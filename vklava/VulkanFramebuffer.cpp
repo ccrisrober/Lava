@@ -1,11 +1,11 @@
 #include "VulkanFramebuffer.h"
 
-
-VulkanFramebuffer::VulkanFramebuffer( VulkanDevicePtr device )
-: VulkanResource( device )
+namespace vklava
 {
-}
+  VulkanFramebuffer::VulkanFramebuffer( VulkanDevicePtr device )
+    : VulkanResource( device )
+  { }
 
-VulkanFramebuffer::~VulkanFramebuffer( void )
-{
+  VulkanFramebuffer::~VulkanFramebuffer( void )
+  { }
 }
