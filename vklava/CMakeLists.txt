@@ -11,10 +11,29 @@ configure_file( ${CMAKE_SOURCE_DIR}/CMake/common/cpp/version.cpp
   ${PROJECT_BINARY_DIR}/src/vklava/version.cpp @ONLY )
 
 set( VKLAVA_SOURCES
-  vklava.cpp
+	RenderWindow.cpp
+	VulkanCommandBuffer.cpp
+	VulkanDevice.cpp
+	VulkanFramebuffer.cpp
+	VulkanQueue.cpp
+	VulkanRenderAPI.cpp
+	VulkanResource.cpp
+	VulkanSwapChain.cpp
+	VulkanTexture.cpp
+	Source.cpp
 )
 
 set( VKLAVA_HEADERS
+	noncopyable.hpp
+	RenderWindow.h
+	VulkanCommandBuffer.h
+	VulkanDevice.h
+	VulkanFramebuffer.h
+	VulkanQueue.h
+	VulkanRenderAPI.h
+	VulkanResource.h
+	VulkanSwapChain.h
+	VulkanTexture.h
 )
 
 set( VKLAVA_MOC_HEADERS
@@ -23,8 +42,9 @@ set( VKLAVA_MOC_HEADERS
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 set( VKLAVA_LINK_LIBRARIES
-    ${VULKAN_LIBRARY}
-    glfw
+	${VULKAN_LIBRARY}
+  	${GLFW3_LIBRARIES}
+  	${GLM_LIBRARIES}
 )
 
 if ( MSVC )
