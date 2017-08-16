@@ -116,6 +116,12 @@ namespace vklava
     VkDevice logicalDevice = getPresentDevice( )->getLogical( );
     getPresentDevice( )->waitIdle( );
 
+    vkDestroyDescriptorPool( logicalDevice, descriptorPool, nullptr );
+    vkDestroyDescriptorSetLayout( logicalDevice, descriptorSetLayout, nullptr );
+
+    vkDestroyBuffer( logicalDevice, uniformBuffer, nullptr );
+    getPresentDevice( )->freeMemory( uniformBufferMemory );
+
     vkDestroyBuffer( logicalDevice, vertexBuffer, nullptr );
     getPresentDevice( )->freeMemory( vertexBufferMemory );
 
@@ -373,6 +379,25 @@ namespace vklava
       throw std::runtime_error( "failed to create render pass!" );
     }
 
+    // UBO DESCRIPTOR
+    VkDescriptorSetLayoutBinding uboLayoutBinding = { };
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.pImmutableSamplers = nullptr;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo = { };
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboLayoutBinding;
+
+    if ( vkCreateDescriptorSetLayout( logicalDevice, &layoutInfo, 
+      nullptr, &descriptorSetLayout ) != VK_SUCCESS )
+    {
+      throw std::runtime_error( "failed to create descriptor set layout!" );
+    }
+
 
 
     // FIXED FUNCTIONS
@@ -408,31 +433,27 @@ namespace vklava
 
     VkRect2D scissor = { };
     scissor.offset = { 0, 0 };
-    scissor.extent =
+    scissor.extent = 
     {
       _renderWindow->_swapChain->getWidth( ),
       _renderWindow->_swapChain->getHeight( )
     };
 
-    VkPipelineViewportStateCreateInfo viewportState;
+    VkPipelineViewportStateCreateInfo viewportState = { };
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.pNext = nullptr;
-    viewportState.flags = 0;
     viewportState.viewportCount = 1;
     viewportState.pViewports = &viewport;
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
-    VkPipelineRasterizationStateCreateInfo rasterizer;
+    VkPipelineRasterizationStateCreateInfo rasterizer = { };
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.pNext = nullptr;
-    rasterizer.flags = 0;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
     VkPipelineMultisampleStateCreateInfo multisampling = { };
@@ -441,8 +462,7 @@ namespace vklava
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = { };
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
-      | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending = { };
@@ -456,22 +476,16 @@ namespace vklava
     colorBlending.blendConstants[ 2 ] = 0.0f;
     colorBlending.blendConstants[ 3 ] = 0.0f;
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = { };
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.pNext = nullptr;
-    pipelineLayoutInfo.flags = 0;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
-    if ( vkCreatePipelineLayout( getPresentDevice( )->getLogical( ),
-      &pipelineLayoutInfo, nullptr, &pipelineLayout ) != VK_SUCCESS )
+    if ( vkCreatePipelineLayout( logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create pipeline layout!" );
     }
 
-    // CONCLUSION (GRAPHICS PIPELINE BASICS)
     VkGraphicsPipelineCreateInfo pipelineInfo = { };
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -487,8 +501,7 @@ namespace vklava
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if ( vkCreateGraphicsPipelines( logicalDevice,
-      VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline ) != VK_SUCCESS )
+    if ( vkCreateGraphicsPipelines( logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create graphics pipeline!" );
     }
@@ -694,6 +707,64 @@ namespace vklava
       vkFreeMemory( logicalDevice, stagingBufferMemory, nullptr );
     }
 
+    // UBO buffer creation
+    {
+      VkDeviceSize bufferSize = sizeof( UniformBufferObject );
+      createBuffer( bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        uniformBuffer, uniformBufferMemory );
+    }
+    {
+      // createDescriptorPool
+      VkDescriptorPoolSize poolSize;
+      poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      poolSize.descriptorCount = 1;
+
+      VkDescriptorPoolCreateInfo poolInfo = { };
+      poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+      poolInfo.poolSizeCount = 1;
+      poolInfo.pPoolSizes = &poolSize;
+      poolInfo.maxSets = 1;
+
+      if ( vkCreateDescriptorPool( logicalDevice, &poolInfo, nullptr, &descriptorPool )
+        != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create descriptor pool!" );
+      }
+    }
+
+    {
+      // createDescriptorSet
+      VkDescriptorSetLayout layouts[] = { descriptorSetLayout };
+      VkDescriptorSetAllocateInfo allocInfo = { };
+      allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+      allocInfo.descriptorPool = descriptorPool;
+      allocInfo.descriptorSetCount = 1;
+      allocInfo.pSetLayouts = layouts;
+
+      if ( vkAllocateDescriptorSets( logicalDevice, &allocInfo, &descriptorSet )
+        != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to allocate descriptor set!" );
+      }
+
+      VkDescriptorBufferInfo bufferInfo = { };
+      bufferInfo.buffer = uniformBuffer;
+      bufferInfo.offset = 0;
+      bufferInfo.range = sizeof( UniformBufferObject );
+
+      VkWriteDescriptorSet descriptorWrite = { };
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = descriptorSet;
+      descriptorWrite.dstBinding = 0;
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pBufferInfo = &bufferInfo;
+
+      vkUpdateDescriptorSets( logicalDevice, 1, &descriptorWrite, 0, nullptr );
+    }
+
 
     // COMMAND BUFFERS
     commandBuffers.resize( swapChainFramebuffers.size( ) );
@@ -757,6 +828,9 @@ namespace vklava
         VkBuffer vertexBuffers[ ] = { vertexBuffer };
         VkDeviceSize offsets[ ] = { 0 };
         vkCmdBindVertexBuffers( commandBuffers[ i ], 0, 1, vertexBuffers, offsets );
+
+        vkCmdBindDescriptorSets( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, 
+          pipelineLayout, 0, 1, &descriptorSet, 0, nullptr );
 
         vkCmdBindIndexBuffer( commandBuffers[ i ], indexBuffer, 0, 
           VK_INDEX_TYPE_UINT16 );

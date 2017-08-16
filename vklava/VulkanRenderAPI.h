@@ -16,8 +16,11 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 
 
-
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
 #include <array>
 
 namespace vklava
@@ -73,6 +76,13 @@ namespace vklava
     { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
   };*/
 
+  struct UniformBufferObject
+  {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+  };
+
   const std::vector<Vertex> vertices = {
     { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
     { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
@@ -106,11 +116,38 @@ namespace vklava
     VulkanRenderAPI( void );
     ~VulkanRenderAPI( void );
     void initialize( void );
+
+    void updateUniformBuffer( )
+    {
+      VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+      static auto startTime = std::chrono::high_resolution_clock::now( );
+
+      auto currentTime = std::chrono::high_resolution_clock::now( );
+      float time = std::chrono::duration_cast<std::chrono::milliseconds>( 
+        currentTime - startTime ).count( ) / 1000.0f;
+
+      UniformBufferObject ubo = { };
+      ubo.model = glm::rotate( glm::mat4( ), time * glm::radians( 90.0f ), 
+        glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      ubo.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), 
+        glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      ubo.proj = glm::perspective( glm::radians( 45.0f ), 
+        _renderWindow->_swapChain->getWidth( ) / 
+        ( float ) _renderWindow->_swapChain->getHeight( ), 0.1f, 10.0f );
+      ubo.proj[ 1 ][ 1 ] *= -1;
+
+      void* data;
+      vkMapMemory( logicalDevice, uniformBufferMemory, 0, sizeof( ubo ), 0, &data );
+      memcpy( data, &ubo, sizeof( ubo ) );
+      vkUnmapMemory( logicalDevice, uniformBufferMemory );
+    }
+
     void run( void )
     {
       while ( !glfwWindowShouldClose( _window ) )
       {
         glfwPollEvents( );
+        updateUniformBuffer( );
         drawFrame( );
       }
       getPresentDevice( )->waitIdle( );
@@ -212,6 +249,7 @@ namespace vklava
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
     VkRenderPass renderPass;
+    VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
 
@@ -227,6 +265,12 @@ namespace vklava
     // Index buffer
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
+    // UBO buffer
+    VkBuffer uniformBuffer;
+    VkDeviceMemory uniformBufferMemory;
+
+    VkDescriptorPool descriptorPool;
+    VkDescriptorSet descriptorSet;
 
     std::vector<VkCommandBuffer> commandBuffers;
     // <MOVE TO ANOTHER CLASS \\
