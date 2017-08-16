@@ -57,19 +57,31 @@ namespace vklava
     }
   };
 
-  const std::vector<Vertex> vertices = {
-    { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-    { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-    { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+  /*const std::vector<Vertex> vertices = {
+    //{ { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    //{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+    //{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
 
-    /*// first triangle
-    { { 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, },  // top right
-    { { 0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, },  // bottom right
-    { { -0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, },  // top left
+    // first triangle
+    { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+    { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+
     // second triangle
-    { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, },  // bottom right
-    { { -0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f }, },  // bottom left
-    { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }  }  // top left*/
+    { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    { { 0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f } },
+    { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+  };*/
+
+  const std::vector<Vertex> vertices = {
+    { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+    { { 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+    { { -0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f } }
+  };
+
+  const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
   };
 
 
@@ -77,6 +89,20 @@ namespace vklava
   class VulkanRenderAPI
   {
   public:
+    static void onWindowResized( GLFWwindow* window, int width, int height )
+    {
+      if ( width == 0 || height == 0 ) return;
+
+      VulkanRenderAPI* app = reinterpret_cast<VulkanRenderAPI*>
+        ( glfwGetWindowUserPointer( window ) );
+      app->resize( );
+    }
+    void resize( )
+    {
+      getPresentDevice( )->waitIdle( );
+      
+      std::cout << "REGENERATE SWAP CHAIN" << std::endl;
+    }
     VulkanRenderAPI( void );
     ~VulkanRenderAPI( void );
     void initialize( void );
@@ -87,14 +113,16 @@ namespace vklava
         glfwPollEvents( );
         drawFrame( );
       }
+      getPresentDevice( )->waitIdle( );
     }
     VulkanSemaphore* imageAvailableSemaphore;
     VulkanSemaphore* renderFinishedSemaphore;
     void drawFrame( void )
     {
       uint32_t imageIndex;
-      VkSwapchainKHR swapChain = _renderWindow->_swapChain->getSwapChain( );
-      vkAcquireNextImageKHR( getPresentDevice( )->getLogical( ), swapChain,
+      VkSwapchainKHR swapChain = _renderWindow->_swapChain->getHandle( );
+      VkResult result = 
+        vkAcquireNextImageKHR( getPresentDevice( )->getLogical( ), swapChain,
         std::numeric_limits<uint64_t>::max( ), imageAvailableSemaphore->getHandle( ),
         VK_NULL_HANDLE, &imageIndex );
 
@@ -114,10 +142,10 @@ namespace vklava
       submitInfo.signalSemaphoreCount = 1;
       submitInfo.pSignalSemaphores = signalSemaphores;
 
-      VkQueue graphicsQueue = getPresentDevice( )->_queueInfos[
-        GpuQueueType::GPUT_GRAPHICS ].queues.front( )->getQueue( );
+      VulkanQueue* graphicsQueue = getPresentDevice( )->getQueue(
+        GpuQueueType::GPUT_GRAPHICS, 0 );
 
-        if ( vkQueueSubmit( graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE ) != VK_SUCCESS )
+        if ( vkQueueSubmit( graphicsQueue->getQueue( ), 1, &submitInfo, VK_NULL_HANDLE ) != VK_SUCCESS )
         {
           throw std::runtime_error( "failed to submit draw command buffer!" );
         }
@@ -134,9 +162,19 @@ namespace vklava
 
         presentInfo.pImageIndices = &imageIndex;
 
-        vkQueuePresentKHR( graphicsQueue, &presentInfo );
+        result = vkQueuePresentKHR( graphicsQueue->getQueue( ), &presentInfo );
 
-        vkQueueWaitIdle( graphicsQueue );
+        if ( result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR )
+        {
+          std::cout << "recreateSwapChain" << std::endl;
+          //recreateSwapChain( );
+        }
+        else if ( result != VK_SUCCESS )
+        {
+          throw std::runtime_error( "failed to present swap chain image!" );
+        }
+
+        graphicsQueue->waitIdle( );
     }
 
     // Returns the internal Vulkan instance object.
@@ -156,6 +194,7 @@ namespace vklava
     }
 
     void cleanup( void );
+    void cleanupSwapChain( void );
   protected:
 #ifndef NDEBUG
     VkDebugReportCallbackEXT _debugCallback;
@@ -182,8 +221,12 @@ namespace vklava
 
     VkCommandPool commandPool;
 
+    // Vertex buffer
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    // Index buffer
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
 
     std::vector<VkCommandBuffer> commandBuffers;
     // <MOVE TO ANOTHER CLASS \\

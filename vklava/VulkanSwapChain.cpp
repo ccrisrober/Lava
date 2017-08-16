@@ -50,13 +50,14 @@ namespace vklava
     VkResult result;
     VkPhysicalDevice physicalDevice = _device->getPhysical( );
 
-
     // Determine swap chain dimensions
     VkSurfaceCapabilitiesKHR surfaceCaps;
     result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR( physicalDevice, surface,
       &surfaceCaps );
     assert( result == VK_SUCCESS );
 
+    VkExtent2D swapchainExtent;
+    // If width/height is 0xFFFFFFFF, we can manually specify width, height
     if ( surfaceCaps.currentExtent.width != std::numeric_limits<uint32_t>::max( ) )
     {
       swapchainExtent = surfaceCaps.currentExtent;
@@ -75,7 +76,6 @@ namespace vklava
 
     _width = swapchainExtent.width;
     _height = swapchainExtent.height;
-
 
     // Find present mode
     uint32_t numPresentModes;
@@ -110,9 +110,9 @@ namespace vklava
     else
     {
       /* Mailbox comes with lower input latency than FIFO, but can waste GPU
-      * power by rendering frames that are never displayed, especially if the
-      * app runs much faster than the refresh rate. This is a concern for mobiles.
-      */
+       * power by rendering frames that are never displayed, especially if the
+       * app runs much faster than the refresh rate. This is a concern for mobiles.
+       */
       for ( const auto& pr : presentModes )
       {
         if ( pr == VK_PRESENT_MODE_MAILBOX_KHR )
@@ -137,7 +137,7 @@ namespace vklava
       transform = surfaceCaps.currentTransform;
     }
 
-    VkSwapchainCreateInfoKHR swapChainCI;// = { };
+    VkSwapchainCreateInfoKHR swapChainCI;
     swapChainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     swapChainCI.pNext = nullptr;
     swapChainCI.flags = 0;

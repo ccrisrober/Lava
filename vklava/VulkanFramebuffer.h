@@ -9,6 +9,7 @@ namespace vklava
   struct VulkanFramebufferAttachment
   {
     VulkanImage* image = nullptr;
+    uint32_t baseLayer = 0;
     VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
     uint32_t index = 0;
   };

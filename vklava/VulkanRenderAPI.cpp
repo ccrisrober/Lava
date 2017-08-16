@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include <sstream>
+#include "routes.h"
 
 namespace vklava
 {
@@ -82,35 +83,56 @@ namespace vklava
     glfwInit( );
 
     glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-    glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
+    //glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
 
     _window = glfwCreateWindow( WIDTH, HEIGHT, "Vulkan", nullptr, nullptr );
+
+    glfwSetWindowUserPointer( _window, this );
+    glfwSetWindowSizeCallback( _window, VulkanRenderAPI::onWindowResized );
   }
 
-  VulkanRenderAPI::~VulkanRenderAPI( )
-  { }
+  VulkanRenderAPI::~VulkanRenderAPI( void )
+  {
+  }
 
-  void VulkanRenderAPI::cleanup( void )
+  void VulkanRenderAPI::cleanupSwapChain( void )
   {
     VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+    for ( size_t i = 0; i < swapChainFramebuffers.size( ); ++i )
+    {
+      vkDestroyFramebuffer( logicalDevice, swapChainFramebuffers[ i ], nullptr );
+    }
+
+    vkFreeCommandBuffers( logicalDevice, commandPool, 
+      static_cast<uint32_t>( commandBuffers.size( ) ), commandBuffers.data( ) );
+
+    vkDestroyPipeline( logicalDevice, graphicsPipeline, nullptr );
+    vkDestroyPipelineLayout( logicalDevice, pipelineLayout, nullptr );
+    vkDestroyRenderPass( logicalDevice, renderPass, nullptr );
+  }
+  void VulkanRenderAPI::cleanup( void )
+  {
+    cleanupSwapChain( );
+    VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+    getPresentDevice( )->waitIdle( );
 
     vkDestroyBuffer( logicalDevice, vertexBuffer, nullptr );
-    vkFreeMemory( logicalDevice, vertexBufferMemory, nullptr );
+    getPresentDevice( )->freeMemory( vertexBufferMemory );
+
+    vkDestroyBuffer( logicalDevice, indexBuffer, nullptr );
+    getPresentDevice( )->freeMemory( indexBufferMemory );
 
     delete renderFinishedSemaphore;
     delete imageAvailableSemaphore;
 
     vkDestroyCommandPool( logicalDevice, commandPool, nullptr );
 
-    for ( size_t i = 0; i < swapChainFramebuffers.size( ); ++i )
+#ifndef NDEBUG
+    if ( _debugCallback != 0 )
     {
-      vkDestroyFramebuffer( logicalDevice, swapChainFramebuffers[ i ], nullptr );
+      DestroyDebugReportCallbackEXT( _instance, _debugCallback, nullptr );
     }
-
-
-    vkDestroyPipeline( logicalDevice, graphicsPipeline, nullptr );
-    vkDestroyPipelineLayout( logicalDevice, pipelineLayout, nullptr );
-    vkDestroyRenderPass( logicalDevice, renderPass, nullptr );
+#endif
 
     //_swapChain.reset( );
 
@@ -118,12 +140,6 @@ namespace vklava
 
     _primaryDevices.clear( );
     _devices.clear( );
-#ifndef NDEBUG
-    if ( _debugCallback != 0 )
-    {
-      DestroyDebugReportCallbackEXT( _instance, _debugCallback, nullptr );
-    }
-#endif
     vkDestroyInstance( _instance, nullptr );
 
     glfwDestroyWindow( _window );
@@ -143,6 +159,13 @@ namespace vklava
     appInfo.engineVersion = VK_MAKE_VERSION( 1, 0, 0 );
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
+    std::vector<const char*> exts;
+
+    uint32_t extensionCount = 0;
+    const char** glfwExtensions;
+
+    glfwExtensions = glfwGetRequiredInstanceExtensions( &extensionCount );
+
 #ifndef NDEBUG
     std::vector<const char*> layers =
     {
@@ -151,32 +174,18 @@ namespace vklava
     checkValidationLayerSupport( layers );
     std::vector<const char*> extensions =
     {
-      nullptr,	// Surface extension
-      nullptr,	// OS specific surface extension
+      glfwExtensions[ 0 ],	// Surface extension
+      glfwExtensions[ 1 ],	// OS specific surface extension
       VK_EXT_DEBUG_REPORT_EXTENSION_NAME
     };
 #else
     std::vector<const char*> layers;
     std::vector<const char*> extensions =
     {
-      nullptr,	// Surface extension
-      nullptr,	// OS specific surface extension
+      glfwExtensions[ 0 ],	// Surface extension
+      glfwExtensions[ 1 ],	// OS specific surface extension
     };
 #endif
-    std::vector<const char*> exts;
-
-    uint32_t extensionCount = 0;
-    const char** glfwExtensions;
-
-    glfwExtensions = glfwGetRequiredInstanceExtensions( &extensionCount );
-
-    for ( uint32_t i = 0; i < extensionCount; ++i )
-    {
-      exts.push_back( glfwExtensions[ i ] );
-    }
-
-    extensions[ 0 ] = exts[ 0 ];
-    extensions[ 1 ] = exts[ 1 ];
 
     VkInstanceCreateInfo instanceInfo;
     instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -210,7 +219,6 @@ namespace vklava
     }
 #endif
 
-
     uint32_t _numDevices = 0;
 
     // Enumerate all devices
@@ -230,7 +238,6 @@ namespace vklava
     {
       _devices[ i ] = std::make_shared<VulkanDevice>( physicalDevices[ i ], i );
     }
-
 
     // Find primary device
     // Note: MULTIGPU - Detect multiple similar devices here if supporting multi-GPU
@@ -297,25 +304,31 @@ namespace vklava
       return shaderModule;
     };
 
-    auto vertShaderCode = readFile( R"(C:/Users/maldicion069/Documents/
-Visual Studio 2013/Projects/VulkanTest/VulkanTest/vert.spv)" );
-    auto fragShaderCode = readFile( R"(C:/Users/maldicion069/Documents/
-Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
+    auto vertShaderCode = readFile( VKLAVA_EXAMPLES_RESOURCES_ROUTE +
+      std::string( "/vert.spv" ) );
+    auto fragShaderCode = readFile( VKLAVA_EXAMPLES_RESOURCES_ROUTE +
+      std::string( "/frag.spv" ) );
 
     VkShaderModule vertShaderModule = createShaderModule( vertShaderCode );
     VkShaderModule fragShaderModule = createShaderModule( fragShaderCode );
 
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo = { };
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo;
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderStageInfo.pNext = nullptr;
+    vertShaderStageInfo.flags = 0;
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
     vertShaderStageInfo.module = vertShaderModule;
     vertShaderStageInfo.pName = "main";
+    vertShaderStageInfo.pSpecializationInfo = nullptr;
 
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo = { };
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo;
     fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderStageInfo.pNext = nullptr;
+    fragShaderStageInfo.flags = 0;
     fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragShaderStageInfo.module = fragShaderModule;
     fragShaderStageInfo.pName = "main";
+    fragShaderStageInfo.pSpecializationInfo = nullptr;
 
     VkPipelineShaderStageCreateInfo shaderStages[] =
     {
@@ -401,15 +414,19 @@ Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
       _renderWindow->_swapChain->getHeight( )
     };
 
-    VkPipelineViewportStateCreateInfo viewportState = { };
+    VkPipelineViewportStateCreateInfo viewportState;
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.pNext = nullptr;
+    viewportState.flags = 0;
     viewportState.viewportCount = 1;
     viewportState.pViewports = &viewport;
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
-    VkPipelineRasterizationStateCreateInfo rasterizer = { };
+    VkPipelineRasterizationStateCreateInfo rasterizer;
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.pNext = nullptr;
+    rasterizer.flags = 0;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
@@ -439,8 +456,12 @@ Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
     colorBlending.blendConstants[ 2 ] = 0.0f;
     colorBlending.blendConstants[ 3 ] = 0.0f;
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo = { };
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo;
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.pNext = nullptr;
+    pipelineLayoutInfo.flags = 0;
+    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pipelineLayoutInfo.pPushConstantRanges = nullptr;
     pipelineLayoutInfo.setLayoutCount = 0;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
 
@@ -511,69 +532,167 @@ Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
     poolCI.pNext = nullptr;
     poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolCI.queueFamilyIndex = getPresentDevice( )->getQueueFamily( GpuQueueType::GPUT_GRAPHICS );
-    if ( vkCreateCommandPool( logicalDevice, &poolCI, nullptr, &commandPool ) != VK_SUCCESS )
+    poolCI.queueFamilyIndex = getPresentDevice( )->getQueueFamily(
+      GpuQueueType::GPUT_GRAPHICS );
+    if ( vkCreateCommandPool( logicalDevice, &poolCI, nullptr,
+      &commandPool ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create command pool!" );
     }
 
 
     // VERTEX BUFFER
+    /*VkDeviceSize bufferSize = sizeof( vertices[ 0 ] ) * vertices.size( );
     VkBufferCreateInfo bufferInfo = { };
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = sizeof( vertices[ 0 ] ) * vertices.size( );
+    bufferInfo.size = bufferSize;
     bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if ( vkCreateBuffer( logicalDevice, &bufferInfo, nullptr, &vertexBuffer ) != VK_SUCCESS )
+    if ( vkCreateBuffer( logicalDevice, &bufferInfo, nullptr,
+    &vertexBuffer ) != VK_SUCCESS )
     {
-      throw std::runtime_error( "failed to create vertex buffer!" );
+    throw std::runtime_error( "failed to create vertex buffer!" );
     }
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements( logicalDevice, vertexBuffer, &memRequirements );
 
-    VkMemoryAllocateInfo memAllocInfo = { };
-    memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memAllocInfo.allocationSize = memRequirements.size;
-
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties( physicalDevice, &memProperties );
-
-    std::function<uint32_t( uint32_t, VkMemoryPropertyFlags )> findMemoryType =
-      [ &] ( uint32_t typeFilter, VkMemoryPropertyFlags properties )
-    {
-      VkPhysicalDeviceMemoryProperties memProperties;
-      vkGetPhysicalDeviceMemoryProperties( physicalDevice, &memProperties );
-
-      for ( uint32_t i = 0; i < memProperties.memoryTypeCount; i++ )
-      {
-        if ( ( typeFilter & ( 1 << i ) ) && ( memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties )
-        {
-          return i;
-        }
-      }
-
-      throw std::runtime_error( "failed to find suitable memory type!" );
-    };
-
-
-    memAllocInfo.memoryTypeIndex = findMemoryType( memRequirements.memoryTypeBits,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-    if ( vkAllocateMemory( logicalDevice, &memAllocInfo, nullptr,
-      &vertexBufferMemory ) != VK_SUCCESS )
-    {
-      throw std::runtime_error( "failed to allocate vertex buffer memory!" );
-    }
+    vertexBufferMemory = getPresentDevice( )->allocateMemReqMemory(
+    memRequirements,
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
     vkBindBufferMemory( logicalDevice, vertexBuffer, vertexBufferMemory, 0 );
 
     void* data;
     vkMapMemory( logicalDevice, vertexBufferMemory, 0, bufferInfo.size, 0, &data );
     memcpy( data, vertices.data( ), ( size_t ) bufferInfo.size );
-    vkUnmapMemory( logicalDevice, vertexBufferMemory );
+    vkUnmapMemory( logicalDevice, vertexBufferMemory );*/
 
+    auto createBuffer = [ &]( VkDeviceSize size, VkBufferUsageFlags usage,
+      VkMemoryPropertyFlags properties, VkBuffer& buffer,
+      VkDeviceMemory& bufferMemory )
+    {
+      VkBufferCreateInfo bufferInfo = { };
+      bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+      bufferInfo.size = size;
+      bufferInfo.usage = usage;
+      bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+      if ( vkCreateBuffer( logicalDevice, &bufferInfo, nullptr, &buffer ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create buffer!" );
+      }
+
+      auto findMemoryType = [ &] ( uint32_t typeFilter, VkMemoryPropertyFlags properties )
+      {
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties( physicalDevice, &memProperties );
+
+        for ( uint32_t i = 0; i < memProperties.memoryTypeCount; i++ )
+        {
+          if ( ( typeFilter & ( 1 << i ) ) &&
+            ( memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties )
+          {
+            return i;
+          }
+        }
+
+        throw std::runtime_error( "failed to find suitable memory type!" );
+      };
+
+      VkMemoryRequirements memRequirements;
+      vkGetBufferMemoryRequirements( logicalDevice, buffer, &memRequirements );
+
+      bufferMemory = getPresentDevice( )->allocateMemReqMemory(
+        memRequirements,
+        properties );
+
+      vkBindBufferMemory( logicalDevice, buffer, bufferMemory, 0 );
+    };
+
+    auto copyBuffer = [ &] ( VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size )
+    {
+      VulkanQueue* graphicsQueue = getPresentDevice( )->getQueue(
+        GpuQueueType::GPUT_GRAPHICS, 0 );
+      VkCommandBufferAllocateInfo allocInfo = { };
+      allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+      allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+      allocInfo.commandPool = commandPool;
+      allocInfo.commandBufferCount = 1;
+
+      VkCommandBuffer commandBuffer;
+      vkAllocateCommandBuffers( logicalDevice, &allocInfo, &commandBuffer );
+
+      VkCommandBufferBeginInfo beginInfo = { };
+      beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+      vkBeginCommandBuffer( commandBuffer, &beginInfo );
+
+      VkBufferCopy copyRegion = { };
+      copyRegion.size = size;
+      vkCmdCopyBuffer( commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion );
+
+      vkEndCommandBuffer( commandBuffer );
+
+      VkSubmitInfo submitInfo = { };
+      submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+      submitInfo.commandBufferCount = 1;
+      submitInfo.pCommandBuffers = &commandBuffer;
+      vkQueueSubmit( graphicsQueue->getQueue( ), 1, &submitInfo, VK_NULL_HANDLE );
+      graphicsQueue->waitIdle( );
+
+      vkFreeCommandBuffers( logicalDevice, commandPool, 1, &commandBuffer );
+    };
+
+    // Vertex buffer creation
+    {
+      VkDeviceSize bufferSize = sizeof( vertices[ 0 ] ) * vertices.size( );
+
+      VkBuffer stagingBuffer;
+      VkDeviceMemory stagingBufferMemory;
+      
+      createBuffer( bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory );
+
+      void* data;
+      vkMapMemory( logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data );
+      memcpy( data, vertices.data( ), ( size_t ) bufferSize );
+      vkUnmapMemory( logicalDevice, stagingBufferMemory );
+
+      createBuffer( bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory );
+
+      copyBuffer( stagingBuffer, vertexBuffer, bufferSize );
+
+      vkDestroyBuffer( logicalDevice, stagingBuffer, nullptr );
+      vkFreeMemory( logicalDevice, stagingBufferMemory, nullptr );
+    }
+
+    // Index buffer creation
+    {
+      VkDeviceSize bufferSize = sizeof( indices[ 0 ] ) * indices.size( );
+
+      VkBuffer stagingBuffer;
+      VkDeviceMemory stagingBufferMemory;
+      createBuffer( bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory );
+
+      void* data;
+      vkMapMemory( logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data );
+      memcpy( data, indices.data( ), ( size_t ) bufferSize );
+      vkUnmapMemory( logicalDevice, stagingBufferMemory );
+
+      createBuffer( bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory );
+
+      copyBuffer( stagingBuffer, indexBuffer, bufferSize );
+
+      vkDestroyBuffer( logicalDevice, stagingBuffer, nullptr );
+      vkFreeMemory( logicalDevice, stagingBufferMemory, nullptr );
+    }
 
 
     // COMMAND BUFFERS
@@ -590,36 +709,60 @@ Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
       throw std::runtime_error( "failed to allocate command buffers!" );
     }
     // Starting command buffer recording
-    for ( size_t i = 0; i < commandBuffers.size( ); ++i )
+    uint32_t i = 0;
+    for ( const VkCommandBuffer& cmd: commandBuffers )
     {
       VkCommandBufferBeginInfo beginInfo = { };
       beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
       beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-      vkBeginCommandBuffer( commandBuffers[ i ], &beginInfo );
+      vkBeginCommandBuffer( cmd, &beginInfo );
 
       // Starting a render pass
-      VkRenderPassBeginInfo renderPassInfo = { };
-      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      renderPassInfo.renderPass = renderPass;
-      renderPassInfo.framebuffer = swapChainFramebuffers[ i ];
-      renderPassInfo.renderArea.offset = { 0, 0 };
-      renderPassInfo.renderArea.extent = _renderWindow->_swapChain->swapchainExtent;
+      VkRenderPassBeginInfo renderPassBeginInfo;
+      renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      renderPassBeginInfo.pNext = nullptr;
+
+      renderPassBeginInfo.renderPass = renderPass;
+      renderPassBeginInfo.framebuffer = swapChainFramebuffers[ i ];
+      renderPassBeginInfo.renderArea.offset = { 0, 0 };
+      renderPassBeginInfo.renderArea.extent =
+      {
+        _renderWindow->_swapChain->getWidth( ),
+        _renderWindow->_swapChain->getHeight( )
+      };
 
       VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-      renderPassInfo.clearValueCount = 1;
-      renderPassInfo.pClearValues = &clearColor;
+      renderPassBeginInfo.clearValueCount = 1;
+      renderPassBeginInfo.pClearValues = &clearColor;
 
-      vkCmdBeginRenderPass( commandBuffers[ i ], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+      vkCmdBeginRenderPass( cmd, &renderPassBeginInfo,
+        VK_SUBPASS_CONTENTS_INLINE );
 
-      // Basic drawing commands
-      vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
+        /*// Basic drawing commands
+        vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, 
+          graphicsPipeline );
 
-      VkBuffer vertexBuffers[] = { vertexBuffer };
-      VkDeviceSize offsets[] = { 0 };
-      vkCmdBindVertexBuffers( commandBuffers[ i ], 0, 1, vertexBuffers, offsets );
+        VkBuffer vertexBuffers[] = { vertexBuffer };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers( cmd, 0, 1, vertexBuffers,
+          offsets );
 
-      vkCmdDraw( commandBuffers[ i ], static_cast< uint32_t >( vertices.size( ) ), 1, 0, 0 );
+        vkCmdDraw( cmd, static_cast< uint32_t >(
+          vertices.size( ) ), 1, 0, 0 );*/
+
+        vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, 
+          graphicsPipeline );
+
+        VkBuffer vertexBuffers[ ] = { vertexBuffer };
+        VkDeviceSize offsets[ ] = { 0 };
+        vkCmdBindVertexBuffers( commandBuffers[ i ], 0, 1, vertexBuffers, offsets );
+
+        vkCmdBindIndexBuffer( commandBuffers[ i ], indexBuffer, 0, 
+          VK_INDEX_TYPE_UINT16 );
+
+        vkCmdDrawIndexed( commandBuffers[ i ], 
+          static_cast<uint32_t>( indices.size( ) ), 1, 0, 0, 0 );
 
       vkCmdEndRenderPass( commandBuffers[ i ] );
 
@@ -627,6 +770,7 @@ Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
       {
         throw std::runtime_error( "failed to record command buffer!" );
       }
+      ++i;
     }
 
     // SEMAPHORES
@@ -634,7 +778,8 @@ Visual Studio 2013/Projects/VulkanTest/VulkanTest/frag.spv)" );
     renderFinishedSemaphore = new VulkanSemaphore( getPresentDevice( ) );
   }
 
-  bool VulkanRenderAPI::checkValidationLayerSupport( const std::vector<const char*>& validationLayers )
+  bool VulkanRenderAPI::checkValidationLayerSupport( 
+    const std::vector<const char*>& validationLayers )
   {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties( &layerCount, nullptr );

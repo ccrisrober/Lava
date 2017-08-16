@@ -21,6 +21,17 @@ namespace vklava
   private:
     VkSemaphore _semaphore;
   };
+  
+  struct SwapChainSurface
+  {
+    VulkanImage* image;
+    VulkanSemaphore* sync;
+    bool acquired;
+    bool needsWait;
+
+    //VulkanFramebuffer* framebuffer;
+   // VULKAN_FRAMEBUFFER_DESC framebufferDesc;
+  };
 
   class VulkanSwapChain
   {
@@ -30,8 +41,8 @@ namespace vklava
     void rebuild( VulkanDevicePtr device, VkSurfaceKHR& surface, uint32_t w,
       uint32_t h, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace );
     /**
-    * Returns the actual width of the swap chain, in pixels. This might differ from the requested size in case it
-    * wasn't supported.
+    * Returns the actual width of the swap chain, in pixels. 
+    * This might differ from the requested size in case it wasn't supported.
     */
     uint32_t getWidth( void ) const
     {
@@ -39,8 +50,8 @@ namespace vklava
     }
 
     /**
-    * Returns the actual height of the swap chain, in pixels. This might differ from the requested size in case it
-    * wasn't supported.
+    * Returns the actual height of the swap chain, in pixels. 
+    * This might differ from the requested size in case it wasn't supported.
     */
     uint32_t getHeight( void ) const
     {
@@ -48,11 +59,6 @@ namespace vklava
     }
 
     operator VkSwapchainKHR( )
-    {
-      return _swapChain;
-    }
-
-    VkSwapchainKHR getSwapChain( void ) const
     {
       return _swapChain;
     }
@@ -81,6 +87,23 @@ namespace vklava
     _currentBackBufferIdx = imageIndex;
     }*/
 
+    /** Returns the number of available color surfaces. */
+
+
+    /*uint32_t getNumColorSurfaces( ) const
+    {
+      return ( uint32_t ) _surfaces.size( );
+    }*/
+
+    /*const SwapChainSurface& getBackBuffer( void )
+    {
+      return _surfaces[ _currentBackBufferIdx ];
+    }*/
+
+    VkSwapchainKHR getHandle( void ) const
+    {
+      return _swapChain;
+    }
 
   protected:
     VulkanDevicePtr _device;
@@ -88,8 +111,11 @@ namespace vklava
     uint32_t _height = 0;
     VkSwapchainKHR _swapChain = VK_NULL_HANDLE;
   public:
-    VkExtent2D swapchainExtent;
     std::vector<VkImageView> swapChainImageViews;
+
+    //std::vector<SwapChainSurface> _surfaces;
+    uint32_t _currentSemaphoreIdx = 0;
+    uint32_t _currentBackBufferIdx = 0;
   };
 }
 

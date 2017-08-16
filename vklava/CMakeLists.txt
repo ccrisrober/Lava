@@ -10,8 +10,13 @@ configure_file( ${CMAKE_SOURCE_DIR}/CMake/common/cpp/version.h
 configure_file( ${CMAKE_SOURCE_DIR}/CMake/common/cpp/version.cpp
   ${PROJECT_BINARY_DIR}/src/vklava/version.cpp @ONLY )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/routes.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
+
 set( VKLAVA_SOURCES
 	RenderWindow.cpp
+	##VulkanBuffer.cpp
 	VulkanCommandBuffer.cpp
 	VulkanDevice.cpp
 	VulkanFramebuffer.cpp
@@ -24,8 +29,10 @@ set( VKLAVA_SOURCES
 )
 
 set( VKLAVA_HEADERS
+	routes.h
 	noncopyable.hpp
 	RenderWindow.h
+	##VulkanBuffer.h
 	VulkanCommandBuffer.h
 	VulkanDevice.h
 	VulkanFramebuffer.h

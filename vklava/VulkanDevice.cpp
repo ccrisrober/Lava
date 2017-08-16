@@ -13,7 +13,7 @@ namespace vklava
 
     vkGetPhysicalDeviceProperties( device, &_deviceProperties );
     vkGetPhysicalDeviceFeatures( device, &_deviceFeatures );
-    //vkGetPhysicalDeviceMemoryProperties( device, &_memoryProperties );
+    vkGetPhysicalDeviceMemoryProperties( device, &_memoryProperties );
 
     uint32_t numQueueFamilies;
     vkGetPhysicalDeviceQueueFamilyProperties( device, &numQueueFamilies, nullptr );
@@ -90,8 +90,20 @@ namespace vklava
     }
   }
 
-  VulkanDevice::~VulkanDevice( )
+  VulkanDevice::~VulkanDevice( void )
   {
+    waitIdle( );
+    for ( uint32_t i = 0; i < GPUT_COUNT; ++i )
+    {
+      uint32_t numQueues = ( uint32_t ) _queueInfos[ i ].queues.size( );
+      for ( uint32_t j = 0; j < numQueues; ++j )
+      {
+        _queueInfos[ i ].queues[ j ]->waitIdle( );
+        // _queueInfos[ i ].queues[ j ]->refreshStates( true, true );
+        delete _queueInfos[ i ].queues[ j ];
+      }
+      _queueInfos[ i ].queues.clear( );
+    }
     vkDestroyDevice( _logicalDevice, nullptr );
   }
 
@@ -99,5 +111,73 @@ namespace vklava
   {
     VkResult result = vkDeviceWaitIdle( _logicalDevice );
     assert( result == VK_SUCCESS );
+  }
+  void VulkanDevice::freeMemory( VkDeviceMemory memory )
+  {
+    vkFreeMemory( _logicalDevice, memory, nullptr );
+  }
+
+  uint32_t VulkanDevice::findMemoryType( uint32_t requirementBits, 
+    VkMemoryPropertyFlags wantedFlags )
+  {
+    for ( uint32_t i = 0; i < _memoryProperties.memoryTypeCount; i++ )
+    {
+      if ( requirementBits & ( 1 << i ) )
+      {
+        if ( ( _memoryProperties.memoryTypes[ i ].propertyFlags & 
+          wantedFlags ) == wantedFlags )
+          return i;
+      }
+    }
+
+    return -1;
+  }
+
+  VkDeviceMemory VulkanDevice::allocateImageMemory( VkImage image, 
+    VkMemoryPropertyFlags flags )
+  {
+    VkMemoryRequirements memReq;
+    vkGetImageMemoryRequirements( _logicalDevice, image, &memReq );
+
+    VkDeviceMemory memory = allocateMemReqMemory( memReq, flags );
+
+    VkResult result = vkBindImageMemory( _logicalDevice, image, memory, 0 );
+    assert( result == VK_SUCCESS );
+
+    return memory;
+  }
+
+  VkDeviceMemory VulkanDevice::allocateBufferMemory( VkBuffer buffer, 
+    VkMemoryPropertyFlags flags )
+  {
+    VkMemoryRequirements memReq;
+    vkGetBufferMemoryRequirements( _logicalDevice, buffer, &memReq );
+
+    VkDeviceMemory memory = allocateMemReqMemory( memReq, flags );
+
+    VkResult result = vkBindBufferMemory( _logicalDevice, buffer, memory, 0 );
+    assert( result == VK_SUCCESS );
+
+    return memory;
+  }
+  VkDeviceMemory VulkanDevice::allocateMemReqMemory( const VkMemoryRequirements& reqs,
+    VkMemoryPropertyFlags flags )
+  {
+    VkMemoryAllocateInfo allocateInfo;
+    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocateInfo.pNext = nullptr;
+    allocateInfo.memoryTypeIndex = findMemoryType( reqs.memoryTypeBits, flags );
+    allocateInfo.allocationSize = reqs.size;
+
+    if ( allocateInfo.memoryTypeIndex == -1 )
+      return VK_NULL_HANDLE;
+
+    VkDeviceMemory memory;
+
+    VkResult result = vkAllocateMemory( _logicalDevice, &allocateInfo, 
+      nullptr, &memory );
+    assert( result == VK_SUCCESS );
+
+    return memory;
   }
 }

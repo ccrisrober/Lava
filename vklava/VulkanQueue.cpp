@@ -1,5 +1,6 @@
 #include "VulkanQueue.h"
 #include "VulkanDevice.h"
+#include <assert.h>
 
 namespace vklava
 {
@@ -11,7 +12,12 @@ namespace vklava
     , _index( index )
   { }
 
-
   VulkanQueue::~VulkanQueue( void )
   { }
+
+  void VulkanQueue::waitIdle( void ) const
+  {
+    VkResult result = vkQueueWaitIdle( _queue );
+    assert( result == VK_SUCCESS );
+  }
 }

@@ -1,7 +1,7 @@
 #include "VulkanRenderAPI.h"
 using namespace vklava;
 
-int main( )
+int main( void )
 {
   VulkanRenderAPI vr;
   vr.initialize( );

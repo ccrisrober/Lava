@@ -8,7 +8,7 @@ namespace vklava
   class VulkanDevice;
 
   // Types of GPU queues.
-  enum GpuQueueType
+  enum GpuQueueType: short
   {
     /**
     * Queue used for rendering. Allows the use of draw commands,
@@ -61,6 +61,8 @@ namespace vklava
     _activeSubmissions.push_back( SubmitInfo( cmdBuffer, _nextSubmitIdx++, semaphoresCount, 1 ) );
     _activeBuffers.push( cmdBuffer );
     }*/
+
+    void waitIdle( ) const;
 
   protected:
     VulkanDevice& _device;
