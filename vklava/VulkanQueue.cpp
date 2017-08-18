@@ -2,7 +2,7 @@
 #include "VulkanDevice.h"
 #include <assert.h>
 
-namespace vklava
+namespace lava
 {
   VulkanQueue::VulkanQueue( VulkanDevice& device, VkQueue queue,
     GpuQueueType type, uint32_t index )

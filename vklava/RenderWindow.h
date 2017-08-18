@@ -6,7 +6,7 @@
 
 #include "VulkanSwapChain.h"
 
-namespace vklava
+namespace lava
 {
   class VulkanRenderAPI;
 

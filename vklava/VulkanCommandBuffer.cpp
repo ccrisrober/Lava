@@ -1,8 +1,26 @@
 #include "VulkanCommandBuffer.h"
 #include <assert.h>
 
-namespace vklava
+namespace lava
 {
+  VulkanSemaphore::VulkanSemaphore( VulkanDevicePtr device )
+    : VulkanResource( device )
+  {
+    VkSemaphoreCreateInfo semaphoreCI;
+    semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphoreCI.pNext = nullptr;
+    semaphoreCI.flags = 0;
+
+    VkResult result = vkCreateSemaphore( _device->getLogical( ),
+      &semaphoreCI, nullptr, &_semaphore );
+    assert( result == VK_SUCCESS );
+  }
+
+  VulkanSemaphore::~VulkanSemaphore( void )
+  {
+    vkDestroySemaphore( _device->getLogical( ), _semaphore, nullptr );
+  }
+
   VulkanCmdBufferPool::VulkanCmdBufferPool( VulkanDevicePtr device )
     : _device( device )
     , _nextId( 1 )
@@ -58,14 +76,7 @@ namespace vklava
 
     const PoolInfo& poolInfo = iterFind->second;
 
-    return new VulkanCmdBuffer( _device, _nextId++, poolInfo.pool,
-      poolInfo.queueFamily, secondary );
-  }
-
-
-  VulkanCmdBuffer::VulkanCmdBuffer( VulkanDevicePtr device, uint32_t id,
-    VkCommandPool pool, uint32_t queueFamily, bool secondary )
-  {
-
+    return nullptr; /* new VulkanCmdBuffer( _device, _nextId++, poolInfo.pool,
+      poolInfo.queueFamily, secondary );*/
   }
 }

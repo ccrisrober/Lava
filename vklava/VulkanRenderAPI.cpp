@@ -11,7 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-namespace vklava
+namespace lava
 {
   VkResult CreateDebugReportCallbackEXT( VkInstance instance,
     const VkDebugReportCallbackCreateInfoEXT* pCreateInfo,
@@ -197,7 +197,7 @@ namespace vklava
     {
       glfwExtensions[ 0 ],	// Surface extension
       glfwExtensions[ 1 ],	// OS specific surface extension
-      VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+      "VK_EXT_debug_report"
     };
 #else
     std::vector<const char*> layers;
@@ -697,8 +697,13 @@ namespace vklava
       // TEXTURE IMAGE CREATION
       int texWidth, texHeight, texChannels;
       stbi_uc* pixels = stbi_load( ( VKLAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/texture.jpg" ) ).c_str( ),
+        std::string( "/uv_checker.png" ) ).c_str( ),
         &texWidth, &texHeight, &texChannels, STBI_rgb_alpha );
+      if ( pixels == nullptr )
+      {
+        std::cerr << stbi_failure_reason( ) << std::endl;
+        throw new std::exception( stbi_failure_reason( ) );
+      }
       VkDeviceSize imageSize = texWidth * texHeight * 4;
 
       if ( !pixels )

@@ -2,7 +2,7 @@
 
 #include "VulkanRenderAPI.h"
 
-namespace vklava
+namespace lava
 {
   RenderWindow::RenderWindow( VulkanRenderAPI& renderAPI )
     : _renderAPI( renderAPI )
@@ -124,10 +124,11 @@ namespace vklava
           render window surface, falling back to a default format.)" );
       }
     }
+    auto mDepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
 
     _swapChain = std::make_shared<VulkanSwapChain>( );
     _swapChain->rebuild( _renderAPI.getPresentDevice( ), _surface, WIDTH,
-      HEIGHT, true, _colorFormat, _colorSpace );
+      HEIGHT, true, _colorFormat, _colorSpace, true, VK_FORMAT_D24_UNORM_S8_UINT );
   }
 
 

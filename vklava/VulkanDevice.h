@@ -9,7 +9,7 @@
 
 #include "VulkanQueue.h"
 
-namespace vklava
+namespace lava
 {
   class VulkanDevice
   {

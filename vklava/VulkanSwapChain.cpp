@@ -5,26 +5,8 @@
 #include <algorithm> 
 using namespace std;
 
-namespace vklava
+namespace lava
 {
-  VulkanSemaphore::VulkanSemaphore( VulkanDevicePtr device )
-    : VulkanResource( device )
-  {
-    VkSemaphoreCreateInfo semaphoreCI;
-    semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    semaphoreCI.pNext = nullptr;
-    semaphoreCI.flags = 0;
-
-    VkResult result = vkCreateSemaphore( _device->getLogical( ),
-      &semaphoreCI, nullptr, &_semaphore );
-    assert( result == VK_SUCCESS );
-  }
-
-  VulkanSemaphore::~VulkanSemaphore( void )
-  {
-    vkDestroySemaphore( _device->getLogical( ), _semaphore, nullptr );
-  }
-
   VulkanSwapChain::VulkanSwapChain( void )
   { }
 
@@ -43,7 +25,8 @@ namespace vklava
   }
 
   void VulkanSwapChain::rebuild( VulkanDevicePtr device, VkSurfaceKHR& surface,
-    uint32_t w, uint32_t h, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace )
+    uint32_t w, uint32_t h, bool vsync, VkFormat colorFormat, 
+    VkColorSpaceKHR colorSpace, bool createDepth, VkFormat depthFormat )
   {
     _device = device;
 
@@ -235,6 +218,30 @@ namespace vklava
       VkResult result = vkCreateImageView( logicalDevice, &imageViewCI,
         nullptr, &swapChainImageViews[ i ] );
       assert( result == VK_SUCCESS );
+
+      /*if ( createDepth )
+      {
+        VkImageCreateInfo depthStencilImageCI;
+        depthStencilImageCI.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        depthStencilImageCI.pNext = nullptr;
+        depthStencilImageCI.flags = 0;
+        depthStencilImageCI.imageType = VK_IMAGE_TYPE_2D;
+        depthStencilImageCI.format = depthFormat;
+        depthStencilImageCI.extent = { w, h, 1 };
+        depthStencilImageCI.mipLevels = 1;
+        depthStencilImageCI.arrayLayers = 1;
+        depthStencilImageCI.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthStencilImageCI.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        depthStencilImageCI.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthStencilImageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
+        depthStencilImageCI.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        depthStencilImageCI.pQueueFamilyIndices = nullptr;
+        depthStencilImageCI.queueFamilyIndexCount = 0;
+
+        result = vkCreateImage( logicalDevice, &depthStencilImageCI, nullptr,
+          &depthStencilImage );
+        assert( result == VK_SUCCESS );
+      }*/
     }
     std::cout << "ImageViews OK" << std::endl;
   }

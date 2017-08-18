@@ -1,7 +1,7 @@
 #ifndef __VKLAVA_NONCOPYABLE__
 #define __VKLAVA_NONCOPYABLE__
 
-namespace vklava
+namespace lava
 {
   class NonCopyable
   {

@@ -3,7 +3,7 @@
 
 #include "VulkanDevice.h"
 
-namespace vklava
+namespace lava
 {
   class VulkanResource
   {

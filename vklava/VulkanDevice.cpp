@@ -2,7 +2,7 @@
 #include <vector>
 #include <assert.h>
 
-namespace vklava
+namespace lava
 {
   VulkanDevice::VulkanDevice( VkPhysicalDevice device, uint32_t deviceIdx )
     : _physicalDevice( device )
@@ -12,6 +12,19 @@ namespace vklava
   {
 
     vkGetPhysicalDeviceProperties( device, &_deviceProperties );
+
+    VkPhysicalDeviceProperties deviceProperties;
+    memset( &deviceProperties, 0, sizeof deviceProperties );
+    vkGetPhysicalDeviceProperties( device, &deviceProperties );
+    printf( "Driver Version: %d\n", deviceProperties.driverVersion );
+    printf( "Device Name:    %s\n", deviceProperties.deviceName );
+    printf( "Device Type:    %d\n", deviceProperties.deviceType );
+    printf( "API Version:    %d.%d.%d\n",
+      // See note below regarding this:
+      ( deviceProperties.apiVersion >> 22 ) & 0x3FF,
+      ( deviceProperties.apiVersion >> 12 ) & 0x3FF,
+      ( deviceProperties.apiVersion & 0xFFF ) );
+
     vkGetPhysicalDeviceFeatures( device, &_deviceFeatures );
     vkGetPhysicalDeviceMemoryProperties( device, &_memoryProperties );
 
@@ -43,8 +56,31 @@ namespace vklava
       queueCreateInfos.push_back( queueCreateInfo );
     };
 
+    // Looks for dedicated upload queues
+    for ( uint32_t i = 0; i < numQueueFamilies; ++i )
+    {
+      if ( ( queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT ) &&
+        ( ( queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 ) &&
+        ( ( queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT ) == 0 ) )
+      {
+        populateQueueInfo( GPUT_TRANSFER, i );
+        break;
+      }
+    }
+
+    // Looks for dedicated compute queues
+    for ( uint32_t i = 0; i < numQueueFamilies; ++i )
+    {
+      if ( ( queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT ) && 
+        ( queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 )
+      {
+        populateQueueInfo( GPUT_COMPUTE, i );
+        break;
+      }
+    }
+
     // Looks for graphics queues
-    for ( uint32_t i = 0, size = queueFamilyProperties.size( ); i < size; ++i )
+    for ( uint32_t i = 0; i < numQueueFamilies; ++i )
     {
       if ( queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
       {

@@ -2,26 +2,11 @@
 #define __VKLAVA_VULKANSWAPCHAIN__
 
 #include "VulkanDevice.h"
+#include "VulkanCommandBuffer.h"
 #include "VulkanTexture.h"
 
-namespace vklava
+namespace lava
 {
-  class VulkanSemaphore : public VulkanResource
-  {
-  public:
-    VulkanSemaphore( VulkanDevicePtr device );
-    ~VulkanSemaphore( void );
-
-    // Returns the internal handle to the Vulkan object
-    VkSemaphore getHandle( ) const
-    {
-      return _semaphore;
-    }
-
-  private:
-    VkSemaphore _semaphore;
-  };
-  
   struct SwapChainSurface
   {
     VulkanImage* image;
@@ -39,7 +24,8 @@ namespace vklava
     VulkanSwapChain( void );
     ~VulkanSwapChain( void );
     void rebuild( VulkanDevicePtr device, VkSurfaceKHR& surface, uint32_t w,
-      uint32_t h, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace );
+      uint32_t h, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace,
+      bool createDepth, VkFormat depthFormat );
     /**
     * Returns the actual width of the swap chain, in pixels. 
     * This might differ from the requested size in case it wasn't supported.
@@ -112,6 +98,9 @@ namespace vklava
     VkSwapchainKHR _swapChain = VK_NULL_HANDLE;
   public:
     std::vector<VkImageView> swapChainImageViews;
+
+    VkImage depthStencilImage;
+    //VulkanImage* _depthStencilImage = nullptr;
 
     //std::vector<SwapChainSurface> _surfaces;
     uint32_t _currentSemaphoreIdx = 0;

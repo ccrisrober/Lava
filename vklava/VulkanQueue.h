@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace vklava
+namespace lava
 {
   class VulkanDevice;
 
@@ -19,7 +19,7 @@ namespace vklava
     GPUT_COMPUTE,
     /** Queue used for memory transfer operations only. No rendering or compute dispatch allowed. */
     GPUT_TRANSFER,
-    GPUT_COUNT // Keep at end
+    GPUT_COUNT
   };
 
   //#include "VulkanCommandBuffer.h"

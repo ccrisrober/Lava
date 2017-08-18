@@ -5,7 +5,7 @@
 
 #include "VulkanResource.h"
 
-namespace vklava
+namespace lava
 {
   enum TextureUsage : uint32_t
   {

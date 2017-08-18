@@ -1,5 +1,5 @@
 #include "VulkanRenderAPI.h"
-using namespace vklava;
+using namespace lava;
 
 int main( void )
 {

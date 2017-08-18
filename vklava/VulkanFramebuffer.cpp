@@ -1,6 +1,6 @@
 #include "VulkanFramebuffer.h"
 
-namespace vklava
+namespace lava
 {
   VulkanFramebuffer::VulkanFramebuffer( VulkanDevicePtr device )
     : VulkanResource( device )

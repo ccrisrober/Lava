@@ -1,7 +1,7 @@
 set( Name vklava )
 set( NAME VKLAVA )
-set( namespace vklava )
-set( NAMESPACE VKLAVA )
+set( namespace lava )
+set( namespace lava )
 set( INCLUDE_NAME vklava )
 configure_file( ${CMAKE_SOURCE_DIR}/CMake/common/cpp/api.h
   ${PROJECT_BINARY_DIR}/include/vklava/api.h @ONLY )

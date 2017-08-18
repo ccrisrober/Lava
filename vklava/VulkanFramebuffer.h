@@ -4,7 +4,7 @@
 #include "VulkanResource.h"
 #include "VulkanTexture.h"
 
-namespace vklava
+namespace lava
 {
   struct VulkanFramebufferAttachment
   {
