@@ -16,10 +16,12 @@ namespace lava
     RenderWindow( VulkanRenderAPI& renderAPI );
     ~RenderWindow( void );
 
+    void resize( uint32_t width, uint32_t height );
+
     //protected:
     VkColorSpaceKHR _colorSpace;
     VkFormat _colorFormat;
-    //VkFormat _depthFormat;
+    VkFormat _depthFormat;
     std::shared_ptr<VulkanSwapChain> _swapChain;
     VulkanRenderAPI& _renderAPI;
     VkSurfaceKHR _surface;

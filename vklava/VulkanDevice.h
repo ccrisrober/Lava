@@ -11,6 +11,8 @@
 
 namespace lava
 {
+  class VulkanCmdBufferPool;
+
   class VulkanDevice
   {
   public:
@@ -71,6 +73,21 @@ namespace lava
       return _queueInfos[ ( int ) type ].queues[ idx ];
     }
 
+    VulkanQueue* getGraphicQueue( void )
+    {
+      return getQueue( GpuQueueType::GPUT_GRAPHICS, 0 );
+    }
+
+    VulkanQueue* getComputeQueue( void )
+    {
+      return getQueue( GpuQueueType::GPUT_COMPUTE, 0 );
+    }
+
+    VulkanQueue* getTransferQueue( void )
+    {
+      return getQueue( GpuQueueType::GPUT_TRANSFER, 0 );
+    }
+
     /**
     * Returns index of the queue family for the specified queue type.
     * Returns -1 if no queues for the specified type exist.
@@ -90,31 +107,39 @@ namespace lava
     }
 
     /**
-    * Allocates memory for the provided image, and binds it to the image. 
+    * Allocates memory for the provided image, and binds it to the image.
     * Returns null if it cannot find memory with the specified flags.
     */
     VkDeviceMemory allocateImageMemory( VkImage image, VkMemoryPropertyFlags flags );
 
     /**
-    * Allocates memory for the provided buffer, and binds it to the buffer. 
+    * Allocates memory for the provided buffer, and binds it to the buffer.
     * Returns null if it cannot find memory with the specified flags.
     */
     VkDeviceMemory allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags flags );
 
     /**
-    * Allocates a block of memory according to the provided memory requirements. 
+    * Allocates a block of memory according to the provided memory requirements.
     * Returns null if it cannot find memory with the specified flags.
     */
-    VkDeviceMemory allocateMemReqMemory( const VkMemoryRequirements& reqs, 
+    VkDeviceMemory allocateMemReqMemory( const VkMemoryRequirements& reqs,
       VkMemoryPropertyFlags flags );
 
     // Frees a previously allocated block of memory.
     void freeMemory( VkDeviceMemory memory );
+
+    /** Returns a pool that can be used for allocating command buffers 
+     * for all queues on this device.
+     */
+    VulkanCmdBufferPool& getCmdBufferPool( void ) const
+    {
+      return *_commandBufferPool;
+    }
   private:
     friend class VulkanRenderAPI;
 
     // Attempts to find a memory type that matches the requirements bits and the requested flags.
-    uint32_t findMemoryType( uint32_t requirementBits, 
+    uint32_t findMemoryType( uint32_t requirementBits,
       VkMemoryPropertyFlags wantedFlags );
 
     // Marks the device as a primary device.
@@ -128,6 +153,8 @@ namespace lava
     bool _isPrimary;
     uint32_t _deviceIdx;
 
+    VulkanCmdBufferPool * _commandBufferPool;
+
     VkPhysicalDeviceProperties _deviceProperties;
     VkPhysicalDeviceFeatures _deviceFeatures;
     VkPhysicalDeviceMemoryProperties _memoryProperties;
@@ -136,7 +163,7 @@ namespace lava
     // Contains data about a set of queues of a specific type.
     struct QueueInfo
     {
-      uint32_t familyIdx;
+      uint32_t familyIdx = -1;
       std::vector<VulkanQueue*> queues;
     };
     std::array< QueueInfo, GPUT_COUNT> _queueInfos;

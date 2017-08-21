@@ -11,6 +11,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include "VulkanPipelineState.h"
+#include "VulkanSampler.h"
+
 namespace lava
 {
   VkResult CreateDebugReportCallbackEXT( VkInstance instance,
@@ -100,7 +103,7 @@ namespace lava
 
   void VulkanRenderAPI::cleanupSwapChain( void )
   {
-    VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+    VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
 
     vkDestroyImageView( logicalDevice, depthImageView, nullptr );
     vkDestroyImage( logicalDevice, depthImage, nullptr );
@@ -122,26 +125,26 @@ namespace lava
   void VulkanRenderAPI::cleanup( void )
   {
     cleanupSwapChain( );
-    VkDevice logicalDevice = getPresentDevice( )->getLogical( );
-    getPresentDevice( )->waitIdle( );
+    VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
+    _getPresentDevice( )->waitIdle( );
 
-    vkDestroySampler( logicalDevice, textureSampler, nullptr );
+    delete textureSampler; //vkDestroySampler( logicalDevice, textureSampler, nullptr );
     vkDestroyImageView( logicalDevice, textureImageView, nullptr );
 
     vkDestroyImage( logicalDevice, textureImage, nullptr );
-    getPresentDevice( )->freeMemory( textureImageMemory );
+    _getPresentDevice( )->freeMemory( textureImageMemory );
 
     vkDestroyDescriptorPool( logicalDevice, descriptorPool, nullptr );
     vkDestroyDescriptorSetLayout( logicalDevice, descriptorSetLayout, nullptr );
 
     vkDestroyBuffer( logicalDevice, uniformBuffer, nullptr );
-    getPresentDevice( )->freeMemory( uniformBufferMemory );
+    _getPresentDevice( )->freeMemory( uniformBufferMemory );
 
     vkDestroyBuffer( logicalDevice, vertexBuffer, nullptr );
-    getPresentDevice( )->freeMemory( vertexBufferMemory );
+    _getPresentDevice( )->freeMemory( vertexBufferMemory );
 
     vkDestroyBuffer( logicalDevice, indexBuffer, nullptr );
-    getPresentDevice( )->freeMemory( indexBufferMemory );
+    _getPresentDevice( )->freeMemory( indexBufferMemory );
 
     delete renderFinishedSemaphore;
     delete imageAvailableSemaphore;
@@ -186,6 +189,17 @@ namespace lava
     const char** glfwExtensions;
 
     glfwExtensions = glfwGetRequiredInstanceExtensions( &extensionCount );
+
+    extensionCount = 0;
+    vkEnumerateInstanceExtensionProperties( nullptr, &extensionCount, nullptr );
+    std::vector<VkExtensionProperties> extensions_( extensionCount );
+    vkEnumerateInstanceExtensionProperties( nullptr, &extensionCount, extensions_.data( ) );
+    std::cout << "available extensions:" << std::endl;
+
+    for ( const auto& extension : extensions_ )
+    {
+      std::cout << "\t" << extension.extensionName << std::endl;
+    }
 
 #ifndef NDEBUG
     std::vector<const char*> layers =
@@ -282,63 +296,151 @@ namespace lava
 
     _renderWindow = std::make_shared<RenderWindow>( *this );
 
-    std::shared_ptr<VulkanDevice> presentDevice = this->getPresentDevice( );
+
+
+    // INIT CAPABILITES
+    std::shared_ptr<VulkanDevice> presentDevice = _getPresentDevice( );
     VkPhysicalDevice physicalDevice = presentDevice->getPhysical( );
 
-    // TODO: MOVE TO ANOTHER ZONE
-    std::function<std::vector<char>( const std::string& )> readFile =
-      [ &] ( const std::string& filename )
+    const VkPhysicalDeviceProperties& deviceProps = 
+      presentDevice->getDeviceProperties( );
+    const VkPhysicalDeviceFeatures& deviceFeatures = 
+      presentDevice->getDeviceFeatures( );
+    const VkPhysicalDeviceLimits& deviceLimits = deviceProps.limits;
+
+    DriverVersion driverVersion;
+    driverVersion.major = ( ( uint32_t ) ( deviceProps.apiVersion ) >> 22 );
+    driverVersion.minor = ( ( uint32_t ) ( deviceProps.apiVersion ) >> 12 ) & 0x3ff;
+    driverVersion.release = ( uint32_t ) ( deviceProps.apiVersion ) & 0xfff;
+    driverVersion.build = 0;
+
+    caps.setDriverVersion( driverVersion );
+    caps.setDeviceName( deviceProps.deviceName );
+
+    // Determine vendor
+    switch ( deviceProps.vendorID )
     {
-      std::ifstream file( filename, std::ios::ate | std::ios::binary );
-
-      if ( !file.is_open( ) )
-      {
-        throw std::runtime_error( "failed to open file!" );
-      }
-
-      size_t fileSize = ( size_t ) file.tellg( );
-      std::vector<char> buffer( fileSize );
-
-      file.seekg( 0 );
-      file.read( buffer.data( ), fileSize );
-
-      file.close( );
-
-      return buffer;
+      case 0x10DE:
+        std::cout << "GPU NVIDIA" << std::endl;
+        caps.setVendor( GPU_NVIDIA );
+        break;
+      case 0x1002:
+        std::cout << "GPU AMD" << std::endl;
+        caps.setVendor( GPU_AMD );
+        break;
+      case 0x163C:
+      case 0x8086:
+        std::cout << "GPU INTEL" << std::endl;
+        caps.setVendor( GPU_INTEL );
+        break;
+      default:
+        std::cout << "GPU UNKNOWN" << std::endl;
+        caps.setVendor( GPU_UNKNOWN );
+        break;
     };
 
-    std::function<VkShaderModule( const std::vector<char>& code )>
-      createShaderModule = [ &] ( const std::vector<char>& code )
+    if ( deviceFeatures.textureCompressionBC )
+      caps.setCapability( RSC_TEXTURE_COMPRESSION_BC );
+
+    if ( deviceFeatures.textureCompressionETC2 )
+      caps.setCapability( RSC_TEXTURE_COMPRESSION_ETC2 );
+
+    if ( deviceFeatures.textureCompressionASTC_LDR )
+      caps.setCapability( RSC_TEXTURE_COMPRESSION_ASTC );
+
+    caps.setMaxBoundVertexBuffers( deviceLimits.maxVertexInputBindings );
+    caps.setNumMultiRenderTargets( deviceLimits.maxColorAttachments );
+
+    caps.setCapability( RSC_COMPUTE_PROGRAM );
+
+    caps.setNumTextureUnits( GPT_FRAGMENT_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorSampledImages );
+    caps.setNumTextureUnits( GPT_VERTEX_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorSampledImages );
+    caps.setNumTextureUnits( GPT_COMPUTE_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorSampledImages );
+
+    caps.setNumGpuParamBlockBuffers( GPT_FRAGMENT_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorUniformBuffers );
+    caps.setNumGpuParamBlockBuffers( GPT_VERTEX_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorUniformBuffers );
+    caps.setNumGpuParamBlockBuffers( GPT_COMPUTE_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorUniformBuffers );
+
+    caps.setNumLoadStoreTextureUnits( GPT_FRAGMENT_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorStorageImages );
+    caps.setNumLoadStoreTextureUnits( GPT_COMPUTE_PROGRAM, 
+      deviceLimits.maxPerStageDescriptorStorageImages );
+
+    if ( deviceFeatures.geometryShader )
     {
-      VkShaderModuleCreateInfo createInfo = { };
-      createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-      createInfo.codeSize = code.size( );
-      createInfo.pCode = reinterpret_cast< const uint32_t* >( code.data( ) );
+      caps.setCapability( RSC_GEOMETRY_PROGRAM );
+      caps.addShaderProfile( "gs_5_0" );
+      caps.setNumTextureUnits( GPT_GEOMETRY_PROGRAM, 
+        deviceLimits.maxPerStageDescriptorSampledImages );
+      caps.setNumGpuParamBlockBuffers( GPT_GEOMETRY_PROGRAM, 
+        deviceLimits.maxPerStageDescriptorUniformBuffers );
+      caps.setGeometryProgramNumOutputVertices( 
+        deviceLimits.maxGeometryOutputVertices );
+    }
 
-      VkShaderModule shaderModule;
-      if ( vkCreateShaderModule( getPresentDevice( )->getLogical( ),
-        &createInfo, nullptr, &shaderModule ) != VK_SUCCESS )
-      {
-        throw std::runtime_error( "failed to create shader module!" );
-      }
+    if ( deviceFeatures.tessellationShader )
+    {
+      caps.setCapability( RSC_TESSELLATION_PROGRAM );
 
-      return shaderModule;
-    };
+      caps.setNumTextureUnits( GPT_TESS_EVAL_PROGRAM, 
+        deviceLimits.maxPerStageDescriptorSampledImages );
+      caps.setNumTextureUnits( GPT_TESS_CTRL_PROGRAM, 
+        deviceLimits.maxPerStageDescriptorSampledImages );
 
-    auto vertShaderCode = readFile( VKLAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/vert.spv" ) );
-    auto fragShaderCode = readFile( VKLAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/frag.spv" ) );
+      caps.setNumGpuParamBlockBuffers( GPT_TESS_EVAL_PROGRAM, 
+        deviceLimits.maxPerStageDescriptorUniformBuffers );
+      caps.setNumGpuParamBlockBuffers( GPT_TESS_CTRL_PROGRAM, 
+        deviceLimits.maxPerStageDescriptorUniformBuffers );
+    }
 
-    VkShaderModule vertShaderModule = createShaderModule( vertShaderCode );
-    VkShaderModule fragShaderModule = createShaderModule( fragShaderCode );
+    caps.setNumCombinedTextureUnits( 
+      caps.getNumTextureUnits( GPT_FRAGMENT_PROGRAM )
+      + caps.getNumTextureUnits( GPT_VERTEX_PROGRAM ) + 
+      caps.getNumTextureUnits( GPT_GEOMETRY_PROGRAM )
+      + caps.getNumTextureUnits( GPT_TESS_EVAL_PROGRAM ) + 
+      caps.getNumTextureUnits( GPT_TESS_CTRL_PROGRAM )
+      + caps.getNumTextureUnits( GPT_COMPUTE_PROGRAM ) );
+
+    caps.setNumCombinedGpuParamBlockBuffers( 
+      caps.getNumGpuParamBlockBuffers( GPT_FRAGMENT_PROGRAM )
+      + caps.getNumGpuParamBlockBuffers( GPT_VERTEX_PROGRAM ) + 
+      caps.getNumGpuParamBlockBuffers( GPT_GEOMETRY_PROGRAM )
+      + caps.getNumGpuParamBlockBuffers( GPT_TESS_EVAL_PROGRAM ) + 
+      caps.getNumGpuParamBlockBuffers( GPT_TESS_CTRL_PROGRAM )
+      + caps.getNumGpuParamBlockBuffers( GPT_COMPUTE_PROGRAM ) );
+
+    caps.setNumCombinedLoadStoreTextureUnits( 
+      caps.getNumLoadStoreTextureUnits( GPT_FRAGMENT_PROGRAM )
+      + caps.getNumLoadStoreTextureUnits( GPT_COMPUTE_PROGRAM ) );
+
+    caps.addShaderProfile( "glsl" );
+
+    //__init__( );
+  }
+
+  void VulkanRenderAPI::__init__( )
+  {
+    VulkanGpuProgram * vertShaderModule = new VulkanGpuProgram( GPU_PROGRAM_DESC (
+      VKLAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/vert.spv" ),
+      GpuProgramType::GPT_VERTEX_PROGRAM
+    ));
+    VulkanGpuProgram * fragShaderModule = new VulkanGpuProgram( GPU_PROGRAM_DESC (
+      VKLAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/frag.spv" ),
+      GpuProgramType::GPT_VERTEX_PROGRAM
+    ));
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo;
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertShaderStageInfo.pNext = nullptr;
     vertShaderStageInfo.flags = 0;
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = vertShaderModule;
+    vertShaderStageInfo.module = vertShaderModule->getShaderModule( )->getHandle( );
     vertShaderStageInfo.pName = "main";
     vertShaderStageInfo.pSpecializationInfo = nullptr;
 
@@ -347,7 +449,7 @@ namespace lava
     fragShaderStageInfo.pNext = nullptr;
     fragShaderStageInfo.flags = 0;
     fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragShaderModule;
+    fragShaderStageInfo.module = fragShaderModule->getShaderModule( )->getHandle( );
     fragShaderStageInfo.pName = "main";
     fragShaderStageInfo.pSpecializationInfo = nullptr;
 
@@ -359,7 +461,7 @@ namespace lava
 
 
     // RENDER PASSES
-    VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+    VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
 
 
     VkAttachmentDescription colorAttachment = { };
@@ -450,7 +552,15 @@ namespace lava
       throw std::runtime_error( "failed to create descriptor set layout!" );
     }
 
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = { };
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
+    if ( vkCreatePipelineLayout( logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout ) != VK_SUCCESS )
+    {
+      throw std::runtime_error( "failed to create pipeline layout!" );
+    }
 
     // FIXED FUNCTIONS
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = { };
@@ -473,28 +583,14 @@ namespace lava
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 
-    VkViewport viewport;
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = ( float ) _renderWindow->_swapChain->getWidth( );
-    viewport.height = ( float ) _renderWindow->_swapChain->getHeight( );
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor;
-    scissor.offset = { 0, 0 };
-    scissor.extent = 
-    {
-      _renderWindow->_swapChain->getWidth( ),
-      _renderWindow->_swapChain->getHeight( )
-    };
-
-    VkPipelineViewportStateCreateInfo viewportState = { };
+    VkPipelineViewportStateCreateInfo viewportState;
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
+    viewportState.pNext = nullptr;
+    viewportState.flags = 0;
+    viewportState.viewportCount = 1; // Spec says this need to be at least 1...
     viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    viewportState.pViewports = nullptr; // Dynamic
+    viewportState.pScissors = nullptr; // Dynamic
 
     VkPipelineRasterizationStateCreateInfo rasterizer = { };
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -540,16 +636,6 @@ namespace lava
     colorBlending.blendConstants[ 2 ] = 0.0f;
     colorBlending.blendConstants[ 3 ] = 0.0f;
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo = { };
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-
-    if ( vkCreatePipelineLayout( logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout ) != VK_SUCCESS )
-    {
-      throw std::runtime_error( "failed to create pipeline layout!" );
-    }
-
     VkGraphicsPipelineCreateInfo pipelineInfo = { };
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -566,14 +652,30 @@ namespace lava
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
+    _dynamicStates[ 0 ] = VK_DYNAMIC_STATE_VIEWPORT;
+    _dynamicStates[ 1 ] = VK_DYNAMIC_STATE_SCISSOR;
+    _dynamicStates[ 2 ] = VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+
+    uint32_t numDynamicStates = sizeof( _dynamicStates ) / sizeof( _dynamicStates[ 0 ] );
+    assert( numDynamicStates == 3 );
+
+    _dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    _dynamicStateInfo.pNext = nullptr;
+    _dynamicStateInfo.flags = 0;
+    _dynamicStateInfo.dynamicStateCount = numDynamicStates;
+    _dynamicStateInfo.pDynamicStates = _dynamicStates;
+
+
+    pipelineInfo.pDynamicState = &_dynamicStateInfo;
+
     if ( vkCreateGraphicsPipelines( logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create graphics pipeline!" );
     }
 
 
-    vkDestroyShaderModule( logicalDevice, fragShaderModule, nullptr );
-    vkDestroyShaderModule( logicalDevice, vertShaderModule, nullptr );
+    delete fragShaderModule; //vkDestroyShaderModule( logicalDevice, fragShaderModule, nullptr );
+    delete vertShaderModule; //vkDestroyShaderModule( logicalDevice, vertShaderModule, nullptr );
 
 
     // COMMAND POOL
@@ -581,7 +683,7 @@ namespace lava
     poolCI.pNext = nullptr;
     poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolCI.queueFamilyIndex = getPresentDevice( )->getQueueFamily(
+    poolCI.queueFamilyIndex = _getPresentDevice( )->getQueueFamily(
       GpuQueueType::GPUT_GRAPHICS );
     if ( vkCreateCommandPool( logicalDevice, &poolCI, nullptr,
       &commandPool ) != VK_SUCCESS )
@@ -652,7 +754,7 @@ namespace lava
       VkMemoryRequirements memRequirements;
       vkGetBufferMemoryRequirements( logicalDevice, buffer, &memRequirements );
 
-      bufferMemory = getPresentDevice( )->allocateMemReqMemory(
+      bufferMemory = _getPresentDevice( )->allocateMemReqMemory(
         memRequirements,
         properties );
 
@@ -736,37 +838,17 @@ namespace lava
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
       vkDestroyBuffer( logicalDevice, stagingBuffer, nullptr );
-      getPresentDevice( )->freeMemory( stagingBufferMemory );
+      _getPresentDevice( )->freeMemory( stagingBufferMemory );
 
 
       textureImageView = createImageView( textureImage, 
         VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT );
 
-      // TEXTURE SAMPLER
-      VkSamplerCreateInfo samplerInfo = { };
-      samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-      samplerInfo.pNext = nullptr;
-      samplerInfo.flags = 0;
-      samplerInfo.magFilter = VK_FILTER_LINEAR;
-      samplerInfo.minFilter = VK_FILTER_LINEAR;
-      samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      //samplerInfo.anisotropyEnable = VK_TRUE;
-      //samplerInfo.maxAnisotropy = 16;
-      samplerInfo.anisotropyEnable = VK_FALSE;
-      samplerInfo.maxAnisotropy = 1;
+      SAMPLER_STATE_DESC samplerDesc;
+      samplerDesc.mipFilter = FO_ANISOTROPIC;
+      samplerDesc.maxAniso = 1;
 
-      samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-      samplerInfo.unnormalizedCoordinates = VK_FALSE;
-      samplerInfo.compareEnable = VK_FALSE;
-      samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-      samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-      if ( vkCreateSampler( logicalDevice, &samplerInfo, nullptr, &textureSampler ) != VK_SUCCESS )
-      {
-        throw std::runtime_error( "failed to create texture sampler!" );
-      }
+      textureSampler = new VulkanSamplerState( samplerDesc );
     }
 
     auto copyBuffer = [ &] ( VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size )
@@ -872,6 +954,7 @@ namespace lava
       }
 
       VkDescriptorBufferInfo bufferInfo = { };
+
       bufferInfo.buffer = uniformBuffer;
       bufferInfo.offset = 0;
       bufferInfo.range = sizeof( UniformBufferObject );
@@ -879,7 +962,7 @@ namespace lava
       VkDescriptorImageInfo imageInfo = { };
       imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       imageInfo.imageView = textureImageView;
-      imageInfo.sampler = textureSampler;
+      imageInfo.sampler = textureSampler->getResource( )->getHandle( );
 
       std::array<VkWriteDescriptorSet, 2> descriptorWrites = { };
 
@@ -952,20 +1035,30 @@ namespace lava
       vkCmdBeginRenderPass( cmd, &renderPassBeginInfo,
         VK_SUBPASS_CONTENTS_INLINE );
 
-        /*// Basic drawing commands
-        vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, 
-          graphicsPipeline );
+        // Basic drawing commands
+        vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
 
-        VkBuffer vertexBuffers[] = { vertexBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers( cmd, 0, 1, vertexBuffers,
-          offsets );
+          VkViewport viewport;
+          viewport.x = 0.0f;
+          viewport.y = 0.0f;
+          viewport.width = ( float ) _renderWindow->_swapChain->getWidth( );
+          viewport.height = ( float ) _renderWindow->_swapChain->getHeight( );
+          viewport.minDepth = 0.0f;
+          viewport.maxDepth = 1.0f;
 
-        vkCmdDraw( cmd, static_cast< uint32_t >(
-          vertices.size( ) ), 1, 0, 0 );*/
+          vkCmdSetViewport( commandBuffers[ i ], 0, 1, &viewport );
 
-        vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, 
-          graphicsPipeline );
+          VkRect2D scissorRect;
+          scissorRect.offset = { 0, 0 };
+          scissorRect.extent =
+          {
+            _renderWindow->_swapChain->getWidth( ),
+            _renderWindow->_swapChain->getHeight( )
+          };
+
+          vkCmdSetScissor( commandBuffers[ i ], 0, 1, &scissorRect );
+
+        vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
 
         VkBuffer vertexBuffers[ ] = { vertexBuffer };
         VkDeviceSize offsets[ ] = { 0 };
@@ -990,8 +1083,8 @@ namespace lava
     }
 
     // SEMAPHORES
-    imageAvailableSemaphore = new VulkanSemaphore( getPresentDevice( ) );
-    renderFinishedSemaphore = new VulkanSemaphore( getPresentDevice( ) );
+    imageAvailableSemaphore = new VulkanSemaphore( _getPresentDevice( ) );
+    renderFinishedSemaphore = new VulkanSemaphore( _getPresentDevice( ) );
   }
 
   bool VulkanRenderAPI::checkValidationLayerSupport( 

@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 #include <vector>
@@ -24,9 +25,24 @@ const int HEIGHT = 600;
 #include <array>
 
 #include "noncopyable.hpp"
+#include "RenderAPICapabilites.h"
 
 namespace lava
 {
+  class VulkanSamplerState;
+
+  template< class E >
+  class Singleton
+  {
+  private:
+    static E _dummyInstance;
+  public:
+    static E* getInstance( void )
+    {
+      static E instance;
+      return &instance;
+    }
+  };
   struct Vertex
   {
     glm::vec3 pos;
@@ -122,22 +138,24 @@ namespace lava
 
 
 
-  class VulkanRenderAPI
+  class VulkanRenderAPI : public Singleton<VulkanRenderAPI>
   {
   public:
+    RenderAPICapabilities caps;
     static void onWindowResized( GLFWwindow* window, int width, int height )
     {
       if ( width == 0 || height == 0 ) return;
 
       VulkanRenderAPI* app = reinterpret_cast<VulkanRenderAPI*>
         ( glfwGetWindowUserPointer( window ) );
-      app->resize( );
+      app->resize( width, height );
     }
-    void resize( )
+    void resize( uint32_t width, uint32_t height )
     {
-      getPresentDevice( )->waitIdle( );
+      _getPresentDevice( )->waitIdle( );
       
       std::cout << "REGENERATE SWAP CHAIN" << std::endl;
+      _renderWindow->resize( width , height );
     }
     VulkanRenderAPI( void );
     ~VulkanRenderAPI( void );
@@ -145,7 +163,7 @@ namespace lava
 
     void updateUniformBuffer( )
     {
-      VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+      VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
       static auto startTime = std::chrono::high_resolution_clock::now( );
 
       auto currentTime = std::chrono::high_resolution_clock::now( );
@@ -154,7 +172,7 @@ namespace lava
 
       UniformBufferObject ubo = { };
       ubo.model = glm::rotate( glm::mat4( ), time * glm::radians( 90.0f ), 
-        glm::vec3( 0.0f, 0.0f, 1.0f ) );
+        glm::vec3( 1.0f, 0.0f, 0.0f ) );
       ubo.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), 
         glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
       ubo.proj = glm::perspective( glm::radians( 45.0f ), 
@@ -167,7 +185,6 @@ namespace lava
       memcpy( data, &ubo, sizeof( ubo ) );
       vkUnmapMemory( logicalDevice, uniformBufferMemory );
     }
-
     void run( void )
     {
       while ( !glfwWindowShouldClose( _window ) )
@@ -176,7 +193,7 @@ namespace lava
         updateUniformBuffer( );
         drawFrame( );
       }
-      getPresentDevice( )->waitIdle( );
+      _getPresentDevice( )->waitIdle( );
     }
     VulkanSemaphore* imageAvailableSemaphore;
     VulkanSemaphore* renderFinishedSemaphore;
@@ -185,7 +202,7 @@ namespace lava
       uint32_t imageIndex;
       VkSwapchainKHR swapChain = _renderWindow->_swapChain->getHandle( );
       VkResult result = 
-        vkAcquireNextImageKHR( getPresentDevice( )->getLogical( ), swapChain,
+        vkAcquireNextImageKHR( _getPresentDevice( )->getLogical( ), swapChain,
         std::numeric_limits<uint64_t>::max( ), imageAvailableSemaphore->getHandle( ),
         VK_NULL_HANDLE, &imageIndex );
 
@@ -205,7 +222,7 @@ namespace lava
       submitInfo.signalSemaphoreCount = 1;
       submitInfo.pSignalSemaphores = signalSemaphores;
 
-      VulkanQueue* graphicsQueue = getPresentDevice( )->getQueue(
+      VulkanQueue* graphicsQueue = _getPresentDevice( )->getQueue(
         GpuQueueType::GPUT_GRAPHICS, 0 );
 
         if ( vkQueueSubmit( graphicsQueue->getQueue( ), 1, &submitInfo, VK_NULL_HANDLE ) != VK_SUCCESS )
@@ -241,7 +258,7 @@ namespace lava
     }
 
     // Returns the internal Vulkan instance object.
-    VkInstance getInstance( void ) const
+    VkInstance _getInstance( void ) const
     {
       return _instance;
     }
@@ -251,9 +268,23 @@ namespace lava
       return _window;
     }
 
-    std::shared_ptr<VulkanDevice> getPresentDevice( void ) const
+
+    void __init__( );
+
+    // Returns the primary device that supports swap chain present operations
+    VulkanDevicePtr _getPresentDevice( void ) const
     {
       return _primaryDevices.front( );
+    }
+    /** Returns a Vulkan device at the specified index. Must be in range [0, _getNumDevices()) */
+    VulkanDevicePtr _getDevice( uint32_t idx ) const
+    {
+      return _devices[ idx ];
+    }
+    /** Gets the total number of Vulkan compatible devices available on this system. */
+    uint32_t _getNumDevices( ) const
+    {
+      return ( uint32_t ) _devices.size( );
     }
 
     void cleanup( void );
@@ -294,7 +325,7 @@ namespace lava
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
-    VkSampler textureSampler;
+    VulkanSamplerState* textureSampler; //VkSampler textureSampler;
 
     // Vertex buffer
     VkBuffer vertexBuffer;
@@ -322,7 +353,7 @@ namespace lava
     VkFormat  findSupportedFormat( const std::vector<VkFormat>& candidates,
       VkImageTiling tiling, VkFormatFeatureFlags features )
     {
-      std::shared_ptr<VulkanDevice> presentDevice = this->getPresentDevice( );
+      std::shared_ptr<VulkanDevice> presentDevice = _getPresentDevice( );
       VkPhysicalDevice physicalDevice = presentDevice->getPhysical( );
       for ( VkFormat format : candidates )
       {
@@ -365,7 +396,7 @@ namespace lava
       allocInfo.commandBufferCount = 1;
 
       VkCommandBuffer commandBuffer;
-      VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+      VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
       vkAllocateCommandBuffers( logicalDevice, &allocInfo, &commandBuffer );
 
       VkCommandBufferBeginInfo beginInfo = { };
@@ -386,13 +417,13 @@ namespace lava
       submitInfo.commandBufferCount = 1;
       submitInfo.pCommandBuffers = &commandBuffer;
 
-      VulkanQueue* graphicsQueue = getPresentDevice( )->getQueue(
+      VulkanQueue* graphicsQueue = _getPresentDevice( )->getQueue(
         GpuQueueType::GPUT_GRAPHICS, 0 );
 
       vkQueueSubmit( graphicsQueue->getQueue( ), 1, &submitInfo, VK_NULL_HANDLE );
       graphicsQueue->waitIdle( );
 
-      VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+      VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
       vkFreeCommandBuffers( logicalDevice, commandPool, 1, &commandBuffer );
     }
     VkImageView createImageView( VkImage image, VkFormat format, VkImageAspectFlags aspectFlags )
@@ -409,7 +440,7 @@ namespace lava
       viewInfo.subresourceRange.layerCount = 1;
 
       VkImageView imageView;
-      VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+      VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
       if ( vkCreateImageView( logicalDevice, &viewInfo, nullptr, &imageView ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create texture image view!" );
@@ -435,7 +466,7 @@ namespace lava
       imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
       imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-      VkDevice logicalDevice = getPresentDevice( )->getLogical( );
+      VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
       if ( vkCreateImage( logicalDevice, &imageInfo, nullptr, &image ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create image!" );
@@ -444,7 +475,7 @@ namespace lava
       VkMemoryRequirements memRequirements;
       vkGetImageMemoryRequirements( logicalDevice, image, &memRequirements );
 
-      imageMemory = getPresentDevice( )->allocateMemReqMemory( memRequirements, properties );
+      imageMemory = _getPresentDevice( )->allocateMemReqMemory( memRequirements, properties );
 
       vkBindImageMemory( logicalDevice, image, imageMemory, 0 );
     }
@@ -523,6 +554,9 @@ namespace lava
       endSingleTimeCommands( commandBuffer );
     }
 
+    
+    VkPipelineDynamicStateCreateInfo _dynamicStateInfo;
+    VkDynamicState _dynamicStates[ 3 ];
   };
 }
 

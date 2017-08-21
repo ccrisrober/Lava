@@ -23,6 +23,7 @@ namespace lava
   public:
     VulkanSwapChain( void );
     ~VulkanSwapChain( void );
+    void clear( VkSwapchainKHR swapChain );
     void rebuild( VulkanDevicePtr device, VkSurfaceKHR& surface, uint32_t w,
       uint32_t h, bool vsync, VkFormat colorFormat, VkColorSpaceKHR colorSpace,
       bool createDepth, VkFormat depthFormat );
@@ -49,46 +50,32 @@ namespace lava
       return _swapChain;
     }
 
-    /*uint32_t _currentSemaphoreIdx = 0;
-    uint32_t _currentBackBufferIdx = 0;
-    void acquireBackBuffer( )
-    {
-    uint32_t imageIndex;
-
-    VkResult result = vkAcquireNextImageKHR( _device->getLogical( ), _swapChain, UINT64_MAX,
-    _surfaces[ _currentSemaphoreIdx ].sync->getHandle( ), VK_NULL_HANDLE, &imageIndex );
-    assert( result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR );
-
-    // In case surfaces aren't being distributed in round-robin fashion the image and semaphore indices might not match,
-    // in which case just move the semaphores
-    if ( imageIndex != _currentSemaphoreIdx )
-    std::swap( mSurfaces[ _currentSemaphoreIdx ].sync, mSurfaces[ imageIndex ].sync );
-
-    _currentSemaphoreIdx = ( _currentSemaphoreIdx + 1 ) % mSurfaces.size( );
-
-    assert( !mSurfaces[ imageIndex ].acquired && "Same swap chain surface being acquired twice in a row without present()." );
-    mSurfaces[ imageIndex ].acquired = true;
-    mSurfaces[ imageIndex ].needsWait = true;
-
-    _currentBackBufferIdx = imageIndex;
-    }*/
-
-    /** Returns the number of available color surfaces. */
-
-
-    /*uint32_t getNumColorSurfaces( ) const
-    {
-      return ( uint32_t ) _surfaces.size( );
-    }*/
-
-    /*const SwapChainSurface& getBackBuffer( void )
-    {
-      return _surfaces[ _currentBackBufferIdx ];
-    }*/
-
     VkSwapchainKHR getHandle( void ) const
     {
       return _swapChain;
+    }
+
+    uint32_t _currentSwapImage;
+    void begin( )
+    {
+      // No checking because could be in lost state if change res
+    vkAcquireNextImageKHR( _device->getLogical( ), _swapChain, UINT64_MAX, 
+      VK_NULL_HANDLE, VK_NULL_HANDLE, &_currentSwapImage );
+    }
+    void end( VulkanQueue* queue )
+    {
+      VkPresentInfoKHR info;
+
+      info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+      info.pNext = nullptr;
+      info.waitSemaphoreCount = 0;
+      info.pWaitSemaphores = nullptr;
+      info.swapchainCount = 1;
+      info.pSwapchains = &_swapChain;
+      info.pImageIndices = &_currentSwapImage;
+      info.pResults = nullptr;
+
+      vkQueuePresentKHR( queue->getQueue( ), &info );
     }
 
   protected:

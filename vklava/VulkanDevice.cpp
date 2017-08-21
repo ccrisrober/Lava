@@ -1,6 +1,8 @@
 #include "VulkanDevice.h"
 #include <vector>
 #include <assert.h>
+#include <iostream>
+#include "VulkanCommandBuffer.h"
 
 namespace lava
 {
@@ -10,15 +12,44 @@ namespace lava
     , _isPrimary( false )
     , _deviceIdx( deviceIdx )
   {
+    uint32_t propertyCount = 0;
+    vkEnumerateDeviceLayerProperties( _physicalDevice, &propertyCount, nullptr );
+    std::vector<VkLayerProperties> properties( propertyCount );
+    vkEnumerateDeviceLayerProperties( _physicalDevice, &propertyCount, properties.data( ) );
+    std::cout << "available properties for logical device:" << std::endl;
+
+    for ( const auto& prop : properties )
+    {
+      std::cout << "\t" << prop.layerName << std::endl;
+    }
 
     vkGetPhysicalDeviceProperties( device, &_deviceProperties );
+    const char* devTypeStr = "";
+    switch ( _deviceProperties.deviceType )
+    {
+      case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_OTHER";
+        break;
+      case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
+        break;
+      case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
+        break;
+      case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
+        break;
+      case VK_PHYSICAL_DEVICE_TYPE_CPU:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_CPU";
+        break;
+    }
 
     VkPhysicalDeviceProperties deviceProperties;
     memset( &deviceProperties, 0, sizeof deviceProperties );
     vkGetPhysicalDeviceProperties( device, &deviceProperties );
     printf( "Driver Version: %d\n", deviceProperties.driverVersion );
     printf( "Device Name:    %s\n", deviceProperties.deviceName );
-    printf( "Device Type:    %d\n", deviceProperties.deviceType );
+    printf( "Device Type:    %s(%d)\n", devTypeStr, deviceProperties.deviceType );
     printf( "API Version:    %d.%d.%d\n",
       // See note below regarding this:
       ( deviceProperties.apiVersion >> 22 ) & 0x3FF,
@@ -124,6 +155,8 @@ namespace lava
           *this, queue, ( GpuQueueType ) i, j );
       }
     }
+
+    _commandBufferPool = new VulkanCmdBufferPool( *this );
   }
 
   VulkanDevice::~VulkanDevice( void )
@@ -140,6 +173,9 @@ namespace lava
       }
       _queueInfos[ i ].queues.clear( );
     }
+
+    delete _commandBufferPool;
+
     vkDestroyDevice( _logicalDevice, nullptr );
   }
 

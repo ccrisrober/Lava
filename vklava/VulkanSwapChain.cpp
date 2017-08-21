@@ -76,11 +76,14 @@ namespace lava
     VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
     if ( !vsync )
     {
+      bool founded = false;
       for ( const auto& pr : presentModes )
       {
         if ( pr == VK_PRESENT_MODE_IMMEDIATE_KHR )
         {
           presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+          std::cout << "Selecting INMEDIATE mode" << std::endl;
+          founded = true;
           break;
         }
 
@@ -88,6 +91,10 @@ namespace lava
         {
           presentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
         }
+      }
+      if ( !founded && presentMode == VK_PRESENT_MODE_FIFO_KHR )
+      {
+        std::cout << "Selecting default FIFO mode" << std::endl;
       }
     }
     else
@@ -110,14 +117,15 @@ namespace lava
 
     uint32_t numImages = surfaceCaps.minImageCount;
 
-    VkSurfaceTransformFlagsKHR transform;
-    if ( surfaceCaps.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR )
+    VkSurfaceTransformFlagBitsKHR surfaceTransform;
+    auto desiredTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+    if ( surfaceCaps.supportedTransforms & desiredTransform )
     {
-      transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+      surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
     }
     else
     {
-      transform = surfaceCaps.currentTransform;
+      surfaceTransform = surfaceCaps.currentTransform;
     }
 
     VkSwapchainCreateInfoKHR swapChainCI;
@@ -138,33 +146,36 @@ namespace lava
     swapChainCI.queueFamilyIndexCount = 0;
     swapChainCI.pQueueFamilyIndices = nullptr;
 
-    swapChainCI.preTransform = ( VkSurfaceTransformFlagBitsKHR ) transform;
+    swapChainCI.preTransform = surfaceTransform;
     swapChainCI.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapChainCI.presentMode = presentMode;
+    swapChainCI.oldSwapchain = _swapChain; // At this time, _swapChain as VK_NULL_HANDLE;
     swapChainCI.clipped = VK_TRUE;
 
-    swapChainCI.oldSwapchain = _swapChain; // At this time, _swapChain as VK_NULL_HANDLE;
-
+    VkSwapchainKHR oldSwapChain = _swapChain;
     VkDevice logicalDevice = _device->getLogical( );
     result = vkCreateSwapchainKHR( logicalDevice, &swapChainCI, nullptr, &_swapChain );
     assert( result == VK_SUCCESS );
-
+     
+    // Clear old swap chain (only if oldSwapChain exist and has value)
+    clear( oldSwapChain );
 
     result = vkGetSwapchainImagesKHR( logicalDevice, _swapChain, &numImages, nullptr );
     assert( result == VK_SUCCESS );
 
     std::vector<VkImage> swapChainImages( numImages );
-    result = vkGetSwapchainImagesKHR( logicalDevice, _swapChain, &numImages, swapChainImages.data( ) );
+    result = vkGetSwapchainImagesKHR( logicalDevice, _swapChain, 
+      &numImages, swapChainImages.data( ) );
     assert( result == VK_SUCCESS );
 
 
     VULKAN_IMAGE_DESC imageDesc;
     imageDesc.format = colorFormat;
     imageDesc.type = TEX_TYPE_2D;
-    imageDesc.usage = TU_RENDERTARGET;
+    //imageDesc.usage = TU_RENDERTARGET;
     imageDesc.layout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageDesc.numFaces = 1;
-    imageDesc.numMipLevels = 1;
+    //imageDesc.numMipLevels = 1;
     imageDesc.memory = VK_NULL_HANDLE;
 
     swapChainImageViews.resize( swapChainImages.size( ) );
@@ -199,11 +210,6 @@ namespace lava
 
       imageViewCI.components =
       {
-        /*VK_COMPONENT_SWIZZLE_IDENTITY,
-        VK_COMPONENT_SWIZZLE_IDENTITY,
-        VK_COMPONENT_SWIZZLE_IDENTITY,
-        VK_COMPONENT_SWIZZLE_IDENTITY*/
-
         VK_COMPONENT_SWIZZLE_R,
         VK_COMPONENT_SWIZZLE_G,
         VK_COMPONENT_SWIZZLE_B,
@@ -244,5 +250,13 @@ namespace lava
       }*/
     }
     std::cout << "ImageViews OK" << std::endl;
+  }
+  void VulkanSwapChain::clear( VkSwapchainKHR swapChain )
+  {
+    VkDevice logicalDevice = _device->getLogical( );
+    if ( swapChain != VK_NULL_HANDLE )
+    {
+      vkDestroySwapchainKHR( logicalDevice, swapChain, nullptr );
+    }
   }
 }

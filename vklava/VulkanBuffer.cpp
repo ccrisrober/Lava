@@ -1,36 +1,45 @@
 #include "VulkanBuffer.h"
 #include <assert.h>
+#include "VulkanCommandBuffer.h"
 
-namespace vklava
+namespace lava
 {
-  VulkanBuffer::VulkanBuffer( VulkanDevicePtr device, VkDeviceSize size, 
-    VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
-    VkBuffer& buffer, VkDeviceMemory& bufferMemory )
+  VulkanBuffer::VulkanBuffer( VulkanDevicePtr device, VkBuffer buffer, VkDeviceMemory memory )
     : VulkanResource( device )
+    , _buffer( buffer )
+    , _memory( memory )
   {
-    _bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    _bufferInfo.pNext = nullptr;
-    _bufferInfo.flags = 0;
-    _bufferInfo.queueFamilyIndexCount = 0;
-    _bufferInfo.pQueueFamilyIndices = nullptr;
-    _bufferInfo.size = size;
-    _bufferInfo.usage = usage;
-    _bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkResult result = vkCreateBuffer( *_device, &_bufferInfo, nullptr, &buffer );
-    assert( result == VK_SUCCESS );
-
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements( *_device, buffer, &memRequirements );
-
-    bufferMemory = _device->allocateMemory( memRequirements, properties );
-
-    result = vkBindBufferMemory( *_device, buffer, bufferMemory, 0 );
-    assert( result == VK_SUCCESS );
   }
-
-  VulkanBuffer::~VulkanBuffer( )
+  VulkanBuffer::~VulkanBuffer( void )
   {
+    VkDevice device = _device->getLogical( );
 
+    vkDestroyBuffer( device, _buffer, nullptr );
+  }
+  void* VulkanBuffer::map( VkDeviceSize offset, VkDeviceSize length ) const
+  {
+    VkDevice device = _device->getLogical( );
+
+    void* data;
+    VkResult result = vkMapMemory( device, _memory, offset, length, 0, &data );
+    assert( result == VK_SUCCESS );
+
+    return data;
+  }
+  void VulkanBuffer::copy( VulkanCmdBuffer* cb, VulkanBuffer* dst, VkDeviceSize srcOffset,
+    VkDeviceSize dstOffset, VkDeviceSize length )
+  {
+    VkBufferCopy region;
+    region.size = length;
+    region.srcOffset = srcOffset;
+    region.dstOffset = dstOffset;
+
+    vkCmdCopyBuffer( cb->getHandle( ), _buffer, dst->getHandle( ), 1, &region );
+  }
+  void VulkanBuffer::unmap( void )
+  {
+    VkDevice device = _device->getLogical( );
+
+    vkUnmapMemory( device, _memory );
   }
 }

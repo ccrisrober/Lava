@@ -21,62 +21,222 @@ namespace lava
     vkDestroySemaphore( _device->getLogical( ), _semaphore, nullptr );
   }
 
-  VulkanCmdBufferPool::VulkanCmdBufferPool( VulkanDevicePtr device )
+  VulkanCmdBuffer::VulkanCmdBuffer( VulkanDevicePtr device/*, uint32_t id*/, 
+    VkCommandPool pool/*, uint32_t queueFamily*/, bool secondary )
     : _device( device )
-    , _nextId( 1 )
+    , _state( State::Ready )
   {
-    for ( uint32_t i = 0; i < GpuQueueType::GPUT_COUNT; ++i )
+    VkCommandBufferAllocateInfo allocInfo;
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.pNext = nullptr;
+    allocInfo.commandPool = pool;
+    allocInfo.level = secondary ?
+      VK_COMMAND_BUFFER_LEVEL_SECONDARY :
+      VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+
+    VkResult result = vkAllocateCommandBuffers( _device->getLogical( ), 
+      &allocInfo, &_cmdBuffer );
+    assert( result == VK_SUCCESS );
+  }
+  VulkanCmdBuffer::~VulkanCmdBuffer( void )
+  {
+    if ( _state == State::Submitted )
     {
-      uint32_t familyIdx = _device->getQueueFamily( ( GpuQueueType ) i );
-
-      if ( familyIdx == ( uint32_t ) -1 )
-        continue;
-
-      VkCommandPoolCreateInfo poolCI;
-      poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-      poolCI.pNext = nullptr;
-      poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-      poolCI.queueFamilyIndex = familyIdx;
-
-      PoolInfo& poolInfo = _pools[ familyIdx ];
-      poolInfo.queueFamily = familyIdx;
-      poolInfo.buffers.clear( );
-      //memset( poolInfo.buffers, 0, sizeof( poolInfo.buffers ) );
-
-      VkResult result = vkCreateCommandPool( _device->getLogical( ),
-        &poolCI, nullptr, &poolInfo.pool );
-      assert( result == VK_SUCCESS );
+      // Wait for finish
     }
+    else if ( _state != State::Ready )
+    {
+
+    }
+    VkDevice device = _device->getLogical( );
+    vkFreeCommandBuffers( device, _pool, 1, &_cmdBuffer );
   }
 
-
-  VulkanCmdBufferPool::~VulkanCmdBufferPool( )
+  void VulkanCmdBuffer::begin( void )
   {
-    for ( auto& entry : _pools )
+    assert( _state == State::Ready );
+
+    VkCommandBufferBeginInfo beginInfo;
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.pNext = nullptr;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    VkResult result = vkBeginCommandBuffer( _cmdBuffer, &beginInfo );
+    assert( result == VK_SUCCESS );
+
+    _state = State::Recording;
+  }
+
+  void VulkanCmdBuffer::end( void )
+  {
+    assert( _state == State::Recording );
+
+    VkResult result = vkEndCommandBuffer( _cmdBuffer );
+    assert( result == VK_SUCCESS );
+
+    _state = State::RecordingDone;
+  }
+
+  void VulkanCmdBuffer::beginRenderPass( VkRenderPass renderPass, std::vector< VkClearValue > clearValues,
+    VkExtent2D swapChainExtent, VkFramebuffer swapChainFramebuffer )
+  {
+    assert( _state == State::Recording );
+
+    VkRenderPassBeginInfo renderPassBeginInfo;
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassBeginInfo.pNext = nullptr;
+    renderPassBeginInfo.renderPass = renderPass;
+    renderPassBeginInfo.framebuffer = swapChainFramebuffer;
+    renderPassBeginInfo.renderArea.offset = { 0, 0 };
+    renderPassBeginInfo.renderArea.extent = swapChainExtent;
+
+    renderPassBeginInfo.clearValueCount = static_cast< uint32_t >( clearValues.size( ) );
+    renderPassBeginInfo.pClearValues = clearValues.data( );
+
+    vkCmdBeginRenderPass(_cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    _state = State::RecordingRenderPass;
+  }
+
+  void VulkanCmdBuffer::endRenderPass( void )
+  {
+    assert( _state == State::RecordingRenderPass );
+
+    vkCmdEndRenderPass(_cmdBuffer);
+
+    _state = State::Recording;
+  }
+
+  void VulkanCmdBuffer::bindDynamicStates( bool forceAll )
+  {
+    if ( _viewportRequiresBind || forceAll )
     {
-      PoolInfo& poolInfo = entry.second;
-      for ( uint32_t i = 0; i < poolInfo.buffers.size( ); ++i )
+      VkViewport viewport;
+      viewport.x = _viewport.x;
+      viewport.y = _viewport.y;
+      viewport.width = _viewport.width;
+      viewport.height = _viewport.height;
+      viewport.minDepth = 0.0f;
+      viewport.maxDepth = 1.0f;
+
+      vkCmdSetViewport( _cmdBuffer, 0, 1, &viewport );
+      _viewportRequiresBind = false;
+    }
+    
+    if( _stencilRefRequiresBind || forceAll )
+    {
+      vkCmdSetStencilReference( _cmdBuffer, 
+        VK_STENCIL_FRONT_AND_BACK, _stencilRef );
+      _stencilRefRequiresBind = false;
+    }
+
+    if( _scissorRequiresBind || forceAll )
+    {
+      VkRect2D scissorRect;
+      if ( isScissorsEnabled ) 
       {
-        VulkanCmdBuffer* buffer = poolInfo.buffers[ i ];
-        if ( buffer == nullptr )
-          break;
-
-        delete buffer;
+        scissorRect.offset.x = _scissor.x;
+        scissorRect.offset.y = _scissor.y;
+        scissorRect.extent.width = _scissor.width;
+        scissorRect.extent.height = _scissor.height;
       }
+      else
+      {
+        scissorRect.offset.x = 0;
+        scissorRect.offset.y = 0;
+        scissorRect.extent.width = _renderTargetWidth;
+        scissorRect.extent.height = _renderTargetHeight;
+      }
+      vkCmdSetScissor( _cmdBuffer, 0, 1, &scissorRect ); 
 
-      vkDestroyCommandPool( _device->getLogical( ), poolInfo.pool, nullptr );
+      _scissorRequiresBind = false;
     }
   }
-
-  VulkanCmdBuffer* VulkanCmdBufferPool::createBuffer( uint32_t queueFamily, bool secondary )
+  /*void VulkanCmdBuffer::setVertexBuffers( uint32_t index, 
+    std::vector<VulkanVertexBuffer*> buffers );
   {
-    auto iterFind = _pools.find( queueFamily );
-    if ( iterFind == _pools.end( ) )
-      return nullptr;
+    if ( buffers.empty( ) )
+      return;
 
-    const PoolInfo& poolInfo = iterFind->second;
+    uint32_t numBuffers = buffers.size( );
 
-    return nullptr; /* new VulkanCmdBuffer( _device, _nextId++, poolInfo.pool,
-      poolInfo.queueFamily, secondary );*/
+    for ( uint32_t i = 0; i < numBuffers; ++i )
+    {
+      VulkanVertexBuffer* vertexBuffer = buffers[ i ];
+
+      if ( vertexBuffer != nullptr )
+      {
+        VulkanBuffer* resource = vertexBuffer->getResource( _device->getIndex( ) );
+        if ( resource != nullptr )
+        {
+          mVertexBuffersTemp[ i ] = resource->getHandle( );
+        }
+        else
+          mVertexBuffersTemp[ i ] = VK_NULL_HANDLE;
+      }
+      else
+        mVertexBuffersTemp[ i ] = VK_NULL_HANDLE;
+    }
+
+    vkCmdBindVertexBuffers( _cmdBuffer, index, 
+      numBuffers, mVertexBuffersTemp, mVertexBufferOffsetsTemp );
+  }*/
+  void VulkanCmdBuffer::setIndexBuffer( const VulkanIndexBuffer* indexBuffer )
+  {
+    VkBuffer buff = VK_NULL_HANDLE;
+    VkIndexType indexType = VK_INDEX_TYPE_UINT32;
+
+    if ( indexBuffer != nullptr )
+    {
+      VulkanBuffer* resource = indexBuffer->getResource( _device->getIndex( ) );
+      if ( resource != nullptr )
+      {
+        buff = resource->getHandle( );
+        indexType = indexBuffer->getType( );
+      }
+    }
+    vkCmdBindIndexBuffer( _cmdBuffer, buff, 0, indexType );
+  }
+  void VulkanCmdBuffer::drawIndexed( uint32_t startIndex, 
+    uint32_t indexCount, uint32_t vertexOffset, uint32_t instanceCount )
+  {
+
+
+
+    if ( instanceCount <= 0 )
+    {
+      instanceCount = 1;
+    }
+
+    vkCmdDrawIndexed( _cmdBuffer, indexCount, instanceCount, 
+      startIndex, vertexOffset, 0 );
+  }
+  void VulkanCmdBuffer::setViewport( const Rect2& area )
+  {
+    //if ( _viewport == area )
+    //  return;
+
+    _viewport = area;
+    _viewportRequiresBind = true;
+  }
+
+  void VulkanCmdBuffer::setScissorRect( const Rect2I& value )
+  {
+    //if ( _scissor == value )
+    //  return;
+
+    _scissor = value;
+    _scissorRequiresBind = true;
+  }
+
+  void VulkanCmdBuffer::setStencilRef( uint32_t value )
+  {
+    //if ( _stencilRef == value )
+    //  return;
+
+    _stencilRef = value;
+    _stencilRefRequiresBind = true;
   }
 }

@@ -8,13 +8,13 @@ namespace lava
     : _renderAPI( renderAPI )
   {
     // Surface KHR
-    if ( glfwCreateWindowSurface( _renderAPI.getInstance( ), _renderAPI.getWindow( ),
+    if ( glfwCreateWindowSurface( _renderAPI._getInstance( ), _renderAPI.getWindow( ),
       nullptr, &_surface ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create window surface!" );
     }
 
-    std::shared_ptr<VulkanDevice> presentDevice = _renderAPI.getPresentDevice( );
+    std::shared_ptr<VulkanDevice> presentDevice = _renderAPI._getPresentDevice( );
     VkPhysicalDevice physicalDevice = presentDevice->getPhysical( );
 
     uint32_t presentQueueFamily = presentDevice->getQueueFamily( GPUT_GRAPHICS );
@@ -124,17 +124,23 @@ namespace lava
           render window surface, falling back to a default format.)" );
       }
     }
-    auto mDepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+    _depthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
 
     _swapChain = std::make_shared<VulkanSwapChain>( );
-    _swapChain->rebuild( _renderAPI.getPresentDevice( ), _surface, WIDTH,
-      HEIGHT, true, _colorFormat, _colorSpace, true, VK_FORMAT_D24_UNORM_S8_UINT );
+    _swapChain->rebuild( _renderAPI._getPresentDevice( ), _surface, WIDTH,
+      HEIGHT, true, _colorFormat, _colorSpace, true, _depthFormat );
   }
 
 
   RenderWindow::~RenderWindow( void )
   {
     _swapChain.reset( );
-    vkDestroySurfaceKHR( _renderAPI.getInstance( ), _surface, nullptr );
+    vkDestroySurfaceKHR( _renderAPI._getInstance( ), _surface, nullptr );
+  }
+
+  void RenderWindow::resize( uint32_t width, uint32_t height )
+  {
+    _swapChain->rebuild( _renderAPI._getPresentDevice( ), _surface, width,
+      height, true, _colorFormat, _colorSpace, true, _depthFormat );
   }
 }

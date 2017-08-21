@@ -35,8 +35,9 @@ common_find_package( Vulkan REQUIRED SYSTEM )
 common_find_package( GLFW3 REQUIRED SYSTEM )
 common_find_package( GLM REQUIRED SYSTEM )
 common_find_package( STBI REQUIRED SYSTEM )
+common_find_package( ASSIMP REQUIRED SYSTEM )
 
-list( APPEND VKLAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI )
+list( APPEND VKLAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP )
 
 # TODO( FIXED GLFW LINUX )
 IF (NOT WIN32)

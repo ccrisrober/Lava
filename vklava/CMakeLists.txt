@@ -16,7 +16,7 @@ configure_file(
 
 set( VKLAVA_SOURCES
 	RenderWindow.cpp
-	##VulkanBuffer.cpp
+	VulkanBuffer.cpp
 	VulkanCommandBuffer.cpp
 	VulkanDevice.cpp
 	VulkanFramebuffer.cpp
@@ -26,13 +26,19 @@ set( VKLAVA_SOURCES
 	VulkanSwapChain.cpp
 	VulkanTexture.cpp
 	Source.cpp
+	VulkanPipelineState.cpp
+	VulkanSampler.cpp
 )
 
 set( VKLAVA_HEADERS
+	scenegraph/Mesh.h
+	scenegraph/ModelImporter.h
+	RenderAPICapabilites.h
+	##vulkan.hpp
 	routes.h
 	noncopyable.hpp
 	RenderWindow.h
-	##VulkanBuffer.h
+	VulkanBuffer.h
 	VulkanCommandBuffer.h
 	VulkanDevice.h
 	VulkanFramebuffer.h
@@ -41,6 +47,8 @@ set( VKLAVA_HEADERS
 	VulkanResource.h
 	VulkanSwapChain.h
 	VulkanTexture.h
+	VulkanPipelineState.h
+	VulkanSampler.h
 )
 
 set( VKLAVA_MOC_HEADERS
@@ -53,6 +61,7 @@ set( VKLAVA_LINK_LIBRARIES
   	${GLFW3_LIBRARIES}
   	${GLM_LIBRARIES}
   	${STBI_LIBRARIES}
+  	${ASSIMP_LIBRARIES}
 )
 
 if ( MSVC )
