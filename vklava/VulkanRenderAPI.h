@@ -27,6 +27,8 @@ const int HEIGHT = 600;
 #include "noncopyable.hpp"
 #include "RenderAPICapabilites.h"
 
+#include "VulkanFramebuffer.h"
+
 namespace lava
 {
   class VulkanSamplerState;
@@ -88,6 +90,7 @@ namespace lava
     glm::mat4 view;
     glm::mat4 proj;
   };
+
   const float side = 1.0f;
   const float side2 = side / 2.0f;
   const std::vector<Vertex> vertices = {
@@ -181,9 +184,9 @@ namespace lava
       ubo.proj[ 1 ][ 1 ] *= -1;
 
       void* data;
-      vkMapMemory( logicalDevice, uniformBufferMemory, 0, sizeof( ubo ), 0, &data );
+      vkMapMemory( logicalDevice, uniformBufferVS.memory, 0, sizeof( ubo ), 0, &data );
       memcpy( data, &ubo, sizeof( ubo ) );
-      vkUnmapMemory( logicalDevice, uniformBufferMemory );
+      vkUnmapMemory( logicalDevice, uniformBufferVS.memory );
     }
     void run( void )
     {
@@ -328,14 +331,25 @@ namespace lava
     VulkanSamplerState* textureSampler; //VkSampler textureSampler;
 
     // Vertex buffer
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
+    struct {
+      VkDeviceMemory memory;	// Handle to the device memory for this buffer
+      VkBuffer buffer;				// Handle to the Vulkan buffer object that the memory is bound to
+    } verticesBuffer;
+
     // Index buffer
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
-    // UBO buffer
-    VkBuffer uniformBuffer;
-    VkDeviceMemory uniformBufferMemory;
+    struct
+    {
+      VkDeviceMemory memory;
+      VkBuffer buffer;
+      uint32_t count;
+    } indicesBuffer;
+
+    // Uniform buffer block object
+    struct {
+      VkDeviceMemory memory;
+      VkBuffer buffer;
+      VkDescriptorBufferInfo descriptor;
+    } uniformBufferVS;
 
     VkDescriptorPool descriptorPool;
     VkDescriptorSet descriptorSet;
@@ -557,6 +571,20 @@ namespace lava
     
     VkPipelineDynamicStateCreateInfo _dynamicStateInfo;
     VkDynamicState _dynamicStates[ 3 ];
+
+
+    VkDescriptorSetLayoutBinding descriptorSetLayoutBinding( 
+      VkDescriptorType type, VkShaderStageFlagBits stage, uint32_t index )
+    {
+      VkDescriptorSetLayoutBinding layoutBinding;
+      layoutBinding.binding = index;
+      layoutBinding.descriptorCount = 1;
+      layoutBinding.descriptorType = type;
+      layoutBinding.pImmutableSamplers = nullptr;
+      layoutBinding.stageFlags = stage;
+
+      return layoutBinding;
+    }
   };
 }
 

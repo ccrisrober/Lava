@@ -3,19 +3,14 @@
 
 #include "VulkanDevice.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanFramebuffer.h"
 #include "VulkanTexture.h"
 
 namespace lava
 {
   struct SwapChainSurface
   {
-    VulkanImage* image;
-    VulkanSemaphore* sync;
-    bool acquired;
-    bool needsWait;
-
-    //VulkanFramebuffer* framebuffer;
-   // VULKAN_FRAMEBUFFER_DESC framebufferDesc;
+    VulkanFramebuffer* framebuffer;
   };
 
   class VulkanSwapChain
@@ -89,7 +84,7 @@ namespace lava
     VkImage depthStencilImage;
     //VulkanImage* _depthStencilImage = nullptr;
 
-    //std::vector<SwapChainSurface> _surfaces;
+    std::vector<SwapChainSurface> _surfaces;
     uint32_t _currentSemaphoreIdx = 0;
     uint32_t _currentBackBufferIdx = 0;
   };

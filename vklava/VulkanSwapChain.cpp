@@ -250,6 +250,12 @@ namespace lava
       }*/
     }
     std::cout << "ImageViews OK" << std::endl;
+
+    uint32_t numFbos = _surfaces.size( );
+    for ( uint32_t i = 0; i < numFbos; ++i )
+    {
+
+    }
   }
   void VulkanSwapChain::clear( VkSwapchainKHR swapChain )
   {

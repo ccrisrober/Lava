@@ -13,6 +13,7 @@
 
 #include "VulkanPipelineState.h"
 #include "VulkanSampler.h"
+#include "VulkanFramebuffer.h"
 
 namespace lava
 {
@@ -137,14 +138,14 @@ namespace lava
     vkDestroyDescriptorPool( logicalDevice, descriptorPool, nullptr );
     vkDestroyDescriptorSetLayout( logicalDevice, descriptorSetLayout, nullptr );
 
-    vkDestroyBuffer( logicalDevice, uniformBuffer, nullptr );
-    _getPresentDevice( )->freeMemory( uniformBufferMemory );
+    vkDestroyBuffer( logicalDevice, uniformBufferVS.buffer, nullptr );
+    _getPresentDevice( )->freeMemory( uniformBufferVS.memory );
 
-    vkDestroyBuffer( logicalDevice, vertexBuffer, nullptr );
-    _getPresentDevice( )->freeMemory( vertexBufferMemory );
+    vkDestroyBuffer( logicalDevice, verticesBuffer.buffer, nullptr );
+    _getPresentDevice( )->freeMemory( verticesBuffer.memory );
 
-    vkDestroyBuffer( logicalDevice, indexBuffer, nullptr );
-    _getPresentDevice( )->freeMemory( indexBufferMemory );
+    vkDestroyBuffer( logicalDevice, indicesBuffer.buffer, nullptr );
+    _getPresentDevice( )->freeMemory( indicesBuffer.memory );
 
     delete renderFinishedSemaphore;
     delete imageAvailableSemaphore;
@@ -463,69 +464,16 @@ namespace lava
     // RENDER PASSES
     VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
 
+    VULKAN_FRAMEBUFFER_DESC fboDesc;
+    fboDesc.numColorAttachments = 1;
+    fboDesc.colorFormats.emplace_back( _renderWindow->_colorFormat );
+    fboDesc.hasDepth = true;
+    fboDesc.depthFormat = findDepthFormat( );
+    VulkanFramebuffer vfb( _getPresentDevice( ), fboDesc );
 
-    VkAttachmentDescription colorAttachment = { };
-    colorAttachment.format = _renderWindow->_colorFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    renderPass = vfb.renderPass;
 
-    VkAttachmentDescription depthAttachment = { };
-    depthAttachment.format = findDepthFormat( );
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference colorAttachmentRef = { };
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthAttachmentRef = { };
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass = { };
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-    VkSubpassDependency dependency = { };
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    
-    std::array<VkAttachmentDescription, 2> attachments =
-    {
-      colorAttachment, depthAttachment
-    };
-    VkRenderPassCreateInfo renderPassInfo = { };
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>( attachments.size( ) );
-    renderPassInfo.pAttachments = attachments.data( );
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    if ( vkCreateRenderPass( logicalDevice, &renderPassInfo,
-      nullptr, &renderPass ) != VK_SUCCESS )
-    {
-      throw std::runtime_error( "failed to create render pass!" );
-    }
-
-    // UBO DESCRIPTOR
+    /*// UBO DESCRIPTOR
     VkDescriptorSetLayoutBinding uboLayoutBinding = { };
     uboLayoutBinding.binding = 0;
     uboLayoutBinding.descriptorCount = 1;
@@ -533,6 +481,7 @@ namespace lava
     uboLayoutBinding.pImmutableSamplers = nullptr;
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
+    // TEXTURE DESCRIPTOR
     VkDescriptorSetLayoutBinding samplerLayoutBinding = { };
     samplerLayoutBinding.binding = 1;
     samplerLayoutBinding.descriptorCount = 1;
@@ -540,7 +489,23 @@ namespace lava
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };*/
+
+    std::vector< VkDescriptorSetLayoutBinding > bindings =
+    {
+      // Binding 0 : Vertex shader uniform buffer
+      descriptorSetLayoutBinding(
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0 ),
+
+      // Binding 1 : Fragment shader image sampler
+      descriptorSetLayoutBinding(
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        VK_SHADER_STAGE_FRAGMENT_BIT,
+        1 )
+    };
+
     VkDescriptorSetLayoutCreateInfo layoutInfo = { };
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>( bindings.size( ) );
@@ -598,7 +563,7 @@ namespace lava
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -674,8 +639,8 @@ namespace lava
     }
 
 
-    delete fragShaderModule; //vkDestroyShaderModule( logicalDevice, fragShaderModule, nullptr );
-    delete vertShaderModule; //vkDestroyShaderModule( logicalDevice, vertShaderModule, nullptr );
+    delete fragShaderModule;
+    delete vertShaderModule;
 
 
     // COMMAND POOL
@@ -880,9 +845,9 @@ namespace lava
 
       createBuffer( bufferSize,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory );
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, verticesBuffer.buffer, verticesBuffer.memory );
 
-      copyBuffer( stagingBuffer, vertexBuffer, bufferSize );
+      copyBuffer( stagingBuffer, verticesBuffer.buffer, bufferSize );
 
       vkDestroyBuffer( logicalDevice, stagingBuffer, nullptr );
       vkFreeMemory( logicalDevice, stagingBufferMemory, nullptr );
@@ -894,7 +859,9 @@ namespace lava
 
       VkBuffer stagingBuffer;
       VkDeviceMemory stagingBufferMemory;
-      createBuffer( bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory );
+      createBuffer( bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+        stagingBuffer, stagingBufferMemory );
 
       void* data;
       vkMapMemory( logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data );
@@ -902,12 +869,16 @@ namespace lava
       vkUnmapMemory( logicalDevice, stagingBufferMemory );
 
       createBuffer( bufferSize,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory );
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indicesBuffer.buffer, 
+        indicesBuffer.memory );
 
-      copyBuffer( stagingBuffer, indexBuffer, bufferSize );
+      copyBuffer( stagingBuffer, indicesBuffer.buffer, bufferSize );
 
       vkDestroyBuffer( logicalDevice, stagingBuffer, nullptr );
       vkFreeMemory( logicalDevice, stagingBufferMemory, nullptr );
+
+      indicesBuffer.count = indices.size( );
     }
 
     // UBO buffer creation
@@ -915,7 +886,7 @@ namespace lava
       VkDeviceSize bufferSize = sizeof( UniformBufferObject );
       createBuffer( bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        uniformBuffer, uniformBufferMemory );
+        uniformBufferVS.buffer, uniformBufferVS.memory );
     }
     {
       // createDescriptorPool
@@ -953,11 +924,11 @@ namespace lava
         throw std::runtime_error( "failed to allocate descriptor set!" );
       }
 
-      VkDescriptorBufferInfo bufferInfo = { };
+      uniformBufferVS.descriptor = { };
 
-      bufferInfo.buffer = uniformBuffer;
-      bufferInfo.offset = 0;
-      bufferInfo.range = sizeof( UniformBufferObject );
+      uniformBufferVS.descriptor.buffer = uniformBufferVS.buffer;
+      uniformBufferVS.descriptor.offset = 0;
+      uniformBufferVS.descriptor.range = sizeof( UniformBufferObject );
 
       VkDescriptorImageInfo imageInfo = { };
       imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -972,7 +943,7 @@ namespace lava
       descriptorWrites[ 0 ].dstArrayElement = 0;
       descriptorWrites[ 0 ].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       descriptorWrites[ 0 ].descriptorCount = 1;
-      descriptorWrites[ 0 ].pBufferInfo = &bufferInfo;
+      descriptorWrites[ 0 ].pBufferInfo = &uniformBufferVS.descriptor;
 
       descriptorWrites[ 1 ].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
       descriptorWrites[ 1 ].dstSet = descriptorSet;
@@ -1060,18 +1031,17 @@ namespace lava
 
         vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
 
-        VkBuffer vertexBuffers[ ] = { vertexBuffer };
+        VkBuffer vertexBuffers[ ] = { verticesBuffer.buffer };
         VkDeviceSize offsets[ ] = { 0 };
         vkCmdBindVertexBuffers( commandBuffers[ i ], 0, 1, vertexBuffers, offsets );
 
         vkCmdBindDescriptorSets( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, 
           pipelineLayout, 0, 1, &descriptorSet, 0, nullptr );
 
-        vkCmdBindIndexBuffer( commandBuffers[ i ], indexBuffer, 0, 
+        vkCmdBindIndexBuffer( commandBuffers[ i ], indicesBuffer.buffer, 0,
           VK_INDEX_TYPE_UINT16 );
 
-        vkCmdDrawIndexed( commandBuffers[ i ], 
-          static_cast<uint32_t>( indices.size( ) ), 1, 0, 0, 0 );
+        vkCmdDrawIndexed( commandBuffers[ i ], indicesBuffer.count, 1, 0, 0, 0 );
 
       vkCmdEndRenderPass( commandBuffers[ i ] );
 
