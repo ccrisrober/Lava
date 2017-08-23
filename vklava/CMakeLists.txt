@@ -28,6 +28,7 @@ set( VKLAVA_SOURCES
 	Source.cpp
 	VulkanPipelineState.cpp
 	VulkanSampler.cpp
+	##VulkanDrawable.cpp
 )
 
 set( VKLAVA_HEADERS
@@ -49,6 +50,7 @@ set( VKLAVA_HEADERS
 	VulkanTexture.h
 	VulkanPipelineState.h
 	VulkanSampler.h
+	##VulkanDrawable.h
 )
 
 set( VKLAVA_MOC_HEADERS

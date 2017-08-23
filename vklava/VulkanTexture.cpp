@@ -89,4 +89,16 @@ namespace lava
 
     return view;
   }
+
+  void Texture2D::loadFromFile( const std::string& filename, VkFormat format,
+    VulkanDevicePtr device, VkImageUsageFlags imageUsageFlags,
+    VkImageLayout imageLayout,
+    bool forceLinear )
+  {
+    /*VkBool32 useStaging = !forceLinear;
+    
+    VkMemoryAllocateInfo memAllocInfo;
+    VkMemoryRequirements memReqs;*/
+
+  }
 }

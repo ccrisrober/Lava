@@ -8,6 +8,8 @@
 #include <sstream>
 #include "routes.h"
 
+#include <iomanip>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -106,9 +108,9 @@ namespace lava
   {
     VkDevice logicalDevice = _getPresentDevice( )->getLogical( );
 
-    vkDestroyImageView( logicalDevice, depthImageView, nullptr );
-    vkDestroyImage( logicalDevice, depthImage, nullptr );
-    vkFreeMemory( logicalDevice, depthImageMemory, nullptr );
+    vkDestroyImageView( logicalDevice, depthStencilTex.view, nullptr );
+    vkDestroyImage( logicalDevice, depthStencilTex.image, nullptr );
+    vkFreeMemory( logicalDevice, depthStencilTex.mem, nullptr );
 
     for ( size_t i = 0; i < swapChainFramebuffers.size( ); ++i )
     {
@@ -147,8 +149,8 @@ namespace lava
     vkDestroyBuffer( logicalDevice, indicesBuffer.buffer, nullptr );
     _getPresentDevice( )->freeMemory( indicesBuffer.memory );
 
-    delete renderFinishedSemaphore;
-    delete imageAvailableSemaphore;
+    delete semaphores.presentComplete;
+    delete semaphores.renderComplete;
 
     vkDestroyCommandPool( logicalDevice, commandPool, nullptr );
 
@@ -195,24 +197,20 @@ namespace lava
     vkEnumerateInstanceExtensionProperties( nullptr, &extensionCount, nullptr );
     std::vector<VkExtensionProperties> extensions_( extensionCount );
     vkEnumerateInstanceExtensionProperties( nullptr, &extensionCount, extensions_.data( ) );
-    std::cout << "available extensions:" << std::endl;
-
-    for ( const auto& extension : extensions_ )
-    {
-      std::cout << "\t" << extension.extensionName << std::endl;
-    }
 
 #ifndef NDEBUG
     std::vector<const char*> layers =
     {
-      "VK_LAYER_LUNARG_standard_validation"
+      "VK_LAYER_LUNARG_standard_validation",
+      //"VK_LAYER_LUNARG_api_dump"
+
     };
     checkValidationLayerSupport( layers );
     std::vector<const char*> extensions =
     {
       glfwExtensions[ 0 ],	// Surface extension
       glfwExtensions[ 1 ],	// OS specific surface extension
-      "VK_EXT_debug_report"
+      VK_EXT_DEBUG_REPORT_EXTENSION_NAME
     };
 #else
     std::vector<const char*> layers;
@@ -222,6 +220,54 @@ namespace lava
       glfwExtensions[ 1 ],	// OS specific surface extension
     };
 #endif
+    std::cout << "available extensions:" << std::endl;
+
+    bool founded = false;
+    for ( const auto& extension : extensions_ )
+    {
+      std::cout << "[Vulkan init] extensions: name=" << extension.extensionName <<
+        ", enabled=";
+
+      founded = false;
+      for ( const auto& e : extensions )
+      {
+        if ( strcmp( e, extension.extensionName ) == 0 )
+        {
+          founded = true;
+          break;
+        }
+      }
+      if ( founded ) std::cout << "1";
+      else std::cout << "0";
+
+      std::cout << std::endl;
+    }
+
+    {
+      std::cout << std::endl << std::endl;
+      uint32_t layerCount = 0;
+      vkEnumerateInstanceLayerProperties( &layerCount, nullptr );
+      std::vector<VkLayerProperties> layersPropList( layerCount );
+      vkEnumerateInstanceLayerProperties( &layerCount, layersPropList.data( ) );
+      std::cout << "Instance layers: " << layersPropList.size( ) << " item(s)\n";
+      for ( const auto& l : layersPropList )
+      {
+        founded = false;
+        for ( const auto& ll : layers )
+        {
+          if ( strcmp( ll, l.layerName ) == 0 )
+          {
+            founded = true;
+            break;
+          }
+        }
+        std::cout << " " << std::left << std::setw( 40 ) << l.layerName << " (";
+        if ( founded ) std::cout << "1";
+        else std::cout << "0";
+        std::cout << ")| " << std::setw( 100 ) << l.description << std::endl;
+      }
+    }
+
 
     VkInstanceCreateInfo instanceInfo;
     instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -297,9 +343,11 @@ namespace lava
 
     _renderWindow = std::make_shared<RenderWindow>( *this );
 
-
-
-    // INIT CAPABILITES
+    initCapabilities( );
+  }
+  
+  void VulkanRenderAPI::initCapabilities( void )
+  {
     std::shared_ptr<VulkanDevice> presentDevice = _getPresentDevice( );
     VkPhysicalDevice physicalDevice = presentDevice->getPhysical( );
 
@@ -354,32 +402,32 @@ namespace lava
 
     caps.setCapability( RSC_COMPUTE_PROGRAM );
 
-    caps.setNumTextureUnits( GPT_FRAGMENT_PROGRAM, 
+    caps.setNumTextureUnits( GpuProgramType::FRAGMENT_PROGRAM,
       deviceLimits.maxPerStageDescriptorSampledImages );
-    caps.setNumTextureUnits( GPT_VERTEX_PROGRAM, 
+    caps.setNumTextureUnits( GpuProgramType::VERTEX_PROGRAM,
       deviceLimits.maxPerStageDescriptorSampledImages );
-    caps.setNumTextureUnits( GPT_COMPUTE_PROGRAM, 
+    caps.setNumTextureUnits( GpuProgramType::COMPUTE_PROGRAM,
       deviceLimits.maxPerStageDescriptorSampledImages );
 
-    caps.setNumGpuParamBlockBuffers( GPT_FRAGMENT_PROGRAM, 
+    caps.setNumGpuParamBlockBuffers( GpuProgramType::FRAGMENT_PROGRAM,
       deviceLimits.maxPerStageDescriptorUniformBuffers );
-    caps.setNumGpuParamBlockBuffers( GPT_VERTEX_PROGRAM, 
+    caps.setNumGpuParamBlockBuffers( GpuProgramType::VERTEX_PROGRAM,
       deviceLimits.maxPerStageDescriptorUniformBuffers );
-    caps.setNumGpuParamBlockBuffers( GPT_COMPUTE_PROGRAM, 
+    caps.setNumGpuParamBlockBuffers( GpuProgramType::COMPUTE_PROGRAM,
       deviceLimits.maxPerStageDescriptorUniformBuffers );
 
-    caps.setNumLoadStoreTextureUnits( GPT_FRAGMENT_PROGRAM, 
+    caps.setNumLoadStoreTextureUnits( GpuProgramType::FRAGMENT_PROGRAM,
       deviceLimits.maxPerStageDescriptorStorageImages );
-    caps.setNumLoadStoreTextureUnits( GPT_COMPUTE_PROGRAM, 
+    caps.setNumLoadStoreTextureUnits( GpuProgramType::COMPUTE_PROGRAM,
       deviceLimits.maxPerStageDescriptorStorageImages );
 
     if ( deviceFeatures.geometryShader )
     {
       caps.setCapability( RSC_GEOMETRY_PROGRAM );
       caps.addShaderProfile( "gs_5_0" );
-      caps.setNumTextureUnits( GPT_GEOMETRY_PROGRAM, 
+      caps.setNumTextureUnits( GpuProgramType::GEOMETRY_PROGRAM,
         deviceLimits.maxPerStageDescriptorSampledImages );
-      caps.setNumGpuParamBlockBuffers( GPT_GEOMETRY_PROGRAM, 
+      caps.setNumGpuParamBlockBuffers( GpuProgramType::GEOMETRY_PROGRAM,
         deviceLimits.maxPerStageDescriptorUniformBuffers );
       caps.setGeometryProgramNumOutputVertices( 
         deviceLimits.maxGeometryOutputVertices );
@@ -389,51 +437,49 @@ namespace lava
     {
       caps.setCapability( RSC_TESSELLATION_PROGRAM );
 
-      caps.setNumTextureUnits( GPT_TESS_EVAL_PROGRAM, 
+      caps.setNumTextureUnits( GpuProgramType::TESS_EVAL_PROGRAM,
         deviceLimits.maxPerStageDescriptorSampledImages );
-      caps.setNumTextureUnits( GPT_TESS_CTRL_PROGRAM, 
+      caps.setNumTextureUnits( GpuProgramType::TESS_CTRL_PROGRAM,
         deviceLimits.maxPerStageDescriptorSampledImages );
 
-      caps.setNumGpuParamBlockBuffers( GPT_TESS_EVAL_PROGRAM, 
+      caps.setNumGpuParamBlockBuffers( GpuProgramType::TESS_EVAL_PROGRAM,
         deviceLimits.maxPerStageDescriptorUniformBuffers );
-      caps.setNumGpuParamBlockBuffers( GPT_TESS_CTRL_PROGRAM, 
+      caps.setNumGpuParamBlockBuffers( GpuProgramType::TESS_CTRL_PROGRAM,
         deviceLimits.maxPerStageDescriptorUniformBuffers );
     }
 
     caps.setNumCombinedTextureUnits( 
-      caps.getNumTextureUnits( GPT_FRAGMENT_PROGRAM )
-      + caps.getNumTextureUnits( GPT_VERTEX_PROGRAM ) + 
-      caps.getNumTextureUnits( GPT_GEOMETRY_PROGRAM )
-      + caps.getNumTextureUnits( GPT_TESS_EVAL_PROGRAM ) + 
-      caps.getNumTextureUnits( GPT_TESS_CTRL_PROGRAM )
-      + caps.getNumTextureUnits( GPT_COMPUTE_PROGRAM ) );
+      caps.getNumTextureUnits( GpuProgramType::FRAGMENT_PROGRAM )
+      + caps.getNumTextureUnits( GpuProgramType::VERTEX_PROGRAM ) +
+      caps.getNumTextureUnits( GpuProgramType::GEOMETRY_PROGRAM )
+      + caps.getNumTextureUnits( GpuProgramType::TESS_EVAL_PROGRAM ) +
+      caps.getNumTextureUnits( GpuProgramType::TESS_CTRL_PROGRAM )
+      + caps.getNumTextureUnits( GpuProgramType::COMPUTE_PROGRAM ) );
 
     caps.setNumCombinedGpuParamBlockBuffers( 
-      caps.getNumGpuParamBlockBuffers( GPT_FRAGMENT_PROGRAM )
-      + caps.getNumGpuParamBlockBuffers( GPT_VERTEX_PROGRAM ) + 
-      caps.getNumGpuParamBlockBuffers( GPT_GEOMETRY_PROGRAM )
-      + caps.getNumGpuParamBlockBuffers( GPT_TESS_EVAL_PROGRAM ) + 
-      caps.getNumGpuParamBlockBuffers( GPT_TESS_CTRL_PROGRAM )
-      + caps.getNumGpuParamBlockBuffers( GPT_COMPUTE_PROGRAM ) );
+      caps.getNumGpuParamBlockBuffers( GpuProgramType::FRAGMENT_PROGRAM )
+      + caps.getNumGpuParamBlockBuffers( GpuProgramType::VERTEX_PROGRAM ) +
+      caps.getNumGpuParamBlockBuffers( GpuProgramType::GEOMETRY_PROGRAM )
+      + caps.getNumGpuParamBlockBuffers( GpuProgramType::TESS_EVAL_PROGRAM ) +
+      caps.getNumGpuParamBlockBuffers( GpuProgramType::TESS_CTRL_PROGRAM )
+      + caps.getNumGpuParamBlockBuffers( GpuProgramType::COMPUTE_PROGRAM ) );
 
     caps.setNumCombinedLoadStoreTextureUnits( 
-      caps.getNumLoadStoreTextureUnits( GPT_FRAGMENT_PROGRAM )
-      + caps.getNumLoadStoreTextureUnits( GPT_COMPUTE_PROGRAM ) );
+      caps.getNumLoadStoreTextureUnits( GpuProgramType::FRAGMENT_PROGRAM )
+      + caps.getNumLoadStoreTextureUnits( GpuProgramType::COMPUTE_PROGRAM ) );
 
     caps.addShaderProfile( "glsl" );
-
-    //__init__( );
   }
 
   void VulkanRenderAPI::__init__( )
   {
     VulkanGpuProgram * vertShaderModule = new VulkanGpuProgram( GPU_PROGRAM_DESC (
       VKLAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/vert.spv" ),
-      GpuProgramType::GPT_VERTEX_PROGRAM
+      GpuProgramType::VERTEX_PROGRAM
     ));
     VulkanGpuProgram * fragShaderModule = new VulkanGpuProgram( GPU_PROGRAM_DESC (
       VKLAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/frag.spv" ),
-      GpuProgramType::GPT_VERTEX_PROGRAM
+      GpuProgramType::FRAGMENT_PROGRAM
     ));
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo;
@@ -473,24 +519,6 @@ namespace lava
 
     renderPass = vfb.renderPass;
 
-    /*// UBO DESCRIPTOR
-    VkDescriptorSetLayoutBinding uboLayoutBinding = { };
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-    // TEXTURE DESCRIPTOR
-    VkDescriptorSetLayoutBinding samplerLayoutBinding = { };
-    samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };*/
-
     std::vector< VkDescriptorSetLayoutBinding > bindings =
     {
       // Binding 0 : Vertex shader uniform buffer
@@ -505,6 +533,7 @@ namespace lava
         VK_SHADER_STAGE_FRAGMENT_BIT,
         1 )
     };
+    bindings.resize( bindings.size( ) );
 
     VkDescriptorSetLayoutCreateInfo layoutInfo = { };
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -519,18 +548,32 @@ namespace lava
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { };
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.pNext = nullptr;
+    pipelineLayoutInfo.flags = 0;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
-    if ( vkCreatePipelineLayout( logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout ) != VK_SUCCESS )
+    // PUSH CONSTANTS
+    VkPushConstantRange pushConstantRange;
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof( pushConstants );
+
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+    // PUSH CONSTANTS \\
+
+
+    if ( vkCreatePipelineLayout( logicalDevice, &pipelineLayoutInfo, nullptr, 
+      &pipelineLayout ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create pipeline layout!" );
     }
 
-    // FIXED FUNCTIONS
+    // Create the Buffer resource metadata information
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = { };
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
+    vertexInputInfo.pNext = nullptr;
 
     auto bindingDescription = Vertex::getBindingDescription( );
     auto attributeDescriptions = Vertex::getAttributeDescriptions( );
@@ -633,7 +676,8 @@ namespace lava
 
     pipelineInfo.pDynamicState = &_dynamicStateInfo;
 
-    if ( vkCreateGraphicsPipelines( logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline ) != VK_SUCCESS )
+    if ( vkCreateGraphicsPipelines( logicalDevice, VK_NULL_HANDLE, 1, 
+      &pipelineInfo, nullptr, &graphicsPipeline ) != VK_SUCCESS )
     {
       throw std::runtime_error( "failed to create graphics pipeline!" );
     }
@@ -664,11 +708,11 @@ namespace lava
       createImage( _renderWindow->_swapChain->getWidth( ),
         _renderWindow->_swapChain->getHeight( ), depthFormat,
         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory );
-      depthImageView = createImageView( depthImage, depthFormat,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthStencilTex.image, depthStencilTex.mem );
+      depthStencilTex.view = createImageView( depthStencilTex.image, depthFormat,
         VK_IMAGE_ASPECT_DEPTH_BIT );
 
-      transitionImageLayout( depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
+      transitionImageLayout( depthStencilTex.image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL );
     }
 
@@ -678,11 +722,11 @@ namespace lava
     // FRAMEBUFFERS
     swapChainFramebuffers.resize( _renderWindow->_swapChain->swapChainImageViews.size( ) );
 
-    for ( size_t i = 0; i < _renderWindow->_swapChain->swapChainImageViews.size( ); i++ )
+    for ( size_t i = 0; i < _renderWindow->_swapChain->swapChainImageViews.size( ); ++i )
     {
       std::array<VkImageView, 2> attachments = {
         _renderWindow->_swapChain->swapChainImageViews[ i ],
-        depthImageView
+        depthStencilTex.view
       };
 
       VkFramebufferCreateInfo framebufferInfo = { };
@@ -809,8 +853,8 @@ namespace lava
       textureImageView = createImageView( textureImage, 
         VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT );
 
-      SAMPLER_STATE_DESC samplerDesc;
-      samplerDesc.mipFilter = FO_ANISOTROPIC;
+      SamplerStateDesc samplerDesc;
+      samplerDesc.mipFilter = FilterOptions::ANISOTROPIC;
       samplerDesc.maxAniso = 1;
 
       textureSampler = new VulkanSamplerState( samplerDesc );
@@ -890,14 +934,16 @@ namespace lava
     }
     {
       // createDescriptorPool
-      std::array<VkDescriptorPoolSize, 2> poolSizes = { };
+      std::array<VkDescriptorPoolSize, 2> poolSizes;
       poolSizes[ 0 ].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       poolSizes[ 0 ].descriptorCount = 1;
       poolSizes[ 1 ].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       poolSizes[ 1 ].descriptorCount = 1;
 
-      VkDescriptorPoolCreateInfo poolInfo = { };
+      VkDescriptorPoolCreateInfo poolInfo;
       poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+      poolInfo.pNext = nullptr;
+      poolInfo.flags = 0;
       poolInfo.poolSizeCount = static_cast<uint32_t>( poolSizes.size( ) );
       poolInfo.pPoolSizes = poolSizes.data( );
       poolInfo.maxSets = 1;
@@ -997,7 +1043,7 @@ namespace lava
       };
 
       std::array<VkClearValue, 2> clearValues = { };
-      clearValues[ 0 ].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+      clearValues[ 0 ].color = { 0.2f, 0.3f, 0.3f, 1.0f };
       clearValues[ 1 ].depthStencil = { 1.0f, 0 };
 
       renderPassBeginInfo.clearValueCount = static_cast<uint32_t>( clearValues.size( ) );
@@ -1028,6 +1074,21 @@ namespace lava
           };
 
           vkCmdSetScissor( commandBuffers[ i ], 0, 1, &scissorRect );
+          
+          
+          pushConstants[0] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+          pushConstants[1] = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+          pushConstants[2] = glm::vec4(0.0f,0.0f, 1.0, 1.5f);
+
+
+          // Submit via push constant (rather than a UBO)
+          vkCmdPushConstants(
+            commandBuffers[i],
+            pipelineLayout,
+            VK_SHADER_STAGE_FRAGMENT_BIT,
+            0,
+            sizeof(pushConstants),
+            pushConstants.data());
 
         vkCmdBindPipeline( commandBuffers[ i ], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
 
@@ -1053,8 +1114,8 @@ namespace lava
     }
 
     // SEMAPHORES
-    imageAvailableSemaphore = new VulkanSemaphore( _getPresentDevice( ) );
-    renderFinishedSemaphore = new VulkanSemaphore( _getPresentDevice( ) );
+    semaphores.presentComplete = new VulkanSemaphore( _getPresentDevice( ) );
+    semaphores.renderComplete = new VulkanSemaphore( _getPresentDevice( ) );
   }
 
   bool VulkanRenderAPI::checkValidationLayerSupport( 
@@ -1077,7 +1138,6 @@ namespace lava
           layerFound = true;
           break;
         }
-        //std::cout << layerProperties.layerName << std::endl;
       }
 
       if ( !layerFound )

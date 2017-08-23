@@ -7,12 +7,12 @@ namespace lava
   {
     vkDestroySampler( _device->getLogical( ), _sampler, nullptr );
   }
-  VulkanSamplerState::VulkanSamplerState( const SAMPLER_STATE_DESC& desc )
+  VulkanSamplerState::VulkanSamplerState( const SamplerStateDesc& desc )
     : _desc( desc )
   {
-    bool anisotropy = _desc.minFilter == FO_ANISOTROPIC ||
-      _desc.magFilter == FO_ANISOTROPIC ||
-      _desc.mipFilter == FO_ANISOTROPIC;
+    bool anisotropy = _desc.minFilter == FilterOptions::ANISOTROPIC ||
+      _desc.magFilter == FilterOptions::ANISOTROPIC ||
+      _desc.mipFilter == FilterOptions::ANISOTROPIC;
 
     CompareFunction compareFunc = _desc.comparisonFunc;
     
@@ -30,7 +30,7 @@ namespace lava
     samplerInfo.mipLodBias = _desc.mipmapBias;
     samplerInfo.anisotropyEnable = anisotropy;
     samplerInfo.maxAnisotropy = (float)_desc.maxAniso;
-    samplerInfo.compareEnable = compareFunc != CMPF_ALWAYS_PASS;
+    samplerInfo.compareEnable = compareFunc != CompareFunction::ALWAYS_PASS;
     samplerInfo.compareOp = getCompareOp( compareFunc );
     samplerInfo.minLod = _desc.mipMin;
     samplerInfo.maxLod = _desc.mipMax;

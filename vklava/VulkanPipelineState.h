@@ -102,11 +102,11 @@ namespace lava
   };
 
   // Descriptor structure used for initializing a GPU pipeline state.
-  struct PIPELINE_STATE_DESC
+  struct PipelineStateDesc
   {
-    //SPtr<BlendState> blendState;
-    //SPtr<RasterizerState> rasterizerState;
-    //SPtr<DepthStencilState> depthStencilState;
+    // BlendState* blendState;
+    // RasterizerState* rasterizerState;
+    // DepthStencilState* depthStencilState;
 
     GpuProgram* vertexProgram;
     GpuProgram* fragmentProgram;
@@ -114,7 +114,7 @@ namespace lava
     GpuProgram* tessCtrlProgram;
     GpuProgram* tessEvalProgram;
   };
-  typedef PIPELINE_STATE_DESC StateDescType;
+  typedef PipelineStateDesc StateDescType;
   
   class TGraphicsPipelineState
   {
@@ -174,7 +174,7 @@ namespace lava
 
     VkPipelineLayout getPipelineLayout( /*uint32_t deviceIdx*/ ) const;
 
-    VulkanPipeline* createPipeline( );
+    VulkanPipeline* createPipeline( void );
 
     VkPipelineShaderStageCreateInfo _shaderStageInfos[ 5 ];
     VkPipelineInputAssemblyStateCreateInfo _inputAssemblyInfo;
@@ -183,7 +183,7 @@ namespace lava
     VkPipelineRasterizationStateCreateInfo _rasterizationInfo;
     VkPipelineMultisampleStateCreateInfo _multiSampleInfo;
     VkPipelineDepthStencilStateCreateInfo _depthStencilInfo;
-    VkPipelineColorBlendAttachmentState _attachmentBlendStates;// [ BS_MAX_MULTIPLE_RENDER_TARGETS ];
+    VkPipelineColorBlendAttachmentState _attachmentBlendStates;// [ NUM_RENDER_TARGETS ];
     VkPipelineColorBlendStateCreateInfo _colorBlendStateInfo;
     VkPipelineDynamicStateCreateInfo _dynamicStateInfo;
     VkDynamicState _dynamicStates[ 3 ];

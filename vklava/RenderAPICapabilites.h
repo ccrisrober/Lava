@@ -69,19 +69,19 @@ namespace lava
     GPU_INTEL = 3,
     GPU_VENDOR_COUNT = 4
   };
-  enum GpuProgramType
+  enum class GpuProgramType
   {
-    GPT_VERTEX_PROGRAM,       // Vertex program
-    GPT_FRAGMENT_PROGRAM,     // Fragment(pixel) program
-    GPT_GEOMETRY_PROGRAM,     // Geometry program
-    GPT_TESS_EVAL_PROGRAM,    // Tesselation evaluation program
-    GPT_TESS_CTRL_PROGRAM,    // Tesselation control program
-    GPT_COMPUTE_PROGRAM,      // Compute program.
-    GPT_COUNT                 // Keep at end
+    VERTEX_PROGRAM,       // Vertex program
+    FRAGMENT_PROGRAM,     // Fragment(pixel) program
+    GEOMETRY_PROGRAM,     // Geometry program
+    TESS_EVAL_PROGRAM,    // Tesselation evaluation program
+    TESS_CTRL_PROGRAM,    // Tesselation control program
+    COMPUTE_PROGRAM,      // Compute program.
+    COUNT                 // Keep at end
   };
   /**
-  * Holds information about render hardware and driver capabilities and allows you to easily set and query those
-  * capabilities.
+  * Holds information about render hardware and driver capabilities 
+  * and allows you to easily set and query those capabilities.
   */
   class RenderAPICapabilities
   {
@@ -93,26 +93,26 @@ namespace lava
         _capabilities[ i ] = 0;
       }
 
-      _numTextureUnitsPerStage[ GPT_VERTEX_PROGRAM ] = 0;
-      _numTextureUnitsPerStage[ GPT_FRAGMENT_PROGRAM ] = 0;
-      _numTextureUnitsPerStage[ GPT_GEOMETRY_PROGRAM ] = 0;
-      _numTextureUnitsPerStage[ GPT_TESS_EVAL_PROGRAM ] = 0;
-      _numTextureUnitsPerStage[ GPT_TESS_CTRL_PROGRAM ] = 0;
-      _numTextureUnitsPerStage[ GPT_COMPUTE_PROGRAM ] = 0;
+      _numTextureUnitsPerStage[ GpuProgramType::VERTEX_PROGRAM ] = 0;
+      _numTextureUnitsPerStage[ GpuProgramType::FRAGMENT_PROGRAM ] = 0;
+      _numTextureUnitsPerStage[ GpuProgramType::GEOMETRY_PROGRAM ] = 0;
+      _numTextureUnitsPerStage[ GpuProgramType::TESS_EVAL_PROGRAM ] = 0;
+      _numTextureUnitsPerStage[ GpuProgramType::TESS_CTRL_PROGRAM ] = 0;
+      _numTextureUnitsPerStage[ GpuProgramType::COMPUTE_PROGRAM ] = 0;
 
-      _numGpuParamBlocksPerStage[ GPT_VERTEX_PROGRAM ] = 0;
-      _numGpuParamBlocksPerStage[ GPT_FRAGMENT_PROGRAM ] = 0;
-      _numGpuParamBlocksPerStage[ GPT_GEOMETRY_PROGRAM ] = 0;
-      _numGpuParamBlocksPerStage[ GPT_TESS_EVAL_PROGRAM ] = 0;
-      _numGpuParamBlocksPerStage[ GPT_TESS_CTRL_PROGRAM ] = 0;
-      _numGpuParamBlocksPerStage[ GPT_COMPUTE_PROGRAM ] = 0;
+      _numGpuParamBlocksPerStage[ GpuProgramType::VERTEX_PROGRAM ] = 0;
+      _numGpuParamBlocksPerStage[ GpuProgramType::FRAGMENT_PROGRAM ] = 0;
+      _numGpuParamBlocksPerStage[ GpuProgramType::GEOMETRY_PROGRAM ] = 0;
+      _numGpuParamBlocksPerStage[ GpuProgramType::TESS_EVAL_PROGRAM ] = 0;
+      _numGpuParamBlocksPerStage[ GpuProgramType::TESS_CTRL_PROGRAM ] = 0;
+      _numGpuParamBlocksPerStage[ GpuProgramType::COMPUTE_PROGRAM ] = 0;
 
-      _numLoadStoreTextureUnitsPerStage[ GPT_VERTEX_PROGRAM ] = 0;
-      _numLoadStoreTextureUnitsPerStage[ GPT_FRAGMENT_PROGRAM ] = 0;
-      _numLoadStoreTextureUnitsPerStage[ GPT_GEOMETRY_PROGRAM ] = 0;
-      _numLoadStoreTextureUnitsPerStage[ GPT_TESS_EVAL_PROGRAM ] = 0;
-      _numLoadStoreTextureUnitsPerStage[ GPT_TESS_CTRL_PROGRAM ] = 0;
-      _numLoadStoreTextureUnitsPerStage[ GPT_COMPUTE_PROGRAM ] = 0;
+      _numLoadStoreTextureUnitsPerStage[ GpuProgramType::VERTEX_PROGRAM ] = 0;
+      _numLoadStoreTextureUnitsPerStage[ GpuProgramType::FRAGMENT_PROGRAM ] = 0;
+      _numLoadStoreTextureUnitsPerStage[ GpuProgramType::GEOMETRY_PROGRAM ] = 0;
+      _numLoadStoreTextureUnitsPerStage[ GpuProgramType::TESS_EVAL_PROGRAM ] = 0;
+      _numLoadStoreTextureUnitsPerStage[ GpuProgramType::TESS_CTRL_PROGRAM ] = 0;
+      _numLoadStoreTextureUnitsPerStage[ GpuProgramType::COMPUTE_PROGRAM ] = 0;
     }
 
     ~RenderAPICapabilities( void )
@@ -142,7 +142,9 @@ namespace lava
       _vendor = v;
     }
 
-    /** Parses a vendor string and returns an enum with the vendor if parsed succesfully. */
+    /** Parses a vendor string and returns an enum with the vendor if 
+     * parsed succesfully.
+     */
     static GPUVendor vendorFromString( const std::string& vendorString )
     {
       initVendorStrings( );
@@ -325,7 +327,7 @@ namespace lava
     }
 
     // Gets the current GPU device name.
-    std::string getDeviceName( ) const
+    std::string getDeviceName( void ) const
     {
       return _deviceName;
     }
@@ -343,7 +345,7 @@ namespace lava
     }
   private:
     // Initializes vendor enum -> vendor name mappings.
-    static void initVendorStrings( )
+    static void initVendorStrings( void )
     {
       if ( _gpuVendorStrings.empty( ) )
       {

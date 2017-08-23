@@ -29,8 +29,8 @@ namespace lava
         else
           globalPath = "./";
 
-        aiScene const *scene = imp.ReadFile( path, aiProcessPreset_TargetRealtime_Fast
-          | aiProcess_FlipUVs );
+        aiScene const *scene = imp.ReadFile( path,
+          aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs );
 
         if ( scene == nullptr )
           throw std::runtime_error( path + " does not opened" );

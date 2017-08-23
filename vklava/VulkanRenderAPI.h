@@ -53,7 +53,7 @@ namespace lava
 
     static VkVertexInputBindingDescription getBindingDescription( )
     {
-      VkVertexInputBindingDescription bindingDescription = { };
+      VkVertexInputBindingDescription bindingDescription;
       bindingDescription.binding = 0;
       bindingDescription.stride = sizeof( Vertex );
       bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
@@ -63,7 +63,7 @@ namespace lava
 
     static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions( )
     {
-      std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = { };
+      std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions;
 
       attributeDescriptions[ 0 ].binding = 0;
       attributeDescriptions[ 0 ].location = 0;
@@ -187,6 +187,12 @@ namespace lava
       vkMapMemory( logicalDevice, uniformBufferVS.memory, 0, sizeof( ubo ), 0, &data );
       memcpy( data, &ubo, sizeof( ubo ) );
       vkUnmapMemory( logicalDevice, uniformBufferVS.memory );
+
+      float timeValue = glfwGetTime( );
+      float greenValue = sin( timeValue ) / 2.0f + 0.5f;
+      pushConstants[ 1 ].g = greenValue;
+
+      std::cout << greenValue << std::endl;
     }
     void run( void )
     {
@@ -198,21 +204,28 @@ namespace lava
       }
       _getPresentDevice( )->waitIdle( );
     }
-    VulkanSemaphore* imageAvailableSemaphore;
-    VulkanSemaphore* renderFinishedSemaphore;
+
+    // Synchronization semaphores
+    struct {
+      // Swap chain image presentation
+      VulkanSemaphore* presentComplete;
+      // Command buffer submission and execution
+      VulkanSemaphore* renderComplete;
+    } semaphores;
+
     void drawFrame( void )
     {
       uint32_t imageIndex;
       VkSwapchainKHR swapChain = _renderWindow->_swapChain->getHandle( );
       VkResult result = 
         vkAcquireNextImageKHR( _getPresentDevice( )->getLogical( ), swapChain,
-        std::numeric_limits<uint64_t>::max( ), imageAvailableSemaphore->getHandle( ),
+        std::numeric_limits<uint64_t>::max( ), semaphores.presentComplete->getHandle( ),
         VK_NULL_HANDLE, &imageIndex );
 
       VkSubmitInfo submitInfo = { };
       submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-      VkSemaphore waitSemaphores[] = { imageAvailableSemaphore->getHandle( ) };
+      VkSemaphore waitSemaphores[] = { semaphores.presentComplete->getHandle( ) };
       VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
       submitInfo.waitSemaphoreCount = 1;
       submitInfo.pWaitSemaphores = waitSemaphores;
@@ -221,7 +234,7 @@ namespace lava
       submitInfo.commandBufferCount = 1;
       submitInfo.pCommandBuffers = &commandBuffers[ imageIndex ];
 
-      VkSemaphore signalSemaphores[] = { renderFinishedSemaphore->getHandle( ) };
+      VkSemaphore signalSemaphores[] = { semaphores.renderComplete->getHandle( ) };
       submitInfo.signalSemaphoreCount = 1;
       submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -320,9 +333,15 @@ namespace lava
     VkCommandPool commandPool;
 
     // Depth texture
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
+    //VkImage depthImage;
+    //VkDeviceMemory depthImageMemory;
+    //VkImageView depthImageView;
+    struct
+    {
+      VkImage image;
+      VkDeviceMemory mem;
+      VkImageView view;
+    } depthStencilTex;
 
     // Texture image
     VkImage textureImage;
@@ -585,6 +604,11 @@ namespace lava
 
       return layoutBinding;
     }
+
+    std::array<glm::vec4, 3> pushConstants;
+
+  protected:
+    void initCapabilities( void );
   };
 }
 

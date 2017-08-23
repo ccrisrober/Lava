@@ -264,10 +264,9 @@ namespace lava
     pipCI.basePipelineHandle = VK_NULL_HANDLE;
     pipCI.basePipelineIndex = -1;
 
-    //VulkanRenderAPI& api = VulkanRenderAPI::getInstance( );
+    auto api = VulkanRenderAPI::getInstance( );
 
-
-
+    _device = api->_getPresentDevice( );
 
     VkPipeline pipeline;
     VkResult result = vkCreateComputePipelines( _device->getLogical( ),

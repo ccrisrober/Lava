@@ -48,6 +48,60 @@ namespace lava
     VkImage _image;
     VkDeviceMemory _memory;
   };
+
+
+
+
+
+  class Texture//: public VulkanResource
+  {
+  public:
+    VulkanDevicePtr device;
+    VkImage image;
+    VkImageLayout imageLayout;
+    VkDeviceMemory deviceMemory;
+    VkImageView view;
+    uint32_t width, height;
+    VkDescriptorImageInfo descriptor;
+    VkSampler sampler;
+
+    void updateDescriptor( void )
+    {
+      descriptor.sampler = sampler;
+      descriptor.imageView = view;
+      descriptor.imageLayout = imageLayout;
+    }
+
+    void destroy( void )
+    {
+      vkDestroyImageView( device->getLogical( ), view, nullptr );
+      vkDestroyImage( device->getLogical( ), image, nullptr );
+      if ( sampler )
+      {
+        vkDestroySampler( device->getLogical( ), sampler, nullptr );
+      }
+      device->freeMemory( deviceMemory );
+    }
+  };
+
+  class Texture2D : public Texture
+  {
+  public:
+    void loadFromFile( const std::string& filename, VkFormat format,
+      VulkanDevicePtr device, VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT,
+      VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      bool forceLinear = false );
+  };
+
+  class Texture2DArray : public Texture
+  {
+
+  };
+
+  class TextureCubeMap : public Texture
+  {
+
+  };
 }
 
 #endif /* __VKLAVA_VULKANTEXTURE__ */
