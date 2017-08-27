@@ -1,1 +1,2 @@
 # -*- mode: cmake -*-
+#git_subproject(glslang https://github.com/KhronosGroup/glslang.git 82e95a3)

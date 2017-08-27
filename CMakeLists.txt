@@ -27,7 +27,7 @@ set( VKLAVA_DESCRIPTION "VKLAVA" )
 
 include(Common)
 # Allow warnings
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
@@ -36,8 +36,11 @@ common_find_package( GLFW3 REQUIRED SYSTEM )
 common_find_package( GLM REQUIRED SYSTEM )
 common_find_package( STBI REQUIRED SYSTEM )
 common_find_package( ASSIMP REQUIRED SYSTEM )
+#common_find_package( GLSLANG REQUIRED )
 
-list( APPEND VKLAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP )
+list( APPEND VKLAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP 
+#GLSLANG
+)
 
 # TODO( FIXED GLFW LINUX )
 IF (NOT WIN32)

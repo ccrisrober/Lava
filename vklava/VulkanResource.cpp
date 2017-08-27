@@ -1,11 +1,11 @@
 #include "VulkanResource.h"
 
+#include "Device.h"
+
 namespace lava
 {
-  VulkanResource::VulkanResource( VulkanDevicePtr device )
-    : _device( device )
-  { }
-
-  VulkanResource::~VulkanResource( void )
-  { }
+	VulkanResource::VulkanResource( std::shared_ptr<Device> device )
+		: _device( device )
+	{
+	}
 }

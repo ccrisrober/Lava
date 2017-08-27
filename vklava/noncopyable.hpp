@@ -3,12 +3,13 @@
 
 namespace lava
 {
+  template< class T >
   class NonCopyable
   {
   public:
-    NonCopyable( ) = default;
-    NonCopyable( NonCopyable const& ) = delete;
-    NonCopyable &operator=( NonCopyable const& ) = delete;
+    NonCopyable( void ) = default;
+    NonCopyable(const NonCopyable& ) = delete;
+    NonCopyable &operator=(const NonCopyable& ) = delete;
   };
 }
 

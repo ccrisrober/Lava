@@ -15,42 +15,52 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
 set( VKLAVA_SOURCES
-	RenderWindow.cpp
-	VulkanBuffer.cpp
-	VulkanCommandBuffer.cpp
-	VulkanDevice.cpp
-	VulkanFramebuffer.cpp
-	VulkanQueue.cpp
-	VulkanRenderAPI.cpp
-	VulkanResource.cpp
-	VulkanSwapChain.cpp
-	VulkanTexture.cpp
+  Instance.cpp
+  PhysicalDevice.cpp
+  Surface.cpp
+  VulkanApp.cpp
+  Device.cpp
+  VulkanResource.cpp
+  Semaphore.cpp
+  Queue.cpp
+  RenderPass.cpp
+  FramebufferSwapchain.cpp
+  Swapchain.cpp
+  Image.cpp
+  Framebuffer.cpp
+  CommandBuffer.cpp
+  Pipeline.cpp
+  Descriptor.cpp
+  Sampler.cpp
+  Buffer.cpp
+
 	Source.cpp
-	VulkanPipelineState.cpp
-	VulkanSampler.cpp
-	##VulkanDrawable.cpp
 )
 
 set( VKLAVA_HEADERS
-	scenegraph/Mesh.h
-	scenegraph/ModelImporter.h
+	includes.hpp
+	../Vulkan-Hpp/vulkan/vulkan.hpp
 	RenderAPICapabilites.h
-	##vulkan.hpp
-	routes.h
-	noncopyable.hpp
-	RenderWindow.h
-	VulkanBuffer.h
-	VulkanCommandBuffer.h
-	VulkanDevice.h
-	VulkanFramebuffer.h
-	VulkanQueue.h
-	VulkanRenderAPI.h
-	VulkanResource.h
-	VulkanSwapChain.h
-	VulkanTexture.h
-	VulkanPipelineState.h
-	VulkanSampler.h
-	##VulkanDrawable.h
+  noncopyable.hpp
+
+  Instance.h
+  PhysicalDevice.h
+  Surface.h
+  VulkanApp.h
+  Device.h
+  VulkanResource.h
+  Semaphore.h
+  Queue.h
+  RenderPass.h
+  FramebufferSwapchain.h
+  Swapchain.h
+  Image.h
+  Framebuffer.h
+  CommandBuffer.h
+  Pipeline.h
+  Descriptor.h
+  Sampler.h
+  Buffer.h
 )
 
 set( VKLAVA_MOC_HEADERS
@@ -64,6 +74,7 @@ set( VKLAVA_LINK_LIBRARIES
   	${GLM_LIBRARIES}
   	${STBI_LIBRARIES}
   	${ASSIMP_LIBRARIES}
+    ${GLSLANG_LIBRARIES}
 )
 
 if ( MSVC )

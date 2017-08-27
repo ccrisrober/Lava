@@ -1,18 +1,16 @@
-#ifndef __VKLAVA_VULKANRESOURCE__
-#define __VKLAVA_VULKANRESOURCE__
+#pragma once
 
-#include "VulkanDevice.h"
+#include "includes.hpp"
+#include <memory>
 
 namespace lava
 {
-  class VulkanResource
-  {
-  public:
-    VulkanResource( VulkanDevicePtr device );
-    ~VulkanResource( void );
-  protected:
-    VulkanDevicePtr _device;
-  };
-}
+	class Device;
+	class VulkanResource
+	{
+	protected:
+		VulkanResource( std::shared_ptr<Device> device );
 
-#endif /* __VKLAVA_VULKANRESOURCE__ */
+		std::shared_ptr<Device> _device;
+	};
+}

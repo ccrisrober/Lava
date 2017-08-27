@@ -27,7 +27,7 @@ namespace lava
     CAPS_CATEGORY_VULKAN = 3,
     CAPS_CATEGORY_COUNT = 32 // Maximum number of categories.
   };
-  enum Capabilities : uint64_t
+  enum Capabilities : short
   {
     // Supports compressed textures in the BC formats.
     RSC_TEXTURE_COMPRESSION_BC = 0,
@@ -35,19 +35,17 @@ namespace lava
     RSC_TEXTURE_COMPRESSION_ETC2 = 1,
     // Supports compressed textures in the ASTC format.
     RSC_TEXTURE_COMPRESSION_ASTC = 2,
-    // Supports hardware geometry programs.
+    // Supports geometry shaders.
     RSC_GEOMETRY_PROGRAM = 3,
-    // Supports hardware tessellation programs.
+    // Supports tessellation shaders.
     RSC_TESSELLATION_PROGRAM = 4,
-    // Supports hardware compute programs.
+    // Supports compute shaders.
     RSC_COMPUTE_PROGRAM = 5,
   };
 
-  /** Holds data about render system driver version. */
   struct DriverVersion
   {
-    /** Returns the driver version as a single string. */
-    std::string toString( ) const
+    std::string toString(void ) const
     {
       std::stringstream str;
       str << major << "." << minor << "." << release << "." << build;
@@ -77,7 +75,7 @@ namespace lava
     TESS_EVAL_PROGRAM,    // Tesselation evaluation program
     TESS_CTRL_PROGRAM,    // Tesselation control program
     COMPUTE_PROGRAM,      // Compute program.
-    COUNT                 // Keep at end
+    COUNT
   };
   /**
   * Holds information about render hardware and driver capabilities 
@@ -118,25 +116,25 @@ namespace lava
     ~RenderAPICapabilities( void )
     { }
 
-    /** Sets the current driver version. */
+    // Sets the current driver version.
     void setDriverVersion( const DriverVersion& version )
     {
       _driverVersion = version;
     }
 
-    /** Returns current driver version. */
+    // Returns current driver version.
     DriverVersion getDriverVersion( void ) const
     {
       return _driverVersion;
     }
 
-    /** Returns vendor of the currently used GPU. */
+    // Returns vendor of the currently used GPU.
     GPUVendor getVendor( void ) const
     {
       return _vendor;
     }
 
-    /** Sets the GPU vendor. */
+    // Sets the GPU vendor.
     void setVendor( GPUVendor v )
     {
       _vendor = v;
@@ -165,62 +163,62 @@ namespace lava
       return ret;
     }
 
-    /** Converts a vendor enum to a string. */
+    // Converts a vendor enum to a string.
     static std::string vendorToString( GPUVendor v )
     {
       initVendorStrings( );
       return _gpuVendorStrings[ v ];
     }
 
-    /** Sets the maximum number of texture units per pipeline stage. */
+    // Sets the maximum number of texture units per pipeline stage.
     void setNumTextureUnits( GpuProgramType type, uint16_t num )
     {
       _numTextureUnitsPerStage[ type ] = num;
     }
 
-    /** Sets the maximum number of texture units in all pipeline stages. */
+    // Sets the maximum number of texture units in all pipeline stages.
     void setNumCombinedTextureUnits( uint16_t num )
     {
       _numCombinedTextureUnits = num;
     }
 
-    /** Sets the maximum number of load-store texture units per pipeline stage. */
+    // Sets the maximum number of load-store texture units per pipeline stage.
     void setNumLoadStoreTextureUnits( GpuProgramType type, uint16_t num )
     {
       _numLoadStoreTextureUnitsPerStage[ type ] = num;
     }
 
-    /** Sets the maximum number of load-store texture units in all pipeline stages. */
+    // Sets the maximum number of load-store texture units in all pipeline stages.
     void setNumCombinedLoadStoreTextureUnits( uint16_t num )
     {
       _numCombinedLoadStoreTextureUnits = num;
     }
 
-    /** Sets the maximum number of GPU param block buffers per pipeline stage. */
+    // Sets the maximum number of GPU param block buffers per pipeline stage.
     void setNumGpuParamBlockBuffers( GpuProgramType type, uint16_t num )
     {
       _numGpuParamBlocksPerStage[ type ] = num;
     }
 
-    /** Sets the maximum number of GPU parammN block buffers in all pipeline stages. */
+    // Sets the maximum number of GPU parammN block buffers in all pipeline stages.
     void setNumCombinedGpuParamBlockBuffers( uint16_t num )
     {
       _numCombinedUniformBlocks = num;
     }
 
-    /** Sets maximum number of bound vertex buffers. */
+    // Sets maximum number of bound vertex buffers.
     void setMaxBoundVertexBuffers( uint32_t num )
     {
       _maxBoundVertexBuffers = num;
     }
 
-    /** Sets maximum number of simultaneously set render targets. */
+    // Sets maximum number of simultaneously set render targets.
     void setNumMultiRenderTargets( uint16_t num )
     {
       _numMultiRenderTargets = num;
     }
 
-    /** Returns the number of texture units supported per pipeline stage. */
+    // Returns the number of texture units supported per pipeline stage.
     uint16_t getNumTextureUnits( GpuProgramType type ) const
     {
       auto iterFind = _numTextureUnitsPerStage.find( type );
@@ -230,13 +228,13 @@ namespace lava
         return 0;
     }
 
-    /** Returns the number of texture units supported in all pipeline stages. */
+    // Returns the number of texture units supported in all pipeline stages.
     uint16_t getNumCombinedTextureUnits( void ) const
     {
       return _numCombinedTextureUnits;
     }
 
-    /** Returns the number of load-store texture units supported per pipeline stage. */
+    // Returns the number of load-store texture units supported per pipeline stage.
     uint16_t getNumLoadStoreTextureUnits( GpuProgramType type ) const
     {
       auto iterFind = _numLoadStoreTextureUnitsPerStage.find( type );
@@ -246,13 +244,13 @@ namespace lava
         return 0;
     }
 
-    /** Returns the number of load-store texture units supported in all pipeline stages. */
+    // Returns the number of load-store texture units supported in all pipeline stages.
     uint16_t getNumCombinedLoadStoreTextureUnits( void ) const
     {
       return _numCombinedLoadStoreTextureUnits;
     }
 
-    /** Returns the maximum number of bound GPU program param block buffers per pipeline stage. */
+    // Returns the maximum number of bound GPU program param block buffers per pipeline stage.
     uint16_t getNumGpuParamBlockBuffers( GpuProgramType type ) const
     {
       auto iterFind = _numGpuParamBlocksPerStage.find( type );
