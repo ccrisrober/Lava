@@ -1,0 +1,73 @@
+#include <lava/lava.h>
+
+int main()
+{
+	try
+	{
+		std::vector<vk::LayerProperties> layerProps = vk::enumerateInstanceLayerProperties();
+		std::cout << "Layers: " << layerProps.size() << std::endl;
+		uint32_t i = 0;
+		for (const auto& prop : layerProps)
+		{
+			std::cout << "Layer " << i << ":" << std::endl;
+			std::cout << "\tlayerName             : " << prop.layerName << std::endl;
+			std::cout << "\tspecVersion           : " << prop.specVersion << std::endl;
+			std::cout << "\timplementationVersion : " << prop.implementationVersion << std::endl;
+			std::cout << "\tdescription           : " << prop.description << std::endl;
+			++i;
+		}
+
+		std::vector<vk::ExtensionProperties> instanceExts = vk::enumerateInstanceExtensionProperties();
+		std::cout << "InstanceExtensions : " << instanceExts.size() << std::endl;
+		for ( const auto& ext: instanceExts)
+		{
+			std::cout << "\t" << ext.extensionName << " (Version " << ext.specVersion << ")" << std::endl;
+		}
+
+		std::shared_ptr<lava::Instance> instance = lava::Instance::create("INSTANCE");
+
+		uint32_t phy_dev_count = instance->getPhysicalDeviceCount();
+		std::cout << "PhysicalDeviceCount : " << phy_dev_count << std::endl;
+		for (uint32_t i = 0; i < phy_dev_count; ++i)
+		{
+			std::shared_ptr<lava::PhysicalDevice> pd = instance->getPhysicalDevice(i);
+			vk::PhysicalDeviceProperties props = pd->getDeviceProperties();
+
+			std::cout << "Device " << i << ":" << std::endl;
+			std::cout << "\tAPI Version    : " << props.apiVersion << std::endl;
+			std::cout << "\tDriver Version : " << props.driverVersion << std::endl;
+			std::cout << "\tVendor ID      : " << props.vendorID << std::endl;
+			std::cout << "\tDevice ID      : " << props.deviceID << std::endl;
+			std::cout << "\tDevice Type    : " << vk::to_string(props.deviceType) << std::endl;
+			std::cout << "\tDevice Name    : " << props.deviceName << std::endl;
+
+			std::vector<vk::QueueFamilyProperties> qProps = static_cast<vk::PhysicalDevice>(*pd).getQueueFamilyProperties();
+			std::cout << "\tQueue Family Property Count : " << qProps.size() << std::endl;
+			uint32_t q = 0;
+			for ( const auto& prop: qProps )
+			{
+				std::cout << "\t\tFamily " << q << ":" << std::endl;
+				std::cout << "\t\t\tQueue Flags                    : " << vk::to_string(prop.queueFlags) << std::endl;
+				std::cout << "\t\t\tQueue Count                    : " << prop.queueCount << std::endl;
+				std::cout << "\t\t\tTimestampe Valid Bits          : " << prop.timestampValidBits << std::endl;
+				std::cout << "\t\t\tMin Image Transfer Granularity : " << prop.minImageTransferGranularity.width << ", " << 
+					prop.minImageTransferGranularity.height << ", " << prop.minImageTransferGranularity.depth << std::endl;
+				++q;
+			}
+
+
+			std::vector<vk::ExtensionProperties> devExts = static_cast<vk::PhysicalDevice>(*pd).enumerateDeviceExtensionProperties();
+			std::cout << "\tDeviceExtensions : " << devExts.size() << std::endl;
+			for ( const auto& ext: devExts)
+			{
+				std::cout << "\t\t" << ext.extensionName << " (Version " << ext.specVersion << ")" << std::endl;
+			}
+		}
+	}
+	catch (std::system_error systemError)
+	{
+		std::cout << "System Error: " << systemError.what() << std::endl;
+	}
+	system("PAUSE");
+	return 0;
+}
