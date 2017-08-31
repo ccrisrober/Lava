@@ -70,6 +70,12 @@ namespace lava
     {
       return _physicalDevice.getFormatProperties( format );
     }
+    
+    bool extensionSupported( const std::string& extension )
+    {
+      return ( std::find( supportedExtensions.begin( ), 
+        supportedExtensions.end( ), extension ) != supportedExtensions.end( ) );
+    }
   private:
     std::shared_ptr<Instance> _instance;
     vk::PhysicalDevice _physicalDevice;
@@ -77,6 +83,9 @@ namespace lava
     vk::PhysicalDeviceProperties _deviceProperties;
     vk::PhysicalDeviceFeatures _deviceFeatures;
     vk::PhysicalDeviceMemoryProperties _memoryProperties;
+    
+    //List of extensions supported by the device
+    std::vector<std::string> supportedExtensions;
   };
 
 

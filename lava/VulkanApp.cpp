@@ -8,14 +8,8 @@ namespace lava
 {
   VulkanApp::VulkanApp( const char* title, uint32_t width, uint32_t height )
   {
-    glfwInit( );
+    _window = std::make_shared< Window >( title, width, height );
 
-
-
-
-
-    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-    _window = glfwCreateWindow( width, height, title, nullptr, nullptr );
     if ( !_window ) throw;
 
     // Create instance
@@ -141,7 +135,7 @@ namespace lava
 
     initCapabilities( );
 
-    _surface = instance->createSurfaceKHR( _window );
+    _surface = instance->createSurfaceKHR( _window->getWindow( ) );
 
     std::vector<vk::SurfaceFormatKHR> surfaceFormats =
       _physicalDevice->getSurfaceFormats( _surface );
@@ -162,7 +156,7 @@ namespace lava
         _colorFormat = vk::Format::eB8G8R8A8Unorm;
       }
 
-      //_colorSpace = surfaceFormats[0].colorSpace;
+      _colorSpace = surfaceFormats[0].colorSpace;
     }
     else
     {
@@ -205,7 +199,7 @@ namespace lava
           if ( surfFormat.format == wantedFormat )
           {
             _colorFormat = surfFormat.format;
-            //_colorSpace = surfFormat.colorSpace;
+            _colorSpace = surfFormat.colorSpace;
 
             foundFormat = true;
             break;
@@ -264,11 +258,11 @@ namespace lava
     vk::SubpassDescription sd(
       vk::SubpassDescriptionFlags( ),
       vk::PipelineBindPoint::eGraphics,
-      0, nullptr,
-      1, &colorReference,
-      nullptr,
-      &depthReference,
-      0, nullptr
+      0, nullptr,           // input attachments ( count, data )
+      1, &colorReference,   // color attachments ( count, data )
+      nullptr,              // resolve attachments ( data )
+      &depthReference,      // depth attachment ( data )
+      0, nullptr            // preserve attachments ( count, data )
     );
 
     _renderPass = _device->createRenderPass(
@@ -285,8 +279,7 @@ namespace lava
         vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
         vk::ImageLayout::eUndefined,vk::ImageLayout::eDepthStencilAttachmentOptimal
       )
-    },
-    { sd }, {}
+    }, sd, {}
     );
 
     _renderComplete = _device->createSemaphore( );
@@ -296,19 +289,24 @@ namespace lava
 
     if ( _window )
     {
-      glfwSetWindowUserPointer( _window, this );
+      glfwSetWindowUserPointer( _window->getWindow( ), this );
 
-      glfwSetFramebufferSizeCallback( _window, VulkanApp::resizeCallback );
-      glfwSetWindowRefreshCallback( _window, VulkanApp::paintCallback );
-      glfwSetKeyCallback( _window, VulkanApp::keyCallback );
-      glfwSetMouseButtonCallback( _window, VulkanApp::mouseButtonCallback );
-      glfwSetCursorPosCallback( _window, VulkanApp::cursorPosCallback );
+      glfwSetFramebufferSizeCallback( _window->getWindow( ), 
+        VulkanApp::resizeCallback );
+      //glfwSetWindowRefreshCallback( _window->getWindow( ), VulkanApp::paintCallback );
+      glfwSetKeyCallback( _window->getWindow( ), 
+        VulkanApp::keyCallback );
+      glfwSetMouseButtonCallback( _window->getWindow( ), 
+        VulkanApp::mouseButtonCallback );
+      glfwSetCursorPosCallback( _window->getWindow( ), 
+        VulkanApp::cursorPosCallback );
     }
   }
 
   VulkanApp::~VulkanApp( void )
   {
     _device->waitIdle( );
+    _defaultFramebuffer.reset( );
     std::cout << "DESTROY" << std::endl;
   }
 
@@ -468,7 +466,7 @@ namespace lava
 
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
     _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
-      _colorFormat, _depthFormat, _renderPass ) );
+      _colorFormat, _colorSpace, _depthFormat, _renderPass ) );
     assert( _defaultFramebuffer->getExtent( ) == vk::Extent2D( width, height ) );
 
     doResize( width, height );
@@ -484,6 +482,7 @@ namespace lava
     _defaultFramebuffer->acquireNextFrame( );
     doPaint( );
     _defaultFramebuffer->present( _graphicsQueue, _renderComplete );
+    _device->waitIdle( ); // TODO: Neccesary ??
   }
 
   void VulkanApp::doPaint( )

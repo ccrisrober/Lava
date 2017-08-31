@@ -96,6 +96,10 @@ namespace lava
   {
     _commandBuffer.setStencilWriteMask( faceMask, stencilWriteMask );
   }
+  void CommandBuffer::setBlendConstants( const float blendConst[ 4 ] )
+  {
+    _commandBuffer.setBlendConstants( blendConst );
+  }
   void CommandBuffer::setLineWidth( float lineWidth )
   {
     _commandBuffer.setLineWidth( lineWidth );
@@ -105,6 +109,19 @@ namespace lava
   {
     _commandBuffer.bindPipeline( bindingPoint, *pipeline );
   }
+  /*void CommandBuffer::bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
+    std::shared_ptr<PipelineLayout> const & pipelineLayout, uint32_t firstSet, 
+    vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
+    vk::ArrayProxy<const uint32_t> dynamicOffsets )
+  {
+    _bindDescriptorSets.clear( );
+    for ( auto & descriptor : descriptorSets )
+    {
+      _bindDescriptorSets.push_back( *descriptor );
+    }
+
+    _commandBuffer.bindDescriptorSets( pipelineBindPoint, *pipelineLayout, firstSet, _bindDescriptorSets, dynamicOffsets );
+  }*/
   void CommandBuffer::setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors )
   {
     _commandBuffer.setScissor( first, scissors );

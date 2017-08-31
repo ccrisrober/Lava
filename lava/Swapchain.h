@@ -15,7 +15,7 @@ namespace lava
   {
   public:
     Swapchain( const DeviceRef& device, const std::shared_ptr<Surface>& surface,
-      uint32_t numImageCount, vk::Format imageFormat,
+      uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
       const vk::Extent2D& imageExtent, uint32_t imageArrayLayers,
       vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
       const std::vector<uint32_t>& queueFamilyIndices,

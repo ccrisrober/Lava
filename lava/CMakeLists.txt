@@ -20,7 +20,14 @@ set( LAVA_SOURCES
   Sampler.cpp
   Buffer.cpp
 
+  Window.cpp
+
   Texture.cpp
+
+  extras/Mesh.cpp
+  extras/Material.cpp
+  extras/ModelImporter.cpp
+  extras/CustomFramebuffer.cpp
 
 	#Source.cpp
 )
@@ -50,10 +57,19 @@ set( LAVA_PUBLIC_HEADERS
   Sampler.h
   Buffer.h
 
+  Window.h
+
   Texture.h
 
+  extras/FpsController.h
+
+  extras/Camera.h
   extras/Mesh.h
+  extras/Material.h
   extras/ModelImporter.h
+  extras/CustomFramebuffer.h
+
+  utils.hpp
 )
 
 

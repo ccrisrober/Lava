@@ -54,6 +54,12 @@ namespace lava
 
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
       _physicalDevice.getQueueFamilyProperties( );
+
+    auto exts = _physicalDevice.enumerateDeviceExtensionProperties( );
+    for ( const auto& ext : exts )
+    {
+      supportedExtensions.push_back( ext.extensionName );
+    }
   }
   PhysicalDevice::~PhysicalDevice( void )
   {

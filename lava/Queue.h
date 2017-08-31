@@ -39,7 +39,7 @@ namespace lava
 
     bool isSignaled( ) const;
     void reset( );
-    void wait( uint64_t timeout ) const;
+    void wait( uint64_t timeout = UINT64_MAX ) const;
 
     inline operator vk::Fence( ) const
     {

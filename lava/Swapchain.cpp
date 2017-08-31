@@ -6,7 +6,8 @@ namespace lava
 {
   Swapchain::Swapchain( const DeviceRef& device,
     const std::shared_ptr<Surface>& surface, uint32_t numImageCount,
-    vk::Format imageFormat, const vk::Extent2D& imageExtent,
+    vk::Format imageFormat, vk::ColorSpaceKHR colorSpace, 
+    const vk::Extent2D& imageExtent,
     uint32_t imageArrayLayers, vk::ImageUsageFlags imageUsage,
     vk::SharingMode imageSharingMode,
     const std::vector<uint32_t>& queueFamilyIndices,
@@ -17,9 +18,8 @@ namespace lava
     : VulkanResource( device )
   {
     vk::SwapchainCreateInfoKHR sci( {}, static_cast< vk::SurfaceKHR >( *surface ),
-      numImageCount, imageFormat, vk::ColorSpaceKHR::eSrgbNonlinear, imageExtent,
-      imageArrayLayers, imageUsage,
-      imageSharingMode, queueFamilyIndices.size( ),
+      numImageCount, imageFormat, colorSpace, imageExtent, imageArrayLayers, 
+      imageUsage, imageSharingMode, queueFamilyIndices.size( ),
       queueFamilyIndices.data( ), preTransform, compositeAlpha, presentMode, clipped,
       oldSwapchain ? static_cast< vk::SwapchainKHR >( *oldSwapchain ) : nullptr );
 

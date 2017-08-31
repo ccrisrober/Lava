@@ -100,9 +100,9 @@ namespace lava
   }
 
   std::shared_ptr<RenderPass> Device::createRenderPass(
-    const std::vector<vk::AttachmentDescription>& attachments,
-    const std::vector<vk::SubpassDescription>& subpasses,
-    const std::vector<vk::SubpassDependency>& dependencies )
+    vk::ArrayProxy<const vk::AttachmentDescription> attachments,
+    vk::ArrayProxy<const vk::SubpassDescription> subpasses,
+    vk::ArrayProxy<const vk::SubpassDependency> dependencies )
   {
     return std::make_shared<RenderPass>( shared_from_this( ), attachments,
       subpasses, dependencies );
@@ -118,14 +118,15 @@ namespace lava
   }
 
   std::shared_ptr<Swapchain> Device::createSwapchain( const std::shared_ptr<Surface>& surface,
-    uint32_t numImageCount, vk::Format imageFormat, const vk::Extent2D& imageExtent,
-    uint32_t imageArrayLayers, vk::ImageUsageFlags imageUsage,
+    uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
+    const vk::Extent2D& imageExtent, uint32_t imageArrayLayers, vk::ImageUsageFlags imageUsage,
     vk::SharingMode imageSharingMode, const std::vector<uint32_t>& queueFamilyIndices,
     vk::SurfaceTransformFlagBitsKHR preTransform, vk::CompositeAlphaFlagBitsKHR compAlpha,
     vk::PresentModeKHR presentMode, bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain )
   {
-    return std::make_shared<Swapchain>( shared_from_this( ), surface, numImageCount, imageFormat, imageExtent,
-      imageArrayLayers, imageUsage, imageSharingMode, queueFamilyIndices, preTransform,
+    return std::make_shared<Swapchain>( shared_from_this( ), surface, 
+      numImageCount, imageFormat, colorSpace, imageExtent, imageArrayLayers, 
+      imageUsage, imageSharingMode, queueFamilyIndices, preTransform,
       compAlpha, presentMode, clipped, oldSwapchain );
   }
   std::shared_ptr<Image> Device::createImage( vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,

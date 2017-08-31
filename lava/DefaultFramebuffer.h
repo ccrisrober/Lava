@@ -13,8 +13,8 @@ namespace lava
   public:
     DefaultFramebuffer( const DeviceRef& device,
       const std::shared_ptr<Surface>& surface,
-      vk::Format surfaceFormat, vk::Format depthFormat,
-      const std::shared_ptr<RenderPass>& renderPass );
+      vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace, 
+      vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
 
     void rebuild( const DeviceRef& device,
       const std::shared_ptr<Surface>& surface,
@@ -26,7 +26,8 @@ namespace lava
     {
       return _framebuffers[ _swapchainIndex ];
     }
-    void acquireNextFrame( uint64_t timeout = UINT64_MAX, const std::shared_ptr<Fence>& fence = {} )
+    void acquireNextFrame( uint64_t timeout = UINT64_MAX, 
+      const std::shared_ptr<Fence>& fence = {} )
     {
       _swapchainIndex = _swapchain->acquireNextImage( timeout, fence );
     }

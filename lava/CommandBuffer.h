@@ -67,6 +67,7 @@ namespace lava
     void setStencilCompareMask( vk::StencilFaceFlags faceMask, uint32_t stencilCompareMask );
     void setStencilReference( vk::StencilFaceFlags faceMask, uint32_t stencilReference );
     void setStencilWriteMask( vk::StencilFaceFlags faceMask, uint32_t stencilWriteMask );
+    void setBlendConstants( const float blendConst[ 4 ] );
 
     void begin( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ),
       const std::shared_ptr<RenderPass>& renderPass = std::shared_ptr<RenderPass>( ),
@@ -81,9 +82,24 @@ namespace lava
     {
       return _isRecording;
     }
+
+    std::shared_ptr<RenderPass> getRenderPass( void ) const
+    {
+      return _renderPass;
+    }
+    std::shared_ptr<Framebuffer> getFramebuffer( void ) const
+    {
+      return _framebuffer;
+    }
+
     template <typename T> void pushConstants( vk::PipelineLayout layout,
       vk::ShaderStageFlags stageFlags, uint32_t start, vk::ArrayProxy<const T> values );
     void bindPipeline( vk::PipelineBindPoint bindingPoint, const std::shared_ptr<Pipeline>& pipeline );
+    
+    /*void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
+      std::shared_ptr<PipelineLayout> const& pipelineLayout, uint32_t firstSet, 
+      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
+      vk::ArrayProxy<const uint32_t> dynamicOffsets );*/
 
     void setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors );
     void setViewport( uint32_t first, vk::ArrayProxy<const vk::Viewport> viewports );
@@ -108,6 +124,7 @@ namespace lava
     std::shared_ptr<RenderPass> _renderPass;
     std::shared_ptr<Framebuffer> _framebuffer;
     bool _isRecording;
+    std::vector<::vk::DescriptorSet> _bindDescriptorSets;
     std::vector<::vk::Buffer> _bindVertexBuffers;
   };
   template<typename T>

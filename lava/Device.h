@@ -42,16 +42,19 @@ namespace lava
     }
     std::shared_ptr<Semaphore> createSemaphore( void );
 
-    std::shared_ptr<RenderPass> createRenderPass( const std::vector<vk::AttachmentDescription>& attachments,
-      const std::vector<vk::SubpassDescription>& subpasses, const std::vector<vk::SubpassDependency>& dependencies );
+    std::shared_ptr<RenderPass> createRenderPass(
+      vk::ArrayProxy<const vk::AttachmentDescription> attachments,
+      vk::ArrayProxy<const vk::SubpassDescription> subpasses,
+      vk::ArrayProxy<const vk::SubpassDependency> dependencies );
 
     std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIndex );
 
     std::shared_ptr<PhysicalDevice> _physicalDevice;
 
     std::shared_ptr<Swapchain> createSwapchain( const std::shared_ptr<Surface>& surface,
-      uint32_t numImageCount, vk::Format imageFormat, const vk::Extent2D& imageExtent,
-      uint32_t imageArrayLayers, vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
+      uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
+      const vk::Extent2D& imageExtent,  uint32_t imageArrayLayers, 
+      vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
       const std::vector<uint32_t>& queueFamilyIndices,
       vk::SurfaceTransformFlagBitsKHR preTransform, vk::CompositeAlphaFlagBitsKHR compositeAlpha,
       vk::PresentModeKHR presentMode, bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain );

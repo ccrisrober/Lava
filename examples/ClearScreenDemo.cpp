@@ -14,13 +14,6 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
-	struct Vertex
-	{
-		glm::vec3 pos;
-		glm::vec3 normal;
-		glm::vec2 texCoord;
-	};
-
 	MyApp(char const* title, uint32_t width, uint32_t height)
 		: VulkanApp( title, width, height )
 	{
@@ -33,7 +26,7 @@ public:
 			switch (action)
 			{
 			case GLFW_PRESS:
-				glfwSetWindowShouldClose(getWindow(), GLFW_TRUE);
+				glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
 				break;
 			default:
 				break;
@@ -45,34 +38,34 @@ public:
 	}
 };
 
-void errorCallback(int error, const char* description)
+void glfwErrorCallback(int error, const char* description)
 {
 	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-int main(void)
+int main( void )
 {
-	try
-	{
-		//glfwSetErrorCallback(errorCallback);
+  try
+  {
+    //if (glfwInit())
+    //{
+    VulkanApp* app = new MyApp( "MyApp", 800, 600 );
 
-		//if (glfwInit())
-		//{
-			MyApp window("MyApp", 800, 600);
+    app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
-			while (window.isRunning( ))
-			{
-				window.waitEvents();
-				window.paint();
-			}
+    while ( app->isRunning( ) )
+    {
+      app->waitEvents( );
+      app->paint( );
+    }
 
-			glfwTerminate();
-		//}
-	}
-	catch (std::system_error systemError)
-	{
-		std::cout << "System Error: " << systemError.what() << std::endl;
-	}
-	system("PAUSE");
-	return 0;
+    delete app;
+    //}
+  }
+  catch ( std::system_error err )
+  {
+    std::cout << "System Error: " << err.what( ) << std::endl;
+  }
+  system( "PAUSE" );
+  return 0;
 }
