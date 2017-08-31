@@ -1,7 +1,0 @@
-#ifndef __VKLAVA_EXAMPLES_ROUTES__
-#define __VKLAVA_EXAMPLES_ROUTES__
-
-#define VKLAVA_EXAMPLES_RESOURCES_ROUTE\
-  std::string("@PROJECT_SOURCE_DIR@/resources")
-
-#endif /* __VKLAVA_EXAMPLES_ROUTES__ */

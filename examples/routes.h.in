@@ -1,0 +1,7 @@
+#ifndef __LAVA_EXAMPLES_ROUTES__
+#define __LAVA_EXAMPLES_ROUTES__
+
+#define LAVA_EXAMPLES_RESOURCES_ROUTE\
+  std::string("@PROJECT_SOURCE_DIR@/resources")
+
+#endif /* __LAVA_EXAMPLES_ROUTES__ */

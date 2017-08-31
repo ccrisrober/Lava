@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( vklava VERSION 0.1.0 )
-set( vklava_VERSION_ABI 1)
+project( lava VERSION 0.1.0 )
+set( lava_VERSION_ABI 1)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
@@ -22,21 +22,27 @@ endif( )
 
 include(GitExternal)
 
-set( COMMON_PROJECT_DOMAIN gmrv.es )
-set( VKLAVA_DESCRIPTION "VKLAVA" )
+set( COMMON_PROJECT_DOMAIN maldicion069 )
+set( LAVA_DESCRIPTION "LAVA" )
 
 include(Common)
 # Allow warnings
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
+
+option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
 
 
 common_find_package( Vulkan REQUIRED SYSTEM )
 common_find_package( GLFW3 REQUIRED SYSTEM )
 common_find_package( GLM REQUIRED SYSTEM )
 common_find_package( STBI REQUIRED SYSTEM )
+common_find_package( ASSIMP REQUIRED SYSTEM )
+#common_find_package( GLSLANG REQUIRED )
 
-list( APPEND VKLAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI )
+list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP 
+#GLSLANG
+)
 
 # TODO( FIXED GLFW LINUX )
 IF (NOT WIN32)
@@ -45,9 +51,9 @@ endif()
 
 common_find_package_post( )
 
-set( PROJECT_INCLUDE_NAME vklava )
-
-add_subdirectory( vklava )
+add_subdirectory( lava )
+#add_subdirectory( lava_extras )
+add_subdirectory( examples )
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})
