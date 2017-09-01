@@ -10,6 +10,7 @@
 #include "CommandBuffer.h"
 #include "Sampler.h"
 #include "Descriptor.h"
+#include "Buffer.h"
 
 #include <vector>
 #include <map>
@@ -24,33 +25,56 @@ namespace lava
   class Device : private NonCopyable<Device>, public std::enable_shared_from_this<Device>
   {
   public:
+    LAVA_API
     static DeviceRef create( const std::shared_ptr<PhysicalDevice>& phyDev,
       const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
       const std::vector<std::string>& enabledLayerNames,
       const std::vector<std::string>& enabledExtensionNames,
       const vk::PhysicalDeviceFeatures& enabledFeatures );
+    LAVA_API
     Device( const std::shared_ptr<PhysicalDevice>& phyDev );
+    LAVA_API
     virtual ~Device( );
-    inline operator vk::Device( ) const
+    LAVA_API
+    inline operator vk::Device( void ) const
     {
       return _device;
     }
 
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::BufferCreateFlags createFlags, 
+      vk::DeviceSize size, vk::BufferUsageFlags usageFlags = vk::BufferUsageFlagBits::eTransferDst,
+      vk::SharingMode sharingMode = vk::SharingMode::eExclusive, 
+      vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr,
+      vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
+      vk::BufferUsageFlags usageFlags = vk::BufferUsageFlagBits::eTransferDst, 
+      vk::SharingMode sharingMode = vk::SharingMode::eExclusive,
+      vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr, 
+      vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+
+    LAVA_API
     void waitIdle( void )
     {
       _device.waitIdle( );
     }
+    LAVA_API
     std::shared_ptr<Semaphore> createSemaphore( void );
 
+    LAVA_API
     std::shared_ptr<RenderPass> createRenderPass(
       vk::ArrayProxy<const vk::AttachmentDescription> attachments,
       vk::ArrayProxy<const vk::SubpassDescription> subpasses,
       vk::ArrayProxy<const vk::SubpassDependency> dependencies );
 
+    LAVA_API
     std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIndex );
 
     std::shared_ptr<PhysicalDevice> _physicalDevice;
 
+    LAVA_API
     std::shared_ptr<Swapchain> createSwapchain( const std::shared_ptr<Surface>& surface,
       uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
       const vk::Extent2D& imageExtent,  uint32_t imageArrayLayers, 
@@ -59,49 +83,90 @@ namespace lava
       vk::SurfaceTransformFlagBitsKHR preTransform, vk::CompositeAlphaFlagBitsKHR compositeAlpha,
       vk::PresentModeKHR presentMode, bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain );
 
-
+    LAVA_API
     std::shared_ptr<Image> createImage( vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,
       const vk::Extent3D & extent, uint32_t mipLevels, uint32_t arraySize, vk::SampleCountFlagBits samples, vk::ImageTiling tiling,
       vk::ImageUsageFlags usageFlags, vk::SharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices,
       vk::ImageLayout initialLayout, vk::MemoryPropertyFlags memoryPropertyFlags );
 
+    LAVA_API
     std::shared_ptr<Framebuffer> createFramebuffer( const std::shared_ptr<RenderPass>& renderPass,
       const std::vector<std::shared_ptr<ImageView>>& attachments, const vk::Extent2D& extent, uint32_t layers );
 
+    LAVA_API
     std::shared_ptr<CommandPool> createCommandPool( vk::CommandPoolCreateFlags flags = {}, uint32_t familyIndex = 0 );
 
+    LAVA_API
+    std::shared_ptr<ShaderModule> createShaderModule( const std::string& filePath, vk::ShaderStageFlagBits type );
+    LAVA_API
     std::shared_ptr<ShaderModule> createShaderModule( const std::string& filePath );
+    LAVA_API
     std::shared_ptr<ShaderModule> createShaderModule( vk::ArrayProxy<const uint32_t> code );
 
+    LAVA_API
     std::shared_ptr<Fence> createFence( bool signaled );
+    LAVA_API
     std::shared_ptr<Sampler> createSampler( const SamplerStateDesc & desc );
+    LAVA_API
     std::shared_ptr<DescriptorSetLayout> createDescriptorSetLayout(
       vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings );
+    LAVA_API
     std::shared_ptr<DescriptorPool> createDescriptorPool(
       vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
       vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes );
 
+    LAVA_API
+    std::shared_ptr<PipelineCache> createPipelineCache( size_t initialSize, 
+      void const* initialData );
+
+    LAVA_API
+    std::shared_ptr<Pipeline> createGraphicsPipeline( 
+      std::shared_ptr<PipelineCache> const& pipelineCache, 
+      vk::PipelineCreateFlags flags, 
+      vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages,
+      vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
+      vk::Optional<const vk::PipelineInputAssemblyStateCreateInfo> inputAssemblyState,
+      vk::Optional<const vk::PipelineTessellationStateCreateInfo> tessellationState,
+      vk::Optional<const PipelineViewportStateCreateInfo> viewportState,
+      vk::Optional<const vk::PipelineRasterizationStateCreateInfo> rasterizationState,
+      vk::Optional<const PipelineMultisampleStateCreateInfo> multisampleState,
+      vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
+      vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState,
+      vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
+      std::shared_ptr<PipelineLayout> const& pipelineLayout, 
+      std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass = 0,
+      std::shared_ptr<Pipeline> const& basePipelineHandle = {}, 
+      uint32_t basePipelineIndex = 0 );
+    
+    LAVA_API
+    std::shared_ptr<PipelineLayout> createPipelineLayout( 
+      vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts,
+      vk::ArrayProxy<const vk::PushConstantRange> pushConstantRanges );
 
     /**
     * Allocates memory for the provided image, and binds it to the image.
     * Returns null if it cannot find memory with the specified flags.
     */
+    LAVA_API
     vk::DeviceMemory allocateImageMemory( vk::Image image, vk::MemoryPropertyFlags flags );
 
     /**
     * Allocates memory for the provided buffer, and binds it to the buffer.
     * Returns null if it cannot find memory with the specified flags.
     */
+    LAVA_API
     vk::DeviceMemory allocateBufferMemory( vk::Buffer buffer, vk::MemoryPropertyFlags flags );
 
     /**
     * Allocates a block of memory according to the provided memory requirements.
     * Returns null if it cannot find memory with the specified flags.
     */
+    LAVA_API
     vk::DeviceMemory allocateMemReqMemory( const vk::MemoryRequirements& reqs,
       vk::MemoryPropertyFlags flags );
 
     // Frees a previously allocated block of memory.
+    LAVA_API
     void freeMemory( vk::DeviceMemory memory );
 
   protected:

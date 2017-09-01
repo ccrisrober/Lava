@@ -482,6 +482,7 @@ namespace lava
     _defaultFramebuffer->acquireNextFrame( );
     doPaint( );
     _defaultFramebuffer->present( _graphicsQueue, _renderComplete );
+
     _device->waitIdle( ); // TODO: Neccesary ??
   }
 

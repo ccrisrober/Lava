@@ -54,6 +54,8 @@ common_find_package_post( )
 add_subdirectory( lava )
 #add_subdirectory( lava_extras )
 add_subdirectory( examples )
+#add_subdirectory( glslang )
+
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})

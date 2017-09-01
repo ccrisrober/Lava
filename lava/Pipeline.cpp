@@ -2,11 +2,37 @@
 
 #include "Device.h"
 #include "VulkanResource.h"
+#include "RenderPass.h"
 
 #include <fstream>
 
 namespace lava
 {
+  ShaderModule::ShaderModule( const DeviceRef& device, const std::string & filePath, vk::ShaderStageFlagBits /* todo: UNUSE type */ )
+    : VulkanResource( device )
+  {
+    std::ifstream file( filePath, std::ios::ate | std::ios::binary );
+
+    if ( !file.is_open( ) ) {
+      throw std::runtime_error( "failed to open file!" );
+    }
+
+    size_t fileSize = ( size_t ) file.tellg( );
+    std::vector<char> code( fileSize );
+
+    file.seekg( 0 );
+    file.read( code.data( ), fileSize );
+
+    file.close( );
+
+    vk::ShaderModuleCreateInfo sci( 
+      vk::ShaderModuleCreateFlags(), 
+      code.size(), 
+      reinterpret_cast<const uint32_t*>( code.data( ) )
+    );
+
+    _shaderModule = static_cast< vk::Device > ( *_device ).createShaderModule( sci );
+  }
   ShaderModule::ShaderModule( const DeviceRef& device,
     const std::string & filePath )
     : ShaderModule( device, readFile( filePath ) )
@@ -110,6 +136,70 @@ namespace lava
     return *this;
   }
 
+
+  PipelineColorBlendStateCreateInfo::PipelineColorBlendStateCreateInfo( 
+    bool logicEnable_, vk::LogicOp logicOp_, 
+    vk::ArrayProxy<const vk::PipelineColorBlendAttachmentState> attachments_, 
+    std::array<float, 4> const& blendConstants_ )
+    : logicEnable( logicEnable_ )
+    , logicOp( logicOp_ )
+    , attachments( attachments_.begin( ), attachments_.end( ) )
+    , blendConstants( blendConstants_ )
+  {}
+
+  PipelineColorBlendStateCreateInfo::PipelineColorBlendStateCreateInfo( 
+    PipelineColorBlendStateCreateInfo const& rhs )
+    : PipelineColorBlendStateCreateInfo( rhs.logicEnable, rhs.logicOp, 
+      rhs.attachments, rhs.blendConstants )
+  {}
+
+  PipelineColorBlendStateCreateInfo& 
+    PipelineColorBlendStateCreateInfo::operator=( 
+      PipelineColorBlendStateCreateInfo const& rhs )
+  {
+    logicEnable = rhs.logicEnable;
+    logicOp = rhs.logicOp;
+    attachments = rhs.attachments;
+    blendConstants = rhs.blendConstants;
+    return *this;
+  }
+
+
+  PipelineMultisampleStateCreateInfo::PipelineMultisampleStateCreateInfo( 
+    vk::SampleCountFlagBits rasterizationSamples_, bool sampleShadingEnable_, 
+    float minSampleShading_, vk::ArrayProxy<const vk::SampleMask> sampleMasks_, 
+    bool alphaToCoverageEnable_, bool alphaToOneEnable_ )
+    : rasterizationSamples( rasterizationSamples_ )
+    , sampleShadingEnable( sampleShadingEnable_ )
+    , minSampleShading( minSampleShading_ )
+    , sampleMasks( sampleMasks_.begin( ), sampleMasks_.end( ) )
+    , alphaToCoverageEnable( alphaToCoverageEnable_ )
+    , alphaToOneEnable( alphaToOneEnable_ )
+  {
+    assert( sampleMasks.empty( ) || 
+      ( ceil( static_cast<uint32_t>( sampleShadingEnable ) / 32 ) <= sampleMasks.size( ) ) );
+  }
+
+  PipelineMultisampleStateCreateInfo::PipelineMultisampleStateCreateInfo( 
+    PipelineMultisampleStateCreateInfo const& rhs )
+    : PipelineMultisampleStateCreateInfo( rhs.rasterizationSamples, 
+      rhs.sampleShadingEnable, rhs.minSampleShading, rhs.sampleMasks, 
+      rhs.alphaToCoverageEnable, rhs.alphaToOneEnable )
+  {}
+
+  PipelineMultisampleStateCreateInfo& 
+    PipelineMultisampleStateCreateInfo::operator=( 
+      PipelineMultisampleStateCreateInfo const& rhs )
+  {
+    rasterizationSamples = rhs.rasterizationSamples;
+    sampleShadingEnable = rhs.sampleShadingEnable;
+    minSampleShading = rhs.minSampleShading;
+    sampleMasks = rhs.sampleMasks;
+    alphaToCoverageEnable = rhs.alphaToCoverageEnable;
+    alphaToOneEnable = rhs.alphaToOneEnable;
+    return *this;
+  }
+
   PipelineCache::PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
     size_t initialSize, void const* initialData )
     : VulkanResource( device )
@@ -188,63 +278,102 @@ namespace lava
       cci ) );
   }
 
-  GraphicsPipeline::GraphicsPipeline( const DeviceRef& device,
-    const std::shared_ptr<PipelineCache>& pipelineCache,
-    vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
-    vk::Optional<const vk::PipelineInputAssemblyStateCreateInfo> inputAssemblyState,
-    vk::Optional<const PipelineViewportStateCreateInfo> viewportState,
-    vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
-    vk::Optional<const vk::PipelineRasterizationStateCreateInfo> rasterizationState,
-    vk::Optional<const vk::PipelineMultisampleStateCreateInfo> multisampleState,
-    vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState )
+  GraphicsPipeline::GraphicsPipeline( std::shared_ptr<Device> const & device, std::shared_ptr<PipelineCache> const& pipelineCache, vk::PipelineCreateFlags flags,
+    vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages, vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
+    vk::Optional<const vk::PipelineInputAssemblyStateCreateInfo> inputAssemblyState, vk::Optional<const vk::PipelineTessellationStateCreateInfo> tessellationState,
+    vk::Optional<const PipelineViewportStateCreateInfo> viewportState, vk::Optional<const vk::PipelineRasterizationStateCreateInfo> rasterizationState,
+    vk::Optional<const PipelineMultisampleStateCreateInfo> multisampleState, vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
+    vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState, vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
+    std::shared_ptr<PipelineLayout> const& pipelineLayout, std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass,
+    std::shared_ptr<Pipeline> const& basePipelineHandle, uint32_t basePipelineIndex )
     : Pipeline( device )
   {
+    std::vector<vk::SpecializationInfo> specializationInfos;
+    specializationInfos.reserve( stages.size( ) );
+
+    std::vector<vk::PipelineShaderStageCreateInfo> vkStages;
+    vkStages.reserve( stages.size( ) );
+    for ( auto const& s : stages )
+    {
+      if ( s.specializationInfo )
+      {
+        specializationInfos.push_back( vk::SpecializationInfo( s.specializationInfo->mapEntries.size( ), s.specializationInfo->mapEntries.data( ),
+          s.specializationInfo->data.size( ), s.specializationInfo->data.data( ) ) );
+      }
+      vkStages.push_back( vk::PipelineShaderStageCreateInfo( {}, s.stage, s.module ? static_cast<vk::ShaderModule>( *s.module ) : nullptr, s.name.data( ),
+        s.specializationInfo ? &specializationInfos.back( ) : nullptr ) );
+    }
+
     vk::PipelineVertexInputStateCreateInfo vkVertexInputState;
     if ( vertexInputState )
     {
-      vkVertexInputState = vk::PipelineVertexInputStateCreateInfo(
-      {},
-        vertexInputState->vertexBindingDescriptions.size( ),
-        vertexInputState->vertexBindingDescriptions.data( ),
-        vertexInputState->vertexAttributeDesriptions.size( ),
-        vertexInputState->vertexAttributeDesriptions.data( )
-      );
+      vkVertexInputState = vk::PipelineVertexInputStateCreateInfo( {}, vertexInputState->vertexBindingDescriptions.size( ), vertexInputState->vertexBindingDescriptions.data( ),
+        vertexInputState->vertexAttributeDesriptions.size( ), vertexInputState->vertexAttributeDesriptions.data( ) );
     }
 
     vk::PipelineViewportStateCreateInfo vkViewportState;
     if ( viewportState )
     {
-      vkViewportState = vk::PipelineViewportStateCreateInfo(
-      {},
-        viewportState->viewports.size( ),
-        viewportState->viewports.data( ),
-        viewportState->scissors.size( ),
-        viewportState->scissors.data( )
-      );
+      vkViewportState = vk::PipelineViewportStateCreateInfo( {}, viewportState->viewports.size( ), viewportState->viewports.data( ),
+        viewportState->scissors.size( ), viewportState->scissors.data( ) );
+    }
+
+    vk::PipelineMultisampleStateCreateInfo vkMultisampleState;
+    if ( multisampleState )
+    {
+      vkMultisampleState = vk::PipelineMultisampleStateCreateInfo( {}, multisampleState->rasterizationSamples, multisampleState->sampleShadingEnable, multisampleState->minSampleShading,
+        multisampleState->sampleMasks.empty( ) ? nullptr : multisampleState->sampleMasks.data( ), multisampleState->alphaToCoverageEnable,
+        multisampleState->alphaToOneEnable );
+    }
+
+    vk::PipelineColorBlendStateCreateInfo vkColorBlendState;
+    if ( colorBlendState )
+    {
+      vkColorBlendState = vk::PipelineColorBlendStateCreateInfo( {}, colorBlendState->logicEnable, colorBlendState->logicOp,  colorBlendState->attachments.size( ),
+        colorBlendState->attachments.data( ), colorBlendState->blendConstants );
     }
 
     vk::PipelineDynamicStateCreateInfo vkDynamicState;
     if ( dynamicState )
     {
-      vkDynamicState = vk::PipelineDynamicStateCreateInfo(
-      {},
-        dynamicState->dynamicStates.size( ),
-        dynamicState->dynamicStates.data( )
-      );
+      vkDynamicState = vk::PipelineDynamicStateCreateInfo( {}, dynamicState->dynamicStates.size( ), dynamicState->dynamicStates.data( ) );
     }
 
-    vk::GraphicsPipelineCreateInfo gci;
-    gci.setPVertexInputState( vertexInputState ? &vkVertexInputState : nullptr );
-    gci.setPTessellationState( nullptr );
-    gci.setPInputAssemblyState( inputAssemblyState );
-    gci.setPDynamicState( dynamicState ? &vkDynamicState : nullptr );
-    gci.setPViewportState( viewportState ? &vkViewportState : nullptr );
-    gci.setPMultisampleState( multisampleState );
-    gci.setPDepthStencilState( depthStencilState );
+    /*vk::GraphicsPipelineCreateInfo pci(
+      flags,
+      vkStages.size( ),
+      vkStages.data( ),
+      vertexInputState ? &vkVertexInputState : nullptr,
+      inputAssemblyState,
+      tessellationState,
+      viewportState ? &vkViewportState : nullptr,
+      rasterizationState, multisampleState ? &vkMultisampleState : nullptr,
+      depthStencilState,
+      colorBlendState ? &vkColorBlendState : nullptr,
+      dynamicState ? &vkDynamicState : nullptr,
+      pipelineLayout ? *pipelineLayout : vk::PipelineLayout( ),
+      renderPass ? *renderPass : vk::RenderPass( ),
+      subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
+      basePipelineIndex );*/
 
-    setPipeline( vk::Device( *_device ).createGraphicsPipeline(
-      pipelineCache ? static_cast< vk::PipelineCache >( *pipelineCache ) : nullptr,
-      gci ) );
+    vk::GraphicsPipelineCreateInfo pci;
+    pci.stageCount = vkStages.size( );
+    pci.pStages = vkStages.data( );
+    pci.pVertexInputState = vertexInputState ? &vkVertexInputState : nullptr;
+    pci.pInputAssemblyState = inputAssemblyState;
+    pci.pViewportState = viewportState ? &vkViewportState : nullptr;
+    pci.pRasterizationState = rasterizationState;
+    pci.pMultisampleState = multisampleState ? &vkMultisampleState : nullptr;
+    pci.pDepthStencilState = depthStencilState;
+    pci.pColorBlendState = colorBlendState ? &vkColorBlendState : nullptr;
+    pci.pDynamicState = dynamicState ? &vkDynamicState : nullptr;
+    pci.layout = pipelineLayout ? *pipelineLayout : vk::PipelineLayout( );
+    pci.renderPass = renderPass ? *renderPass : vk::RenderPass( );
+    pci.subpass = subpass;
+    pci.basePipelineHandle = basePipelineHandle ? *basePipelineHandle : vk::Pipeline( );
+    pci.basePipelineIndex = basePipelineIndex;
+
+    setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
   }
 
 

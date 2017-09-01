@@ -35,3 +35,5 @@ Debug*
 BuildToQt*
 BuildToQtCreator
 CMakeLists.txt.user
+
+/**/*.spv

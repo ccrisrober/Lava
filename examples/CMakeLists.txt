@@ -23,5 +23,26 @@ if( LAVA_WITH_EXAMPLES )
     lava
   )
   common_application( lavaClearScreenDemo )
-  
+
+  set( LAVATRIANGLE_HEADERS )
+  set( LAVATRIANGLE_SOURCES Triangle.cpp )
+  set( LAVATRIANGLE_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaTriangle )
+
+  set( LAVATRIANGLEINDEXED_HEADERS )
+  set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
+  set( LAVATRIANGLEINDEXED_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaTriangleIndexed )
+
+  set( LAVACUBEINDEXED_HEADERS )
+  set( LAVACUBEINDEXED_SOURCES CubeIndexed.cpp )
+  set( LAVACUBEINDEXED_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaCubeIndexed )
+
 endif( )

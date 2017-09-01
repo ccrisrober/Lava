@@ -44,6 +44,26 @@ namespace lava
     //_queues.clear();
     _device.destroy( );
   }
+  std::shared_ptr<Buffer> Device::createBuffer( 
+    vk::BufferCreateFlags createFlags, vk::DeviceSize size, 
+    vk::BufferUsageFlags usageFlags, vk::SharingMode sharingMode, 
+    vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+    vk::MemoryPropertyFlags memoryPropertyFlags )
+  {
+    return std::make_shared<Buffer>( shared_from_this( ), createFlags, size, 
+      usageFlags, sharingMode, queueFamilyIndices, memoryPropertyFlags );
+  }
+
+  std::shared_ptr<Buffer> Device::createBuffer( vk::DeviceSize size, 
+    vk::BufferUsageFlags usageFlags, vk::SharingMode sharingMode, 
+    vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+    vk::MemoryPropertyFlags memoryPropertyFlags )
+  {
+    return std::make_shared<Buffer>( shared_from_this( ), 
+      vk::BufferCreateFlags( ), size, usageFlags, sharingMode, 
+      queueFamilyIndices, memoryPropertyFlags );
+  }
+
   void Device::init(
     const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
     const std::vector<std::string>& enabledLayerNames,
@@ -145,6 +165,10 @@ namespace lava
   {
     return std::make_shared<CommandPool>( shared_from_this( ), flags, familyIndex );
   }
+  std::shared_ptr<ShaderModule> Device::createShaderModule( const std::string & filePath, vk::ShaderStageFlagBits type )
+  {
+    return std::make_shared<ShaderModule>( shared_from_this( ), filePath, type );
+  }
   std::shared_ptr<ShaderModule> Device::createShaderModule( const std::string & filePath )
   {
     return std::make_shared<ShaderModule>( shared_from_this( ), filePath );
@@ -171,6 +195,10 @@ namespace lava
     vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes )
   {
     return std::make_shared<DescriptorPool>( shared_from_this( ), flags, maxSets, poolSizes );
+  }
+  LAVA_API std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, void const * initialData )
+  {
+    return std::make_shared<PipelineCache>( shared_from_this( ), vk::PipelineCacheCreateFlags( ), initialSize, initialData );
   }
   vk::DeviceMemory Device::allocateImageMemory( vk::Image image, vk::MemoryPropertyFlags flags )
   {
@@ -207,5 +235,38 @@ namespace lava
   void Device::freeMemory( vk::DeviceMemory memory )
   {
     _device.freeMemory( memory );
+  }
+
+  std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
+    std::shared_ptr<PipelineCache> const& pipelineCache, 
+    vk::PipelineCreateFlags flags,
+    vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages,
+    vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
+    vk::Optional<const vk::PipelineInputAssemblyStateCreateInfo> inputAssemblyState,
+    vk::Optional<const vk::PipelineTessellationStateCreateInfo> tessellationState,
+    vk::Optional<const PipelineViewportStateCreateInfo> viewportState,
+    vk::Optional<const vk::PipelineRasterizationStateCreateInfo> rasterizationState,
+    vk::Optional<const PipelineMultisampleStateCreateInfo> multisampleState,
+    vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
+    vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState,
+    vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
+    std::shared_ptr<PipelineLayout> const& pipelineLayout,
+    std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass,
+    std::shared_ptr<Pipeline> const& basePipelineHandle,
+    uint32_t basePipelineIndex )
+  {
+    return std::make_shared<GraphicsPipeline>( shared_from_this( ), pipelineCache, 
+      flags, stages, vertexInputState, inputAssemblyState, tessellationState, 
+      viewportState, rasterizationState, multisampleState, depthStencilState, 
+      colorBlendState, dynamicState, pipelineLayout, renderPass, subpass, 
+      basePipelineHandle, basePipelineIndex );
+  }
+  
+  std::shared_ptr<PipelineLayout> Device::createPipelineLayout( 
+    vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts, 
+    vk::ArrayProxy<const vk::PushConstantRange> pushConstantRanges )
+  {
+    return std::make_shared<PipelineLayout>( shared_from_this( ), 
+      setLayouts, pushConstantRanges );
   }
 }

@@ -2,6 +2,9 @@
 
 #include "Device.h"
 #include "Swapchain.h"
+#include "CommandBuffer.h"
+
+#define DEFAULT_FENCE_TIMEOUT 100000000000
 
 namespace lava
 {
@@ -201,6 +204,23 @@ namespace lava
   void Queue::waitIdle( )
   {
     _queue.waitIdle( );
+  }
+
+  void Queue::submitAndWait( std::shared_ptr<CommandBuffer>& cmd )
+  {
+    std::shared_ptr<Fence> fence = _device->createFence( false );
+    this->submit( cmd, fence );
+
+    std::vector<vk::Fence> vkFences;
+    vkFences.push_back( *fence );
+    /*vkFences.reserve( fences.size( ) );
+    for ( auto const& f : fences )
+    {
+      vkFences.push_back( *f );
+    }*/
+
+    // Wait for the fence to signal that command buffer has finished executing
+    static_cast< vk::Device >( *_device ).waitForFences( vkFences, VK_TRUE, DEFAULT_FENCE_TIMEOUT );
   }
 
   Queue::Queue( const DeviceRef& device, vk::Queue queue )
