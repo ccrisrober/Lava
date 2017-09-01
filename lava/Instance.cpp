@@ -5,12 +5,15 @@
 PFN_vkCreateDebugReportCallbackEXT  pfnVkCreateDebugReportCallbackEXT;
 PFN_vkDestroyDebugReportCallbackEXT pfnVkDestroyDebugReportCallbackEXT;
 
-VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
+  VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, 
+  const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
 {
 	return pfnVkCreateDebugReportCallbackEXT(instance, pCreateInfo, pAllocator, pCallback);
 }
 
-VKAPI_ATTR void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
+VKAPI_ATTR void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, 
+  VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
 {
 	pfnVkDestroyDebugReportCallbackEXT(instance, callback, pAllocator);
 }
@@ -20,9 +23,9 @@ VKAPI_ATTR void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, 
 namespace lava
 {
   VKAPI_ATTR VkBool32 VKAPI_CALL debugMsgCallback( VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
-    size_t location, int32_t msgCode, const char* pLayerPrefix,
-    const char* pMsg, void* pUserData )
+    VkDebugReportObjectTypeEXT, uint64_t,
+    size_t, int32_t msgCode, const char* pLayerPrefix,
+    const char* pMsg, void* )
   {
     std::stringstream message;
 

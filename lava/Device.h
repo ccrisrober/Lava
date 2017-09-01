@@ -121,7 +121,7 @@ namespace lava
 
     LAVA_API
     std::shared_ptr<Pipeline> createGraphicsPipeline( 
-      std::shared_ptr<PipelineCache> const& pipelineCache, 
+      const std::shared_ptr<PipelineCache>& pipelineCache, 
       vk::PipelineCreateFlags flags, 
       vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages,
       vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
@@ -137,7 +137,16 @@ namespace lava
       std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass = 0,
       std::shared_ptr<Pipeline> const& basePipelineHandle = {}, 
       uint32_t basePipelineIndex = 0 );
-    
+
+    LAVA_API
+    std::shared_ptr<Pipeline> createComputePipeline( 
+      const std::shared_ptr<PipelineCache>& pipelineCache, 
+      vk::PipelineCreateFlags flags,
+      const PipelineShaderStageCreateInfo& stage,
+      const std::shared_ptr<PipelineLayout>& pipelineLayout,
+      const std::shared_ptr<Pipeline>& basePipelineHandle = {},
+      uint32_t basePipelineIndex = 0 );
+
     LAVA_API
     std::shared_ptr<PipelineLayout> createPipelineLayout( 
       vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts,

@@ -220,7 +220,7 @@ namespace lava
         //_colorSpace = surfaceFormats[0].colorSpace;
 
         if ( gamma )
-          throw new std::exception( R"(Cannot find a valid sRGB format for a render window surface, falling back to a default format.)" );
+          throw new std::runtime_error( R"(Cannot find a valid sRGB format for a render window surface, falling back to a default format.)" );
       }
     }
     _depthFormat = vk::Format::eD24UnormS8Uint;
@@ -229,7 +229,7 @@ namespace lava
     // Search for a graphics queue and a present queue in the array of 
     //    queue families, try to find one that supports both
     std::vector<uint32_t> queueFamilyIndices =
-      getGraphicsPresentQueueFamilyIndices( _physicalDevice, _surface );
+      _physicalDevice->getGraphicsPresentQueueFamilyIndices( _surface );
     assert( !queueFamilyIndices.empty( ) );
     _queueFamilyIndex = queueFamilyIndices[ 0 ];
 
@@ -476,7 +476,7 @@ namespace lava
   {
   }
 
-  void VulkanApp::paint( )
+  void VulkanApp::paint( void )
   {
     // Get the index of the next available swapchain image:
     _defaultFramebuffer->acquireNextFrame( );
@@ -486,7 +486,7 @@ namespace lava
     _device->waitIdle( ); // TODO: Neccesary ??
   }
 
-  void VulkanApp::doPaint( )
+  void VulkanApp::doPaint( void )
   {
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );

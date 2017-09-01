@@ -34,7 +34,9 @@ set( LAVA_SOURCES
 
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
-  ../Vulkan-Hpp/vulkan/vulkan.hpp
+  #../Vulkan-Hpp/vulkan/vulkan.hpp
+  vulkan.hpp
+
   RenderAPICapabilites.h
   noncopyable.hpp
 

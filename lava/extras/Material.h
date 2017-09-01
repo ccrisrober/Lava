@@ -1,6 +1,8 @@
 #ifndef __LAVA_MATERIAL__
 #define __LAVA_MATERIAL__
 
+#ifdef LAVA_USE_ASSIMP
+
 #include <assimp/material.h>
 #include "../includes.hpp"
 
@@ -18,5 +20,7 @@ namespace lava
     };
   }
 }
+
+#endif
 
 #endif /* __LAVA_MATERIAL__  */

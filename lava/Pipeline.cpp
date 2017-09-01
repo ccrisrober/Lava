@@ -8,12 +8,14 @@
 
 namespace lava
 {
-  ShaderModule::ShaderModule( const DeviceRef& device, const std::string & filePath, vk::ShaderStageFlagBits /* todo: UNUSE type */ )
+  ShaderModule::ShaderModule( const DeviceRef& device, 
+  const std::string& filePath, vk::ShaderStageFlagBits /* todo: UNUSE type */ )
     : VulkanResource( device )
   {
     std::ifstream file( filePath, std::ios::ate | std::ios::binary );
 
     if ( !file.is_open( ) ) {
+      std::cerr << "File don't opened" << std::endl;
       throw std::runtime_error( "failed to open file!" );
     }
 
@@ -34,12 +36,12 @@ namespace lava
     _shaderModule = static_cast< vk::Device > ( *_device ).createShaderModule( sci );
   }
   ShaderModule::ShaderModule( const DeviceRef& device,
-    const std::string & filePath )
+    const std::string& filePath )
     : ShaderModule( device, readFile( filePath ) )
   {
   }
 
-  const std::vector<uint32_t> ShaderModule::readFile( const std::string & filename )
+  const std::vector<uint32_t> ShaderModule::readFile( const std::string& filename )
   {
     std::ifstream file( filename, std::ios::ate | std::ios::binary );
 
@@ -249,7 +251,7 @@ namespace lava
     const PipelineShaderStageCreateInfo& stage,
     const std::shared_ptr<PipelineLayout>& layout,
     const std::shared_ptr<Pipeline>& basePipelineHandle,
-    int32_t basePipelineIndex )
+    uint32_t basePipelineIndex )
     : Pipeline( device )
   {
     vk::SpecializationInfo vkSpecializationInfo(
@@ -278,14 +280,22 @@ namespace lava
       cci ) );
   }
 
-  GraphicsPipeline::GraphicsPipeline( std::shared_ptr<Device> const & device, std::shared_ptr<PipelineCache> const& pipelineCache, vk::PipelineCreateFlags flags,
-    vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages, vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
-    vk::Optional<const vk::PipelineInputAssemblyStateCreateInfo> inputAssemblyState, vk::Optional<const vk::PipelineTessellationStateCreateInfo> tessellationState,
-    vk::Optional<const PipelineViewportStateCreateInfo> viewportState, vk::Optional<const vk::PipelineRasterizationStateCreateInfo> rasterizationState,
-    vk::Optional<const PipelineMultisampleStateCreateInfo> multisampleState, vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
-    vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState, vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
-    std::shared_ptr<PipelineLayout> const& pipelineLayout, std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass,
-    std::shared_ptr<Pipeline> const& basePipelineHandle, uint32_t basePipelineIndex )
+  GraphicsPipeline::GraphicsPipeline( const std::shared_ptr<Device>& device, 
+    const std::shared_ptr<PipelineCache>& pipelineCache, 
+    vk::PipelineCreateFlags flags, 
+    vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages, 
+    vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
+    vk::Optional<const vk::PipelineInputAssemblyStateCreateInfo> inputAssemblyState, 
+    vk::Optional<const vk::PipelineTessellationStateCreateInfo> tessellationState,
+    vk::Optional<const PipelineViewportStateCreateInfo> viewportState, 
+    vk::Optional<const vk::PipelineRasterizationStateCreateInfo> rasterizationState,
+    vk::Optional<const PipelineMultisampleStateCreateInfo> multisampleState, 
+    vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
+    vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState, 
+    vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
+    std::shared_ptr<PipelineLayout> const& pipelineLayout, 
+    std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass,
+    std::shared_ptr<Pipeline> const& basePipelineHandle, uint32_t basePipelineIdx )
     : Pipeline( device )
   {
     std::vector<vk::SpecializationInfo> specializationInfos;
@@ -354,7 +364,7 @@ namespace lava
       pipelineLayout ? *pipelineLayout : vk::PipelineLayout( ),
       renderPass ? *renderPass : vk::RenderPass( ),
       subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
-      basePipelineIndex );*/
+      basePipelineIdx );*/
 
     vk::GraphicsPipelineCreateInfo pci;
     pci.stageCount = vkStages.size( );
@@ -371,7 +381,7 @@ namespace lava
     pci.renderPass = renderPass ? *renderPass : vk::RenderPass( );
     pci.subpass = subpass;
     pci.basePipelineHandle = basePipelineHandle ? *basePipelineHandle : vk::Pipeline( );
-    pci.basePipelineIndex = basePipelineIndex;
+    pci.basePipelineIndex = basePipelineIdx;
 
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
   }

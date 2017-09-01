@@ -10,10 +10,11 @@ namespace lava
   class Surface : private NonCopyable<Surface>
   {
   public:
-    Surface( const std::shared_ptr< Instance >& instance, const vk::SurfaceKHR& surface );
+    Surface( const std::shared_ptr< Instance >& instance, 
+      const vk::SurfaceKHR& surface );
     ~Surface( );
 
-    inline operator vk::SurfaceKHR( ) const
+    inline operator vk::SurfaceKHR( void ) const
     {
       return _surface;
     }

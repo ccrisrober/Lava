@@ -14,33 +14,33 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
-	MyApp(char const* title, uint32_t width, uint32_t height)
-		: VulkanApp( title, width, height )
-	{
-	}
-	void keyEvent(int key, int scancode, int action, int mods)
-	{
-		switch (key)
-		{
-		case GLFW_KEY_ESCAPE:
-			switch (action)
-			{
-			case GLFW_PRESS:
-				glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-	}
+  MyApp(char const* title, uint32_t width, uint32_t height)
+    : VulkanApp( title, width, height )
+  {
+  }
+  void keyEvent(int key, int scancode, int action, int mods)
+  {
+    switch (key)
+    {
+    case GLFW_KEY_ESCAPE:
+      switch (action)
+      {
+      case GLFW_PRESS:
+        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        break;
+      default:
+        break;
+      }
+      break;
+    default:
+      break;
+    }
+  }
 };
 
 void glfwErrorCallback(int error, const char* description)
 {
-	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+  fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
 int main( void )

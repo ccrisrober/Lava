@@ -48,10 +48,12 @@ public:
     _device->updateDescriptorSets( wdss, nullptr );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/fullquad_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> vertexShaderModule =_device->createShaderModule( 
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/fullquad_vert.spv"), 
+      vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/fullquad_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/fullquad_frag.spv" ), 
+      vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
@@ -65,14 +67,25 @@ public:
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, false, false, 
-      vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
+      vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, 
+      vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+    PipelineMultisampleStateCreateInfo multisample( 
+      vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, 
+      vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 
+      0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
+      stencilOpState, 0.0f, 0.0f );
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG 
+      | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
+      colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
+    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, 
+      vk::DynamicState::eScissor } );
 
 
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
@@ -80,7 +93,7 @@ public:
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
   }
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
@@ -96,7 +109,8 @@ public:
     { vk::ClearValue( ccv ), vk::ClearValue( 
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
     commandBuffer->bindPipeline( vk::PipelineBindPoint::eGraphics, _pipeline );
-    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics, _pipelineLayout, 0, { _descriptorSet }, nullptr );
+    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      _pipelineLayout, 0, { _descriptorSet }, nullptr );
 
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, 
       ( float ) _defaultFramebuffer->getExtent( ).width, 

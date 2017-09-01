@@ -4,7 +4,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "../Vulkan-Hpp/vulkan/vulkan.hpp"
+//#include "../Vulkan-Hpp/vulkan/vulkan.hpp"
+#include "vulkan.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

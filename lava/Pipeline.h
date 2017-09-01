@@ -210,7 +210,7 @@ namespace lava
       const PipelineShaderStageCreateInfo& stage,
       const std::shared_ptr<PipelineLayout>& layout,
       const std::shared_ptr<Pipeline>& basePipelineHandle,
-      int32_t basePipelineIndex );
+      uint32_t basePipelineIndex );
   };
 
   class GraphicsPipeline : public Pipeline
@@ -218,8 +218,8 @@ namespace lava
   public:
     LAVA_API
     GraphicsPipeline(
-      std::shared_ptr<Device> const & device,
-      std::shared_ptr<PipelineCache> const& pipelineCache,
+      const std::shared_ptr<Device>& device,
+      const std::shared_ptr<PipelineCache>& pipelineCache,
       vk::PipelineCreateFlags flags,
       vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages,
       vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,

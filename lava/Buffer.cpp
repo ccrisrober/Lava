@@ -5,10 +5,10 @@
 
 namespace lava
 {
-  Buffer::Buffer( const DeviceRef& device, vk::BufferCreateFlags createFlags, 
+  Buffer::Buffer( const DeviceRef& device, vk::BufferCreateFlags, 
     vk::DeviceSize size, vk::BufferUsageFlags usageFlags, 
-    vk::SharingMode sharingMode, vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
-    vk::MemoryPropertyFlags memoryPropertyFlags )
+    vk::SharingMode, vk::ArrayProxy<const uint32_t>, 
+    vk::MemoryPropertyFlags )
     : VulkanResource( device )
   {
     vk::BufferCreateInfo vertexBufferInfo;

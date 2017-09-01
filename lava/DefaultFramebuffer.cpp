@@ -188,10 +188,10 @@ namespace lava
     std::cout << "Framebuffer Swapchain OK" << std::endl;
   }
 
-  void DefaultFramebuffer::rebuild( const DeviceRef& device,
-    const std::shared_ptr<Surface>& surface,
-    vk::Format surfaceFormat, vk::Format depthFormat,
-    const std::shared_ptr<RenderPass>& renderPass )
+  void DefaultFramebuffer::rebuild( const DeviceRef&,
+    const std::shared_ptr<Surface>&,
+    vk::Format, vk::Format,
+    const std::shared_ptr<RenderPass>& )
   {
     // TODO
   }

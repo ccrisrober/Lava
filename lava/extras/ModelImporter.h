@@ -1,6 +1,8 @@
 #ifndef __LAVA_MODELIMPORTER__
 #define __LAVA_MODELIMPORTER__
 
+#ifdef LAVA_USE_ASSIMP
+
 #include "Mesh.h"
 #include "Material.h"
 
@@ -22,5 +24,7 @@ namespace lava
     };
   }
 }
+
+#endif
 
 #endif /* __LAVA_MODELIMPORTER__ */

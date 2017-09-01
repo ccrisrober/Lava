@@ -12,11 +12,13 @@ namespace lava
     , stageFlags( stageFlags_ )
   {}
 
-  DescriptorSetLayoutBinding::DescriptorSetLayoutBinding( DescriptorSetLayoutBinding const& rhs )
+  DescriptorSetLayoutBinding::DescriptorSetLayoutBinding( 
+    DescriptorSetLayoutBinding const& rhs )
     : DescriptorSetLayoutBinding( rhs.binding, rhs.descriptorType, rhs.stageFlags )
   {}
 
-  DescriptorSetLayoutBinding & DescriptorSetLayoutBinding::operator=( DescriptorSetLayoutBinding const& rhs )
+  DescriptorSetLayoutBinding& 
+  DescriptorSetLayoutBinding::operator=( DescriptorSetLayoutBinding const& rhs )
   {
     binding = rhs.binding;
     descriptorType = rhs.descriptorType;
@@ -36,11 +38,11 @@ namespace lava
       dslb.size( ),
       dslb.data( )
     );
-    _descriptorSetLayout = static_cast< vk::Device >( *_device ).createDescriptorSetLayout(
-      dci );
+    _descriptorSetLayout = static_cast< vk::Device >( *_device )
+      .createDescriptorSetLayout( dci );
   }
 
-  DescriptorSetLayout::~DescriptorSetLayout( )
+  DescriptorSetLayout::~DescriptorSetLayout( void )
   {
     static_cast< vk::Device >( *_device ).destroyDescriptorSetLayout( _descriptorSetLayout );
   }
@@ -63,13 +65,36 @@ namespace lava
     _descriptorPool = static_cast< vk::Device >( *_device ).createDescriptorPool( dci );
   }
 
-  DescriptorPool::~DescriptorPool( )
+  DescriptorPool::~DescriptorPool( void )
   {
     static_cast< vk::Device >( *_device ).destroyDescriptorPool( _descriptorPool );
   }
 
-  void DescriptorPool::reset( )
+  void DescriptorPool::reset( void )
   {
     static_cast< vk::Device >( *_device ).resetDescriptorPool( _descriptorPool );
+  }
+
+  DescriptorSet::DescriptorSet( const DeviceRef& device, 
+    const std::shared_ptr<DescriptorPool>& descriptorPool,
+    const std::shared_ptr<DescriptorSetLayout>& layout)
+    : VulkanResource( device )
+    , _descriptorPool( descriptorPool )
+  {
+    vk::DescriptorSetLayout lay = *layout;
+    vk::DescriptorSetAllocateInfo dci( *_descriptorPool, 1, &lay );
+
+    std::vector< vk::DescriptorSet > vds = static_cast< vk::Device >( *_device)
+      .allocateDescriptorSets( dci );
+
+    assert( !vds.empty( ) );
+
+    _descriptorSet = vds.front( );
+  }
+
+  DescriptorSet::~DescriptorSet( void )
+  {
+    static_cast< vk::Device > ( *_device ).freeDescriptorSets( *_descriptorPool, 
+      _descriptorSet );
   }
 }

@@ -1,6 +1,8 @@
 #ifndef __LAVA_MESH__
 #define __LAVA_MESH__
 
+#ifdef LAVA_USE_ASSIMP
+
 #include <vector>
 #include <glm/glm.hpp>
 #include <assimp/mesh.h>
@@ -25,5 +27,7 @@ namespace lava
     };
   }
 }
+
+#endif
 
 #endif /* __LAVA_MESH__ */

@@ -18,7 +18,7 @@ namespace lava
       const std::vector<std::shared_ptr<ImageView>>& attachments, const vk::Extent2D& extent, uint32_t layers );
     virtual ~Framebuffer( );
 
-    inline operator vk::Framebuffer( ) const
+    inline operator vk::Framebuffer( void ) const
     {
       return _framebuffer;
     }

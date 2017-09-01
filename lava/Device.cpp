@@ -149,27 +149,36 @@ namespace lava
       imageUsage, imageSharingMode, queueFamilyIndices, preTransform,
       compAlpha, presentMode, clipped, oldSwapchain );
   }
-  std::shared_ptr<Image> Device::createImage( vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,
-    const vk::Extent3D & extent, uint32_t mipLevels, uint32_t arraySize, vk::SampleCountFlagBits samples, vk::ImageTiling tiling,
-    vk::ImageUsageFlags usageFlags, vk::SharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices,
+  std::shared_ptr<Image> Device::createImage( vk::ImageCreateFlags createFlags, 
+    vk::ImageType type, vk::Format format, const vk::Extent3D & extent, 
+    uint32_t mipLevels, uint32_t arraySize, vk::SampleCountFlagBits samples, 
+    vk::ImageTiling tiling, vk::ImageUsageFlags usageFlags, 
+    vk::SharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices,
     vk::ImageLayout initialLayout, vk::MemoryPropertyFlags memoryPropertyFlags )
   {
-    return std::make_shared<Image>( shared_from_this( ), createFlags, type, format, extent, mipLevels,
-      arraySize, samples, tiling, usageFlags, sharingMode, queueFamilyIndices, initialLayout, memoryPropertyFlags );
+    return std::make_shared<Image>( shared_from_this( ), createFlags, type, 
+      format, extent, mipLevels, arraySize, samples, tiling, usageFlags, 
+      sharingMode, queueFamilyIndices, initialLayout, memoryPropertyFlags );
   }
-  std::shared_ptr<Framebuffer> Device::createFramebuffer( const std::shared_ptr<RenderPass>& renderPass, const std::vector<std::shared_ptr<ImageView>>& attachments, const vk::Extent2D & extent, uint32_t layers )
+  std::shared_ptr<Framebuffer> Device::createFramebuffer( 
+    const std::shared_ptr<RenderPass>& renderPass, 
+    const std::vector<std::shared_ptr<ImageView>>& attachments, 
+    const vk::Extent2D & extent, uint32_t layers )
   {
-    return std::make_shared<Framebuffer>( shared_from_this( ), renderPass, attachments, extent, layers );
+    return std::make_shared<Framebuffer>( shared_from_this( ), renderPass, 
+      attachments, extent, layers );
   }
-  std::shared_ptr<CommandPool> Device::createCommandPool( vk::CommandPoolCreateFlags flags, uint32_t familyIndex )
+  std::shared_ptr<CommandPool> Device::createCommandPool( 
+    vk::CommandPoolCreateFlags flags, uint32_t familyIdx )
   {
-    return std::make_shared<CommandPool>( shared_from_this( ), flags, familyIndex );
+    return std::make_shared<CommandPool>( shared_from_this( ), flags, familyIdx );
   }
-  std::shared_ptr<ShaderModule> Device::createShaderModule( const std::string & filePath, vk::ShaderStageFlagBits type )
+  std::shared_ptr<ShaderModule> Device::createShaderModule( 
+    const std::string& filePath, vk::ShaderStageFlagBits type )
   {
     return std::make_shared<ShaderModule>( shared_from_this( ), filePath, type );
   }
-  std::shared_ptr<ShaderModule> Device::createShaderModule( const std::string & filePath )
+  std::shared_ptr<ShaderModule> Device::createShaderModule( const std::string& filePath )
   {
     return std::make_shared<ShaderModule>( shared_from_this( ), filePath );
   }
@@ -225,8 +234,8 @@ namespace lava
       findMemoryType( _physicalDevice->getMemoryProperties( ), reqs.memoryTypeBits, flags )
     );
 
-    if ( allocateInfo.memoryTypeIndex == -1 )
-      return VK_NULL_HANDLE;
+    if ( allocateInfo.memoryTypeIndex == uint32_t( -1 ) )
+      throw; //return VK_NULL_HANDLE;
 
     vk::DeviceMemory memory = _device.allocateMemory( allocateInfo );
 
@@ -238,7 +247,7 @@ namespace lava
   }
 
   std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
-    std::shared_ptr<PipelineCache> const& pipelineCache, 
+    const std::shared_ptr<PipelineCache>& pipelineCache, 
     vk::PipelineCreateFlags flags,
     vk::ArrayProxy<const PipelineShaderStageCreateInfo> stages,
     vk::Optional<const PipelineVertexInputStateCreateInfo> vertexInputState,
@@ -260,6 +269,18 @@ namespace lava
       viewportState, rasterizationState, multisampleState, depthStencilState, 
       colorBlendState, dynamicState, pipelineLayout, renderPass, subpass, 
       basePipelineHandle, basePipelineIndex );
+  }
+
+  std::shared_ptr<Pipeline> Device::createComputePipeline( 
+    const std::shared_ptr<PipelineCache>& pipelineCache, 
+    vk::PipelineCreateFlags flags,
+    const PipelineShaderStageCreateInfo& stage,
+    std::shared_ptr<PipelineLayout> const& pipelineLayout,
+    std::shared_ptr<Pipeline> const& basePipelineHandle,
+    uint32_t basePipelineIndex )
+  {
+    return std::make_shared<ComputePipeline>( shared_from_this( ), pipelineCache, 
+      flags, stage, pipelineLayout, basePipelineHandle, basePipelineIndex );
   }
   
   std::shared_ptr<PipelineLayout> Device::createPipelineLayout( 

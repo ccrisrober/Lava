@@ -75,7 +75,7 @@ namespace lava
       fatt.memory = _device->allocateMemReqMemory( memReqs, vk::MemoryPropertyFlagBits::eDeviceLocal );
       vk::Device( *_device ).bindImageMemory( fatt.image, fatt.memory, 0 );
 
-      fatt.subresourceRange = {};
+      //fatt.subresourceRange = {};
       fatt.subresourceRange.aspectMask = aspectMask;
       fatt.subresourceRange.levelCount = 1;
       fatt.subresourceRange.layerCount = ci.layerCount;
@@ -93,7 +93,7 @@ namespace lava
 
 
       // Fill attachment description
-      fatt.description = {};
+      //fatt.description = {};
       fatt.description.samples = vk::SampleCountFlagBits::e1;
       fatt.description.loadOp = vk::AttachmentLoadOp::eClear;
       fatt.description.storeOp = ( ci.usage & vk::ImageUsageFlagBits::eSampled ) ? 

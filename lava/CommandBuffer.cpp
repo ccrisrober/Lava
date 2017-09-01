@@ -89,6 +89,24 @@ namespace lava
 
     _commandBuffer.endRenderPass( );
   }
+
+
+  void CommandBuffer::bindDescriptorSets(
+    vk::PipelineBindPoint pipelineBindPoint, 
+    const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet, 
+    vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
+    vk::ArrayProxy<const uint32_t> dynamicOffsets)
+  {
+    _bindDescriptorSets.clear( );
+    for( auto& descriptor : descriptorSets )
+    {
+      _bindDescriptorSets.push_back(*descriptor);
+    }
+
+    _commandBuffer.bindDescriptorSets(pipelineBindPoint, *pipelineLayout, 
+      firstSet, _bindDescriptorSets, dynamicOffsets);
+  }
+
   void CommandBuffer::setStencilCompareMask( vk::StencilFaceFlags faceMask, 
     uint32_t stencilCompareMask )
   {

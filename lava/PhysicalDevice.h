@@ -76,6 +76,26 @@ namespace lava
       return ( std::find( supportedExtensions.begin( ), 
         supportedExtensions.end( ), extension ) != supportedExtensions.end( ) );
     }
+
+    std::vector<uint32_t> getGraphicsPresentQueueFamilyIndices(
+      const std::shared_ptr<Surface>& surface )
+    {
+      std::vector<vk::QueueFamilyProperties> props =
+        _physicalDevice.getQueueFamilyProperties( );
+      assert( !props.empty( ) );
+
+      std::vector<uint32_t> indices;
+      for ( size_t i = 0; i < props.size( ); ++i )
+      {
+        if ( ( props[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) &&
+          this->getSurfaceSupport( i, surface ) )
+        {
+          indices.push_back( i );
+        }
+      }
+      return indices;
+    }
+
   private:
     std::shared_ptr<Instance> _instance;
     vk::PhysicalDevice _physicalDevice;
@@ -87,27 +107,6 @@ namespace lava
     //List of extensions supported by the device
     std::vector<std::string> supportedExtensions;
   };
-
-
-  static std::vector<uint32_t> getGraphicsPresentQueueFamilyIndices(
-    const std::shared_ptr<PhysicalDevice>& physicalDevice,
-    const std::shared_ptr<Surface>& surface )
-  {
-    std::vector<vk::QueueFamilyProperties> props =
-      vk::PhysicalDevice( *physicalDevice ).getQueueFamilyProperties( );
-    assert( !props.empty( ) );
-
-    std::vector<uint32_t> indices;
-    for ( size_t i = 0; i < props.size( ); ++i )
-    {
-      if ( ( props[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) &&
-        physicalDevice->getSurfaceSupport( i, surface ) )
-      {
-        indices.push_back( i );
-      }
-    }
-    return indices;
-  }
 }
 
 #endif /* __LAVA_PHYSICALDEVICE__ */

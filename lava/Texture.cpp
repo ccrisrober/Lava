@@ -32,9 +32,9 @@ namespace lava
     }
     device.freeMemory( memory );
   }
-  void Texture2D::loadFromFile( const DeviceRef & device, const std::string & filename,
-    vk::Format format, vk::Queue copyQueue, vk::ImageUsageFlagBits, vk::ImageLayout layout,
-    bool forceLinear )
+  void Texture2D::loadFromFile( const DeviceRef& device, const std::string& filename,
+    vk::Format format, vk::Queue copyQueue, vk::ImageUsageFlagBits, 
+    vk::ImageLayout layout, bool forceLinear )
   {
     this->_device = device;
 
@@ -44,7 +44,7 @@ namespace lava
     if ( pixels == nullptr )
     {
       std::cerr << stbi_failure_reason( ) << std::endl;
-      throw new std::exception( stbi_failure_reason( ) );
+      throw new std::runtime_error( stbi_failure_reason( ) );
     }
 
     width = texWidth;
@@ -56,6 +56,7 @@ namespace lava
     vk::Bool32 useStaging = !forceLinear;
 
     vk::MemoryRequirements memReqs;
+    vk::MemoryAllocateInfo memAllocInfo;
 
     if ( useStaging )
     {
@@ -83,6 +84,9 @@ namespace lava
 
 
 
+      // Setup buffer copy regions for each mip level
+      std::vector<vk::BufferImageCopy> bufferCopyRegions;
+      uint32_t offset = 0;
 
 
 
@@ -93,8 +97,43 @@ namespace lava
     }
     else
     {
+      // Check if this support is supported for linear tiling
+      assert(formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage);
+    
+      vk::Image mappableImage;
+      vk::Devicememory mappableMemory;
+
+      vk::ImageCreateInfo ici;
+      ici.imageType = vk::ImageType::e2D;
+      ici.format = format;
+      ici.extent = { width, height, 1 };
+      ici.mipLevels = 1;
+      ici.arrayLayers = 1;
+      ici.samples = vk::SampleCountFlagBits::e1;
+      ici.tiling = vk::ImageTiling::eLinear;
+      ici.SharingMode = vk::SharingMode::eExclusive;
+      ici.initialLayout = vk::ImageLayout::eUndefined;
+
+      // Load mip map level 0 to linear image
+      mappableImage = _static_cast<vk::Device>(*_device).createImage( ici );
+
+      // Get memory requirements for this image like size and aligments
+      memReqs = static_cast< vk::Device >( *_device ).getBufferMemoryRequirements( mappableImage );
+      // Set memory allocation size to required memory size
+      memAllocInfo.setAllocationSize( memReqs.size );
+      // Get memory type that can be mapped to host memory
+      memAllocInfo.memoryTpeIndex = ....
+
+      // Allocate host memory
+      mappableMemory = static_cast<vk::Device>(*_device).allocateMemory( memAllocInfo );
+
+      // Bind allocate image for use
+      static_cast<vk::Device>(*_device).bindImageMemory(mappableImage, mappableMemory, 0);
+
+      
 
     }
+
 
     // Create default sampler
     vk::SamplerCreateInfo sci;

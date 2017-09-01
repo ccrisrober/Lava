@@ -31,9 +31,11 @@ namespace lava
   class Texture2D : public Texture
   {
   public:
-    void loadFromFile( const DeviceRef& device, const std::string& filename, vk::Format format,
-      vk::Queue copyQueue, vk::ImageUsageFlagBits = vk::ImageUsageFlagBits::eSampled,
-      vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal, bool forceLinear = false );
+    void loadFromFile( const DeviceRef& device, const std::string& filename, 
+      vk::Format format, vk::Queue copyQueue, 
+      vk::ImageUsageFlagBits = vk::ImageUsageFlagBits::eSampled,
+      vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal, 
+      bool forceLinear = false );
   };
 }
 

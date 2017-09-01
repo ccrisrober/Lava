@@ -9,7 +9,7 @@ namespace lava
     , _surface( surface )
   {
   }
-  Surface::~Surface( )
+  Surface::~Surface( void )
   {
     vk::Instance( *_instance ).destroySurfaceKHR( _surface );
   }

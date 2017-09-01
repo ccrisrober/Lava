@@ -19,22 +19,26 @@ namespace lava
     LAVA_API
       virtual ~VulkanApp( void );
 
-    RenderAPICapabilities caps;
+    LAVA_API
+    inline const RenderAPICapabilities& getCapabilities( void ) const
+    {
+      return caps;
+    }
 
     LAVA_API
-      void waitEvents( )
+      void waitEvents( void )
     {
       glfwWaitEvents( );
     }
     LAVA_API
-    bool isRunning( )
+    bool isRunning( void )
     {
       return getWindow( )->isRunning( );
       //return !glfwWindowShouldClose( getWindow( ) );
     }
 
     LAVA_API
-    void paint( );
+    void paint( void );
     LAVA_API
     const std::shared_ptr<Window> getWindow( ) const { return _window; }
   protected:
@@ -44,7 +48,7 @@ namespace lava
     LAVA_API
     virtual void doResize( uint32_t width, uint32_t height );
     LAVA_API
-    virtual void doPaint( );
+    virtual void doPaint( void );
 
     LAVA_API
     virtual void cursorPosEvent( double xPos, double yPos );
@@ -79,6 +83,8 @@ namespace lava
     vk::Format _colorFormat;
     vk::Format _depthFormat;
     std::shared_ptr<Semaphore> _renderComplete;
+
+    RenderAPICapabilities caps;
 
     void initCapabilities( void );
     bool checkValidationLayerSupport(

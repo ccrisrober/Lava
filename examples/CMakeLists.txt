@@ -52,6 +52,18 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaFullQuadNoTexture )
 
+  set( LAVACOMPUTEEXAMPLE_HEADERS
+    lodepng.h
+  )
+  set( LAVACOMPUTEEXAMPLE_SOURCES
+    lodepng.cpp
+    ComputeExample.cpp
+  )
+  set( LAVACOMPUTEEXAMPLE_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaComputeExample )
+
   ##set( LAVAFULLQUADTEXTURE_HEADERS )
   ##set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
   ##set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES

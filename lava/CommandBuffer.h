@@ -78,8 +78,8 @@ namespace lava
     void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
       const std::shared_ptr<PipelineLayout>& pipelineLayout, 
       uint32_t firstSet, 
-      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, vk::ArrayProxy<const uint32_t> dynamicOffsets );
-
+      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
+      vk::ArrayProxy<const uint32_t> dynamicOffsets );
 
     LAVA_API
     void endRenderPass( );

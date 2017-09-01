@@ -1,5 +1,7 @@
 #include "ModelImporter.h"
 
+#ifdef LAVA_USE_ASSIMP
+
 namespace lava
 {
   namespace extras
@@ -40,3 +42,5 @@ namespace lava
     }
   }
 }
+
+#endif
