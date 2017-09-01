@@ -73,6 +73,14 @@ namespace lava
     void beginRenderPass( const std::shared_ptr<RenderPass>& renderPass,
       const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
       vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents contents );
+
+    LAVA_API
+    void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
+      const std::shared_ptr<PipelineLayout>& pipelineLayout, 
+      uint32_t firstSet, 
+      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, vk::ArrayProxy<const uint32_t> dynamicOffsets );
+
+
     LAVA_API
     void endRenderPass( );
 

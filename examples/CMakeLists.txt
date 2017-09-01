@@ -45,4 +45,18 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaCubeIndexed )
 
+  set( LAVAFULLQUADNOTEXTURE_HEADERS )
+  set( LAVAFULLQUADNOTEXTURE_SOURCES FullQuadNoTexture.cpp )
+  set( LAVAFULLQUADNOTEXTURE_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaFullQuadNoTexture )
+
+  ##set( LAVAFULLQUADTEXTURE_HEADERS )
+  ##set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
+  ##set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaFullQuadTexture )
+
 endif( )
