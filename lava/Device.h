@@ -54,6 +54,12 @@ namespace lava
       vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr, 
       vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
 
+    LAVA_API
+    std::shared_ptr<DescriptorSet> allocateDescriptorSet( 
+      const std::shared_ptr<DescriptorPool>& pool, 
+      const std::shared_ptr<DescriptorSetLayout>& layout );
+    LAVA_API
+    void updateDescriptorSets( std::vector<WriteDescriptorSet> descriptorWrites /* todo */ );
 
     LAVA_API
     void waitIdle( void )

@@ -75,12 +75,14 @@ public:
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, { 
-      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, position ) ), 
-      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, color ) ) }
+      vk::VertexInputAttributeDescription( 0, 0, 
+        vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, position ) ), 
+      vk::VertexInputAttributeDescription( 1, 0, 
+        vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, color ) ) }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, false /* todo: error true */, false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); // empty viewport and scissors force to dynamic states
+    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
     vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );

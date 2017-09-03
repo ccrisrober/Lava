@@ -27,11 +27,12 @@ set( LAVA_DESCRIPTION "LAVA" )
 
 include(Common)
 # Allow warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
 
+set(STBI_INCLUDE_DIR ../stbi)
 
 common_find_package( Vulkan REQUIRED SYSTEM )
 common_find_package( GLFW3 REQUIRED SYSTEM )

@@ -18,6 +18,7 @@ class MyApp : public VulkanApp
 public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<ImageView> _textureImageView;
   std::shared_ptr<Sampler> _textureSampler;
   std::shared_ptr<DescriptorSet> _descriptorSet;
   MyApp(char const* title, uint32_t width, uint32_t height)
@@ -28,6 +29,9 @@ public:
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
       _device->createDescriptorSetLayout( dslbs );
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+
+
+    _textureImageView = image->createImageView( vk::ImageViewType::e2D, format );
 
     // Init TextureSampler
     SamplerStateDesc samplerDesc;

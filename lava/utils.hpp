@@ -7,12 +7,13 @@
 #include <fstream>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <stbi/stb_image.h>
 
 namespace lava
 {
 	class utils
 	{
+  public:
     static unsigned char* loadImageTexture( const std::string& fileName,
       uint32_t& width, uint32_t& height, uint32_t& numChannels )
     {

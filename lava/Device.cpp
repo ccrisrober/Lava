@@ -64,6 +64,58 @@ namespace lava
       queueFamilyIndices, memoryPropertyFlags );
   }
 
+  std::shared_ptr<DescriptorSet> Device::allocateDescriptorSet( 
+    const std::shared_ptr<DescriptorPool>& pool, 
+    const std::shared_ptr<DescriptorSetLayout>& layout )
+  {
+    return std::make_shared<DescriptorSet>( shared_from_this( ), pool, layout );
+  }
+
+  void Device::updateDescriptorSets( std::vector<WriteDescriptorSet> descriptorWrites )
+  {
+    std::vector<vk::DescriptorImageInfo> diis;
+    std::vector<vk::DescriptorBufferInfo> dbis;
+
+    std::vector<vk::WriteDescriptorSet> writes;
+    for ( const auto& w : descriptorWrites )
+    {
+      if ( w.imageInfo )
+      {
+        /*vk::DescriptorImageInfo dii(
+          w.imageInfo->sampler ? static_cast< vk::Sampler >( *w.imageInfo->sampler ) : nullptr,
+          w.imageInfo->imageView ? static_cast< vk::ImageView >( *w.imageInfo->imageView ) : nullptr,
+          w.imageInfo->imageLayout );
+        diis.push_back( dii );*/
+      }
+      else if ( w.bufferInfo )
+      {
+        vk::DescriptorBufferInfo dbi(
+          w.bufferInfo->buffer ? static_cast< vk::Buffer >( *w.bufferInfo->buffer ) : nullptr,
+          w.bufferInfo->offset, 
+          w.bufferInfo->range
+        );
+        dbis.push_back( dbi );
+      }
+      else
+      {
+        throw;
+      }
+      vk::WriteDescriptorSet write (
+        w.dstSet ? static_cast<vk::DescriptorSet>( *w.dstSet ) : nullptr,
+        w.dstBinding,
+        w.dstArrayElement,
+        w.descriptorCount,
+        w.descriptorType,
+        diis.data( ), 
+        dbis.data( ), 
+        nullptr);
+      writes.push_back( write );
+    }
+    std::vector<vk::CopyDescriptorSet> copies;
+
+    _device.updateDescriptorSets( writes, copies );
+  }
+
   void Device::init(
     const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
     const std::vector<std::string>& enabledLayerNames,
@@ -90,7 +142,7 @@ namespace lava
       extensions.push_back( s.c_str( ) );
     }
     vk::DeviceCreateInfo dci(
-    {},
+      {},
       queueCIs.size( ),
       queueCIs.data( ),
       layers.size( ),

@@ -11,27 +11,36 @@
 namespace lava
 {
   class Device;
+  class Buffer;
+  class Sampler;
   struct DescriptorSetLayoutBinding
   {
+    LAVA_API
     DescriptorSetLayoutBinding( uint32_t binding,
       vk::DescriptorType descriptorType,
       vk::ShaderStageFlags stageFlags );
+    LAVA_API
     DescriptorSetLayoutBinding( DescriptorSetLayoutBinding const& rhs );
-    DescriptorSetLayoutBinding & operator=( DescriptorSetLayoutBinding const& rhs );
+    LAVA_API
+    DescriptorSetLayoutBinding& operator=( DescriptorSetLayoutBinding const& rhs );
 
     uint32_t binding;
     vk::DescriptorType descriptorType;
     vk::ShaderStageFlags stageFlags;
+    std::vector<std::shared_ptr<Sampler>> immutableSamplers;
   };
 
   class DescriptorSetLayout : public VulkanResource,
     private NonCopyable<DescriptorSetLayout>
   {
   public:
+    LAVA_API
     DescriptorSetLayout( const DeviceRef& device,
       vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings );
-    ~DescriptorSetLayout( );
+    LAVA_API
+    ~DescriptorSetLayout( void );
 
+    LAVA_API
     inline operator vk::DescriptorSetLayout( void ) const
     {
       return _descriptorSetLayout;
@@ -80,6 +89,59 @@ namespace lava
   protected:
     vk::DescriptorSet _descriptorSet;
     std::shared_ptr< DescriptorPool > _descriptorPool;
+  };
+
+  struct DescriptorBufferInfo
+  {
+    LAVA_API
+    DescriptorBufferInfo( const std::shared_ptr<Buffer>& buffer,
+      vk::DeviceSize offset, vk::DeviceSize range );
+    LAVA_API
+    DescriptorBufferInfo( const DescriptorBufferInfo& rhs );
+    LAVA_API
+    DescriptorBufferInfo& operator=( const DescriptorBufferInfo& rhs );
+
+    std::shared_ptr<Buffer> buffer;
+    vk::DeviceSize offset;
+    vk::DeviceSize range;
+  };
+
+  struct DescriptorImageInfo
+  {
+    /*DescriptorImageInfo( vk::ImageLayout imageLayout,
+      const std::shared_ptr<ImageView>& imageView,
+      const std::shared_ptr<Sampler>& sampler );
+    DescriptorImageInfo( const DescriptorImageInfo& rhs );
+    DescriptorImageInfo& operator=( const DescriptorImageInfo& rhs );
+
+    vk::ImageLayout imageLayout;
+    std::shared_ptr<ImageView> imageView;
+    std::shared_ptr<Sampler> sampler;*/
+  };
+
+  struct WriteDescriptorSet
+  {
+    LAVA_API
+    WriteDescriptorSet( const std::shared_ptr<DescriptorSet>& dstSet,
+      uint32_t dstBinding,
+      uint32_t dstArrayElement,
+      vk::DescriptorType descriptorType,
+      uint32_t descriptorCount,
+      vk::Optional<const DescriptorImageInfo> imageInfo,
+      vk::Optional<const DescriptorBufferInfo> bufferInfo );
+    LAVA_API
+    WriteDescriptorSet( const WriteDescriptorSet& rhs );
+    LAVA_API
+    WriteDescriptorSet& operator=( const WriteDescriptorSet& rhs );
+
+    std::shared_ptr<DescriptorSet> dstSet;
+    uint32_t dstBinding;
+    uint32_t dstArrayElement;
+    vk::DescriptorType descriptorType;
+    uint32_t descriptorCount;
+    std::unique_ptr<DescriptorImageInfo> imageInfo;
+    std::unique_ptr<DescriptorBufferInfo> bufferInfo;
+    // todo: pTexelBufferView
   };
 }
 

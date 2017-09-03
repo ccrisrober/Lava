@@ -254,17 +254,17 @@ namespace lava
     uint32_t basePipelineIndex )
     : Pipeline( device )
   {
-    vk::SpecializationInfo vkSpecializationInfo(
+    /*vk::SpecializationInfo vkSpecializationInfo(
       stage.specializationInfo->mapEntries.size( ),
       stage.specializationInfo->mapEntries.data( ),
       stage.specializationInfo->data.size( ),
-      stage.specializationInfo->data.data( ) );
+      stage.specializationInfo->data.data( ) );*/
     vk::PipelineShaderStageCreateInfo vkStage(
-    {},
+      {},
       stage.stage,
       stage.module ? static_cast< vk::ShaderModule >( *stage.module ) : nullptr,
       stage.name.data( ),
-      &vkSpecializationInfo
+      nullptr//&vkSpecializationInfo
     );
 
     vk::ComputePipelineCreateInfo cci(

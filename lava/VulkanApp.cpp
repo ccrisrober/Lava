@@ -244,8 +244,13 @@ namespace lava
     dqci.setPQueuePriorities( &queuePriority );
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     queueCreateInfos.push_back( dqci );
-    _device = _physicalDevice->createDevice( queueCreateInfos, enabledLayerNames,
-      enabledExtensionNames );
+
+    _device = _physicalDevice->createDevice( 
+      queueCreateInfos, 
+      enabledLayerNames,
+      enabledExtensionNames,
+      _physicalDevice->getDeviceFeatures( )
+    );
 
     _graphicsQueue = _device->getQueue( _queueFamilyIndex, 0 );
 

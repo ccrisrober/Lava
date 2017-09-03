@@ -169,12 +169,24 @@ namespace lava
     _commandBuffer.draw( vertexCount, instanceCount, firstVertex, firstInstance );
   }
 
+  void CommandBuffer::drawIndirect( const std::shared_ptr<Buffer>& buffer, 
+    vk::DeviceSize offset, uint32_t count, uint32_t stride )
+  {
+    _commandBuffer.drawIndirect( *buffer, offset, count, stride );
+  }
+
   void CommandBuffer::drawIndexed( uint32_t indexCount, uint32_t instanceCount, 
     uint32_t firstIndex,
     int32_t vertexOffset, uint32_t firstInstance )
   {
     _commandBuffer.drawIndexed( indexCount, instanceCount, firstIndex, 
       vertexOffset, firstInstance );
+  }
+
+  void CommandBuffer::drawIndexedIndirect( const std::shared_ptr<Buffer>& buffer, 
+    vk::DeviceSize offset, uint32_t count, uint32_t stride )
+  {
+    _commandBuffer.drawIndexedIndirect( *buffer, offset, count, stride );
   }
 
   void CommandBuffer::copyBuffer( const std::shared_ptr<Buffer>& srcBuffer, 

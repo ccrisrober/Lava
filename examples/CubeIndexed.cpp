@@ -58,7 +58,7 @@ const std::vector<Vertex> vertices =
   { { side2, side2, -side2 },{ 0.0f, 1.0f, 0.0f } },
   { { -side2, side2, -side2 },{ 0.0f, 1.0f, 0.0f } },
 };
-const std::vector<uint32_t> indices = { 
+const std::vector<uint32_t> indices = {
   0, 1, 2, 0, 2, 3,
   4, 5, 6, 4, 6, 7,
   8, 9, 10, 8, 10, 11,
@@ -67,25 +67,23 @@ const std::vector<uint32_t> indices = {
   20, 21, 22, 20, 22, 23
 };
 struct {
-  glm::mat4 projectionMatrix;
-  glm::mat4 viewMatrix;
-  glm::mat4 modelMatrix;
+  glm::mat4 mvpMatrix;
 } uboVS;
+
 class MyApp : public VulkanApp
 {
 public:
   std::shared_ptr<Buffer> _vertexBuffer;
   std::shared_ptr<Buffer> _indexBuffer;
-  std::shared_ptr<Buffer> _uniformBuffer;
+  std::shared_ptr<Buffer> _uniformBufferMVP;
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<DescriptorSet> _descriptorSet;
+
+
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-    // init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // Vertex buffer
     {
@@ -93,7 +91,8 @@ public:
         vertices.size( ) ) * sizeof( Vertex );
       _vertexBuffer = _device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-        vk::SharingMode::eExclusive, nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::SharingMode::eExclusive, nullptr, 
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
       void* data = _vertexBuffer->map( 0, vertexBufferSize );
       memcpy( data, vertices.data( ), vertexBufferSize );
       _vertexBuffer->unmap( );
@@ -103,14 +102,47 @@ public:
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
       _indexBuffer = _device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer );
+        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, 
+        vk::SharingMode::eExclusive, nullptr, 
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
       void* data = _indexBuffer->map( 0, indexBufferSize );
       memcpy( data, indices.data( ), indexBufferSize );
       _indexBuffer->unmap( );
     }
 
+    // MVP buffer
+    {
+      uint32_t mvpBufferSize = sizeof( uboVS );
+      _uniformBufferMVP = _device->createBuffer( mvpBufferSize, vk::BufferUsageFlagBits::eUniformBuffer, 
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
+      void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
+      memcpy( data, &uboVS.mvpMatrix, mvpBufferSize );
+      _uniformBufferMVP->unmap( );
+    }
+
+    // Init descriptor and pipeline layouts
+    std::vector<DescriptorSetLayoutBinding> dslbs;
+    DescriptorSetLayoutBinding mvpDescriptor = DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex );
+    dslbs.push_back( mvpDescriptor );
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+
+    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+
+    std::array<vk::DescriptorPoolSize, 1> poolSize;
+    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
+    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+
+    // Init descriptor set
+    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    std::vector<WriteDescriptorSet> wdss;
+    DescriptorBufferInfo buffInfo = DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) );
+    WriteDescriptorSet w = WriteDescriptorSet( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
+    wdss.push_back( w );
+    _device->updateDescriptorSets( wdss );
+
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/cube_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
@@ -119,8 +151,8 @@ public:
     PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
-    PipelineVertexInputStateCreateInfo vertexInput( binding, { 
-      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, position ) ), 
+    PipelineVertexInputStateCreateInfo vertexInput( binding, {
+      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, position ) ),
       vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, color ) ) }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -143,18 +175,20 @@ public:
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
     // Update matrices
-    uboVS.projectionMatrix = glm::perspective( glm::radians( 60.0f ), ( float ) width / ( float ) height, 0.1f, 256.0f );
+    glm::mat4 projectionMatrix = glm::perspective( glm::radians( 60.0f ), ( float ) width / ( float ) height, 0.1f, 256.0f );
 
-    uboVS.viewMatrix = glm::translate( glm::mat4( ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    glm::mat4 viewMatrix = glm::translate( glm::mat4( ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
 
-    uboVS.modelMatrix = glm::mat4( );
+    glm::mat4 modelMatrix = glm::mat4( );
+
+    uboVS.mvpMatrix = projectionMatrix * viewMatrix * modelMatrix;
 
     // Map uniform buffer and update it
-    void* data = _uniformBuffer->map( 0, sizeof( uboVS ) );
+    void* data = _uniformBufferMVP->map( 0, sizeof( uboVS ) );
     memcpy( data, &uboVS, sizeof( uboVS ) );
     // Unmap after data has been copied
     // Note: Since we requested a host coherent memory type for the uniform buffer, the write is instantly visible to the GPU
-    _uniformBuffer->unmap( );
+    _uniformBufferMVP->unmap( );
   }
 
   void doPaint( ) override
@@ -171,6 +205,8 @@ public:
     commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
     commandBuffer->bindPipeline( vk::PipelineBindPoint::eGraphics, _pipeline );
+    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      _pipelineLayout, 0, { _descriptorSet }, nullptr );
     commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
     commandBuffer->bindIndexBuffer( _indexBuffer, 0, vk::IndexType::eUint32 );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
@@ -187,15 +223,15 @@ public:
       _renderComplete
     } );
   }
-  void keyEvent(int key, int scancode, int action, int mods)
+  void keyEvent( int key, int scancode, int action, int mods )
   {
-    switch (key)
+    switch ( key )
     {
     case GLFW_KEY_ESCAPE:
-      switch (action)
+      switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
         break;
       default:
         break;
@@ -207,9 +243,9 @@ public:
   }
 };
 
-void glfwErrorCallback(int error, const char* description)
+void glfwErrorCallback( int error, const char* description )
 {
-  fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+  fprintf( stderr, "GLFW Error %d: %s\n", error, description );
 }
 
 int main( void )

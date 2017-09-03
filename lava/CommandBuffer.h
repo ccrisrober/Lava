@@ -143,9 +143,14 @@ namespace lava
     void draw( uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex,
       uint32_t firstInstance );
     LAVA_API
+    void drawIndirect( const std::shared_ptr<Buffer>& buffer,
+      vk::DeviceSize offset, uint32_t count, uint32_t stride );
+    LAVA_API
     void drawIndexed( uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
       int32_t vertexOffset, uint32_t firstInstance );
-
+    LAVA_API
+    void drawIndexedIndirect( const std::shared_ptr<Buffer>& buffer, 
+      vk::DeviceSize offset, uint32_t count, uint32_t stride );
     LAVA_API
     void copyBuffer( const std::shared_ptr<Buffer>& srcBuffer,
       const std::shared_ptr<Buffer>& dstBuffer, 
