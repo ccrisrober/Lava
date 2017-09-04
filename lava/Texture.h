@@ -8,14 +8,16 @@
 namespace lava
 {
   class Device;
+  class CommandPool;
 
   class Texture2D: public VulkanResource
   {
   public:
-    Texture2D( const DeviceRef& device, const std::string& filename );
+    Texture2D( const DeviceRef& device, const std::string& filename, 
+      const std::shared_ptr<CommandPool>& cmdPool );
 
-    vk::Image image;
-    vk::DeviceMemory imageMemory;
+    vk::Image textureImage;
+    vk::DeviceMemory textureImageMemory;
     vk::ImageLayout imageLayout;
   };
   /*class Texture : public VulkanResource

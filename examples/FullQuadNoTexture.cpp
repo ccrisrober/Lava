@@ -88,7 +88,7 @@ public:
         _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue(
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindPipeline( vk::PipelineBindPoint::eGraphics, _pipeline );
+    commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, 
       ( float ) _defaultFramebuffer->getExtent( ).width, 
       ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );

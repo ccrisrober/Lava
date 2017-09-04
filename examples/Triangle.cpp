@@ -36,31 +36,23 @@ public:
 	MyApp(char const* title, uint32_t width, uint32_t height)
 		: VulkanApp( title, width, height )
 	{
-
-
     // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
+      _device->createDescriptorSetLayout( dslbs );
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    // Init vertex buffer
-    /*uint32_t vertexBufferSize = static_cast<uint32_t>( 
-      vertices.size( ) ) * sizeof( Vertex );
-    _vertexBuffer = _device->createBuffer( vertexBufferSize,
-      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-      vk::SharingMode::eExclusive, nullptr,
-      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
-    void* data = _vertexBuffer->map( 0, vertexBufferSize );
-    memcpy( data, vertices.data( ), vertexBufferSize );
-    _vertexBuffer->unmap( );*/
-    
     uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
     _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
     _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/triangle_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+          std::string("/triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+          std::string( "/triangle_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -73,8 +65,8 @@ public:
       vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, color ) ) }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, false /* todo: error true */, false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); // Dynamic viewport and scissors
+    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
     vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
@@ -98,7 +90,7 @@ public:
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindPipeline( vk::PipelineBindPoint::eGraphics, _pipeline );
+    commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );

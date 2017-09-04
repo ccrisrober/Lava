@@ -7,30 +7,13 @@
 
 namespace lava
 {
-  Texture2D::Texture2D( const DeviceRef& device_, const std::string& filename )
+  Texture2D::Texture2D( const DeviceRef& device_, const std::string& filename, 
+      const std::shared_ptr<CommandPool>& cmdPool )
     : VulkanResource( device_ )
   {
     uint32_t width, height, numChannels;
     unsigned char* pixels = lava::utils::loadImageTexture( 
       filename, width, height, numChannels );
-    /*
-    vk::ImageCreateInfo ici;
-    ici.imageType = vk::ImageType::e2D;
-    ici.extent = { width, height, 1 };
-    ici.mipLevels = 1;
-    ici.arrayLayers = 1;
-    ici.format = vk::Format::eR8G8B8A8Unorm; //format;
-    ici.tiling = vk::ImageTiling::eOptimal; //eLinear;
-    ici.initialLayout = vk::ImageLayout::eUndefined;
-    ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
-    ici.sharingMode = vk::SharingMode::eExclusive;
-    ici.samples = vk::SampleCountFlagBits::e1;
-
-    image = static_cast< vk::Device >( *_device ).createImage( ici );
-
-    imageMemory = _device->allocateImageMemory( 
-      image, vk::MemoryPropertyFlagBits::eDeviceLocal );
-    */
 
     vk::Format format = vk::Format::eR8G8B8A8Unorm;
     vk::FormatProperties formatProps = 
@@ -50,17 +33,126 @@ namespace lava
 
       vk::BufferCreateInfo bci;
       bci.size = texSize;
+      bci.usage = vk::BufferUsageFlagBits::eTransferSrc;
       bci.sharingMode = vk::SharingMode::eExclusive;
 
       stagingBuffer = device.createBuffer( bci );
-      stagingMemory = _device->allocateBufferMemory( stagingBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
+      stagingMemory = _device->allocateBufferMemory( stagingBuffer, 
+        vk::MemoryPropertyFlagBits::eHostVisible 
+          | vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
+
 
       // Copy texture data into staging buffer
       void* data = device.mapMemory( stagingMemory, 0, texSize );
       memcpy( data, pixels, texSize );
       device.unmapMemory( stagingMemory );
 
-      // TODO: bufferImageCopy
+      free( pixels );
+
+      // Create Image
+      vk::ImageCreateInfo ici;
+      ici.imageType = vk::ImageType::e2D;
+      ici.format = format;
+      ici.mipLevels = 1;
+      ici.arrayLayers = 1;
+      ici.samples = vk::SampleCountFlagBits::e1;
+      ici.tiling = vk::ImageTiling::eOptimal;
+      ici.sharingMode = vk::SharingMode::eExclusive;
+      ici.initialLayout = vk::ImageLayout::eUndefined;
+      ici.extent.width = width;
+      ici.extent.height = height;
+      ici.extent.depth = 1;
+      ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+
+      textureImage = device.createImage( ici );
+      textureImageMemory = _device->allocateImageMemory( textureImage, 
+        vk::MemoryPropertyFlagBits::eDeviceLocal );  // Allocate + bind
+
+
+      std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
+      copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+
+
+      copyCmd->end( );
+
+      // The sub resource range describes the regions of the image we will be transition
+      vk::ImageSubresourceRange subresourceRange;
+      // Image only contains color data
+      subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+      // Start at first mip level
+      subresourceRange.baseMipLevel = 0;
+      // We will transition on all mip levels
+      subresourceRange.levelCount = 1;// mipLevels;
+      // The 2D texture only has one layer
+      subresourceRange.layerCount = 1;
+
+      // Image barrier for optimal image (target)
+      // Optimal image will be used as destination for the copy
+      // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+      utils::setImageLayout(
+        copyCmd,
+        textureImage,
+        // unnecesary (added in subresourceRange) vk::ImageAspectFlagBits::eColor,
+        vk::ImageLayout::eUndefined,          // Old layout is undefined
+        vk::ImageLayout::eTransferDstOptimal, // New layout
+        subresourceRange
+      );
+      // Copy buffer to image
+
+      vk::BufferImageCopy region = {};
+      region.bufferOffset = 0;
+      region.bufferRowLength = 0;
+      region.bufferImageHeight = 0;
+      region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      region.imageSubresource.mipLevel = 0;
+      region.imageSubresource.baseArrayLayer = 0;
+      region.imageSubresource.layerCount = 1;
+      region.imageOffset = vk::Offset3D( 0, 0, 0 );
+      region.imageExtent = vk::Extent3D(
+        width,
+        height,
+        1
+      );
+
+      static_cast<vk::CommandBuffer>( *copyCmd ).copyBufferToImage( 
+        stagingBuffer, textureImage, vk::ImageLayout::eTransferDstOptimal, 
+        { region }
+      );
+
+      // Change texture image layout to shader read after all mip levels have been copied
+      imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+      
+      // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+      utils::setImageLayout(
+        copyCmd,
+        textureImage,
+        // unnecesary (added in subresourceRange) vk::ImageAspectFlagBits::eColor,
+        vk::ImageLayout::eTransferDstOptimal, // Older layout
+        imageLayout,                          // New layout
+        subresourceRange
+      );
+
+      // Free staging buffer and memory
+      device.destroyBuffer( stagingBuffer );
+      _device->freeMemory( stagingMemory );
+
+      /*vk::BufferCopy copyRegion;
+      copyRegion.size = texSize;
+      vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+      vkEndCommandBuffer(commandBuffer);
+
+      VkSubmitInfo submitInfo = {};
+      submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+      submitInfo.commandBufferCount = 1;
+      submitInfo.pCommandBuffers = &commandBuffer;
+
+      vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+      vkQueueWaitIdle(graphicsQueue);
+
+      vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);*/
+
+      /*// TODO: bufferImageCopy
       
       vk::BufferImageCopy bufferCopyRegion = {};
       bufferCopyRegion.bufferOffset = 0;
@@ -71,11 +163,11 @@ namespace lava
       bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
       bufferCopyRegion.imageSubresource.layerCount = 1;
       bufferCopyRegion.imageOffset = { 0, 0, 0 };
-      bufferCopyRegion.imageExtent = {
+      bufferCopyRegion.imageExtent = vk::Extent3D(
         width,
         height,
         1
-      };
+      );
 
       // Create optimal tiled target image
       vk::ImageCreateInfo ici;
@@ -90,7 +182,7 @@ namespace lava
       ici.extent = { width, height, 1 };
       ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits:::eSampled; // imageUsageFlags;
 
-      // Ensure that the transfer_dst bit is set for stagging
+      // Ensure that the transfer_dst bit is set for staging
       if ( !( ici.usage & vk::ImageUsageFlagBits::eTransferDst ) )
       {
         ici.usage |= vk::ImageUsageFlagBits::eTransferDst;
@@ -100,7 +192,7 @@ namespace lava
     
 
       std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 0/*_queueFamilyIndex*/ );
+        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 0/*_queueFamilyIndex );
       std::shared_ptr<CommandBuffer> copyCmd = commandPool->allocateCommandBuffer( );
       
       // The sub resource range describes the regions of the image we will be transition
@@ -143,11 +235,11 @@ namespace lava
       device.freeMemory( stagingMemory );
       device.destroyBuffer( stagingBuffer );
 
-      // todo: send command buffer
+      // todo: send command buffer*/
     }
     else
     {
-      // Check if this support is supported for linear tiling
+      /*// Check if this support is supported for linear tiling
       assert( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage );
 
       vk::ImageCreateInfo ici;
@@ -173,18 +265,18 @@ namespace lava
       
       void* data;
 
-      /*// Get subresources layout
+      // Get subresources layout
       vk::SubresourceLayout subResLayout = static_cast< vk::Device >( *_device )
         .getImageSubresourceLayout( mappableImage, subRes );
       static_cast< vk::Device >( *_device ).mapMemory( mappableMemory, 0, memReqs.size, 0, &data );
       // Copy image memory
       memcpy( data, pixels, size );
-      static_cast< vk::Device >( *_device ).unmapMemory( mappableMemory );*/
+      static_cast< vk::Device >( *_device ).unmapMemory( mappableMemory );
 
       // Linear tiled images don't need to be staged
       // and can be directly used as textures
       image = mappableImage;
-      imageMemory = mappableMemory;
+      imageMemory = mappableMemory;*/
 
 
     }

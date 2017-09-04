@@ -104,8 +104,8 @@ public:
       vk::SubpassContents::eInline
     );
     commandBuffer->bindGraphicsPipeline(_pipeline );
-    commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
-    commandBuffer->bindIndexBuffer( _indexBuffer, 0 );
+    _vertexBuffer->bind( commandBuffer ); //commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
+    _indexBuffer->bind( commandBuffer );  //commandBuffer->bindIndexBuffer( _indexBuffer, 0 );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );

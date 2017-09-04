@@ -22,7 +22,7 @@ namespace lava
       vk::SurfaceTransformFlagBitsKHR preTransform,
       vk::CompositeAlphaFlagBitsKHR compositeAlpha, vk::PresentModeKHR presentMode,
       bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain );
-    virtual ~Swapchain( );
+    virtual ~Swapchain( void );
 
     const std::vector<std::shared_ptr<Image>>& getImages( void ) const;
     const std::vector<std::shared_ptr<Semaphore>>& getPresentCompleteSemaphores( ) const

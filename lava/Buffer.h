@@ -82,13 +82,18 @@ namespace lava
   public:
     LAVA_API
     VertexBuffer( const DeviceRef& device, vk::DeviceSize size );
+    LAVA_API
+    void bind( std::shared_ptr<CommandBuffer>& cmd );
   };
 
   class IndexBuffer: public Buffer
   {
   public:
     LAVA_API
-    IndexBuffer( const DeviceRef& device, const vk::IndexType type, uint32_t numIndices );
+    IndexBuffer( const DeviceRef& device, const vk::IndexType type, 
+      uint32_t numIndices );
+    LAVA_API
+    void bind( std::shared_ptr<CommandBuffer>& cmd );
     inline const vk::IndexType getIndexType( void )
     {
       return _type;

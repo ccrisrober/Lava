@@ -298,6 +298,13 @@ namespace lava
   {
     _commandBuffer.bindIndexBuffer( *buffer, offset, buffer->getIndexType( ) );
   }
+  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
+  {
+    vk::CommandBufferBeginInfo cbbi;
+    cbbi.flags = flags;
+
+    _commandBuffer.begin( cbbi );
+  }
   void CommandBuffer::begin( vk::CommandBufferUsageFlags flags,
     const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
     const std::shared_ptr<Framebuffer>& framebuffer, vk::Bool32 occlusionQueryEnable,

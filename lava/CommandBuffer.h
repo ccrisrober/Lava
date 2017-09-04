@@ -79,6 +79,9 @@ namespace lava
     }
 
     LAVA_API
+    void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ) );
+
+    LAVA_API
     void clearAttachments( vk::ArrayProxy< const vk::ClearAttachment> attachments,
       vk::ArrayProxy<const vk::ClearRect> rects );
     LAVA_API

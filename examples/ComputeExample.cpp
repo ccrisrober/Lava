@@ -115,7 +115,7 @@ public:
     commandBuffer->begin( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->bindPipeline( vk::PipelineBindPoint::eCompute, _pipeline );
+    commandBuffer->bindComputePipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eCompute,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
 
