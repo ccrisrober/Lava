@@ -174,6 +174,14 @@ namespace lava
   {
     _commandBuffer.bindPipeline( bindingPoint, *pipeline );
   }
+  void CommandBuffer::bindGraphicsPipeline( const std::shared_ptr<Pipeline>& pipeline )
+  {
+    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eGraphics, *pipeline );
+  }
+  void CommandBuffer::bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline )
+  {
+    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *pipeline );
+  }
   /*void CommandBuffer::bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
     std::shared_ptr<PipelineLayout> const & pipelineLayout, uint32_t firstSet, 
     vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
@@ -285,6 +293,11 @@ namespace lava
     _commandBuffer.bindIndexBuffer( *buffer, offset, indexType );
   }
 
+  void CommandBuffer::bindIndexBuffer( 
+    const std::shared_ptr<IndexBuffer>& buffer, vk::DeviceSize offset )
+  {
+    _commandBuffer.bindIndexBuffer( *buffer, offset, buffer->getIndexType( ) );
+  }
   void CommandBuffer::begin( vk::CommandBufferUsageFlags flags,
     const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
     const std::shared_ptr<Framebuffer>& framebuffer, vk::Bool32 occlusionQueryEnable,

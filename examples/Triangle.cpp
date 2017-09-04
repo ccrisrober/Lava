@@ -44,7 +44,7 @@ public:
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // Init vertex buffer
-    uint32_t vertexBufferSize = static_cast<uint32_t>( 
+    /*uint32_t vertexBufferSize = static_cast<uint32_t>( 
       vertices.size( ) ) * sizeof( Vertex );
     _vertexBuffer = _device->createBuffer( vertexBufferSize,
       vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
@@ -52,7 +52,11 @@ public:
       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
     void* data = _vertexBuffer->map( 0, vertexBufferSize );
     memcpy( data, vertices.data( ), vertexBufferSize );
-    _vertexBuffer->unmap( );
+    _vertexBuffer->unmap( );*/
+    
+    uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
+    _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+    _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );

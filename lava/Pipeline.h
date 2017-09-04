@@ -126,6 +126,9 @@ namespace lava
     LAVA_API
     void merge( vk::ArrayProxy<const std::shared_ptr<PipelineCache>> srcCaches ) const;
 
+    LAVA_API
+    void saveToFile( const char* filename );
+
     inline operator vk::PipelineCache( void ) const
     {
       return _pipelineCache;

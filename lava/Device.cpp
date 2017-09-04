@@ -64,6 +64,17 @@ namespace lava
       queueFamilyIndices, memoryPropertyFlags );
   }
 
+  std::shared_ptr<Buffer> Device::createBuffer( vk::DeviceSize size, 
+    const BufferType& bufferType, 
+    vk::SharingMode sharingMode,
+    vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+    vk::MemoryPropertyFlags memoryPropertyFlags )
+  {
+    return std::make_shared<Buffer>( shared_from_this( ), 
+      vk::BufferCreateFlags( ), size, bufferType, sharingMode, 
+      queueFamilyIndices, memoryPropertyFlags );
+  }
+
   std::shared_ptr<DescriptorSet> Device::allocateDescriptorSet( 
     const std::shared_ptr<DescriptorPool>& pool, 
     const std::shared_ptr<DescriptorSetLayout>& layout )

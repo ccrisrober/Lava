@@ -53,6 +53,12 @@ namespace lava
       vk::SharingMode sharingMode = vk::SharingMode::eExclusive,
       vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr, 
       vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
+      const BufferType& bufferType, 
+      vk::SharingMode sharingMode = vk::SharingMode::eExclusive,
+      vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr, 
+      vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
 
     LAVA_API
     std::shared_ptr<DescriptorSet> allocateDescriptorSet( 

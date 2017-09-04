@@ -109,7 +109,6 @@ namespace lava
     vk::ImageAspectFlags aspectMask,
     vk::ImageLayout oldImageLayout,
     vk::ImageLayout newImageLayout,
-    vk::ImageSubresourceRange subresourceRange,
     vk::PipelineStageFlags srcStageMask,
     vk::PipelineStageFlags dstStageMask )
   {

@@ -30,8 +30,8 @@ const std::vector<uint32_t> indices = { 0, 1, 2 };
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _vertexBuffer;
-  std::shared_ptr<Buffer> _indexBuffer;
+  std::shared_ptr<VertexBuffer> _vertexBuffer;
+  std::shared_ptr<IndexBuffer> _indexBuffer;
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   MyApp( char const* title, uint32_t width, uint32_t height )
@@ -44,27 +44,17 @@ public:
 
     // Vertex buffer
     {
-      uint32_t vertexBufferSize = static_cast< uint32_t >(
-        vertices.size( ) ) * sizeof( Vertex );
-      _vertexBuffer = _device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
-      void* data = _vertexBuffer->map( 0, vertexBufferSize );
-      memcpy( data, vertices.data( ), vertexBufferSize );
-      _vertexBuffer->unmap( );
+      uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
+      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      _indexBuffer = _device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
-      void* data = _indexBuffer->map( 0, indexBufferSize );
-      memcpy( data, indices.data( ), indexBufferSize );
-      _indexBuffer->unmap( );
+      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
+        vk::IndexType::eUint32, indices.size( ) );
+      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     // init shaders
@@ -107,14 +97,17 @@ public:
     commandBuffer->begin( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
-    { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindPipeline( vk::PipelineBindPoint::eGraphics, _pipeline );
+    commandBuffer->beginRenderPass( _renderPass, 
+      _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, 
+      _defaultFramebuffer->getExtent( ) ),
+      { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, 
+      vk::SubpassContents::eInline
+    );
+    commandBuffer->bindGraphicsPipeline(_pipeline );
     commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
-    commandBuffer->bindIndexBuffer( _indexBuffer, 0, vk::IndexType::eUint32 );
+    commandBuffer->bindIndexBuffer( _indexBuffer, 0 );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-    //commandBuffer->draw( uint32_t( vertices.size( ) ), 1, 0, 0 );
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 

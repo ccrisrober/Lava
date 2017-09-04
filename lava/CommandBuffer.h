@@ -12,6 +12,7 @@ namespace lava
 {
   class Device;
   class Buffer;
+  class IndexBuffer;
   class Image;
   class RenderPass;
   class Framebuffer;
@@ -24,13 +25,13 @@ namespace lava
       vk::CommandPoolCreateFlags flags = vk::CommandPoolCreateFlags( ),
       uint32_t familyIndex = 0 );
     LAVA_API
-    virtual ~CommandPool( );
+    virtual ~CommandPool( void );
 
-    inline operator vk::CommandPool( ) const
+    inline operator vk::CommandPool( void ) const
     {
       return _commandPool;
     }
-    const DeviceRef& getDevice( )
+    const DeviceRef& getDevice( void )
     {
       return _device;
     }
@@ -72,7 +73,7 @@ namespace lava
     LAVA_API
     virtual ~CommandBuffer( void );
 
-    inline operator vk::CommandBuffer( ) const
+    inline operator vk::CommandBuffer( void ) const
     {
       return _commandBuffer;
     }
@@ -104,7 +105,7 @@ namespace lava
       vk::ArrayProxy<const uint32_t> dynamicOffsets );
 
     LAVA_API
-    void endRenderPass( );
+    void endRenderPass( void );
 
     LAVA_API
     void setStencilCompareMask( vk::StencilFaceFlags faceMask, uint32_t stencilCompareMask );
@@ -147,6 +148,10 @@ namespace lava
     LAVA_API
     void bindPipeline( vk::PipelineBindPoint bindingPoint, 
       const std::shared_ptr<Pipeline>& pipeline );
+    LAVA_API
+    void bindGraphicsPipeline( const std::shared_ptr<Pipeline>& pipeline );
+    LAVA_API
+    void bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline );
     
     /*void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
       std::shared_ptr<PipelineLayout> const& pipelineLayout, uint32_t firstSet, 
@@ -193,6 +198,9 @@ namespace lava
     LAVA_API
     void bindIndexBuffer( const std::shared_ptr<Buffer>& buffer, 
       vk::DeviceSize offset, vk::IndexType indexType );
+    LAVA_API
+    void bindIndexBuffer( const std::shared_ptr<IndexBuffer>& buffer, 
+      vk::DeviceSize offset = { } );
     LAVA_API
     void bindVertexBuffer( uint32_t startBinding, const std::shared_ptr<Buffer>& buffer,
       vk::DeviceSize offset );

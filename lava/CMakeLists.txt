@@ -22,7 +22,7 @@ set( LAVA_SOURCES
 
   Window.cpp
 
-  Texture.cpp
+  #Texture.cpp
 
   extras/Mesh.cpp
   extras/Material.cpp
@@ -62,7 +62,7 @@ set( LAVA_PUBLIC_HEADERS
 
   Window.h
 
-  Texture.h
+  #Texture.h
 
   extras/FpsController.h
 

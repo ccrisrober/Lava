@@ -230,6 +230,27 @@ namespace lava
     }
     static_cast< vk::Device >( *_device ).mergePipelineCaches( _pipelineCache, caches );
   }
+
+  void PipelineCache::saveToFile( const char* filename )
+  {
+    size_t size = 0;
+    vk::Result result = static_cast<vk::Device>(*_device)
+      .getPipelineCacheData( _pipelineCache, &size, nullptr );
+    if ( result == vk::Result::eSuccess && size != 0 )
+    {
+      auto myfile = std::fstream( filename, std::ios::out | std::ios::binary );
+      void* data;
+      result = static_cast<vk::Device>(*_device)
+        .getPipelineCacheData( _pipelineCache, &size, data );
+      if ( result == vk::Result::eSuccess )
+      {
+        myfile.write( (char*)data, size );
+        myfile.close( );
+      }
+      free( data );
+    }
+  }
+
   Pipeline::Pipeline( const DeviceRef& device )
     : VulkanResource( device )
   {}
