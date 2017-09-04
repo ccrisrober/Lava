@@ -1,15 +1,195 @@
 #include "Texture.h"
 
 #include "Device.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include "PhysicalDevice.h"
+
+#include "utils.hpp"
 
 namespace lava
 {
-  Texture::Texture( const DeviceRef & device )
+  Texture2D::Texture2D( const DeviceRef& device_, const std::string& filename )
+    : VulkanResource( device_ )
+  {
+    uint32_t width, height, numChannels;
+    unsigned char* pixels = lava::utils::loadImageTexture( 
+      filename, width, height, numChannels );
+    /*
+    vk::ImageCreateInfo ici;
+    ici.imageType = vk::ImageType::e2D;
+    ici.extent = { width, height, 1 };
+    ici.mipLevels = 1;
+    ici.arrayLayers = 1;
+    ici.format = vk::Format::eR8G8B8A8Unorm; //format;
+    ici.tiling = vk::ImageTiling::eOptimal; //eLinear;
+    ici.initialLayout = vk::ImageLayout::eUndefined;
+    ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+    ici.sharingMode = vk::SharingMode::eExclusive;
+    ici.samples = vk::SampleCountFlagBits::e1;
+
+    image = static_cast< vk::Device >( *_device ).createImage( ici );
+
+    imageMemory = _device->allocateImageMemory( 
+      image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+    */
+
+    vk::Format format = vk::Format::eR8G8B8A8Unorm;
+    vk::FormatProperties formatProps = 
+      _device->_physicalDevice->getFormatProperties( format );
+
+    bool useStaging = false;
+
+    VkDeviceSize texSize = width * height * 4; // todo: 4 is numChannels?
+
+    vk::Device device = static_cast< vk::Device >( *_device );
+
+    if ( useStaging )
+    {
+      // Create a host-visible staging buffer that contains the raw image data
+      vk::Buffer stagingBuffer;
+      vk::DeviceMemory stagingMemory;
+
+      vk::BufferCreateInfo bci;
+      bci.size = texSize;
+      bci.sharingMode = vk::SharingMode::eExclusive;
+
+      stagingBuffer = device.createBuffer( bci );
+      stagingMemory = _device->allocateBufferMemory( stagingBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
+
+      // Copy texture data into staging buffer
+      void* data = device.mapMemory( stagingMemory, 0, texSize );
+      memcpy( data, pixels, texSize );
+      device.unmapMemory( stagingMemory );
+
+      // TODO: bufferImageCopy
+      
+      vk::BufferImageCopy bufferCopyRegion = {};
+      bufferCopyRegion.bufferOffset = 0;
+      bufferCopyRegion.bufferRowLength = 0;
+      bufferCopyRegion.bufferImageHeight = 0;
+      bufferCopyRegion.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      bufferCopyRegion.imageSubresource.mipLevel = 0;
+      bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+      bufferCopyRegion.imageSubresource.layerCount = 1;
+      bufferCopyRegion.imageOffset = { 0, 0, 0 };
+      bufferCopyRegion.imageExtent = {
+        width,
+        height,
+        1
+      };
+
+      // Create optimal tiled target image
+      vk::ImageCreateInfo ici;
+      ici.imageType = vk::ImageType::e2D;
+      ici.format = format;
+      ici.mipLevels = 1;// mipLevels;
+      ici.arrayLayers = 1;
+      ici.samples = vk::SampleCountFlagBits::e1;
+      ici.tiling = vk::ImageTiling::eOptimal;
+      ici.sharingMode = vk::SharingMode::eExclusive;
+      ici.initialLayout = vk::ImageLayout::eUndefined;
+      ici.extent = { width, height, 1 };
+      ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits:::eSampled; // imageUsageFlags;
+
+      // Ensure that the transfer_dst bit is set for stagging
+      if ( !( ici.usage & vk::ImageUsageFlagBits::eTransferDst ) )
+      {
+        ici.usage |= vk::ImageUsageFlagBits::eTransferDst;
+      }
+      image = device.createImage( ici );
+      imageMemory = _device->allocateImageMemory( image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+    
+
+      std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 0/*_queueFamilyIndex*/ );
+      std::shared_ptr<CommandBuffer> copyCmd = commandPool->allocateCommandBuffer( );
+      
+      // The sub resource range describes the regions of the image we will be transition
+      vk::ImageSubresourceRange ssr;
+      // Image only contains color data
+      ssr.aspectMask = vk::ImageAspectFlagBits::eColor;
+      // Start at first mip level
+      ssr.baseMipLevel = 0;
+      // We will transition on all mip levels
+      ssr.levelCount = 1;// mipLevels;
+      // The 2D texture only has one layer
+      ssr.layerCount = 1;
+
+      // Optimal image will be used as destination for the copy, so we must transfer from our
+      // initial undefined image layout to the transfer destination layout
+      utils::setImageLayout(
+        copyCmd,
+        image,
+        vk::ImageAspectFlagBits::eColor,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eTransferDstOptimal,
+        ssr
+      );
+
+      static_cast< vk::CommandBuffer >( *copyCmd ).copyBufferToImage( 
+        stagingBuffer, image, vk::ImageLayout::eTransferDstOptimal, bufferCopyRegion );
+
+      // Change texture image layout to shader read after all mip levels have been copied
+      imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+      utils::setImageLayout(
+        copyCmd,
+        image,
+        vk::ImageAspectFlagBits::eColor,
+        vk::ImageLayout::eTransferDstOptimal,
+        imageLayout,
+        ssr
+      );
+
+      // Clean up staging resources
+      device.freeMemory( stagingMemory );
+      device.destroyBuffer( stagingBuffer );
+
+      // todo: send command buffer
+    }
+    else
+    {
+      // Check if this support is supported for linear tiling
+      assert( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage );
+
+      vk::ImageCreateInfo ici;
+      ici.imageType = vk::ImageType::e2D;
+      ici.extent = { width, height, 1 };
+      ici.mipLevels = 1;
+      ici.arrayLayers = 1;
+      ici.format = format;
+      ici.tiling = vk::ImageTiling::eOptimal; //eLinear;
+      ici.initialLayout = vk::ImageLayout::eUndefined;
+      ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+      ici.sharingMode = vk::SharingMode::eExclusive;
+      ici.samples = vk::SampleCountFlagBits::e1;
+
+      // Get subresource layout
+      vk::ImageSubresource subRes;
+      subRes.aspectMask = vk::ImageAspectFlagBits::eColor;
+      subRes.mipLevel = 0;
+
+
+      vk::Image mappableImage;
+      vk::DeviceMemory mappableMemory;
+      
+      void* data;
+
+      /*// Get subresources layout
+      vk::SubresourceLayout subResLayout = static_cast< vk::Device >( *_device )
+        .getImageSubresourceLayout( mappableImage, subRes );
+      static_cast< vk::Device >( *_device ).mapMemory( mappableMemory, 0, memReqs.size, 0, &data );
+      // Copy image memory
+      memcpy( data, pixels, size );
+      static_cast< vk::Device >( *_device ).unmapMemory( mappableMemory );*/
+
+      // Linear tiled images don't need to be staged
+      // and can be directly used as textures
+      image = mappableImage;
+      imageMemory = mappableMemory;
+
+
+    }
+  }
+  /*Texture::Texture( const DeviceRef & device )
     : VulkanResource( device )
   {
   }
@@ -170,5 +350,5 @@ namespace lava
 
     // Update descriptor image info member that can be used for setting up descriptor sets
     updateDescriptor( );
-  }
+  }*/
 }

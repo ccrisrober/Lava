@@ -139,7 +139,7 @@ public:
     DescriptorBufferInfo buffInfo = DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) );
     WriteDescriptorSet w = WriteDescriptorSet( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
     wdss.push_back( w );
-    _device->updateDescriptorSets( wdss );
+    _device->updateDescriptorSets( wdss, {} );
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );

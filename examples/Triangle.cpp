@@ -46,10 +46,10 @@ public:
     // Init vertex buffer
     uint32_t vertexBufferSize = static_cast<uint32_t>( 
       vertices.size( ) ) * sizeof( Vertex );
-
-    _vertexBuffer = _device->createBuffer( vertexBufferSize, 
-      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, 
-      vk::SharingMode::eExclusive, nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+    _vertexBuffer = _device->createBuffer( vertexBufferSize,
+      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
     void* data = _vertexBuffer->map( 0, vertexBufferSize );
     memcpy( data, vertices.data( ), vertexBufferSize );
     _vertexBuffer->unmap( );

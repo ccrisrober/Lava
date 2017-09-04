@@ -59,7 +59,9 @@ namespace lava
       const std::shared_ptr<DescriptorPool>& pool, 
       const std::shared_ptr<DescriptorSetLayout>& layout );
     LAVA_API
-    void updateDescriptorSets( std::vector<WriteDescriptorSet> descriptorWrites /* todo */ );
+    void updateDescriptorSets( 
+      std::vector<WriteDescriptorSet> descriptorWrites,
+      std::vector<CopyDescriptorSet> descriptorCopies );
 
     LAVA_API
     void waitIdle( void )

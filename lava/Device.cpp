@@ -71,7 +71,9 @@ namespace lava
     return std::make_shared<DescriptorSet>( shared_from_this( ), pool, layout );
   }
 
-  void Device::updateDescriptorSets( std::vector<WriteDescriptorSet> descriptorWrites )
+  void Device::updateDescriptorSets( 
+    std::vector<WriteDescriptorSet> descriptorWrites, 
+    std::vector<CopyDescriptorSet> descriptorCopies )
   {
     std::vector<vk::DescriptorImageInfo> diis;
     std::vector<vk::DescriptorBufferInfo> dbis;
@@ -81,11 +83,11 @@ namespace lava
     {
       if ( w.imageInfo )
       {
-        /*vk::DescriptorImageInfo dii(
+        vk::DescriptorImageInfo dii(
           w.imageInfo->sampler ? static_cast< vk::Sampler >( *w.imageInfo->sampler ) : nullptr,
           w.imageInfo->imageView ? static_cast< vk::ImageView >( *w.imageInfo->imageView ) : nullptr,
           w.imageInfo->imageLayout );
-        diis.push_back( dii );*/
+        diis.push_back( dii );
       }
       else if ( w.bufferInfo )
       {
@@ -112,6 +114,21 @@ namespace lava
       writes.push_back( write );
     }
     std::vector<vk::CopyDescriptorSet> copies;
+    copies.reserve( descriptorCopies.size( ) );
+    for ( auto const& c : descriptorCopies )
+    {
+      copies.push_back( 
+        vk::CopyDescriptorSet( 
+          c.srcSet ? static_cast<vk::DescriptorSet>( *c.srcSet ) : nullptr, 
+          c.srcBinding, 
+          c.srcArrayElement,
+          c.dstSet ? static_cast<vk::DescriptorSet>( *c.dstSet ) : nullptr, 
+          c.dstBinding, 
+          c.dstArrayElement, 
+          c.descriptorCount
+        )
+      );
+    }
 
     _device.updateDescriptorSets( writes, copies );
   }
@@ -257,7 +274,7 @@ namespace lava
   {
     return std::make_shared<DescriptorPool>( shared_from_this( ), flags, maxSets, poolSizes );
   }
-  LAVA_API std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, void const * initialData )
+  std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, void const * initialData )
   {
     return std::make_shared<PipelineCache>( shared_from_this( ), vk::PipelineCacheCreateFlags( ), initialSize, initialData );
   }

@@ -19,22 +19,12 @@ namespace lava
     vertexBufferInfo.sharingMode = sharingMode;
 
     _buffer = static_cast< vk::Device >( *_device ).createBuffer( vertexBufferInfo );
-    vk::MemoryRequirements memReqs = 
-      static_cast< vk::Device >( *_device ).getBufferMemoryRequirements( _buffer );
-
-    vk::MemoryAllocateInfo memAlloc;
-    memAlloc.allocationSize = memReqs.size;
-    memAlloc.memoryTypeIndex = findMemoryType( 
-      _device->_physicalDevice->getMemoryProperties( ), 
-      memReqs.memoryTypeBits, 
-      memoryPropertyFlags );
-
-    _memory = static_cast< vk::Device >( *_device ).allocateMemory( memAlloc );
-    static_cast< vk::Device >( *_device ).bindBufferMemory( _buffer, _memory, 0 );
+    _memory = _device->allocateBufferMemory( _buffer, memoryPropertyFlags );
   }
 
-  Buffer::~Buffer( )
+  Buffer::~Buffer( void )
   {
+    _device->freeMemory( _memory );
     static_cast< vk::Device >( *_device ).destroyBuffer( _buffer );
   }
   void * Buffer::map( vk::DeviceSize offset, vk::DeviceSize length ) const

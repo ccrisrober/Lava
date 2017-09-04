@@ -64,11 +64,11 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaComputeExample )
 
-  ##set( LAVAFULLQUADTEXTURE_HEADERS )
-  ##set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
-  ##set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES
-  ##  lava
-  ##)
-  ##common_application( lavaFullQuadTexture )
+  set( LAVAFULLQUADTEXTURE_HEADERS )
+  set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
+  set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaFullQuadTexture )
 
 endif( )

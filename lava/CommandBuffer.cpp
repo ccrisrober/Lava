@@ -25,6 +25,45 @@ namespace lava
     _commandBuffers.push_back( commandBuffer.get( ) );
     return( commandBuffer );
   }
+
+
+  ImageMemoryBarrier::ImageMemoryBarrier( 
+    vk::AccessFlags srcAccessMask_, vk::AccessFlags dstAccessMask_, 
+    vk::ImageLayout oldLayout_, vk::ImageLayout newLayout_,
+    uint32_t srcQueueFamilyIndex_, uint32_t dstQueueFamilyIndex_, 
+    const std::shared_ptr<Image>& image_, 
+    const vk::ImageSubresourceRange& subresourceRange_ )
+    : srcAccessMask( srcAccessMask_ )
+    , dstAccessMask( dstAccessMask_ )
+    , oldLayout( oldLayout_ )
+    , newLayout( newLayout_ )
+    , srcQueueFamilyIndex( srcQueueFamilyIndex_ )
+    , dstQueueFamilyIndex( dstQueueFamilyIndex_ )
+    , image( image_ )
+    , subresourceRange( subresourceRange_ )
+  {}
+
+  ImageMemoryBarrier::ImageMemoryBarrier( ImageMemoryBarrier const& rhs )
+    : ImageMemoryBarrier( rhs.srcAccessMask, rhs.dstAccessMask, 
+      rhs.oldLayout, rhs.newLayout, rhs.srcQueueFamilyIndex, rhs.dstQueueFamilyIndex, 
+      rhs.image, rhs.subresourceRange )
+  {}
+
+  ImageMemoryBarrier & ImageMemoryBarrier::operator=( 
+    ImageMemoryBarrier const& rhs )
+  {
+    srcAccessMask = rhs.srcAccessMask;
+    dstAccessMask = rhs.dstAccessMask;
+    oldLayout = rhs.oldLayout;
+    newLayout = rhs.newLayout;
+    srcQueueFamilyIndex = rhs.srcQueueFamilyIndex;
+    dstQueueFamilyIndex = rhs.dstQueueFamilyIndex;
+    image = rhs.image;
+    subresourceRange = rhs.subresourceRange;
+
+    return *this;
+  }
+
   CommandBuffer::CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool, 
     vk::CommandBufferLevel level )
     : _commandPool( cmdPool )
@@ -274,5 +313,25 @@ namespace lava
     assert( _isRecording );
     _isRecording = false;
     _commandBuffer.end( );
+  }
+
+
+  void CommandBuffer::pipelineBarrier( vk::PipelineStageFlags srcStageMask, 
+    vk::PipelineStageFlags destStageMask, vk::DependencyFlags dependencyFlags,
+    vk::ArrayProxy<const vk::MemoryBarrier> barriers, 
+    vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers,
+    vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers )
+  {
+    std::vector<vk::ImageMemoryBarrier> imbs;
+    imbs.reserve( imageMemoryBarriers.size( ) );
+    for ( auto const& imb : imageMemoryBarriers )
+    {
+      imbs.push_back( vk::ImageMemoryBarrier( imb.srcAccessMask, imb.dstAccessMask, 
+        imb.oldLayout, imb.newLayout, imb.srcQueueFamilyIndex, imb.dstQueueFamilyIndex,
+        imb.image ? static_cast<vk::Image>( *imb.image ) : nullptr, imb.subresourceRange ) );
+    }
+
+    _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
+      barriers, bufferMemoryBarriers, imbs );
   }
 }

@@ -108,15 +108,15 @@ namespace lava
 
   struct DescriptorImageInfo
   {
-    /*DescriptorImageInfo( vk::ImageLayout imageLayout,
-      const std::shared_ptr<ImageView>& imageView,
+    DescriptorImageInfo( vk::ImageLayout imageLayout,
+      const std::shared_ptr<vk::ImageView>& imageView,
       const std::shared_ptr<Sampler>& sampler );
     DescriptorImageInfo( const DescriptorImageInfo& rhs );
     DescriptorImageInfo& operator=( const DescriptorImageInfo& rhs );
 
     vk::ImageLayout imageLayout;
-    std::shared_ptr<ImageView> imageView;
-    std::shared_ptr<Sampler> sampler;*/
+    std::shared_ptr<vk::ImageView> imageView;
+    std::shared_ptr<Sampler> sampler;
   };
 
   struct WriteDescriptorSet
@@ -142,6 +142,27 @@ namespace lava
     std::unique_ptr<DescriptorImageInfo> imageInfo;
     std::unique_ptr<DescriptorBufferInfo> bufferInfo;
     // todo: pTexelBufferView
+  };
+
+  struct CopyDescriptorSet
+  {
+    LAVA_API
+    CopyDescriptorSet( const std::shared_ptr<DescriptorSet>& srcSet,
+      uint32_t srcBinding, uint32_t srcArrayElement,
+      const std::shared_ptr<DescriptorSet>& dstSet, uint32_t dstBinding,
+      uint32_t dstArrayElement, uint32_t descriptorCount );
+    LAVA_API
+    CopyDescriptorSet( const CopyDescriptorSet& cds );
+    LAVA_API
+    CopyDescriptorSet& operator=( const CopyDescriptorSet& cds );
+
+    std::shared_ptr<DescriptorSet> srcSet;
+    uint32_t srcBinding;
+    uint32_t srcArrayElement;
+    std::shared_ptr<DescriptorSet> dstSet;
+    uint32_t dstBinding;
+    uint32_t dstArrayElement;
+    uint32_t descriptorCount;
   };
 }
 

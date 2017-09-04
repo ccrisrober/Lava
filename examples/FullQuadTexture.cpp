@@ -18,38 +18,35 @@ class MyApp : public VulkanApp
 public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<ImageView> _textureImageView;
+  std::shared_ptr<vk::ImageView> _textureImageView;
   std::shared_ptr<Sampler> _textureSampler;
   std::shared_ptr<DescriptorSet> _descriptorSet;
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    // init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
-      _device->createDescriptorSetLayout( dslbs );
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
-
-
-    _textureImageView = image->createImageView( vk::ImageViewType::e2D, format );
-
     // Init TextureSampler
     SamplerStateDesc samplerDesc;
     samplerDesc.mipFilter = FilterOptions::ANISOTROPIC;
     samplerDesc.maxAniso = 1;
     _textureSampler = _device->createSampler( samplerDesc );
 
-    std::shared_ptr<DescriptorPool> descriptorPool = 
-      _device->createDescriptorPool( {}, 1, 
-      { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
+    // init descriptor and pipeline layouts
+    std::vector<DescriptorSetLayoutBinding> dslbs;
+    dslbs.push_back( DescriptorSetLayoutBinding(
+      1, vk::DescriptorType::eCombinedImageSampler,
+      vk::ShaderStageFlagBits::eFragment ) );
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout =
+      _device->createDescriptorSetLayout( dslbs );
+    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+
+    std::shared_ptr<DescriptorPool> descriptorPool =
+      _device->createDescriptorPool( {}, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
 
     // init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
-    wdss.push_back( WriteDescriptorSet( _descriptorSet, 0, 0, 1, 
-      vk::DescriptorType::eCombinedImageSampler, DescriptorImageInfo( 
-        _textureSampler, _textureImageView, vk::ImageLayout::eGeneral ), nullptr ) );
-    _device->updateDescriptorSets( wdss, nullptr );
+    wdss.push_back( WriteDescriptorSet( _descriptorSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, 1, DescriptorImageInfo( vk::ImageLayout::eGeneral, _textureImageView, _textureSampler ), nullptr ) );
+    _device->updateDescriptorSets( wdss, { } );
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule =_device->createShaderModule( 

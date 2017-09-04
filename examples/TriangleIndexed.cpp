@@ -48,7 +48,8 @@ public:
         vertices.size( ) ) * sizeof( Vertex );
       _vertexBuffer = _device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-        vk::SharingMode::eExclusive, nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
       void* data = _vertexBuffer->map( 0, vertexBufferSize );
       memcpy( data, vertices.data( ), vertexBufferSize );
       _vertexBuffer->unmap( );
@@ -58,7 +59,9 @@ public:
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
       _indexBuffer = _device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer );
+        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
       void* data = _indexBuffer->map( 0, indexBufferSize );
       memcpy( data, indices.data( ), indexBufferSize );
       _indexBuffer->unmap( );

@@ -64,16 +64,7 @@ namespace lava
       vk::Device d = static_cast< vk::Device >( *_device );
       fatt.image = d.createImage( image );
 
-
-      vk::MemoryRequirements memReqs = static_cast< vk::Device >( *_device ).getImageMemoryRequirements( fatt.image );
-      uint32_t memoryTypeIndex = findMemoryType( _device->_physicalDevice->getMemoryProperties( ), memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal );
-      assert( memoryTypeIndex != -1 );
-
-      memAlloc.allocationSize = memReqs.size;
-      memAlloc.memoryTypeIndex = memoryTypeIndex;
-
-      fatt.memory = _device->allocateMemReqMemory( memReqs, vk::MemoryPropertyFlagBits::eDeviceLocal );
-      vk::Device( *_device ).bindImageMemory( fatt.image, fatt.memory, 0 );
+      fatt.memory = _device->allocateImageMemory( fatt.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       //fatt.subresourceRange = {};
       fatt.subresourceRange.aspectMask = aspectMask;
@@ -85,7 +76,7 @@ namespace lava
         vk::ImageViewType::e2D : vk::ImageViewType::e2DArray;
       imageView.format = ci.format;
       imageView.subresourceRange = fatt.subresourceRange;
-      //todo: workaround for depth+stencil attachments
+
       imageView.subresourceRange.aspectMask = ( fatt.hasDepth( ) ) ?
         vk::ImageAspectFlagBits::eDepth : aspectMask;
       imageView.image = fatt.image;

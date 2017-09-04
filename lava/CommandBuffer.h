@@ -41,6 +41,28 @@ namespace lava
     vk::CommandPool _commandPool;
     std::vector<CommandBuffer*> _commandBuffers;
   };
+
+
+  struct ImageMemoryBarrier
+  {
+    ImageMemoryBarrier( vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
+      vk::ImageLayout oldLayout, vk::ImageLayout newLayout, 
+      uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex,
+      const std::shared_ptr<Image>& image, 
+      const vk::ImageSubresourceRange& subresourceRange );
+    ImageMemoryBarrier( const ImageMemoryBarrier& rhs );
+    ImageMemoryBarrier & operator=( const ImageMemoryBarrier& rhs );
+
+    vk::AccessFlags           srcAccessMask;
+    vk::AccessFlags           dstAccessMask;
+    vk::ImageLayout           oldLayout;
+    vk::ImageLayout           newLayout;
+    uint32_t                  srcQueueFamilyIndex;
+    uint32_t                  dstQueueFamilyIndex;
+    std::shared_ptr<Image>    image;
+    vk::ImageSubresourceRange subresourceRange;
+  };
+
   class CommandBuffer
   {
   public:
@@ -180,6 +202,14 @@ namespace lava
       vk::ArrayProxy<const vk::DeviceSize> offsets );
     template <typename T> void updateBuffer( const std::shared_ptr<Buffer>& destBuffer,
       vk::DeviceSize destOffset, vk::ArrayProxy<const T> data );
+
+    LAVA_API
+    void pipelineBarrier( 
+      vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags destStageMask, 
+      vk::DependencyFlags dependencyFlags, 
+      vk::ArrayProxy<const vk::MemoryBarrier> barriers, 
+      vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
+      vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers );
 
   protected:
     std::shared_ptr<CommandPool> _commandPool;

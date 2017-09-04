@@ -126,8 +126,8 @@ namespace lava
     static_cast< vk::Device > ( *_device ).freeDescriptorSets( *_descriptorPool, 
       _descriptorSet );
   }
-  /*DescriptorImageInfo::DescriptorImageInfo( vk::ImageLayout imageLayout_, 
-    const std::shared_ptr<ImageView>& imageView_, const std::shared_ptr<Sampler>& sampler_ )
+  DescriptorImageInfo::DescriptorImageInfo( vk::ImageLayout imageLayout_, 
+    const std::shared_ptr<vk::ImageView>& imageView_, const std::shared_ptr<Sampler>& sampler_ )
     : imageLayout( imageLayout_ )
     , imageView( imageView_ )
     , sampler( sampler_ )
@@ -143,7 +143,7 @@ namespace lava
     imageView = rhs.imageView;
     sampler = rhs.sampler;
     return *this;
-  }*/
+  }
   WriteDescriptorSet::WriteDescriptorSet( const std::shared_ptr<DescriptorSet>& dstSet_, 
     uint32_t dstBinding_, uint32_t dstArrayElement_, vk::DescriptorType descriptorType_, 
     uint32_t descriptorCount_, 
@@ -176,6 +176,36 @@ namespace lava
     descriptorCount = rhs.descriptorCount;
     imageInfo.reset( rhs.imageInfo ? new DescriptorImageInfo( *rhs.imageInfo ) : nullptr );
     bufferInfo.reset( rhs.bufferInfo ? new DescriptorBufferInfo( *rhs.bufferInfo ) : nullptr );
+    return *this;
+  }
+  CopyDescriptorSet::CopyDescriptorSet( 
+    const std::shared_ptr<DescriptorSet>& srcSet_, uint32_t srcBinding_,
+    uint32_t srcArrayElem_, const std::shared_ptr<DescriptorSet>& dstSet_,
+    uint32_t dstBinding_, uint32_t dstArrayElem_, uint32_t descriptorCount_ )
+    : srcSet( srcSet_ )
+    , srcBinding( srcBinding_ )
+    , srcArrayElement( srcArrayElem_ )
+    , dstSet( dstSet_ )
+    , dstBinding( dstBinding_ )
+    , dstArrayElement( dstArrayElem_ )
+    , descriptorCount( descriptorCount_ )
+  {
+  }
+  CopyDescriptorSet::CopyDescriptorSet( const CopyDescriptorSet & cds )
+    : CopyDescriptorSet( cds.srcSet, cds.srcBinding, cds.srcArrayElement, 
+      cds.dstSet, cds.dstBinding, cds.dstArrayElement, cds.descriptorCount )
+  {
+  }
+  CopyDescriptorSet& CopyDescriptorSet::operator=( const CopyDescriptorSet & cds )
+  {
+    srcSet = cds.srcSet;
+    srcBinding = cds.srcBinding;
+    srcArrayElement = cds.srcArrayElement;
+    dstSet = cds.dstSet;
+    dstBinding = cds.dstBinding;
+    dstArrayElement = cds.dstArrayElement;
+    descriptorCount = cds.descriptorCount;
+
     return *this;
   }
 }

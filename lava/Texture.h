@@ -8,7 +8,17 @@
 namespace lava
 {
   class Device;
-  class Texture : public VulkanResource
+
+  class Texture2D: public VulkanResource
+  {
+  public:
+    Texture2D( const DeviceRef& device, const std::string& filename );
+
+    vk::Image image;
+    vk::DeviceMemory imageMemory;
+    vk::ImageLayout imageLayout;
+  };
+  /*class Texture : public VulkanResource
   {
   public:
     Texture( const DeviceRef& device );
@@ -36,7 +46,7 @@ namespace lava
       vk::ImageUsageFlagBits = vk::ImageUsageFlagBits::eSampled,
       vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal, 
       bool forceLinear = false );
-  };
+  };*/
 }
 
 #endif /* __LAVA_TEXTURE__ */
