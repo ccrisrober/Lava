@@ -107,7 +107,7 @@ namespace lava
       if ( w.imageInfo )
       {
         vk::DescriptorImageInfo dii(
-          w.imageInfo->sampler ? static_cast< vk::Sampler >( *w.imageInfo->sampler ) : nullptr,
+          w.imageInfo->sampler ? (*w.imageInfo->sampler) : nullptr,//static_cast< vk::Sampler >( *w.imageInfo->sampler ) : nullptr,
           w.imageInfo->imageView ? static_cast< vk::ImageView >( *w.imageInfo->imageView ) : nullptr,
           w.imageInfo->imageLayout );
         diis.push_back( dii );

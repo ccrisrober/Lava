@@ -370,18 +370,19 @@ namespace lava
       flags,
       vStages.size( ),
       vStages.data( ),
-      vertexInputState ? &vVertexInputState : nullptr,
+      vertexInputState? &vVertexInputState : nullptr,
       inputAssemblyState,
       tessellationState,
-      viewportState ? &vViewportState : nullptr,
-      rasterizationState, multisampleState ? &vMultisampleState : nullptr,
+      viewportState? &vViewportState : nullptr,
+      rasterizationState, multisampleState? &vMultisampleState : nullptr,
       depthStencilState,
-      colorBlendState ? &vColorBlendState : nullptr,
-      dynamicState ? &vDynamicState : nullptr,
-      pipelineLayout ? *pipelineLayout : vk::PipelineLayout( ),
-      renderPass ? *renderPass : vk::RenderPass( ),
-      subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
-      basePipelineIdx );
+      colorBlendState? &vColorBlendState : nullptr,
+      dynamicState? &vDynamicState : nullptr,
+      pipelineLayout? *pipelineLayout : vk::PipelineLayout( ),
+      renderPass? *renderPass : vk::RenderPass( ),
+      subpass, basePipelineHandle? *basePipelineHandle : vk::Pipeline( ),
+      basePipelineIdx
+    );
 
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
   }

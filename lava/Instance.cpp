@@ -45,8 +45,8 @@ namespace lava
     if ( flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT )
       message << "DEBUG";
 
-    message << ": [" << pLayerPrefix << "] Code " << msgCode << ": "
-      << pMsg << std::endl;
+      message << ": [" << pLayerPrefix << "] Code " << msgCode << ": "
+        << pMsg << std::endl;
 
     if ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT )
       std::cerr << message.str( ) << std::endl;
@@ -55,6 +55,8 @@ namespace lava
       std::cerr << message.str( ) << std::endl;
     else
       std::cerr << message.str( ) << std::endl;
+
+    std::cerr << message.str( ) << std::endl;
     assert( !message );
 
     // Abort calls that caused a validation message

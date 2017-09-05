@@ -111,7 +111,7 @@ namespace lava
     LAVA_API
     DescriptorImageInfo( vk::ImageLayout imageLayout,
       const std::shared_ptr<vk::ImageView>& imageView,
-      const std::shared_ptr<Sampler>& sampler );
+      const std::shared_ptr<vk::Sampler>& sampler );
     LAVA_API
     DescriptorImageInfo( const DescriptorImageInfo& rhs );
     LAVA_API
@@ -119,7 +119,7 @@ namespace lava
 
     vk::ImageLayout imageLayout;
     std::shared_ptr<vk::ImageView> imageView;
-    std::shared_ptr<Sampler> sampler;
+    std::shared_ptr<vk::Sampler> sampler; // todo: Move to lava::Sampler
   };
 
   struct WriteDescriptorSet

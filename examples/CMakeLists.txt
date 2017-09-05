@@ -38,6 +38,13 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaTriangleIndexed )
 
+  set( LAVACUBEUV_HEADERS )
+  set( LAVACUBEUV_SOURCES CubeUV.cpp )
+  set( LAVACUBEUV_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaCubeUV )
+
   set( LAVACUBEINDEXED_HEADERS )
   set( LAVACUBEINDEXED_SOURCES CubeIndexed.cpp )
   set( LAVACUBEINDEXED_LINK_LIBRARIES
@@ -64,11 +71,18 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaComputeExample )
 
-  set( LAVAFULLQUADTEXTURE_HEADERS )
-  set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
-  set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES
+  ##set( LAVAFULLQUADTEXTURE_HEADERS )
+  ##set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
+  ##set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaFullQuadTexture )
+
+  set( LAVAMESH_HEADERS )
+  set( LAVAMESH_SOURCES Mesh.cpp )
+  set( LAVAMESH_LINK_LIBRARIES
     lava
   )
-  common_application( lavaFullQuadTexture )
+  common_application( lavaMesh )
 
 endif( )

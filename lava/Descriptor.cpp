@@ -127,7 +127,8 @@ namespace lava
       _descriptorSet );
   }
   DescriptorImageInfo::DescriptorImageInfo( vk::ImageLayout imageLayout_, 
-    const std::shared_ptr<vk::ImageView>& imageView_, const std::shared_ptr<Sampler>& sampler_ )
+    const std::shared_ptr<vk::ImageView>& imageView_, 
+    const std::shared_ptr<vk::Sampler>& sampler_ )
     : imageLayout( imageLayout_ )
     , imageView( imageView_ )
     , sampler( sampler_ )
