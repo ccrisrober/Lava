@@ -108,10 +108,13 @@ namespace lava
 
   struct DescriptorImageInfo
   {
+    LAVA_API
     DescriptorImageInfo( vk::ImageLayout imageLayout,
       const std::shared_ptr<vk::ImageView>& imageView,
       const std::shared_ptr<Sampler>& sampler );
+    LAVA_API
     DescriptorImageInfo( const DescriptorImageInfo& rhs );
+    LAVA_API
     DescriptorImageInfo& operator=( const DescriptorImageInfo& rhs );
 
     vk::ImageLayout imageLayout;
@@ -123,10 +126,8 @@ namespace lava
   {
     LAVA_API
     WriteDescriptorSet( const std::shared_ptr<DescriptorSet>& dstSet,
-      uint32_t dstBinding,
-      uint32_t dstArrayElement,
-      vk::DescriptorType descriptorType,
-      uint32_t descriptorCount,
+      uint32_t dstBinding, uint32_t dstArrayElement,
+      vk::DescriptorType descriptorType, uint32_t descriptorCount,
       vk::Optional<const DescriptorImageInfo> imageInfo,
       vk::Optional<const DescriptorBufferInfo> bufferInfo );
     LAVA_API

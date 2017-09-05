@@ -44,7 +44,19 @@ namespace lava
     //_queues.clear();
     _device.destroy( );
   }
-  std::shared_ptr<Buffer> Device::createBuffer( 
+  vk::Result Device::waitForFences( 
+    vk::ArrayProxy<const std::shared_ptr<Fence>> fences, bool waitAll, 
+    uint32_t timeout ) const
+  {
+    std::vector<vk::Fence> vfences;
+    vfences.reserve( fences.size( ) );
+    for ( auto const& f : fences )
+    {
+      vfences.push_back( *f );
+    }
+    return _device.waitForFences( vfences, waitAll, timeout );
+  }
+  std::shared_ptr<Buffer> Device::createBuffer(
     vk::BufferCreateFlags createFlags, vk::DeviceSize size, 
     vk::BufferUsageFlags usageFlags, vk::SharingMode sharingMode, 
     vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
@@ -193,6 +205,10 @@ namespace lava
       assert( it.second && "duplicate queueFamilyIndex" );
     }
     std::cout << "Device OK" << std::endl;
+  }
+  void Device::waitIdle( void )
+  {
+    _device.waitIdle( );
   }
   std::shared_ptr<Semaphore> Device::createSemaphore( void )
   {

@@ -111,6 +111,12 @@ namespace lava
     void endRenderPass( void );
 
     LAVA_API
+    void blitImage( const std::shared_ptr<Image>& srcImage, 
+      vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
+      vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 
+      vk::Filter filter );
+
+    LAVA_API
     void setStencilCompareMask( vk::StencilFaceFlags faceMask, uint32_t stencilCompareMask );
     LAVA_API
     void setStencilReference( vk::StencilFaceFlags faceMask, uint32_t stencilReference );

@@ -129,6 +129,14 @@ namespace lava
     _commandBuffer.endRenderPass( );
   }
 
+  void CommandBuffer::blitImage( const std::shared_ptr<Image>& srcImage, 
+    vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
+    vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 
+    vk::Filter filter )
+  {
+    _commandBuffer.blitImage( *srcImage, srcImageLayout, *dstImage, 
+      dstImageLayout, regions, filter );
+  }
 
   void CommandBuffer::bindDescriptorSets(
     vk::PipelineBindPoint pipelineBindPoint, 
@@ -300,10 +308,12 @@ namespace lava
   }
   void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
   {
+    assert( !_isRecording );
     vk::CommandBufferBeginInfo cbbi;
     cbbi.flags = flags;
 
     _commandBuffer.begin( cbbi );
+    _isRecording = true;
   }
   void CommandBuffer::begin( vk::CommandBufferUsageFlags flags,
     const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
