@@ -24,6 +24,29 @@ public:
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
+    /*vk::Format format = vk::Format::eR8G8B8A8Unorm;
+    auto features = _device->_physicalDevice->getDeviceFeatures( );
+    if ( features.textureCompressionBC )
+    {
+      format = vk::Format::eBc3UnormBlock;
+    }
+    else if ( features.textureCompressionASTC_LDR )
+    {
+      format = vk::Format::eAstc8x8UnormBlock;
+    }
+    else if ( features.textureCompressionETC2 )
+    {
+      format = vk::Format::eEtc2R8G8B8UnormBlock;
+    }*/
+
+    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    Texture2D * tex = new Texture2D( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      std::string( "/uv_checker.png" ), commandPool, _graphicsQueue );
+
+
+
+
     // Init TextureSampler
     SamplerStateDesc samplerDesc;
     samplerDesc.mipFilter = FilterOptions::ANISOTROPIC;

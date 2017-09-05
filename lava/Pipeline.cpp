@@ -268,37 +268,33 @@ namespace lava
 
   ComputePipeline::ComputePipeline( const DeviceRef& device,
     const std::shared_ptr<PipelineCache>& pipelineCache,
-    vk::PipelineCreateFlags flags,
-    const PipelineShaderStageCreateInfo& stage,
+    vk::PipelineCreateFlags flags, const PipelineShaderStageCreateInfo& stage,
     const std::shared_ptr<PipelineLayout>& layout,
-    const std::shared_ptr<Pipeline>& basePipelineHandle,
-    uint32_t basePipelineIndex )
+    const std::shared_ptr<Pipeline>& basePipelineHandle, uint32_t basePipelineIdx )
     : Pipeline( device )
   {
-    /*vk::SpecializationInfo vkSpecializationInfo(
+    /*vk::SpecializationInfo vSpecializationInfo(
       stage.specializationInfo->mapEntries.size( ),
       stage.specializationInfo->mapEntries.data( ),
       stage.specializationInfo->data.size( ),
       stage.specializationInfo->data.data( ) );*/
-    vk::PipelineShaderStageCreateInfo vkStage(
+    vk::PipelineShaderStageCreateInfo vStage(
       {},
       stage.stage,
       stage.module ? static_cast< vk::ShaderModule >( *stage.module ) : nullptr,
       stage.name.data( ),
-      nullptr//&vkSpecializationInfo
-    );
-
-    vk::ComputePipelineCreateInfo cci(
-      flags,
-      vkStage,
-      layout ? static_cast< vk::PipelineLayout >( *layout ) : nullptr,
-      basePipelineHandle ? static_cast< vk::Pipeline >( *basePipelineHandle ) : nullptr,
-      basePipelineIndex
+      nullptr//&vSpecializationInfo
     );
 
     setPipeline( vk::Device( *_device ).createComputePipeline(
       pipelineCache ? static_cast< vk::PipelineCache >( *pipelineCache ) : nullptr,
-      cci ) );
+      vk::ComputePipelineCreateInfo(
+        flags,
+        vStage,
+        layout ? static_cast< vk::PipelineLayout >( *layout ) : nullptr,
+        basePipelineHandle ? static_cast< vk::Pipeline >( *basePipelineHandle ) : nullptr,
+        basePipelineIdx
+      ) ) );
   }
 
   GraphicsPipeline::GraphicsPipeline( const std::shared_ptr<Device>& device, 
@@ -322,8 +318,8 @@ namespace lava
     std::vector<vk::SpecializationInfo> specializationInfos;
     specializationInfos.reserve( stages.size( ) );
 
-    std::vector<vk::PipelineShaderStageCreateInfo> vkStages;
-    vkStages.reserve( stages.size( ) );
+    std::vector<vk::PipelineShaderStageCreateInfo> vStages;
+    vStages.reserve( stages.size( ) );
     for ( auto const& s : stages )
     {
       if ( s.specializationInfo )
@@ -331,78 +327,78 @@ namespace lava
         specializationInfos.push_back( vk::SpecializationInfo( s.specializationInfo->mapEntries.size( ), s.specializationInfo->mapEntries.data( ),
           s.specializationInfo->data.size( ), s.specializationInfo->data.data( ) ) );
       }
-      vkStages.push_back( vk::PipelineShaderStageCreateInfo( {}, s.stage, s.module ? static_cast<vk::ShaderModule>( *s.module ) : nullptr, s.name.data( ),
+      vStages.push_back( vk::PipelineShaderStageCreateInfo( {}, s.stage, s.module ? static_cast<vk::ShaderModule>( *s.module ) : nullptr, s.name.data( ),
         s.specializationInfo ? &specializationInfos.back( ) : nullptr ) );
     }
 
-    vk::PipelineVertexInputStateCreateInfo vkVertexInputState;
+    vk::PipelineVertexInputStateCreateInfo vVertexInputState;
     if ( vertexInputState )
     {
-      vkVertexInputState = vk::PipelineVertexInputStateCreateInfo( {}, vertexInputState->vertexBindingDescriptions.size( ), vertexInputState->vertexBindingDescriptions.data( ),
+      vVertexInputState = vk::PipelineVertexInputStateCreateInfo( {}, vertexInputState->vertexBindingDescriptions.size( ), vertexInputState->vertexBindingDescriptions.data( ),
         vertexInputState->vertexAttributeDesriptions.size( ), vertexInputState->vertexAttributeDesriptions.data( ) );
     }
 
-    vk::PipelineViewportStateCreateInfo vkViewportState;
+    vk::PipelineViewportStateCreateInfo vViewportState;
     if ( viewportState )
     {
-      vkViewportState = vk::PipelineViewportStateCreateInfo( {}, viewportState->viewports.size( ), viewportState->viewports.data( ),
+      vViewportState = vk::PipelineViewportStateCreateInfo( {}, viewportState->viewports.size( ), viewportState->viewports.data( ),
         viewportState->scissors.size( ), viewportState->scissors.data( ) );
     }
 
-    vk::PipelineMultisampleStateCreateInfo vkMultisampleState;
+    vk::PipelineMultisampleStateCreateInfo vMultisampleState;
     if ( multisampleState )
     {
-      vkMultisampleState = vk::PipelineMultisampleStateCreateInfo( {}, multisampleState->rasterizationSamples, multisampleState->sampleShadingEnable, multisampleState->minSampleShading,
+      vMultisampleState = vk::PipelineMultisampleStateCreateInfo( {}, multisampleState->rasterizationSamples, multisampleState->sampleShadingEnable, multisampleState->minSampleShading,
         multisampleState->sampleMasks.empty( ) ? nullptr : multisampleState->sampleMasks.data( ), multisampleState->alphaToCoverageEnable,
         multisampleState->alphaToOneEnable );
     }
 
-    vk::PipelineColorBlendStateCreateInfo vkColorBlendState;
+    vk::PipelineColorBlendStateCreateInfo vColorBlendState;
     if ( colorBlendState )
     {
-      vkColorBlendState = vk::PipelineColorBlendStateCreateInfo( {}, colorBlendState->logicEnable, colorBlendState->logicOp,  colorBlendState->attachments.size( ),
+      vColorBlendState = vk::PipelineColorBlendStateCreateInfo( {}, colorBlendState->logicEnable, colorBlendState->logicOp,  colorBlendState->attachments.size( ),
         colorBlendState->attachments.data( ), colorBlendState->blendConstants );
     }
 
-    vk::PipelineDynamicStateCreateInfo vkDynamicState;
+    vk::PipelineDynamicStateCreateInfo vDynamicState;
     if ( dynamicState )
     {
-      vkDynamicState = vk::PipelineDynamicStateCreateInfo( {}, dynamicState->dynamicStates.size( ), dynamicState->dynamicStates.data( ) );
+      vDynamicState = vk::PipelineDynamicStateCreateInfo( {}, dynamicState->dynamicStates.size( ), dynamicState->dynamicStates.data( ) );
     }
 
     /*vk::GraphicsPipelineCreateInfo pci(
       flags,
-      vkStages.size( ),
-      vkStages.data( ),
-      vertexInputState ? &vkVertexInputState : nullptr,
+      vStages.size( ),
+      vStages.data( ),
+      vertexInputState ? &vVertexInputState : nullptr,
       inputAssemblyState,
       tessellationState,
-      viewportState ? &vkViewportState : nullptr,
-      rasterizationState, multisampleState ? &vkMultisampleState : nullptr,
+      viewportState ? &vViewportState : nullptr,
+      rasterizationState, multisampleState ? &vMultisampleState : nullptr,
       depthStencilState,
-      colorBlendState ? &vkColorBlendState : nullptr,
-      dynamicState ? &vkDynamicState : nullptr,
+      colorBlendState ? &vColorBlendState : nullptr,
+      dynamicState ? &vDynamicState : nullptr,
       pipelineLayout ? *pipelineLayout : vk::PipelineLayout( ),
       renderPass ? *renderPass : vk::RenderPass( ),
       subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
       basePipelineIdx );*/
 
     vk::GraphicsPipelineCreateInfo pci;
-    pci.stageCount = vkStages.size( );
-    pci.pStages = vkStages.data( );
-    pci.pVertexInputState = vertexInputState ? &vkVertexInputState : nullptr;
+    pci.stageCount = vStages.size( );
+    pci.pStages = vStages.data( );
+    pci.pVertexInputState = vertexInputState ? &vVertexInputState : nullptr;
     pci.pInputAssemblyState = inputAssemblyState;
-    pci.pViewportState = viewportState ? &vkViewportState : nullptr;
+    pci.pViewportState = viewportState ? &vViewportState : nullptr;
     pci.pRasterizationState = rasterizationState;
-    pci.pMultisampleState = multisampleState ? &vkMultisampleState : nullptr;
+    pci.pMultisampleState = multisampleState ? &vMultisampleState : nullptr;
     pci.pDepthStencilState = depthStencilState;
-    pci.pColorBlendState = colorBlendState ? &vkColorBlendState : nullptr;
-    pci.pDynamicState = dynamicState ? &vkDynamicState : nullptr;
+    pci.pColorBlendState = colorBlendState ? &vColorBlendState : nullptr;
+    pci.pDynamicState = dynamicState ? &vDynamicState : nullptr;
     pci.layout = pipelineLayout ? *pipelineLayout : vk::PipelineLayout( );
     pci.renderPass = renderPass ? *renderPass : vk::RenderPass( );
     pci.subpass = subpass;
     pci.basePipelineHandle = basePipelineHandle ? *basePipelineHandle : vk::Pipeline( );
-    pci.basePipelineIndex = basePipelineIdx;
+    pci.basePipelineIdx = basePipelineIdx;
 
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
   }
@@ -451,7 +447,8 @@ namespace lava
     return *this;
   }
 
-  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( vk::ShaderStageFlagBits stage_, std::shared_ptr<ShaderModule> const& module_, std::string const& name_,
+  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( 
+    vk::ShaderStageFlagBits stage_, const std::shared_ptr<ShaderModule>& module_, std::string const& name_,
     vk::Optional<const SpecializationInfo> specializationInfo_ )
     : stage( stage_ )
     , module( module_ )

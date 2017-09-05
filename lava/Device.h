@@ -19,8 +19,8 @@
 
 namespace lava
 {
-  uint32_t findMemoryType( const vk::PhysicalDeviceMemoryProperties& memoryProperties, uint32_t requirementBits,
-    vk::MemoryPropertyFlags wantedFlags );
+  uint32_t findMemoryType( const vk::PhysicalDeviceMemoryProperties& memoryProps, 
+    uint32_t requirementBits, vk::MemoryPropertyFlags wantedFlags );
   class PhysicalDevice;
   class Device : private NonCopyable<Device>, public std::enable_shared_from_this<Device>
   {
@@ -34,12 +34,15 @@ namespace lava
     LAVA_API
     Device( const std::shared_ptr<PhysicalDevice>& phyDev );
     LAVA_API
-    virtual ~Device( );
+    virtual ~Device( void );
     LAVA_API
     inline operator vk::Device( void ) const
     {
       return _device;
     }
+    LAVA_API
+    vk::Result waitForFences( vk::ArrayProxy<const std::shared_ptr<Fence>> fences, 
+      bool waitAll, uint32_t timeout ) const;
 
     LAVA_API
     std::shared_ptr<Buffer> createBuffer( vk::BufferCreateFlags createFlags, 
@@ -70,10 +73,8 @@ namespace lava
       std::vector<CopyDescriptorSet> descriptorCopies );
 
     LAVA_API
-    void waitIdle( void )
-    {
-      _device.waitIdle( );
-    }
+    void waitIdle( void );
+
     LAVA_API
     std::shared_ptr<Semaphore> createSemaphore( void );
 
