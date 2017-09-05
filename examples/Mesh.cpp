@@ -20,60 +20,6 @@ struct UniformBufferObject {
   glm::mat4 proj;
 };
 
-struct Vertex {
-  glm::vec3 pos;
-  glm::vec3 color;
-};
-
-const float side = 1.0f;
-const float side2 = side / 2.0f;
-const std::vector<Vertex> vertices =
-{
-  { { -side2, -side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-  { { side2, -side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-  { { side2, side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-  { { -side2, side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-
-
-  { { side2, -side2, side2 },{ 1.0f, 0.0f, 0.0f } },
-  { { side2, -side2, -side2 },{ 1.0f, 0.0f, 0.0f } },
-  { { side2, side2, -side2 },{ 1.0f, 0.0f, 0.0f } },
-  { { side2, side2, side2 },{ 1.0f, 0.0f, 0.0f } },
-
-
-  { { -side2, -side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-  { { -side2, side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-  { { side2, side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-  { { side2, -side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-
-
-  { { -side2, -side2, side2 },{ -1.0f, 0.0f, 0.0f } },
-  { { -side2, side2, side2 },{ -1.0f, 0.0f, 0.0f } },
-  { { -side2, side2, -side2 },{ -1.0f, 0.0f, 0.0f } },
-  { { -side2, -side2, -side2 },{ -1.0f, 0.0f, 0.0f } },
-
-
-  { { -side2, -side2, side2 },{ 0.0f, -1.0f, 0.0f } },
-  { { -side2, -side2, -side2 },{ 0.0f, -1.0f, 0.0f } },
-  { { side2, -side2, -side2 },{ 0.0f, -1.0f, 0.0f } },
-  { { side2, -side2, side2 },{ 0.0f, -1.0f, 0.0f } },
-
-
-  { { -side2, side2, side2 },{ 0.0f, 1.0f, 0.0f } },
-  { { side2, side2, side2 },{ 0.0f, 1.0f, 0.0f } },
-  { { side2, side2, -side2 },{ 0.0f, 1.0f, 0.0f } },
-  { { -side2, side2, -side2 },{ 0.0f, 1.0f, 0.0f } },
-};
-const std::vector<uint16_t> indices =
-{
-  0, 1, 2, 0, 2, 3,
-  4, 5, 6, 4, 6, 7,
-  8, 9, 10, 8, 10, 11,
-  12, 13, 14, 12, 14, 15,
-  16, 17, 18, 16, 18, 19,
-  20, 21, 22, 20, 22, 23
-};
-
 class MyApp : public VulkanApp
 {
 public:
@@ -83,25 +29,27 @@ public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-
+  lava::extras::Mesh* mesh;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube.obj_" ) );
+    mesh = &mi._meshes[ 0 ];
 
     // Vertex buffer
     {
-      uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
+      uint32_t vertexBufferSize = mesh->numVertices * sizeof( lava::extras::Vertex );
       _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      _vertexBuffer->writeData( 0, vertexBufferSize, mesh->vertices.data( ) );
     }
 
     // Index buffer
     {
-      uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
+      uint32_t indexBufferSize = mesh->numIndices * sizeof( uint32_t );
       _indexBuffer = std::make_shared<IndexBuffer>( _device, 
-        vk::IndexType::eUint16, indices.size( ) );
-      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+        vk::IndexType::eUint32, mesh->numIndices );
+      _indexBuffer->writeData( 0, indexBufferSize, mesh->indices.data( ) );
     }
 
     // MVP buffer
@@ -137,19 +85,23 @@ public:
     _device->updateDescriptorSets( wdss, {} );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
     PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
-    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
+    vk::VertexInputBindingDescription binding( 0, sizeof( lava::extras::Vertex ), 
+      vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
-      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos) ),
-      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color) ) }
-    );
+      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, position ) ),
+      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, normal ) ),
+      vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof(lava::extras::Vertex, texCoord ) ) 
+    } );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, 
@@ -220,7 +172,7 @@ public:
     _indexBuffer->bind( commandBuffer );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-    commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
+    commandBuffer->drawIndexed( mesh->numIndices, 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 
     commandBuffer->end( );

@@ -78,7 +78,7 @@ public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-  Texture2D * tex;
+  std::shared_ptr<Texture2D> tex;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -111,8 +111,8 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    /*Texture2D **/ tex = new Texture2D( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string( "/uv_checker.png" ), commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      std::string( "/random.png" ), commandPool, _graphicsQueue );
 
 
 

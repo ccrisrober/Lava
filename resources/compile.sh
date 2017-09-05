@@ -15,4 +15,7 @@
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V cubeUV.vert -o cubeUV_vert.spv
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V cubeUV.frag -o cubeUV_frag.spv
 
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V mesh.vert -o mesh_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V mesh.frag -o mesh_frag.spv
+
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V compute_example.comp -o compute_example.spv
