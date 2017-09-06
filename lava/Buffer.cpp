@@ -140,9 +140,9 @@ namespace lava
         | vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
-  void VertexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd )
+  void VertexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index )
   {
-    cmd->bindVertexBuffer( 0, shared_from_this( ), 0 );
+    cmd->bindVertexBuffer( index, shared_from_this( ), 0 );
   }
   IndexBuffer::IndexBuffer( const DeviceRef& device, const vk::IndexType type, 
     uint32_t numIndices )
@@ -165,8 +165,8 @@ namespace lava
       return sizeof( unsigned int ) * numIndices;
     }
   }
-  void IndexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd )
+  void IndexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index )
   {
-    cmd->bindIndexBuffer( shared_from_this( ), 0, _type );
+    cmd->bindIndexBuffer( shared_from_this( ), index, _type );
   }
 }

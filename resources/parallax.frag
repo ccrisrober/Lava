@@ -1,7 +1,16 @@
 #version 450
 
+layout (binding = 0) uniform UBOV 
+{
+	mat4 projection;
+	mat4 view;
+	mat4 model;
+	vec4 lightPos;
+	vec4 cameraPos;
+} uboV;
+
 layout (binding = 1) uniform sampler2D sColorMap;
-layout (binding = 2) uniform sampler2D sNormalHeightMap;
+layout (binding = 2) uniform sampler2D sNormalMap;
 
 layout (binding = 3) uniform UBO 
 {
@@ -11,133 +20,47 @@ layout (binding = 3) uniform UBO
 	int mappingMode;
 } ubo;
 
-layout (location = 0) in vec2 inUV;
-layout (location = 1) in vec3 inTangentLightPos;
-layout (location = 2) in vec3 inTangentViewPos;
-layout (location = 3) in vec3 inTangentFragPos;
+layout (location = 0) in vec3 outPosition;
+layout (location = 1) in vec3 Normal;
+layout (location = 2) in vec2 TexCoord;
 
-layout (location = 0) out vec4 outColor;
+layout (location = 0) out vec4 fragColor;
 
-vec2 parallax_uv(vec2 uv, vec3 view_dir, int type)
+const float normalScale = 2.0;
+
+vec3 perturb_normal(vec3 p, vec3 n)
 {
-	if (type == 2) {
-		// Parallax mapping
-		float depth = 1.0 - texture(sNormalHeightMap, uv).a;
-		vec2 p = view_dir.xy * (depth * (ubo.heightScale * 0.5) + ubo.parallaxBias) / view_dir.z;
-		return uv - p;  
-	} else {
-		float layer_depth = 1.0 / ubo.numLayers;
-		float cur_layer_depth = 0.0;
-		vec2 delta_uv = view_dir.xy * ubo.heightScale / (view_dir.z * ubo.numLayers);
-		vec2 cur_uv = uv;
-
-		float depth_from_tex = 1.0 - texture(sNormalHeightMap, cur_uv).a;
-
-		for (int i = 0; i < 32; i++) {
-			cur_layer_depth += layer_depth;
-			cur_uv -= delta_uv;
-			depth_from_tex = 1.0 - texture(sNormalHeightMap, cur_uv).a;
-			if (depth_from_tex < cur_layer_depth) {
-				break;
-			}
-		}
-
-		if (type == 3) {
-			// Steep parallax mapping
-			return cur_uv;
-		} else {
-			// Parallax occlusion mapping
-			vec2 prev_uv = cur_uv + delta_uv;
-			float next = depth_from_tex - cur_layer_depth;
-			float prev = 1.0 - texture(sNormalHeightMap, prev_uv).a - cur_layer_depth + layer_depth;
-			float weight = next / (next - prev);
-			return mix(cur_uv, prev_uv, weight);
-		}
-	}
+  vec3 dp1 = dFdx(p);
+  vec3 dp2 = dFdy(p);
+  vec2 duv1 = dFdx(TexCoord);
+  vec2 duv2 = dFdy(TexCoord);
+  vec3 S = normalize(dp1 * duv2.t - dp2 * duv1.t);
+  vec3 T = normalize(-dp1 * duv2.s + dp2 * duv1.s);
+  vec3 N = normalize(n);
+  vec3 mapN = texture(sNormalMap, TexCoord).xyz * 2.0 - 1.0;
+  mapN.xy = normalScale * mapN.xy;
+  mat3 tsn = mat3(S, T, N);
+  return normalize(tsn * mapN);
 }
 
-vec2 parallaxMapping(vec2 uv, vec3 viewDir) 
+void main( void )
 {
-	float height = 1.0 - texture(sNormalHeightMap, uv).a;
-	vec2 p = viewDir.xy * (height * (ubo.heightScale * 0.5) + ubo.parallaxBias) / viewDir.z;
-	return uv - p;  
-}
+    vec3 ambient = vec3(0.4);
 
-vec2 steepParallaxMapping(vec2 uv, vec3 viewDir) 
-{
-	float layerDepth = 1.0 / ubo.numLayers;
-	float currLayerDepth = 0.0;
-	vec2 deltaUV = viewDir.xy * ubo.heightScale / (viewDir.z * ubo.numLayers);
-	vec2 currUV = uv;
-	float height = 1.0 - texture(sNormalHeightMap, currUV).a;
-	for (int i = 0; i < ubo.numLayers; i++) {
-		currLayerDepth += layerDepth;
-		currUV -= deltaUV;
-		height = 1.0 - texture(sNormalHeightMap, currUV).a;
-		if (height < currLayerDepth) {
-			break;
-		}
-	}
-	return currUV;
-}
+    vec3 norm = normalize(Normal);
+    norm = perturb_normal(-outPosition, norm);
 
-vec2 parallaxOcclusionMapping(vec2 uv, vec3 viewDir) 
-{
-	float layerDepth = 1.0 / ubo.numLayers;
-	float currLayerDepth = 0.0;
-	vec2 deltaUV = viewDir.xy * ubo.heightScale / (viewDir.z * ubo.numLayers);
-	vec2 currUV = uv;
-	float height = 1.0 - texture(sNormalHeightMap, currUV).a;
-	for (int i = 0; i < ubo.numLayers; i++) {
-		currLayerDepth += layerDepth;
-		currUV -= deltaUV;
-		height = 1.0 - texture(sNormalHeightMap, currUV).a;
-		if (height < currLayerDepth) {
-			break;
-		}
-	}
-	vec2 prevUV = currUV + deltaUV;
-	float nextDepth = height - currLayerDepth;
-	float prevDepth = 1.0 - texture(sNormalHeightMap, prevUV).a - currLayerDepth + layerDepth;
-	return mix(currUV, prevUV, nextDepth / (nextDepth - prevDepth));
-}
+    vec3 lightDir = normalize(uboV.lightPos.xyz - outPosition);
+    float diff = max(dot(norm, lightDir), 0.0);
+    //vec3 diffuse = texture( DiffuseTexture, TexCoord ).rgb * diff;
+    vec3 diffuse = vec3(1.0) * diff;
 
-void main(void) 
-{
-	vec3 V = normalize(inTangentViewPos - inTangentFragPos);
-	vec2 uv = inUV;
+    vec3 viewDir = normalize(uboV.cameraPos.xyz - outPosition);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    vec3 specular = vec3(spec);
 
-	if (ubo.mappingMode == 0) {
-		// Color only
-		outColor = texture(sColorMap, inUV);
-	} else {
-		switch(ubo.mappingMode) {
-			case 2:
-				uv = parallaxMapping(inUV, V);
-				break;
-			case 3:
-				uv = steepParallaxMapping(inUV, V);
-				break;
-			case 4:
-				uv = parallaxOcclusionMapping(inUV, V);
-				break;
-		}
-
-		// Discard fragments at texture border
-		if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
-			discard;
-		}
-
-		vec3 N = normalize(texture(sNormalHeightMap, uv).rgb * 2.0 - 1.0);   
-		vec3 L = normalize(inTangentLightPos - inTangentFragPos);
-		vec3 R = reflect(-L, N);
-		vec3 H = normalize(L + V);  
-   
-		vec3 color = texture(sColorMap, uv).rgb;
-		vec3 ambient = 0.2 * color;
-		vec3 diffuse = max(dot(L, N), 0.0) * color;
-		vec3 specular = vec3(0.15) * pow(max(dot(N, H), 0.0), 32.0);
-
-		outColor = vec4(ambient + diffuse + specular, 1.0f);
-	}	
+    //fragColor = vec4((ambient + diffuse + specular) * DiffuseColor.rgb, 1.0);
+    fragColor = vec4((ambient + diffuse + specular) * texture( sColorMap, TexCoord ).rgb, 1.0);
+    //fragColor *= DiffuseColor;
 }

@@ -18,13 +18,14 @@ namespace lava
   {
   public:
     LAVA_API
-    ShaderModule( const DeviceRef& device, const std::string& filePath, vk::ShaderStageFlagBits type );
+    ShaderModule( const DeviceRef& device, const std::string& filePath, 
+      vk::ShaderStageFlagBits type );
     LAVA_API
     ShaderModule( const DeviceRef& device, const std::string& filePath );
     LAVA_API
     ShaderModule( const DeviceRef& device, vk::ArrayProxy<const uint32_t> code );
     LAVA_API
-    ~ShaderModule( );
+    ~ShaderModule( void );
 
     inline operator vk::ShaderModule( ) const { return _shaderModule; }
 
@@ -39,14 +40,14 @@ namespace lava
     LAVA_API
     PipelineVertexInputStateCreateInfo(
       vk::ArrayProxy<const vk::VertexInputBindingDescription> vertexBindingDescriptions,
-      vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttributeDesriptions );
+      vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttrirDescriptions );
     LAVA_API
     PipelineVertexInputStateCreateInfo( const PipelineVertexInputStateCreateInfo& rhs );
     LAVA_API
     PipelineVertexInputStateCreateInfo & operator=( const PipelineVertexInputStateCreateInfo& rhs );
 
     std::vector<vk::VertexInputBindingDescription> vertexBindingDescriptions;
-    std::vector<vk::VertexInputAttributeDescription> vertexAttributeDesriptions;
+    std::vector<vk::VertexInputAttributeDescription> vertexAttrirDescriptions;
   };
 
   struct PipelineDynamicStateCreateInfo

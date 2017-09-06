@@ -11,63 +11,112 @@ using namespace lava;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "lodepng.h" //Used for png encoding.
+#define PARTICLE_COUNT 256 * 1024
 
 class MyApp : public VulkanApp
 {
-  struct Pixel {
-    float r, g, b, a;
+  // SSBO particle declaration
+  struct Particle
+  {
+    glm::vec2 pos;                // Particle position
+    glm::vec2 vel;                // Particle velocity
   };
+  struct
+  {
+    std::shared_ptr<Buffer> storageBuffer;
+    std::shared_ptr<Buffer> uniformBuffer;
+    struct computeUBO
+    {
+      float deltaT;
+      float destX;
+      float destY;
+      int32_t particleCount = PARTICLE_COUNT;
+    } ubo;
+    VkDeviceSize storageBufferSize;
+  } compute;
 public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
 
-  std::shared_ptr<Buffer> _computeBuffer;
-
-  uint32_t bufferSize = sizeof( Pixel ) * 100 * 100;
+  void updateUniformBuffers( void )
+  {
+    float frameTimer = 1.0f, timer = 1.0f;
+    compute.ubo.deltaT = frameTimer * 2.5f;
+    compute.ubo.destX = sin(glm::radians(timer * 360.0f)) * 0.75f;
+    compute.ubo.destY = 0.0f;
+    
+    compute.uniformBuffer->writeData( 0, sizeof( compute.ubo ), &compute.ubo );
+  }
 
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
+    // PREPARE STORAGE BUFFERS
+    std::mt19937 rGenerator;
+    std::uniform_real_distribution<float> rDistribution(-1.0f, 1.0f);
+
+    // Initial particle positions
+    std::vector<Particle> particleBuffer(PARTICLE_COUNT);
+    for (auto& particle : particleBuffer)
+    {
+      particle.pos = glm::vec2(rDistribution(rGenerator), rDistribution(rGenerator));
+      particle.vel = glm::vec2(0.0f);
+    }
+
+    compute.storageBufferSize = particleBuffer.size() * sizeof(Particle);
+
+    // PREPARE UNIFORM BUFFERS
+    compute.uniformBuffer = _device->createBuffer( sizeof( compute.ubo ),
+      vk::BufferUsageFlagBits::eUniformBuffer, vk::SharingMode::eExclusive, 
+      nullptr, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );
+
+    updateUniformBuffers( );
+
     // Compute buffer
     {
-      _computeBuffer = _device->createBuffer( bufferSize, 
+      compute.storageBuffer = _device->createBuffer( compute.storageBufferSize, 
         vk::BufferUsageFlagBits::eStorageBuffer, vk::SharingMode::eExclusive, 
         nullptr, vk::MemoryPropertyFlagBits::eHostCoherent | 
           vk::MemoryPropertyFlagBits::eHostVisible );
-      std::vector<Pixel> values;// ( 100 * 100 );
-      uint32_t numPixels = 100 * 100;
-      for ( uint32_t i = 0; i < numPixels; ++i )
-      {
-        values.push_back( Pixel{ i * 1.0f, i * 1.0f, i * 1.0f, 1.0f } );
-      }
-      _computeBuffer->writeData( 0, bufferSize, values.data( ) );
     }
 
-    // init descriptor and pipeline layouts
+    // PREPARE COMPUTE
+    // todo: i'm using graphics queue for compute work ...
     std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eStorageBuffer,
-      vk::ShaderStageFlagBits::eCompute );
-    dslbs.push_back( mvpDescriptor );
+    dslbs.push_back( DescriptorSetLayoutBinding
+      ( 0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute )
+    );
+    dslbs.push_back( DescriptorSetLayoutBinding
+      ( 1, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eCompute )
+    );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 1 );
+    std::array<vk::DescriptorPoolSize, 3> poolSize;
+    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
+    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 1 );
+    poolSize[ 2 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 );
     std::shared_ptr<DescriptorPool> descriptorPool = 
-      _device->createDescriptorPool( {}, 1, poolSize );
+      _device->createDescriptorPool( {}, 2, poolSize );
+
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eStorageBuffer, 1, nullptr, 
-      lava::DescriptorBufferInfo( _computeBuffer, 0, bufferSize ) );
-    wdss.push_back( w );
+    wdss.push_back( WriteDescriptorSet (
+        _descriptorSet, 0, 0, 
+        vk::DescriptorType::eStorageBuffer, 1, nullptr, 
+        lava::DescriptorBufferInfo( compute.storageBuffer, 0, compute.storageBufferSize )
+      )
+    );
+    wdss.push_back( WriteDescriptorSet (
+        _descriptorSet, 1, 0, 
+        vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+        lava::DescriptorBufferInfo( compute.uniformBuffer, 0, sizeof( compute.ubo ) )
+      )
+    );
     _device->updateDescriptorSets( wdss, {} );
-
-
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -77,11 +126,12 @@ public:
       std::string("/compute_example.spv"), vk::ShaderStageFlagBits::eCompute );
 
     PipelineShaderStageCreateInfo computeStage( 
-      vk::ShaderStageFlagBits::eCompute, computeShaderModule, "main" );
+      vk::ShaderStageFlagBits::eCompute, computeShaderModule );
 
     std::cout << "CREATE PIPELINE" << std::endl;
 
-    _pipeline = _device->createComputePipeline( pipelineCache, {}, computeStage, _pipelineLayout );
+    _pipeline = _device->createComputePipeline( 
+      pipelineCache, {}, computeStage, _pipelineLayout );
 
     std::cout << "PIPELINE CREATED" << std::endl;
   }
@@ -103,42 +153,6 @@ public:
       break;
     }
   }
-  /*
-  The mandelbrot set will be rendered to this buffer.
-  The memory that backs the buffer is bufferMemory. 
-  */
-  vk::Buffer buffer;
-  vk::DeviceMemory bufferMemory;
-  void saveRenderedImage( void )
-  {
-    uint32_t width = _window->getWidth( );
-    uint32_t height = _window->getHeight( );
-
-    void* mappedMemory = nullptr;
-    // Map the buffer memory, so that we can read from it on the CPU.
-    mappedMemory = static_cast< vk::Device > (*_device).mapMemory( bufferMemory, 0, bufferSize, { } );
-    Pixel* pmappedMemory = (Pixel *)mappedMemory;
-
-    // Get the color data from the buffer, and cast it to bytes.
-    // We save the data to a vector.
-    std::vector<unsigned char> image;
-    image.reserve(width * height * 4);
-    for ( uint32_t i = 0, size = width * height; i < size; ++i )
-    {
-        image.push_back((unsigned char)(255.0f * (pmappedMemory[ i ].r)));
-        image.push_back((unsigned char)(255.0f * (pmappedMemory[ i ].g)));
-        image.push_back((unsigned char)(255.0f * (pmappedMemory[ i ].b)));
-        image.push_back((unsigned char)(255.0f * (pmappedMemory[ i ].a)));
-    }
-    // Done reading, so unmap.
-    static_cast< vk::Device > (*_device).unmapMemory( bufferMemory );
-
-    // Now we save the acquired color data to a .png.
-    unsigned error = lodepng::encode((LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string("/mandelbrot.png")).c_str( ), image, width, height);
-    if (error) printf("encoder error %d: %s", error, lodepng_error_text(error));
-  }
-  const int WorkgroupSize = 32; // Workgroup size in compute shader.
   void doPaint( void ) override
   {
     uint32_t width = _window->getWidth( );
@@ -151,16 +165,11 @@ public:
 
     commandBuffer->begin( );
 
-    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->bindComputePipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eCompute,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
 
-    commandBuffer->dispatch( 
-      (uint32_t)ceil(width / float(WorkgroupSize)), 
-      (uint32_t)ceil(height / float(WorkgroupSize)), 
-      1
-    );
+    commandBuffer->dispatch( PARTICLE_COUNT / 256, 1, 1 );
 
     commandBuffer->end( );
 

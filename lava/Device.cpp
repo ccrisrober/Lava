@@ -311,6 +311,14 @@ namespace lava
   {
     return std::make_shared<ShaderModule>( shared_from_this( ), code );
   }
+  const PipelineShaderStageCreateInfo& Device::createShaderPipelineState( 
+    const std::string& spvFile, vk::ShaderStageFlagBits stage, 
+    const std::string& name )
+  {
+    auto shaderModule = createShaderModule( spvFile, stage );
+    return PipelineShaderStageCreateInfo( stage, shaderModule, name );
+  }
+
   std::shared_ptr<Fence> Device::createFence( bool signaled )
   {
     return std::make_shared<Fence>( shared_from_this( ), signaled );

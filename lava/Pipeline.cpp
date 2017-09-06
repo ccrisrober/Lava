@@ -82,21 +82,21 @@ namespace lava
 
   PipelineVertexInputStateCreateInfo::PipelineVertexInputStateCreateInfo(
     vk::ArrayProxy<const vk::VertexInputBindingDescription> vertexBindingDescriptions_,
-    vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttributeDesriptions_ )
+    vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttrirDescriptions_ )
     : vertexBindingDescriptions( vertexBindingDescriptions_.begin( ), vertexBindingDescriptions_.end( ) )
-    , vertexAttributeDesriptions( vertexAttributeDesriptions_.begin( ), vertexAttributeDesriptions_.end( ) )
+    , vertexAttrirDescriptions( vertexAttrirDescriptions_.begin( ), vertexAttrirDescriptions_.end( ) )
   {}
 
   PipelineVertexInputStateCreateInfo::PipelineVertexInputStateCreateInfo(
     const PipelineVertexInputStateCreateInfo& rhs )
-    : PipelineVertexInputStateCreateInfo( rhs.vertexBindingDescriptions, rhs.vertexAttributeDesriptions )
+    : PipelineVertexInputStateCreateInfo( rhs.vertexBindingDescriptions, rhs.vertexAttrirDescriptions )
   {}
 
   PipelineVertexInputStateCreateInfo & PipelineVertexInputStateCreateInfo::operator=(
     PipelineVertexInputStateCreateInfo const& rhs )
   {
     vertexBindingDescriptions = rhs.vertexBindingDescriptions;
-    vertexAttributeDesriptions = rhs.vertexAttributeDesriptions;
+    vertexAttrirDescriptions = rhs.vertexAttrirDescriptions;
     return *this;
   }
 
@@ -335,7 +335,7 @@ namespace lava
     if ( vertexInputState )
     {
       vVertexInputState = vk::PipelineVertexInputStateCreateInfo( {}, vertexInputState->vertexBindingDescriptions.size( ), vertexInputState->vertexBindingDescriptions.data( ),
-        vertexInputState->vertexAttributeDesriptions.size( ), vertexInputState->vertexAttributeDesriptions.data( ) );
+        vertexInputState->vertexAttrirDescriptions.size( ), vertexInputState->vertexAttrirDescriptions.data( ) );
     }
 
     vk::PipelineViewportStateCreateInfo vViewportState;

@@ -19,3 +19,9 @@
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V mesh.frag -o mesh_frag.spv
 
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V compute_example.comp -o compute_example.spv
+
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V parallax.vert -o normal_mapping_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V parallax.frag -o normal_mapping_frag.spv
+
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V instancing.vert -o instancing_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V instancing.frag -o instancing_frag.spv

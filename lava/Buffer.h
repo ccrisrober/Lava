@@ -65,6 +65,8 @@ namespace lava
     void readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst );
     LAVA_API
     void writeData( vk::DeviceSize offset, vk::DeviceSize length, const void* src );
+
+    // todo: virtual void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 ) = 0;
   protected:
     vk::Buffer _buffer;
     vk::BufferView _view;
@@ -83,7 +85,7 @@ namespace lava
     LAVA_API
     VertexBuffer( const DeviceRef& device, vk::DeviceSize size );
     LAVA_API
-    void bind( std::shared_ptr<CommandBuffer>& cmd );
+    void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
   };
 
   class IndexBuffer: public Buffer
@@ -93,7 +95,7 @@ namespace lava
     IndexBuffer( const DeviceRef& device, const vk::IndexType type, 
       uint32_t numIndices );
     LAVA_API
-    void bind( std::shared_ptr<CommandBuffer>& cmd );
+    void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
     inline const vk::IndexType getIndexType( void )
     {
       return _type;

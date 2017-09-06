@@ -92,4 +92,18 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaNormalTexture )
 
+  set( LAVAINSTANCING_HEADERS )
+  set( LAVAINSTANCING_SOURCES Instancing.cpp )
+  set( LAVAINSTANCING_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaInstancing )
+
+  set( LAVABLUR_HEADERS )
+  set( LAVABLUR_SOURCES Blur.cpp )
+  set( LAVABLUR_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaBlur )
+
 endif( )

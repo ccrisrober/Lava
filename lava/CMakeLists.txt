@@ -28,6 +28,7 @@ set( LAVA_SOURCES
   extras/Material.cpp
   extras/ModelImporter.cpp
   extras/CustomFramebuffer.cpp
+  extras/CustomMaterial.cpp
 
 	#Source.cpp
   utils.cpp
@@ -71,6 +72,7 @@ set( LAVA_PUBLIC_HEADERS
   extras/Material.h
   extras/ModelImporter.h
   extras/CustomFramebuffer.h
+  extras/CustomMaterial.h
 
   utils.hpp
 )

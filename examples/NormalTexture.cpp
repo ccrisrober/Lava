@@ -157,7 +157,7 @@ public:
     std::vector<DescriptorSetLayoutBinding> dslbs;
     dslbs.push_back(
       DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
-        vk::ShaderStageFlagBits::eVertex ) );
+        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment ) );
     dslbs.push_back(
       DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
         vk::ShaderStageFlagBits::eFragment ) );
@@ -245,6 +245,7 @@ public:
 
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
       {
+        // Todo: replace with createShaderPipelineState
         PipelineShaderStageCreateInfo( vk::ShaderStageFlagBits::eVertex, vertexShaderModule ),
         PipelineShaderStageCreateInfo( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule )
       }, entryInput, assembly, nullptr, viewport, rasterization, multisample,
@@ -262,14 +263,14 @@ public:
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
     // Vertex shader
-    ubos.vertexShader.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    ubos.vertexShader.model = glm::mat4( ); //glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
     ubos.vertexShader.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
     ubos.vertexShader.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     ubos.vertexShader.proj[ 1 ][ 1 ] *= -1;
 
     // if ( !paused ) {
-    ubos.vertexShader.lightPos.x = sin( glm::radians( timer * 360.0f ) ) * 1.5f;
-    ubos.vertexShader.lightPos.z = cos( glm::radians( timer * 360.0f ) ) * 1.5f;
+    ubos.vertexShader.lightPos.x = sin( glm::radians( time * 360.0f ) ) * 1.5f;
+    ubos.vertexShader.lightPos.z = cos( glm::radians( time * 360.0f ) ) * 1.5f;
     //}
 
     ubos.vertexShader.cameraPos = glm::vec4( glm::vec3( 0.0f, 1.25f, 1.5f ), -1.0f ) * -1.0f;

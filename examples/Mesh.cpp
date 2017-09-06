@@ -14,7 +14,8 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject {
+struct UniformBufferObject
+{
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
@@ -29,27 +30,38 @@ public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-  lava::extras::Mesh* mesh;
+
+  uint32_t numIndices;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-    lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube.obj_" ) );
-    mesh = &mi._meshes[ 0 ];
+    lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+    lava::extras::Mesh mesh = mi._meshes[ 0 ];
+
+    numIndices = mesh.numIndices;
+
+    /*for ( const auto& v: mesh.vertices )
+    {
+      std::cout << "POSITION: " << v.position.x << ", " << v.position.y << "," << v.position.z << std::endl;
+      std::cout << "NORMAL: " << v.normal.x << ", " << v.normal.y << "," << v.normal.z << std::endl;
+      std::cout << "TEXCOORD: " << v.texCoord.x << ", " << v.texCoord.y << std::endl;
+      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~ " << std::endl;
+    }*/
 
     // Vertex buffer
     {
-      uint32_t vertexBufferSize = mesh->numVertices * sizeof( lava::extras::Vertex );
+      uint32_t vertexBufferSize = mesh.numVertices * sizeof( lava::extras::Vertex );
       _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, mesh->vertices.data( ) );
+      _vertexBuffer->writeData( 0, vertexBufferSize, mesh.vertices.data( ) );
     }
 
     // Index buffer
     {
-      uint32_t indexBufferSize = mesh->numIndices * sizeof( uint32_t );
+      uint32_t indexBufferSize = mesh.numIndices * sizeof( uint32_t );
       _indexBuffer = std::make_shared<IndexBuffer>( _device, 
-        vk::IndexType::eUint32, mesh->numIndices );
-      _indexBuffer->writeData( 0, indexBufferSize, mesh->indices.data( ) );
+        vk::IndexType::eUint32, mesh.numIndices );
+      _indexBuffer->writeData( 0, indexBufferSize, mesh.indices.data( ) );
     }
 
     // MVP buffer
@@ -94,14 +106,16 @@ public:
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
     PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
-    vk::VertexInputBindingDescription binding( 0, sizeof( lava::extras::Vertex ), 
-      vk::VertexInputRate::eVertex );
 
-    PipelineVertexInputStateCreateInfo vertexInput( binding, {
-      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, position ) ),
-      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, normal ) ),
-      vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof(lava::extras::Vertex, texCoord ) ) 
-    } );
+    PipelineVertexInputStateCreateInfo vertexInput( 
+      vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ), 
+        vk::VertexInputRate::eVertex ),
+      {
+        vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, position ) ),
+        vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, normal ) ),
+        vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof(lava::extras::Vertex, texCoord ) ) 
+      }
+    );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, 
@@ -119,7 +133,7 @@ public:
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
   }
-  void updateUniformBuffers( )
+  void updateUniformBuffers( void )
   {
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
@@ -145,7 +159,7 @@ public:
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
 
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     updateUniformBuffers( );
 
@@ -172,7 +186,7 @@ public:
     _indexBuffer->bind( commandBuffer );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-    commandBuffer->drawIndexed( mesh->numIndices, 1, 0, 0, 1 );
+    commandBuffer->drawIndexed( numIndices, 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 
     commandBuffer->end( );
@@ -215,7 +229,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Indexed", 800, 600 );
+    VulkanApp* app = new MyApp( "Cube Mesh", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
