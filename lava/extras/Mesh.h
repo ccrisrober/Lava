@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <assimp/mesh.h>
 
+#include <lava/api.h>
+
 namespace lava
 {
   namespace extras
@@ -17,9 +19,12 @@ namespace lava
       glm::vec3 normal;
       glm::vec2 texCoord;
     };
-    struct Mesh
+    class Mesh
     {
+    public:
+      LAVA_API
       Mesh( const aiMesh *mesh );
+    public:
       uint32_t numVertices;
       uint32_t numIndices;
       std::vector< Vertex > vertices;

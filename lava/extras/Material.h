@@ -6,12 +6,16 @@
 #include <assimp/material.h>
 #include "../includes.hpp"
 
+#include <lava/api.h>
+
 namespace lava
 {
   namespace extras
   {
-    struct Material
+    class Material
     {
+    public:
+      LAVA_API
       Material( const aiMaterial* mtl, const std::string& globalPath );
 
       std::string albedoTexturePath;

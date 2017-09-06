@@ -98,16 +98,45 @@ namespace lava
     std::vector<WriteDescriptorSet> descriptorWrites, 
     std::vector<CopyDescriptorSet> descriptorCopies )
   {
-    std::vector<vk::DescriptorImageInfo> diis;
-    std::vector<vk::DescriptorBufferInfo> dbis;
+    std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
+    diis.reserve( descriptorWrites.size( ) );
+
+    std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> dbis;
+    dbis.reserve( descriptorWrites.size( ) );
 
     std::vector<vk::WriteDescriptorSet> writes;
-    for ( const auto& w : descriptorWrites )
+    writes.reserve( descriptorWrites.size( ) );
+    for ( auto const& w : descriptorWrites )
+    {
+      diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>( 
+        w.imageInfo ? new vk::DescriptorImageInfo( w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
+        w.imageInfo->imageView ? static_cast<vk::ImageView>( *w.imageInfo->imageView ) : nullptr,
+        w.imageInfo->imageLayout )
+        : nullptr ) );
+      dbis.push_back( std::unique_ptr<vk::DescriptorBufferInfo>( 
+        w.bufferInfo ? new vk::DescriptorBufferInfo( w.bufferInfo->buffer ? 
+          static_cast<vk::Buffer>( *w.bufferInfo->buffer ) : nullptr,
+        w.bufferInfo->offset, w.bufferInfo->range )
+        : nullptr ) );
+      vk::WriteDescriptorSet write( 
+        w.dstSet ? static_cast<vk::DescriptorSet>( *w.dstSet ) : nullptr, 
+        w.dstBinding, 
+        w.dstArrayElement, 
+        w.descriptorCount, 
+        w.descriptorType, 
+        diis.back( ).get( ), 
+        dbis.back( ).get( )
+      );
+      
+      writes.push_back( std::move( write ) );
+    }
+
+    /*for ( const auto& w : descriptorWrites )
     {
       if ( w.imageInfo )
       {
         vk::DescriptorImageInfo dii(
-          w.imageInfo->sampler ? static_cast< vk::Sampler >( *w.imageInfo->sampler ) : nullptr,
+          w.imageInfo->sampler ? (*w.imageInfo->sampler) : nullptr,//static_cast< vk::Sampler >( *w.imageInfo->sampler ) : nullptr,
           w.imageInfo->imageView ? static_cast< vk::ImageView >( *w.imageInfo->imageView ) : nullptr,
           w.imageInfo->imageLayout );
         diis.push_back( dii );
@@ -135,7 +164,7 @@ namespace lava
         dbis.data( ), 
         nullptr);
       writes.push_back( write );
-    }
+    }*/
     std::vector<vk::CopyDescriptorSet> copies;
     copies.reserve( descriptorCopies.size( ) );
     for ( auto const& c : descriptorCopies )
@@ -301,7 +330,7 @@ namespace lava
   {
     return std::make_shared<DescriptorPool>( shared_from_this( ), flags, maxSets, poolSizes );
   }
-  std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, void const * initialData )
+  std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, void const * initialData = nullptr )
   {
     return std::make_shared<PipelineCache>( shared_from_this( ), vk::PipelineCacheCreateFlags( ), initialSize, initialData );
   }

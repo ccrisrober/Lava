@@ -216,7 +216,7 @@ namespace lava
     sci.setCompareOp( vk::CompareOp::eNever );
     sci.setMinLod( 0.0f );
     sci.setMaxLod( /*useStaging ? mipLevels : 0.0f*/0.0f );
-    //sci.setMaxAnisotropy()
+    sci.setMaxAnisotropy( 1.0f );
     sci.setAnisotropyEnable( VK_TRUE );
     sci.setBorderColor( vk::BorderColor::eFloatOpaqueWhite );
 

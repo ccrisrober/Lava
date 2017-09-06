@@ -22,56 +22,51 @@ struct UniformBufferObject {
 
 struct Vertex {
   glm::vec3 pos;
-  glm::vec3 color;
+  glm::vec2 texCoord;
 };
 
 const float side = 1.0f;
 const float side2 = side / 2.0f;
 const std::vector<Vertex> vertices =
 {
-  { { -side2, -side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-  { { side2, -side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-  { { side2, side2, side2 },{ 0.0f, 0.0f, 1.0f } },
-  { { -side2, side2, side2 },{ 0.0f, 0.0f, 1.0f } },
+  {{-side2, -side2,  side2}, {0.0f, 0.0f}},
+  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
+  {{-side2,  side2,  side2}, {0.0f, 1.0f}},
+  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
 
+  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
+  {{ side2, -side2, -side2}, {1.0f, 0.0f}},
+  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
+  {{ side2,  side2, -side2}, {1.0f, 1.0f}},
 
-  { { side2, -side2, side2 },{ 1.0f, 0.0f, 0.0f } },
-  { { side2, -side2, -side2 },{ 1.0f, 0.0f, 0.0f } },
-  { { side2, side2, -side2 },{ 1.0f, 0.0f, 0.0f } },
-  { { side2, side2, side2 },{ 1.0f, 0.0f, 0.0f } },
+  {{ side2, -side2, -side2}, {0.0f, 0.0f}},
+  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
+  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
+  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
 
+  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
+  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
+  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
+  {{-side2,  side2,  side2}, {1.0f, 1.0f}},
 
-  { { -side2, -side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-  { { -side2, side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-  { { side2, side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
-  { { side2, -side2, -side2 },{ 0.0f, 0.0f, -1.0f } },
+  {{-side2,  side2, -side2}, {0.0f, 0.0f}},
+  {{-side2,  side2,  side2}, {1.0f, 0.0f}},
+  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
+  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
 
-
-  { { -side2, -side2, side2 },{ -1.0f, 0.0f, 0.0f } },
-  { { -side2, side2, side2 },{ -1.0f, 0.0f, 0.0f } },
-  { { -side2, side2, -side2 },{ -1.0f, 0.0f, 0.0f } },
-  { { -side2, -side2, -side2 },{ -1.0f, 0.0f, 0.0f } },
-
-
-  { { -side2, -side2, side2 },{ 0.0f, -1.0f, 0.0f } },
-  { { -side2, -side2, -side2 },{ 0.0f, -1.0f, 0.0f } },
-  { { side2, -side2, -side2 },{ 0.0f, -1.0f, 0.0f } },
-  { { side2, -side2, side2 },{ 0.0f, -1.0f, 0.0f } },
-
-
-  { { -side2, side2, side2 },{ 0.0f, 1.0f, 0.0f } },
-  { { side2, side2, side2 },{ 0.0f, 1.0f, 0.0f } },
-  { { side2, side2, -side2 },{ 0.0f, 1.0f, 0.0f } },
-  { { -side2, side2, -side2 },{ 0.0f, 1.0f, 0.0f } },
+  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
+  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
+  {{ side2, -side2, -side2}, {0.0f, 1.0f}},
+  {{ side2, -side2,  side2}, {1.0f, 1.0f}} 
 };
 const std::vector<uint16_t> indices =
 {
-  0, 1, 2, 0, 2, 3,
-  4, 5, 6, 4, 6, 7,
-  8, 9, 10, 8, 10, 11,
-  12, 13, 14, 12, 14, 15,
-  16, 17, 18, 16, 18, 19,
-  20, 21, 22, 20, 22, 23
+  0,1,2,      1,3,2,
+  4,6,5,      5,6,7,
+  8,10,9,     9,10,11,
+  12,13,14,   13,15,14,
+  16,17,18,   17,19,18,
+  20,22,21,   21,22,23,
 };
 
 class MyApp : public VulkanApp
@@ -83,10 +78,12 @@ public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<Texture2D> tex;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
@@ -112,31 +109,55 @@ public:
           vk::MemoryPropertyFlagBits::eHostCoherent );
     }
 
+    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      std::string( "/random.png" ), commandPool, _graphicsQueue );
+
+
+
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
     DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
       vk::ShaderStageFlagBits::eVertex );
     dslbs.push_back( mvpDescriptor );
+    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler, 
+      vk::ShaderStageFlagBits::eFragment );
+    dslbs.push_back( mvpDescriptor2 );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
+    std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
+    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( glm::mat4 ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
+
+    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( glm::mat4 ) ) );
     wdss.push_back( w );
+
+    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
+      DescriptorImageInfo( 
+        vk::ImageLayout::eGeneral, 
+        std::make_shared<vk::ImageView>( tex->view ), 
+        std::make_shared<vk::Sampler>( tex->sampler )
+      ), nullptr
+    );
+    wdss.push_back( w2 );
     _device->updateDescriptorSets( wdss, {} );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+        std::string( "/cubeUV_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+        std::string( "/cubeUV_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -146,7 +167,7 @@ public:
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos) ),
-      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color) ) }
+      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord) ) }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them

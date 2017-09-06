@@ -17,6 +17,7 @@ namespace lava
     class ModelImporter
     {
     public:
+      LAVA_API
       ModelImporter( const std::string& path );
     public:
       std::vector< Mesh > _meshes;

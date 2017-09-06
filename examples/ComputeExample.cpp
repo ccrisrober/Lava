@@ -22,14 +22,52 @@ public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-  
+
+  std::shared_ptr<Buffer> _computeBuffer;
+
+  uint32_t bufferSize = sizeof( Pixel ) * 100 * 100;
+
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
+    // Compute buffer
+    {
+      _computeBuffer = _device->createBuffer( bufferSize, 
+        vk::BufferUsageFlagBits::eStorageBuffer, vk::SharingMode::eExclusive, 
+        nullptr, vk::MemoryPropertyFlagBits::eHostCoherent | 
+          vk::MemoryPropertyFlagBits::eHostVisible );
+      std::vector<Pixel> values;// ( 100 * 100 );
+      uint32_t numPixels = 100 * 100;
+      for ( uint32_t i = 0; i < numPixels; ++i )
+      {
+        values.push_back( Pixel{ i * 1.0f, i * 1.0f, i * 1.0f, 1.0f } );
+      }
+      _computeBuffer->writeData( 0, bufferSize, values.data( ) );
+    }
+
     // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
+    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eStorageBuffer,
+      vk::ShaderStageFlagBits::eCompute );
+    dslbs.push_back( mvpDescriptor );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+
+    std::array<vk::DescriptorPoolSize, 1> poolSize;
+    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 1 );
+    std::shared_ptr<DescriptorPool> descriptorPool = 
+      _device->createDescriptorPool( {}, 1, poolSize );
+
+    // Init descriptor set
+    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    std::vector<WriteDescriptorSet> wdss;
+    WriteDescriptorSet w( _descriptorSet, 0, 0, 
+      vk::DescriptorType::eStorageBuffer, 1, nullptr, 
+      lava::DescriptorBufferInfo( _computeBuffer, 0, bufferSize ) );
+    wdss.push_back( w );
+    _device->updateDescriptorSets( wdss, {} );
+
+
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -75,7 +113,6 @@ public:
   {
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
-    uint32_t bufferSize = sizeof(Pixel) * width * height;
 
     void* mappedMemory = nullptr;
     // Map the buffer memory, so that we can read from it on the CPU.
@@ -127,7 +164,7 @@ public:
 
     commandBuffer->end( );
 
-    _graphicsQueue->submit( SubmitInfo{
+    _graphicsQueue->submit( SubmitInfo {
       { _defaultFramebuffer->getPresentSemaphore( ) },
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
       commandBuffer,
@@ -147,7 +184,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Compute Example", 800, 600 );
+    VulkanApp* app = new MyApp( "Compute Example", 100, 100 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

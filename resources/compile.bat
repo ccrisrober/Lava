@@ -10,5 +10,13 @@ C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V triangle.frag -o triangle_fr
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V cube.vert -o cube_vert.spv
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V cube.frag -o cube_frag.spv
 
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V cubeUV.vert -o cubeUV_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V cubeUV.frag -o cubeUV_frag.spv
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V mesh.vert -o mesh_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V mesh.frag -o mesh_frag.spv
+
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V compute_example.comp -o compute_example.spv
-pause
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V parallax.vert -o normal_mapping_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V parallax.frag -o normal_mapping_frag.spv

@@ -366,7 +366,7 @@ namespace lava
       vDynamicState = vk::PipelineDynamicStateCreateInfo( {}, dynamicState->dynamicStates.size( ), dynamicState->dynamicStates.data( ) );
     }
 
-    /*vk::GraphicsPipelineCreateInfo pci(
+    vk::GraphicsPipelineCreateInfo pci(
       flags,
       vStages.size( ),
       vStages.data( ),
@@ -381,25 +381,8 @@ namespace lava
       pipelineLayout ? *pipelineLayout : vk::PipelineLayout( ),
       renderPass ? *renderPass : vk::RenderPass( ),
       subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
-      basePipelineIdx );*/
-
-    vk::GraphicsPipelineCreateInfo pci;
-    pci.stageCount = vStages.size( );
-    pci.pStages = vStages.data( );
-    pci.pVertexInputState = vertexInputState ? &vVertexInputState : nullptr;
-    pci.pInputAssemblyState = inputAssemblyState;
-    pci.pViewportState = viewportState ? &vViewportState : nullptr;
-    pci.pRasterizationState = rasterizationState;
-    pci.pMultisampleState = multisampleState ? &vMultisampleState : nullptr;
-    pci.pDepthStencilState = depthStencilState;
-    pci.pColorBlendState = colorBlendState ? &vColorBlendState : nullptr;
-    pci.pDynamicState = dynamicState ? &vDynamicState : nullptr;
-    pci.layout = pipelineLayout ? *pipelineLayout : vk::PipelineLayout( );
-    pci.renderPass = renderPass ? *renderPass : vk::RenderPass( );
-    pci.subpass = subpass;
-    pci.basePipelineHandle = basePipelineHandle ? *basePipelineHandle : vk::Pipeline( );
-    pci.basePipelineIdx = basePipelineIdx;
-
+      basePipelineIdx
+    );
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
   }
 
@@ -448,19 +431,23 @@ namespace lava
   }
 
   PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( 
-    vk::ShaderStageFlagBits stage_, const std::shared_ptr<ShaderModule>& module_, std::string const& name_,
-    vk::Optional<const SpecializationInfo> specializationInfo_ )
+    vk::ShaderStageFlagBits stage_, const std::shared_ptr<ShaderModule>& module_, 
+    const std::string& name_, vk::Optional<const SpecializationInfo> specializationInfo_ )
     : stage( stage_ )
     , module( module_ )
     , name( name_ )
-    , specializationInfo( specializationInfo_ ? new SpecializationInfo( *specializationInfo_ ) : nullptr )
+    , specializationInfo( specializationInfo_ ? 
+      new SpecializationInfo( *specializationInfo_ ) : nullptr )
   {}
 
-  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( PipelineShaderStageCreateInfo const& rhs )
-    : PipelineShaderStageCreateInfo( rhs.stage, rhs.module, rhs.name, rhs.specializationInfo ? vk::Optional<const SpecializationInfo>( *rhs.specializationInfo.get( ) ) : nullptr )
+  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( const PipelineShaderStageCreateInfo& rhs )
+    : PipelineShaderStageCreateInfo( rhs.stage, rhs.module, rhs.name, 
+      rhs.specializationInfo ? vk::Optional<const SpecializationInfo>( 
+        *rhs.specializationInfo.get( ) ) : nullptr )
   {}
 
-  PipelineShaderStageCreateInfo & PipelineShaderStageCreateInfo::operator=( PipelineShaderStageCreateInfo const& rhs )
+  PipelineShaderStageCreateInfo & PipelineShaderStageCreateInfo::operator=( 
+    const PipelineShaderStageCreateInfo& rhs )
   {
     stage = rhs.stage;
     module = rhs.module;

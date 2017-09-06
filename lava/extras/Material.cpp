@@ -7,7 +7,7 @@ namespace lava
 {
   namespace extras
   {
-    Material::Material( const aiMaterial *mtl, std::string const &globalPath )
+    Material::Material( const aiMaterial* mtl, const std::string& globalPath )
     {
       aiString texPath;
 

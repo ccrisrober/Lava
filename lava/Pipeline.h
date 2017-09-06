@@ -191,12 +191,12 @@ namespace lava
   {
     LAVA_API
     PipelineShaderStageCreateInfo( vk::ShaderStageFlagBits stage, 
-      std::shared_ptr<ShaderModule> const& module, std::string const& name,
+      const std::shared_ptr<ShaderModule>& module, const std::string& name = "main",
       vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
     LAVA_API
-    PipelineShaderStageCreateInfo( PipelineShaderStageCreateInfo const& rhs );
+    PipelineShaderStageCreateInfo( const PipelineShaderStageCreateInfo& rhs );
     LAVA_API
-    PipelineShaderStageCreateInfo & operator=( PipelineShaderStageCreateInfo const& rhs );
+    PipelineShaderStageCreateInfo & operator=( const PipelineShaderStageCreateInfo& rhs );
 
     vk::ShaderStageFlagBits             stage;
     std::shared_ptr<ShaderModule>       module;

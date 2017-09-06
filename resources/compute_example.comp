@@ -13,25 +13,20 @@ struct Pixel
 
 layout(std140, binding = 0) buffer buf
 {
-   Pixel imageData[];
+  Pixel imageData[];
 };
 
 void main( void )
 {
-
-  /*
-  In order to fit the work into workgroups, some unnecessary threads are launched.
-  We terminate those threads here. 
-  */
+  // In order to fit the work into workgroups, some unnecessary threads are launched.
+  // We terminate those threads here. 
   if(gl_GlobalInvocationID.x >= WIDTH || gl_GlobalInvocationID.y >= HEIGHT)
     return;
 
   float x = float(gl_GlobalInvocationID.x) / float(WIDTH);
   float y = float(gl_GlobalInvocationID.y) / float(HEIGHT);
 
-  /*
-  What follows is code for rendering the mandelbrot set. 
-  */
+  // What follows is code for rendering the mandelbrot set. 
   vec2 uv = vec2(x,y);
   float n = 0.0;
   vec2 c = vec2(-.445, 0.0) +  (uv - 0.5)*(2.0+ 1.7*0.2  ), 
