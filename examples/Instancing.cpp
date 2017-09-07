@@ -1,7 +1,8 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include <lava/lava.h>
 using namespace lava;
-
-#include <routes.h>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -13,6 +14,8 @@ using namespace lava;
 #include <glm/gtx/string_cast.hpp>
 
 #include <routes.h>
+
+#include <random>
 
 struct UniformBufferObject {
   glm::mat4 model;

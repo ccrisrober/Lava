@@ -20,3 +20,6 @@ C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V compute_example.comp -o comp
 
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V parallax.vert -o normal_mapping_vert.spv
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V parallax.frag -o normal_mapping_frag.spv
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V instancing.vert -o instancing_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V instancing.frag -o instancing_frag.spv

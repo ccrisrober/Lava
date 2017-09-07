@@ -19,17 +19,22 @@ struct FrameBufferAttachment {
   vk::DeviceMemory mem;
   vk::ImageView view;
 };
+struct FrameBuffer {
+  vk::Framebuffer framebuffer;
+  FrameBufferAttachment color, depth;
+  vk::DescriptorImageInfo descriptor;
+};
 struct OffscreenPass {
   int32_t width, height;
-  vk::Framebuffer frameBuffer;
-  FrameBufferAttachment color, depth;
   vk::RenderPass renderPass;
   vk::Sampler sampler;
-  vk::DescriptorImageInfo descriptor;
   vk::CommandBuffer commandBuffer = VK_NULL_HANDLE;
-  // Semaphore used to synchronize between offscreen and final scene render pass
+  // Semaphore used to synchronize between offscreen and final scene rendering
   vk::Semaphore semaphore = VK_NULL_HANDLE;
+  FrameBuffer framebuffer;
 } offscreenPass;
+
+#define FB_COLOR_FORMAT vk::Format::eR8G8B8A8Unorm
 
 class MyApp : public VulkanApp
 {
@@ -44,22 +49,170 @@ public:
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    /*vk::Format format = vk::Format::eR8G8B8A8Unorm;
-    auto features = _device->_physicalDevice->getDeviceFeatures( );
-    if ( features.textureCompressionBC )
-    {
-      format = vk::Format::eBc3UnormBlock;
-    }
-    else if ( features.textureCompressionASTC_LDR )
-    {
-      format = vk::Format::eAstc8x8UnormBlock;
-    }
-    else if ( features.textureCompressionETC2 )
-    {
-      format = vk::Format::eEtc2R8G8B8UnormBlock;
-    }*/
+    // PREPARE OFFSCREEN
+    offscreenPass.width = width;
+    offscreenPass.height = height;
 
-   
+    // Find a suitable depth format
+    vk::Format depthFormat = _depthFormat;
+    //VkBool32 validDepthFormat = vks::tools::getSupportedDepthFormat( physicalDevice, &fbDepthFormat );
+    //assert( validDepthFormat );
+
+    // Create a separate render pass for the offscreen rendering as it may differ from the one used for scene rendering
+
+    std::array<vk::AttachmentDescription, 2> attchmentDescriptions = {};
+    // Color attachment
+    attchmentDescriptions[ 0 ].format = FB_COLOR_FORMAT;
+    attchmentDescriptions[ 0 ].samples = vk::SampleCountFlagBits::e1;
+    attchmentDescriptions[ 0 ].loadOp = vk::AttachmentLoadOp::eClear;
+    attchmentDescriptions[ 0 ].storeOp = vk::AttachmentStoreOp::eStore;
+    attchmentDescriptions[ 0 ].stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+    attchmentDescriptions[ 0 ].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+    attchmentDescriptions[ 0 ].initialLayout = vk::ImageLayout::eUndefined;
+    attchmentDescriptions[ 0 ].finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    // Depth attachment
+    attchmentDescriptions[ 1 ].format = depthFormat;
+    attchmentDescriptions[ 1 ].samples = vk::SampleCountFlagBits::e1;
+    attchmentDescriptions[ 1 ].loadOp = vk::AttachmentLoadOp::eClear;
+    attchmentDescriptions[ 1 ].storeOp = vk::AttachmentStoreOp::eDontCare;
+    attchmentDescriptions[ 1 ].stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+    attchmentDescriptions[ 1 ].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+    attchmentDescriptions[ 1 ].initialLayout = vk::ImageLayout::eUndefined;
+    attchmentDescriptions[ 1 ].finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+
+    vk::AttachmentReference colorRef = { 0, vk::ImageLayout::eColorAttachmentOptimal };
+    vk::AttachmentReference depthRef = { 1, vk::ImageLayout::eDepthStencilAttachmentOptimal };
+
+    vk::SubpassDescription subpassDescription;
+    subpassDescription.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+    subpassDescription.colorAttachmentCount = 1;
+    subpassDescription.pColorAttachments = &colorRef;
+    subpassDescription.pDepthStencilAttachment = &depthRef;
+
+
+    // Use subpass dependencies for attachment layout transitions
+    std::array<vk::SubpassDependency, 2> dependencies;
+
+    dependencies[ 0 ].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[ 0 ].dstSubpass = 0;
+    dependencies[ 0 ].srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+    dependencies[ 0 ].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependencies[ 0 ].srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+    dependencies[ 0 ].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+    dependencies[ 0 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+
+    dependencies[ 1 ].srcSubpass = 0;
+    dependencies[ 1 ].dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[ 1 ].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependencies[ 1 ].dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+    dependencies[ 1 ].srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+    dependencies[ 1 ].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+    dependencies[ 1 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+
+    // Create render pass
+    vk::RenderPassCreateInfo renderPassInfo;
+    renderPassInfo.pAttachments = attchmentDescriptions.data( );
+    renderPassInfo.attachmentCount = static_cast<uint32_t>( attchmentDescriptions.size( ) );
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpassDescription;
+    renderPassInfo.dependencyCount = 2;
+    renderPassInfo.pDependencies = dependencies.data( );
+    
+    offscreenPass.renderPass = static_cast< vk::Device >( *_device ).createRenderPass( renderPassInfo );
+
+
+    // Create sampler to sample from the color attachments
+    vk::SamplerCreateInfo sampler;
+    sampler.magFilter = vk::Filter::eLinear;
+    sampler.minFilter = vk::Filter::eLinear;
+    sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    sampler.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+    sampler.addressModeV = sampler.addressModeU;
+    sampler.addressModeW = sampler.addressModeU;
+    sampler.mipLodBias = 0.0f;
+    sampler.maxAnisotropy = 1.0f;
+    sampler.minLod = 0.0f;
+    sampler.maxLod = 1.0f;
+    sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
+
+    offscreenPass.sampler = static_cast< vk::Device >( *_device ).createSampler( sampler );
+
+    // CREATE OFFSCREEN FBO
+    vk::ImageCreateInfo image;
+		// Color attachment
+    {
+      image.imageType = vk::ImageType::e2D;
+      image.format = FB_COLOR_FORMAT;
+      image.extent.width = width;
+      image.extent.height = height;
+      image.extent.depth = 1;
+      image.mipLevels = 1;
+      image.arrayLayers = 1;
+      image.samples = vk::SampleCountFlagBits::e1;
+      image.tiling = vk::ImageTiling::eOptimal;
+      // We will sample directly from the color attachment
+      image.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
+
+
+      vk::ImageViewCreateInfo colorImageView;
+      colorImageView.viewType = vk::ImageViewType::e2D;
+      colorImageView.format = FB_COLOR_FORMAT;
+      colorImageView.subresourceRange = {};
+      colorImageView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+      colorImageView.subresourceRange.baseMipLevel = 0;
+      colorImageView.subresourceRange.levelCount = 1;
+      colorImageView.subresourceRange.baseArrayLayer = 0;
+      colorImageView.subresourceRange.layerCount = 1;
+
+      offscreenPass.framebuffer.color.image = static_cast< vk::Device >( *_device ).createImage( image );
+      offscreenPass.framebuffer.color.mem = _device->allocateImageMemory(
+        offscreenPass.framebuffer.color.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+      colorImageView.image = offscreenPass.framebuffer.color.image;
+      offscreenPass.framebuffer.color.view = static_cast< vk::Device >( *_device ).createImageView( colorImageView );
+    }
+    // Depth stencil attachment
+    {
+      image.format = depthFormat;
+      image.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+
+      vk::ImageViewCreateInfo depthStencilView;
+      depthStencilView.viewType = vk::ImageViewType::e2D;
+      depthStencilView.format = depthFormat;
+      depthStencilView.subresourceRange = {};
+      depthStencilView.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
+      depthStencilView.subresourceRange.baseMipLevel = 0;
+      depthStencilView.subresourceRange.levelCount = 1;
+      depthStencilView.subresourceRange.baseArrayLayer = 0;
+      depthStencilView.subresourceRange.layerCount = 1;
+
+      offscreenPass.framebuffer.depth.image = static_cast< vk::Device >( *_device ).createImage( image );
+      offscreenPass.framebuffer.depth.mem = _device->allocateImageMemory(
+        offscreenPass.framebuffer.depth.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+      depthStencilView.image = offscreenPass.framebuffer.depth.image;
+
+      offscreenPass.framebuffer.depth.view = static_cast< vk::Device >( *_device ).createImageView( depthStencilView );
+    }
+
+    vk::ImageView attachments[ 2 ];
+    attachments[ 0 ] = offscreenPass.framebuffer.color.view;
+    attachments[ 1 ] = offscreenPass.framebuffer.depth.view;
+
+    vk::FramebufferCreateInfo fbufCreateInfo;
+    fbufCreateInfo.renderPass = offscreenPass.renderPass;
+    fbufCreateInfo.attachmentCount = 2;
+    fbufCreateInfo.pAttachments = attachments;
+    fbufCreateInfo.width = width;
+    fbufCreateInfo.height = height;
+    fbufCreateInfo.layers = 1;
+
+    offscreenPass.framebuffer.framebuffer = static_cast< vk::Device >( *_device ).createFramebuffer( fbufCreateInfo );
+
+    // Fill a descriptor for later use in a descriptor set 
+    offscreenPass.framebuffer.descriptor.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    offscreenPass.framebuffer.descriptor.imageView = offscreenPass.framebuffer.color.view;
+    offscreenPass.framebuffer.descriptor.sampler = offscreenPass.sampler;
+
+
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
