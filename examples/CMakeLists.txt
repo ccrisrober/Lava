@@ -99,11 +99,19 @@ if( LAVA_WITH_EXAMPLES )
   )
   common_application( lavaInstancing )
 
-  set( LAVABLUR_HEADERS )
-  set( LAVABLUR_SOURCES Blur.cpp )
-  set( LAVABLUR_LINK_LIBRARIES
+  ##set( LAVABLUR_HEADERS )
+  ##set( LAVABLUR_SOURCES Blur.cpp )
+  ##set( LAVABLUR_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaBlur )
+
+
+  set( LAVAFOO_HEADERS )
+  set( LAVAFOO_SOURCES Foo.cpp )
+  set( LAVAFOO_LINK_LIBRARIES
     lava
   )
-  common_application( lavaBlur )
-
+  common_application( lavaFoo )
+  
 endif( )

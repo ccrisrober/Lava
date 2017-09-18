@@ -119,6 +119,17 @@ namespace lava
 
     cmd->copyBufferToImage( shared_from_this( ), dst, layout, region );
   }
+
+
+  void Buffer::flush( vk::DeviceSize size, vk::DeviceSize offset )
+  {
+    vk::MappedMemoryRange mappedRange;
+    mappedRange.memory = _memory;
+    mappedRange.offset = offset;
+    mappedRange.size = size;
+    static_cast< vk::Device >( *_device ).flushMappedMemoryRanges( { mappedRange } );
+  }
+
   void Buffer::readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst )
   {
     void* data = map( offset, length );

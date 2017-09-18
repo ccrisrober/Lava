@@ -23,3 +23,11 @@ C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V parallax.frag -o normal_mapp
 
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V instancing.vert -o instancing_vert.spv
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V instancing.frag -o instancing_frag.spv
+
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V skybox.vert -o skybox_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V skybox.frag -o skybox_frag.spv
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V reflect.vert -o reflect_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V reflect.frag -o reflect_frag.spv

@@ -19,19 +19,16 @@ struct FrameBufferAttachment {
   vk::DeviceMemory mem;
   vk::ImageView view;
 };
-struct FrameBuffer {
-  vk::Framebuffer framebuffer;
-  FrameBufferAttachment color, depth;
-  vk::DescriptorImageInfo descriptor;
-};
 struct OffscreenPass {
   int32_t width, height;
+  vk::Framebuffer framebuffer;
+  FrameBufferAttachment color, depth;
   vk::RenderPass renderPass;
   vk::Sampler sampler;
+  vk::DescriptorImageInfo descriptor;
   vk::CommandBuffer commandBuffer = VK_NULL_HANDLE;
-  // Semaphore used to synchronize between offscreen and final scene rendering
+  // Semaphore used to synchronize between offscreen and final scene render pass
   vk::Semaphore semaphore = VK_NULL_HANDLE;
-  FrameBuffer framebuffer;
 } offscreenPass;
 
 #define FB_COLOR_FORMAT vk::Format::eR8G8B8A8Unorm
@@ -46,10 +43,25 @@ public:
   std::shared_ptr<DescriptorSet> _descriptorSet;
   std::shared_ptr<Texture2D> tex;
 
-  MyApp(char const* title, uint32_t width, uint32_t height)
-    : VulkanApp( title, width, height )
+  struct
   {
-    // PREPARE OFFSCREEN
+    std::shared_ptr<Buffer> scene;
+  } uniformBuffers;
+
+  struct UboVS
+  {
+    glm::mat4 proj;
+    glm::mat4 view;
+    glm::mat4 model;
+  } uboScene;
+
+  struct
+  {
+    std::shared_ptr<lava::Pipeline> offscrenDisplay;
+  };
+
+  void prepareOffscreen( uint32_t width, uint32_t height )
+  {
     offscreenPass.width = width;
     offscreenPass.height = height;
 
@@ -117,7 +129,7 @@ public:
     renderPassInfo.pSubpasses = &subpassDescription;
     renderPassInfo.dependencyCount = 2;
     renderPassInfo.pDependencies = dependencies.data( );
-    
+
     offscreenPass.renderPass = static_cast< vk::Device >( *_device ).createRenderPass( renderPassInfo );
 
 
@@ -139,7 +151,7 @@ public:
 
     // CREATE OFFSCREEN FBO
     vk::ImageCreateInfo image;
-		// Color attachment
+    // Color attachment
     {
       image.imageType = vk::ImageType::e2D;
       image.format = FB_COLOR_FORMAT;
@@ -164,11 +176,11 @@ public:
       colorImageView.subresourceRange.baseArrayLayer = 0;
       colorImageView.subresourceRange.layerCount = 1;
 
-      offscreenPass.framebuffer.color.image = static_cast< vk::Device >( *_device ).createImage( image );
-      offscreenPass.framebuffer.color.mem = _device->allocateImageMemory(
-        offscreenPass.framebuffer.color.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
-      colorImageView.image = offscreenPass.framebuffer.color.image;
-      offscreenPass.framebuffer.color.view = static_cast< vk::Device >( *_device ).createImageView( colorImageView );
+      offscreenPass.color.image = static_cast< vk::Device >( *_device ).createImage( image );
+      offscreenPass.color.mem = _device->allocateImageMemory(
+        offscreenPass.color.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+      colorImageView.image = offscreenPass.color.image;
+      offscreenPass.color.view = static_cast< vk::Device >( *_device ).createImageView( colorImageView );
     }
     // Depth stencil attachment
     {
@@ -185,17 +197,17 @@ public:
       depthStencilView.subresourceRange.baseArrayLayer = 0;
       depthStencilView.subresourceRange.layerCount = 1;
 
-      offscreenPass.framebuffer.depth.image = static_cast< vk::Device >( *_device ).createImage( image );
-      offscreenPass.framebuffer.depth.mem = _device->allocateImageMemory(
-        offscreenPass.framebuffer.depth.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
-      depthStencilView.image = offscreenPass.framebuffer.depth.image;
+      offscreenPass.depth.image = static_cast< vk::Device >( *_device ).createImage( image );
+      offscreenPass.depth.mem = _device->allocateImageMemory(
+        offscreenPass.depth.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
+      depthStencilView.image = offscreenPass.depth.image;
 
-      offscreenPass.framebuffer.depth.view = static_cast< vk::Device >( *_device ).createImageView( depthStencilView );
+      offscreenPass.depth.view = static_cast< vk::Device >( *_device ).createImageView( depthStencilView );
     }
 
     vk::ImageView attachments[ 2 ];
-    attachments[ 0 ] = offscreenPass.framebuffer.color.view;
-    attachments[ 1 ] = offscreenPass.framebuffer.depth.view;
+    attachments[ 0 ] = offscreenPass.color.view;
+    attachments[ 1 ] = offscreenPass.depth.view;
 
     vk::FramebufferCreateInfo fbufCreateInfo;
     fbufCreateInfo.renderPass = offscreenPass.renderPass;
@@ -205,13 +217,55 @@ public:
     fbufCreateInfo.height = height;
     fbufCreateInfo.layers = 1;
 
-    offscreenPass.framebuffer.framebuffer = static_cast< vk::Device >( *_device ).createFramebuffer( fbufCreateInfo );
+    offscreenPass.framebuffer = static_cast< vk::Device >( *_device ).createFramebuffer( fbufCreateInfo );
 
     // Fill a descriptor for later use in a descriptor set 
-    offscreenPass.framebuffer.descriptor.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-    offscreenPass.framebuffer.descriptor.imageView = offscreenPass.framebuffer.color.view;
-    offscreenPass.framebuffer.descriptor.sampler = offscreenPass.sampler;
+    offscreenPass.descriptor.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    offscreenPass.descriptor.imageView = offscreenPass.color.view;
+    offscreenPass.descriptor.sampler = offscreenPass.sampler;
+  }
 
+  void setupVertexDescriptions( )
+  {
+    uint32_t width = _window->getWidth( );
+    uint32_t height = _window->getHeight( );
+
+    static auto startTime = std::chrono::high_resolution_clock::now( );
+
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
+
+    uboScene.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    uboScene.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    uboScene.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboScene.proj[ 1 ][ 1 ] *= -1;
+
+    uint32_t mvpBufferSize = sizeof( uboScene );
+    void* data = uniformBuffers.scene->map( 0, mvpBufferSize );
+    memcpy( data, &uboScene, sizeof( uboScene ) );
+    uniformBuffers.scene->unmap( );
+  }
+
+  void prepareUniformBuffers( )
+  {
+    uint32_t mvpBufferSize = sizeof( uboScene );
+    uniformBuffers.scene = _device->createBuffer( mvpBufferSize,
+      vk::BufferUsageFlagBits::eUniformBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent );
+
+    updateUniformsScene( );
+  }
+  void updateUniformsScene( )
+  {
+
+  }
+  MyApp(char const* title, uint32_t width, uint32_t height)
+    : VulkanApp( title, width, height )
+  {
+    // PREPARE OFFSCREEN
+    prepareOffscreen( width, height );
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );

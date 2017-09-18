@@ -62,6 +62,9 @@ namespace lava
       const vk::ImageSubresourceLayers& range, vk::ImageLayout layout );
 
     LAVA_API
+    void flush( vk::DeviceSize size, vk::DeviceSize offset );
+
+    LAVA_API
     void readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst );
     LAVA_API
     void writeData( vk::DeviceSize offset, vk::DeviceSize length, const void* src );

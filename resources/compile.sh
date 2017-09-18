@@ -25,3 +25,11 @@
 
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V instancing.vert -o instancing_vert.spv
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V instancing.frag -o instancing_frag.spv
+
+
+
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V skybox.vert -o skybox_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V skybox.frag -o skybox_frag.spv
+
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V reflect.vert -o reflect_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V reflect.frag -o reflect_frag.spv

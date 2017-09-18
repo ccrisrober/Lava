@@ -24,30 +24,35 @@ struct UniformBufferObject
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
-  std::shared_ptr<IndexBuffer> _indexBuffer;
+  //std::shared_ptr<VertexBuffer> _vertexBuffer;
+  //std::shared_ptr<IndexBuffer> _indexBuffer;
   std::shared_ptr<Buffer> _uniformBufferMVP;
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
 
-  uint32_t numIndices;
+  //uint32_t numIndices;
+
+  std::shared_ptr<lava::extras::Geometry> geometry;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-    lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+    geometry = std::make_shared<lava::extras::Geometry>( _device, 
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+
+    /*lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
     lava::extras::Mesh mesh = mi._meshes[ 0 ];
 
     numIndices = mesh.numIndices;
 
-    /*for ( const auto& v: mesh.vertices )
+    for ( const auto& v: mesh.vertices )
     {
       std::cout << "POSITION: " << v.position.x << ", " << v.position.y << "," << v.position.z << std::endl;
       std::cout << "NORMAL: " << v.normal.x << ", " << v.normal.y << "," << v.normal.z << std::endl;
       std::cout << "TEXCOORD: " << v.texCoord.x << ", " << v.texCoord.y << std::endl;
       std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~ " << std::endl;
-    }*/
+    }
 
     // Vertex buffer
     {
@@ -62,7 +67,8 @@ public:
       _indexBuffer = std::make_shared<IndexBuffer>( _device, 
         vk::IndexType::eUint32, mesh.numIndices );
       _indexBuffer->writeData( 0, indexBufferSize, mesh.indices.data( ) );
-    }
+    }*/
+
 
     // MVP buffer
     {
@@ -182,11 +188,12 @@ public:
     commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    _vertexBuffer->bind( commandBuffer );
-    _indexBuffer->bind( commandBuffer );
+    //_vertexBuffer->bind( commandBuffer );
+    //_indexBuffer->bind( commandBuffer );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-    commandBuffer->drawIndexed( numIndices, 1, 0, 0, 1 );
+    //commandBuffer->drawIndexed( numIndices, 1, 0, 0, 1 );
+    geometry->render( commandBuffer );
     commandBuffer->endRenderPass( );
 
     commandBuffer->end( );

@@ -19,11 +19,34 @@ namespace lava
   public:
     LAVA_API
     Texture2D( const DeviceRef& device, const std::string& filename, 
-      const std::shared_ptr<CommandPool>& cmdPool, const std::shared_ptr<Queue>& queue,
-      vk::Format format = vk::Format::eR8G8B8A8Unorm, bool forceLinear = false );
+      const std::shared_ptr<CommandPool>& cmdPool, 
+      const std::shared_ptr<Queue>& queue,
+      vk::Format format = vk::Format::eR8G8B8A8Unorm, 
+      bool forceLinear = false );
 
     LAVA_API
     virtual ~Texture2D( void );
+
+    vk::Image textureImage;
+    vk::DeviceMemory textureImageMemory;
+    vk::ImageLayout imageLayout;
+
+    vk::ImageView view;
+    vk::Sampler sampler;
+  };
+  class TextureCubemap: public VulkanResource
+  {
+  public:
+    LAVA_API
+    TextureCubemap( const DeviceRef& device, 
+      const std::array< std::string, 6 >& filePaths, 
+      const std::shared_ptr<CommandPool>& cmdPool, 
+      const std::shared_ptr<Queue>& queue, 
+      vk::Format format = vk::Format::eR8G8B8A8Unorm, 
+      bool forceLinear = false );
+
+    LAVA_API
+    virtual ~TextureCubemap( void );
 
     vk::Image textureImage;
     vk::DeviceMemory textureImageMemory;
