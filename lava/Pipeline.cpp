@@ -14,7 +14,8 @@ namespace lava
   {
     std::ifstream file( filePath, std::ios::ate | std::ios::binary );
 
-    if ( !file.is_open( ) ) {
+    if ( !file.is_open( ) )
+    {
       std::cerr << "File don't opened" << std::endl;
       throw std::runtime_error( "failed to open file!" );
     }
@@ -85,12 +86,14 @@ namespace lava
     vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttrirDescriptions_ )
     : vertexBindingDescriptions( vertexBindingDescriptions_.begin( ), vertexBindingDescriptions_.end( ) )
     , vertexAttrirDescriptions( vertexAttrirDescriptions_.begin( ), vertexAttrirDescriptions_.end( ) )
-  {}
+  {
+  }
 
   PipelineVertexInputStateCreateInfo::PipelineVertexInputStateCreateInfo(
     const PipelineVertexInputStateCreateInfo& rhs )
     : PipelineVertexInputStateCreateInfo( rhs.vertexBindingDescriptions, rhs.vertexAttrirDescriptions )
-  {}
+  {
+  }
 
   PipelineVertexInputStateCreateInfo & PipelineVertexInputStateCreateInfo::operator=(
     PipelineVertexInputStateCreateInfo const& rhs )
@@ -103,12 +106,14 @@ namespace lava
   PipelineDynamicStateCreateInfo::PipelineDynamicStateCreateInfo(
     vk::ArrayProxy<const vk::DynamicState> dynamicStates_ )
     : dynamicStates( dynamicStates_.begin( ), dynamicStates_.end( ) )
-  {}
+  {
+  }
 
   PipelineDynamicStateCreateInfo::PipelineDynamicStateCreateInfo(
     const PipelineDynamicStateCreateInfo& rhs )
     : PipelineDynamicStateCreateInfo( rhs.dynamicStates )
-  {}
+  {
+  }
 
   PipelineDynamicStateCreateInfo & PipelineDynamicStateCreateInfo::operator=(
     const PipelineDynamicStateCreateInfo& rhs )
@@ -123,7 +128,8 @@ namespace lava
     vk::ArrayProxy<const vk::Viewport> viewports_, vk::ArrayProxy<const vk::Rect2D> scissors_ )
     : viewports( viewports_.begin( ), viewports_.end( ) )
     , scissors( scissors_.begin( ), scissors_.end( ) )
-  {}
+  {
+  }
 
   PipelineViewportStateCreateInfo::PipelineViewportStateCreateInfo(
     const PipelineViewportStateCreateInfo& rhs )
@@ -147,13 +153,15 @@ namespace lava
     , logicOp( logicOp_ )
     , attachments( attachments_.begin( ), attachments_.end( ) )
     , blendConstants( blendConstants_ )
-  {}
+  {
+  }
 
   PipelineColorBlendStateCreateInfo::PipelineColorBlendStateCreateInfo( 
     PipelineColorBlendStateCreateInfo const& rhs )
     : PipelineColorBlendStateCreateInfo( rhs.logicEnable, rhs.logicOp, 
       rhs.attachments, rhs.blendConstants )
-  {}
+  {
+  }
 
   PipelineColorBlendStateCreateInfo& 
     PipelineColorBlendStateCreateInfo::operator=( 
@@ -187,7 +195,8 @@ namespace lava
     : PipelineMultisampleStateCreateInfo( rhs.rasterizationSamples, 
       rhs.sampleShadingEnable, rhs.minSampleShading, rhs.sampleMasks, 
       rhs.alphaToCoverageEnable, rhs.alphaToOneEnable )
-  {}
+  {
+  }
 
   PipelineMultisampleStateCreateInfo& 
     PipelineMultisampleStateCreateInfo::operator=( 
@@ -253,7 +262,8 @@ namespace lava
 
   Pipeline::Pipeline( const DeviceRef& device )
     : VulkanResource( device )
-  {}
+  {
+  }
 
   void Pipeline::setPipeline( vk::Pipeline const& pipeline )
   {
@@ -315,6 +325,7 @@ namespace lava
     std::shared_ptr<Pipeline> const& basePipelineHandle, uint32_t basePipelineIdx )
     : Pipeline( device )
   {
+    std::cerr << "Pipeline creation ..." << std::endl;
     std::vector<vk::SpecializationInfo> specializationInfos;
     specializationInfos.reserve( stages.size( ) );
 
@@ -383,7 +394,9 @@ namespace lava
       subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
       basePipelineIdx
     );
+    std::cerr << " ... " << std::endl;
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
+    std::cerr << " ... Pipeline created!" << std::endl;
   }
 
 

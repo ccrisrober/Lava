@@ -14,13 +14,6 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject
-{
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
-};
-
 class MyApp : public VulkanApp
 {
 public:
@@ -80,122 +73,166 @@ public:
     tex = std::make_shared<TextureCubemap>( _device, cubeImages, commandPool, 
       _graphicsQueue );
 
-    // MVP buffer
+    // Prepare and initialize uniform buffer containing shader uniforms
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-      uniformBuffers.object = _device->createBuffer( mvpBufferSize,
+      // Object vertex shader uniform buffer
+      uint32_t mpBufferSize = sizeof(uboVS);
+      uniformBuffers.object = _device->createBuffer( mpBufferSize,
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
           vk::MemoryPropertyFlagBits::eHostCoherent );
+      // Skybox vertex shader uniform buffer
+      uniformBuffers.skybox = _device->createBuffer( mpBufferSize,
+        vk::BufferUsageFlagBits::eUniformBuffer, 
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
+          vk::MemoryPropertyFlagBits::eHostCoherent );
+
+      updateUniformBuffers( );
     }
 
-    // Init descriptor and pipeline layouts
+    // SetupDescriptorSetLayout
     std::vector<DescriptorSetLayoutBinding> dslbs;
-    dslbs.push_back( DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex ) );
-    dslbs.push_back( DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment ) );
+    // Binding 0 : Vertex shader uniform buffer
+    dslbs.push_back( DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer, 
+      vk::ShaderStageFlagBits::eVertex ) );
+    // Binding 1 : Fragment shader image sampler
+    dslbs.push_back( DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler, 
+      vk::ShaderStageFlagBits::eFragment ) );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
-
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
+
+    std::cout << "Preparing pipelines ..." << std::endl;
+    // Prepare pipelines
+    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
+
+    std::cout << "\tPreparing Skybox pipeline" << std::endl;
+    // Skybox pipeline (background cube)
+    // init shaders
+    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/skybox_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/skybox_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+
+    // init pipeline
+    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
+    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
+
+    // Setup vertex description
+    PipelineVertexInputStateCreateInfo vertexInput(
+      vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
+        vk::VertexInputRate::eVertex ),
+        {
+          vk::VertexInputAttributeDescription( 0, 0, 
+            vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
+          vk::VertexInputAttributeDescription( 1, 0, 
+            vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
+          vk::VertexInputAttributeDescription( 2, 0, 
+            vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
+        }
+    );
+    
+    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    vk::PipelineRasterizationStateCreateInfo rasterizationState( {}, true,
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
+      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // Dynamic viewport and scissor
+    
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, false, false, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
+    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
+
+
+    std::cout << "\tCreating Skybox pipeline" << std::endl;
+    pipelines.skybox = _device->createGraphicsPipeline( pipelineCache, {},
+    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+      viewport, rasterizationState, multisample, depthStencil, colorBlend, dynamic,
+      _pipelineLayout, _renderPass );
+
+    std::cout << "\tPreparing Model pipeline" << std::endl;
+    // Model pipeline
+    std::shared_ptr<ShaderModule> vertexShaderModule2 = _device->createShaderModule(
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/reflect_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule2 = _device->createShaderModule(
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/reflect_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+
+    // init pipeline
+    PipelineShaderStageCreateInfo vertexStage2( vk::ShaderStageFlagBits::eVertex, vertexShaderModule2, "main" );
+    PipelineShaderStageCreateInfo fragmentStage2( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule2, "main" );
+    // Enable depth test and write
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthTestEnable = VK_TRUE;
+    // Flip cull mode
+    rasterizationState.cullMode = vk::CullModeFlagBits::eFront;
+
+
+    std::cout << "\tCreating Model pipeline" << std::endl;
+    pipelines.object = _device->createGraphicsPipeline( pipelineCache, {},
+    { vertexStage2, fragmentStage2 }, vertexInput, assembly, nullptr,
+      viewport, rasterizationState, multisample, depthStencil, colorBlend, dynamic,
+      _pipelineLayout, _renderPass );
+
+
+    // Setup descriptor pool
     std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 );
     poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 2, poolSize );
+    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool(
+      {}, 2, poolSize );
 
-    // Init descriptor set
+    // Setup descriptor sets
+    // Image descriptor for the cube map textur
+    DescriptorImageInfo textureDescriptor( 
+      vk::ImageLayout::eGeneral, 
+      std::make_shared<vk::ImageView>( tex->view ), 
+      std::make_shared<vk::Sampler>( tex->sampler )
+    );
+    // 3D object descriptor set
     descriptorSets.object = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    
     std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( uniformBuffers.object, 0, sizeof( glm::mat4 ) );
-    WriteDescriptorSet w( descriptorSets.object, 0, 0,
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
+    // Binding 0 : Vertex shader uniform buffer
+    wdss.push_back(
+      WriteDescriptorSet( descriptorSets.object, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr,  
+      DescriptorBufferInfo( uniformBuffers.object, 0, sizeof( uboVS ) ) )
+    );
+    // Binding 1 : Fragment shader cubemap sampler
+    wdss.push_back(
+      WriteDescriptorSet( descriptorSets.object, 0, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
+      DescriptorImageInfo( 
+        vk::ImageLayout::eGeneral, 
+        std::make_shared<vk::ImageView>( tex->view ), 
+        std::make_shared<vk::Sampler>( tex->sampler )
+      ), nullptr
+    ));
     _device->updateDescriptorSets( wdss, {} );
 
+    // Skybox descriptor set
 
-    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-
-    // Skybox pipeline
-    {
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-        LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/skybox_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-      std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-        LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/skybox_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
-      // init pipeline
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
-
-      PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
-          vk::VertexInputRate::eVertex ),
-          {
-            vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-            vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-            vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
-          }
-      );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
-        false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
-        vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-      PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-      vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, false, false, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-      vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-      PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-      PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
-
-
-      pipelines.skybox = _device->createGraphicsPipeline( pipelineCache, {},
-      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
-        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-        _pipelineLayout, _renderPass );
-    }
-
-    // Model pipeline
-    {
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-        LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/reflect_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-      std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-        LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/reflect_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
-      // init pipeline
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
-
-      PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
-          vk::VertexInputRate::eVertex ),
-          {
-            vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-            vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-            vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
-          }
-      );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
-        false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
-        vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-      PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-      vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-      vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-      PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-      PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
-
-
-      pipelines.object = _device->createGraphicsPipeline( pipelineCache, {},
-      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
-        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-        _pipelineLayout, _renderPass );
-    }
+    wdss.clear( );
+    // Binding 0 : Vertex shader uniform buffer
+    wdss.push_back(
+      WriteDescriptorSet( descriptorSets.skybox, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr,  
+      DescriptorBufferInfo( uniformBuffers.skybox, 0, sizeof( uboVS ) ) )
+    );
+    // Binding 1 : Fragment shader cubemap sampler
+    wdss.push_back(
+      WriteDescriptorSet( descriptorSets.skybox, 0, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
+      DescriptorImageInfo( 
+        vk::ImageLayout::eGeneral, 
+        std::make_shared<vk::ImageView>( tex->view ), 
+        std::make_shared<vk::Sampler>( tex->sampler )
+      ), nullptr
+    ));
+    _device->updateDescriptorSets( wdss, {} );
   }
   void updateUniformBuffers( void )
   {
@@ -207,24 +244,33 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
-
     vk::Device device = static_cast<vk::Device>(*_device);
 
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = uniformBuffers.object->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
+    // 3D object
+    uboVS.projection = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.001f, 256.0f);
+    glm::mat4 viewMatrix = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    uboVS.model = viewMatrix * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    uint32_t mpBufferSize = sizeof(uboVS);
+    void* data = uniformBuffers.object->map( 0, mpBufferSize );
+    memcpy( data, &uboVS, sizeof(uboVS) );
     uniformBuffers.object->unmap( );
 
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    // Skybox
+    viewMatrix = glm::mat4();
+    uboVS.projection = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.001f, 256.0f);
+    uboVS.model = viewMatrix * glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    mpBufferSize = sizeof(uboVS);
+    data = uniformBuffers.skybox->map( 0, mpBufferSize );
+    memcpy( data, &uboVS, sizeof(uboVS) );
+    uniformBuffers.skybox->unmap( );
   }
 
   void doPaint( void ) override
   {
+    std::cout << "Updating buffer" << std::endl;
     updateUniformBuffers( );
 
     // create a command pool for command buffer allocation

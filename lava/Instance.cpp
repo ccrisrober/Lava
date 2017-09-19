@@ -31,30 +31,51 @@ namespace lava
 
     // Determine prefix
     if ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT )
+    {
       message << "ERROR";
+    }
 
     if ( flags & VK_DEBUG_REPORT_WARNING_BIT_EXT )
+    {
       message << "WARNING";
+    }
 
     if ( flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT )
+    {
       message << "PERFORMANCE";
-
-    if ( flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT )
-      message << "INFO";
-
-    if ( flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT )
-      message << "DEBUG";
-
+      
       message << ": [" << pLayerPrefix << "] Code " << msgCode << ": "
         << pMsg << std::endl;
+      std::cerr << message.str( ) << std::endl;
+      return VK_TRUE;
+    }
+
+    if ( flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT )
+    {
+      message << "INFO";
+    }
+
+    if ( flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT )
+    {
+      message << "DEBUG";
+    }
+
+    message << ": [" << pLayerPrefix << "] Code " << msgCode << ": "
+      << pMsg << std::endl;
 
     if ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT )
+    {
       std::cerr << message.str( ) << std::endl;
+    }
     else if ( flags & VK_DEBUG_REPORT_WARNING_BIT_EXT || flags &
       VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT )
+    {
       std::cerr << message.str( ) << std::endl;
+    }
     else
+    {
       std::cerr << message.str( ) << std::endl;
+    }
 
     std::cerr << message.str( ) << std::endl;
     assert( !message );
