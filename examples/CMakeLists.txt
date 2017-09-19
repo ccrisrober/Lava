@@ -113,5 +113,13 @@ if( LAVA_WITH_EXAMPLES )
     lava
   )
   common_application( lavaFoo )
+
+
+  set( LAVAPIPELINES_HEADERS )
+  set( LAVAPIPELINES_SOURCES Pipelines.cpp )
+  set( LAVAPIPELINES_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaPipelines )
   
 endif( )

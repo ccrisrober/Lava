@@ -33,3 +33,12 @@
 
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V reflect.vert -o reflect_vert.spv
 /home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V reflect.frag -o reflect_frag.spv
+
+
+
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V pipelines/Toon.vert -o pipelines/toon_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V pipelines/Toon.frag -o pipelines/toon_frag.spv
+
+
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V pipelines/Phong.vert -o pipelines/phong_vert.spv
+/home/crodriguez/Vulkan/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V pipelines/Phong.frag -o pipelines/phong_frag.spv
