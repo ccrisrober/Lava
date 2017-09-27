@@ -16,6 +16,50 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
+  // Resources for graphic part
+  struct
+  {
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
+    std::shared_ptr<DescritorSet> descriptorSetPreCompute;
+    std::shared_ptr<DescritorSet> descriptorSet;
+    std::shared_ptr<Pipeline> pipeline;
+    std::shared_ptr<PipelineLayout> pipelineLayout;
+  } graphics;
+
+  // Resources for compute part
+  struct
+  {
+    struct
+    {
+      std::shared_ptr<Buffer> spheres;
+    } storageBuffers;
+    std::shared_ptr<Buffer> uniformBuffer;
+    std::shared_ptr<Queue> queue;
+    std::shared_ptr<CommandPool> commandPool;
+    std::shared_ptr<CommandBuffer> commandBuffer;
+    std::shared_ptr<Fence> fence;
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
+    std::shared_ptr<DescritorSet> descriptorSet;
+    std::shared_ptr<Pipeline> pipeline;
+    std::shared_ptr<PipelineLayout> pipelineLayout;
+    struct UBOCompute
+    {
+      // float globalTime;
+      glm::vec2 windowSize;
+    } ubo;
+  } compute;
+
+  // SSBO sphere declaration 
+  struct Sphere
+  {                 // Shader uses std140 layout (so we only use vec4 instead of vec3)
+    glm::vec3 pos;                
+    float radius;
+    glm::vec3 diffuse;
+    float specular;
+    uint32_t id;                // Id used to identify sphere for raytracing
+    glm::ivec3 _pad;
+  };
+
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<vk::ImageView> _textureImageView;
@@ -23,25 +67,82 @@ public:
   std::shared_ptr<DescriptorSet> _descriptorSet;
   std::shared_ptr<Texture2D> tex;
 
+  void updateUniformBuffers( void )
+  {
+    // TODO compute.ubo.
+  }
+  
+  // Prepare a texture target that is used to store compute shader calculations
+  void createTextureTarget( std::shared_ptr<Texture> tex, 
+    uint32_t width, uint32_t height )
+  {
+    // TODO: CHECK IF SUPPORT STORAGE IMAGE
+
+    t
+    // Prepare blit target texture
+    tex->width = width;
+    tex->height = height;
+  }
+
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    /*vk::Format format = vk::Format::eR8G8B8A8Unorm;
-    auto features = _device->_physicalDevice->getDeviceFeatures( );
-    if ( features.textureCompressionBC )
+    // PREPARING STORAGE BUFFER
     {
-      format = vk::Format::eBc3UnormBlock;
-    }
-    else if ( features.textureCompressionASTC_LDR )
-    {
-      format = vk::Format::eAstc8x8UnormBlock;
-    }
-    else if ( features.textureCompressionETC2 )
-    {
-      format = vk::Format::eEtc2R8G8B8UnormBlock;
-    }*/
+      // Spheres
+      std::vector<Sphere> spheres;
+      spheres.push_back(newSphere(glm::vec3(1.75f, -0.5f, 0.0f), 1.0f, glm::vec3(0.0f, 1.0f, 0.0f), 32.0f));
+      spheres.push_back(newSphere(glm::vec3(0.0f, 1.0f, -0.5f), 1.0f, glm::vec3(0.65f, 0.77f, 0.97f), 32.0f));
+      spheres.push_back(newSphere(glm::vec3(-1.75f, -0.75f, -0.5f), 1.25f, glm::vec3(0.9f, 0.76f, 0.46f), 32.0f));
+      vk::DeviceSize storageBufferSize = spheres.size() * sizeof(Sphere);
 
-   
+      // Stage
+      std::shared_ptr<Buffer> stagingBuffer;
+
+      stagingBuffer = _device->createBuffer( storageBufferSize, 
+        vk::BufferUsageFlagBits::eTransferSrc, 
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
+          vk::MemoryPropertyFlagBits::eHostCoherent );
+
+      compute.storageBuffers.spheres = _device->createBuffer( storageBufferSize, 
+        vk::BufferUsageFlagBits::eVertexBuffer |vk::BufferUsageFlagBits::eStorageBuffer, 
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+      // Copy to staging buffer
+      // create a command pool for command buffer allocation
+      std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
+        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+      std::shared_ptr<CommandBuffer> copyCmd = commandPool->allocateCommandBuffer( );
+
+      copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      vk::BufferCopy copyRegion;
+      copyRegion.size = storageBufferSize;
+      copyCmd->copyBuffer( stagingBuffer.buffer, 
+        compute.storageBuffers.spheres.bUffer, { copyRegion } );
+
+      // Send command buffer
+      copyCmd->end( );
+
+      queue->submitAndWait( copyCmd );
+
+      stagingBuffer.reset( );
+    }
+
+    // PREPARE UNIFORM BUFFERS
+    {
+      // Compute shader parameter uniform buffer block
+      compute.uniformBuffer = _device->createBuffer( sizeof( compute.ubo ), 
+        vk::BufferUsageFlagBits::eUniformBuffer, 
+        vk::SharingMode::eExclusive, nullptr,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
+          vk::MemoryPropertyFlagBits::eHostCoherent );
+
+      updateUniformBuffers( );
+    }
+
+
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 

@@ -39,9 +39,9 @@ public:
     std::shared_ptr<PipelineCache> pipelineCache = 
       _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
+      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
     PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
+      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );

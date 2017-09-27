@@ -18,7 +18,8 @@ struct UniformBufferObject {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+  float amount = 0.5f;
+} uboVS;
 
 struct Vertex {
   glm::vec3 pos;
@@ -27,47 +28,8 @@ struct Vertex {
 
 const float side = 1.0f;
 const float side2 = side / 2.0f;
-const std::vector<Vertex> vertices =
-{
-  {{-side2, -side2,  side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
-
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2, -side2}, {1.0f, 1.0f}},
-
-  {{ side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
-
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 1.0f}},
-
-  {{-side2,  side2, -side2}, {0.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
-
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {0.0f, 1.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 1.0f}} 
-};
-const std::vector<uint16_t> indices =
-{
-  0,1,2,      1,3,2,
-  4,6,5,      5,6,7,
-  8,10,9,     9,10,11,
-  12,13,14,   13,15,14,
-  16,17,18,   17,19,18,
-  20,22,21,   21,22,23,
-};
+std::vector<Vertex> vertices;
+std::vector<uint32_t> indices;
 
 class MyApp : public VulkanApp
 {
@@ -75,14 +37,69 @@ public:
   std::shared_ptr<VertexBuffer> _vertexBuffer;
   std::shared_ptr<IndexBuffer> _indexBuffer;
   std::shared_ptr<Buffer> _uniformBufferMVP;
-  std::shared_ptr<Pipeline> _pipeline;
+
+  struct Pipelines
+  {
+    std::shared_ptr<Pipeline> solid;
+    std::shared_ptr<Pipeline> wireframe;
+  } pipelines;
+
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
   std::shared_ptr<Texture2D> tex;
 
+  void generatePlane( float width = 1.0f, float height = 1.0f,
+    unsigned int widthSegments = 1,
+    unsigned int heightSegments = 1 )
+  {
+    float width_half = width / 2.0f;
+    float height_half = height / 2.0f;
+
+    unsigned int gridX = std::floor( widthSegments );// || 1.0f;
+    unsigned int gridY = std::floor( heightSegments );// || 1.0f;
+
+    unsigned int gridX1 = gridX + 1;
+    unsigned int gridY1 = gridY + 1;
+
+    float segment_width = width / gridX;
+    float segment_height = height / gridY;
+
+    unsigned int ix, iy;
+
+    for ( iy = 0; iy < gridY1; ++iy )
+    {
+      float y = iy * segment_height - height_half;
+      for ( ix = 0; ix < gridX1; ++ix )
+      {
+        float x = ix * segment_width - width_half;
+
+        vertices.push_back( Vertex{
+          glm::vec3( x, -y, 0.0f ),
+          glm::vec2( ( ( float ) ix ) / gridX, 1.0 - ( ( ( float ) iy ) / gridY ) )
+        });
+      }
+    }
+    for ( iy = 0; iy < gridY; ++iy )
+    {
+      for ( ix = 0; ix < gridX; ++ix )
+      {
+        unsigned int a = ix + gridX1 * iy;
+        unsigned int b = ix + gridX1 * ( iy + 1 );
+        unsigned int c = ( ix + 1 ) + gridX1 * ( iy + 1 );
+        unsigned int d = ( ix + 1 ) + gridX1 * iy;
+
+        // faces
+        indices.push_back( a );   indices.push_back( b );    indices.push_back( d );
+        indices.push_back( b );   indices.push_back( c );    indices.push_back( d );
+      }
+    }
+
+  }
+
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    generatePlane( 2.5f, 2.5f, 50, 50 );
 
     // Vertex buffer
     {
@@ -95,7 +112,7 @@ public:
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
       _indexBuffer = std::make_shared<IndexBuffer>( _device, 
-        vk::IndexType::eUint16, indices.size( ) );
+        vk::IndexType::eUint32, indices.size( ) );
       _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
@@ -111,8 +128,8 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string( "/random.png" ), commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE +
+      std::string( "/heightmap.jpg" ), commandPool, _graphicsQueue );
 
 
 
@@ -122,7 +139,7 @@ public:
       vk::ShaderStageFlagBits::eVertex );
     dslbs.push_back( mvpDescriptor );
     DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler, 
-      vk::ShaderStageFlagBits::eFragment );
+      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment );
     dslbs.push_back( mvpDescriptor2 );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
@@ -133,10 +150,10 @@ public:
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule =
       _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-        std::string( "/cubeUV_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+        std::string( "/terrain_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule =
       _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-        std::string( "/cubeUV_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+        std::string( "/terrain_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -161,9 +178,20 @@ public:
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
-
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
+
+    // Wireframe rendering pipeline
+    if ( _physicalDevice->getDeviceFeatures( ).fillModeNonSolid )
+    {
+      rasterization.polygonMode = vk::PolygonMode::eLine;
+      rasterization.lineWidth = 1.0f;
+
+      rasterization.cullMode = vk::CullModeFlagBits::eNone;
+
+      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+        _pipelineLayout, _renderPass );
+    }
 
     std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
@@ -198,17 +226,17 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    uboVS.model = glm::mat4( 1.0f );
+    //uboVS.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    uboVS.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
+    uboVS.proj[1][1] *= -1;
 
     vk::Device device = static_cast<vk::Device>(*_device);
 
     uint32_t mvpBufferSize = sizeof(UniformBufferObject);
     void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
+    memcpy( data, &uboVS, sizeof( uboVS ) );
     _uniformBufferMVP->unmap( );
 
     //std::cout<<glm::to_string(mvpc)<<std::endl;
@@ -234,7 +262,20 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( 
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+    
+
+    if ( enable_wire )
+    {
+      std::cout << "WIREFRAME PIPELINE" << std::endl;
+      commandBuffer->bindGraphicsPipeline( pipelines.wireframe );
+    }
+    else
+    {
+      std::cout << "SOLID PIPELINE" << std::endl;
+      commandBuffer->bindGraphicsPipeline( pipelines.solid );
+    }
+
+
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     _vertexBuffer->bind( commandBuffer );
@@ -253,10 +294,33 @@ public:
       _renderComplete
     } );
   }
+  bool enable_wire = false;
   void keyEvent( int key, int scancode, int action, int mods )
   {
     switch ( key )
     {
+    case GLFW_KEY_E:
+      enable_wire = true;
+      break;
+    case GLFW_KEY_R:
+      enable_wire = false;
+      break;
+    case GLFW_KEY_D:
+      switch ( action )
+      {
+      case GLFW_PRESS:
+        uboVS.amount += 0.01f;
+        break;
+      }
+      break;
+    case GLFW_KEY_S:
+      switch ( action )
+      {
+      case GLFW_PRESS:
+        uboVS.amount -= 0.01f;
+        break;
+      }
+      break;
     case GLFW_KEY_ESCAPE:
       switch ( action )
       {
@@ -301,6 +365,6 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
+  //system( "PAUSE" );
   return 0;
 }

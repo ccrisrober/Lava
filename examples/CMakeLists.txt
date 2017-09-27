@@ -115,11 +115,90 @@ if( LAVA_WITH_EXAMPLES )
   common_application( lavaFoo )
 
 
-  set( LAVAPIPELINES_HEADERS )
-  set( LAVAPIPELINES_SOURCES Pipelines.cpp )
-  set( LAVAPIPELINES_LINK_LIBRARIES
+  ##set( LAVAPIPELINES_HEADERS )
+  ##set( LAVAPIPELINES_SOURCES Pipelines.cpp )
+  ##set( LAVAPIPELINES_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaPipelines )
+
+
+  ##set( LAVARAYTRACING_HEADERS )
+  ##set( LAVARAYTRACING_SOURCES RayTracing.cpp )
+  ##set( LAVARAYTRACING_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaRayTracing )
+
+
+  set( LAVAGEOMETRYSHADER_HEADERS )
+  set( LAVAGEOMETRYSHADER_SOURCES GeometryShader.cpp )
+  set( LAVAGEOMETRYSHADER_LINK_LIBRARIES
     lava
   )
-  common_application( lavaPipelines )
+  common_application( lavaGeometryShader )
+  
+
+
+  set( LAVASHOWNORMALS_HEADERS )
+  set( LAVASHOWNORMALS_SOURCES ShowNormals.cpp )
+  set( LAVASHOWNORMALS_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaShowNormals )
+  
+
+
+  set( LAVAMATCAP_HEADERS )
+  set( LAVAMATCAP_SOURCES Matcap.cpp )
+  set( LAVAMATCAP_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaMatcap )
+  
+
+
+  set( LAVASPECIALIZATIONCONSTANT_HEADERS )
+  set( LAVASPECIALIZATIONCONSTANT_SOURCES SpecializationConstant.cpp )
+  set( LAVASPECIALIZATIONCONSTANT_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaSpecializationConstant )
+  
+
+
+  set( LAVAPUSHCONSTANT_HEADERS )
+  set( LAVAPUSHCONSTANT_SOURCES PushConstant.cpp )
+  set( LAVAPUSHCONSTANT_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaPushConstant )
+  
+
+
+  set( LAVAHEIGHTMAP_HEADERS )
+  set( LAVAHEIGHTMAP_SOURCES Heightmap.cpp )
+  set( LAVAHEIGHTMAP_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaHeightmap )
+  
+
+
+  set( LAVAHEIGHTMAPTESS_HEADERS )
+  set( LAVAHEIGHTMAPTESS_SOURCES HeightmapTess.cpp )
+  set( LAVAHEIGHTMAPTESS_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaHeightmapTess )
+  
+
+
+  ##set( LAVACOMPUTECONVOLUTION_HEADERS )
+  ##set( LAVACOMPUTECONVOLUTION_SOURCES ComputeConvolution.cpp )
+  ##set( LAVACOMPUTECONVOLUTION_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaComputeConvolution )
   
 endif( )

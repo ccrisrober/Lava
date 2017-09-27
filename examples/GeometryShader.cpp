@@ -10,37 +10,62 @@ using namespace lava;
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <routes.h>
+
+struct Vertex
+{
+  glm::vec3 position;
+};
 
 struct UniformBufferObject
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
+  float time;
 };
 
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _uniformBufferMVP;
+  std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<Buffer> _uniformBufferMVP;
   std::shared_ptr<DescriptorSet> _descriptorSet;
 
-  std::shared_ptr<lava::extras::Geometry> geometry;
+  std::vector<Vertex> vertices;
 
-  struct Pipelines
-  {
-    std::shared_ptr<Pipeline> solid;
-    std::shared_ptr<Pipeline> wireframe;
-  } pipelines;
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  std::shared_ptr<VertexBuffer> _vbo;
+  std::shared_ptr<IndexBuffer> _ibo;
+  uint32_t numIndices;
+
+  MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+
+    // Create vertex and ibo buffer
+    {
+      lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+        std::string( "/monkey.obj_" ) );
+      lava::extras::Mesh mesh = mi._meshes[ 0 ];
+
+      numIndices = mesh.numIndices;
+      for ( const lava::extras::Vertex& v : mesh.vertices )
+      {
+        vertices.push_back( Vertex{ v.position } );
+      }
+      uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
+      _vbo = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      _vbo->writeData( 0, vertexBufferSize, vertices.data( ) );
+
+
+      uint32_t indexBufferSize = numIndices * sizeof( uint32_t );
+      _ibo = std::make_shared<IndexBuffer>( _device,
+        vk::IndexType::eUint32, numIndices );
+      _ibo->writeData( 0, indexBufferSize, mesh.indices.data( ) );
+    }
 
     // MVP buffer
     {
@@ -52,40 +77,40 @@ public:
           vk::MemoryPropertyFlagBits::eHostCoherent );
     }
 
-    // Init descriptor and pipeline layouts
+    // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex );
+    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer,
+      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry );
     dslbs.push_back( mvpDescriptor );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
+
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+          std::string("/geometry/explosion_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> geometryShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+          std::string("/geometry/explosion_geom.spv"), vk::ShaderStageFlagBits::eGeometry );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+          std::string( "/geometry/explosion_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
+    PipelineShaderStageCreateInfo geometryStage( vk::ShaderStageFlagBits::eGeometry, geometryShaderModule );
     PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
-    PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
-        vk::VertexInputRate::eVertex ),
-        {
-          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-          vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
-        }
-    );
+    PipelineVertexInputStateCreateInfo vertexInput( binding, { 
+      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, position ) )
+    } );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
-      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
-      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); // Dynamic viewport and scissors
+    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
     vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
@@ -95,20 +120,11 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
+      { vertexStage, geometryStage, fragmentStage }, 
+      vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
 
-    // Wireframe rendering pipeline
-    if ( _physicalDevice->getDeviceFeatures( ).fillModeNonSolid )
-    {
-      rasterization.polygonMode = vk::PolygonMode::eLine;
-      rasterization.lineWidth = 1.0f;
-
-      rasterization.cullMode = vk::CullModeFlagBits::eNone;
-
-      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-        _pipelineLayout, _renderPass );
-    }
 
     std::array<vk::DescriptorPoolSize, 1> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
@@ -118,11 +134,10 @@ public:
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
     DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
+    WriteDescriptorSet w( _descriptorSet, 0, 0,
       vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
     wdss.push_back( w );
     _device->updateDescriptorSets( wdss, {} );
-
   }
   void updateUniformBuffers( void )
   {
@@ -136,10 +151,12 @@ public:
 
     UniformBufferObject ubo = {};
     ubo.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    //ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
+
+    ubo.time = time; // glfwGetTime( );
 
     vk::Device device = static_cast<vk::Device>(*_device);
 
@@ -150,45 +167,30 @@ public:
 
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
-
-  bool enable_wire = false;
-
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
     // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass, 
-      _defaultFramebuffer->getFramebuffer( ), 
-      vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ),
-      { vk::ClearValue( ccv ), vk::ClearValue( 
-        vk::ClearDepthStencilValue( 1.0f, 0 ) )
-      }, vk::SubpassContents::eInline );
-
-    if ( enable_wire )
-    {
-      std::cout << "WIREFRAME PIPELINE" << std::endl;
-      commandBuffer->bindGraphicsPipeline( pipelines.wireframe );
-    }
-    else
-    {
-      std::cout << "SOLID PIPELINE" << std::endl;
-      commandBuffer->bindGraphicsPipeline( pipelines.solid );
-    }
+    commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
+    { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
+    commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-    geometry->render( commandBuffer );
+
+
+    _vbo->bind( commandBuffer );
+    _ibo->bind( commandBuffer );
+    commandBuffer->drawIndexed( numIndices, 1, 0, 0, 1 );
+
     commandBuffer->endRenderPass( );
 
     commandBuffer->end( );
@@ -200,21 +202,15 @@ public:
       _renderComplete
     } );
   }
-  void keyEvent( int key, int scancode, int action, int mods )
+  void keyEvent(int key, int scancode, int action, int mods)
   {
-    switch ( key )
+    switch (key)
     {
-    case GLFW_KEY_E:
-      enable_wire = true;
-      break;
-    case GLFW_KEY_R:
-      enable_wire = false;
-      break;
     case GLFW_KEY_ESCAPE:
-      switch ( action )
+      switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
         break;
       default:
         break;
@@ -226,9 +222,9 @@ public:
   }
 };
 
-void glfwErrorCallback( int error, const char* description )
+void glfwErrorCallback(int error, const char* description)
 {
-  fprintf( stderr, "GLFW Error %d: %s\n", error, description );
+  fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
 int main( void )
@@ -237,13 +233,13 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Mesh", 800, 600 );
+    VulkanApp* app = new MyApp( "Geometry Shader (Explosion)", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 
@@ -254,6 +250,6 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
+  system( "PAUSE" );
   return 0;
 }

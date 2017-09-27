@@ -31,3 +31,37 @@ C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V skybox.frag -o skybox_frag.s
 
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V reflect.vert -o reflect_vert.spv
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V reflect.frag -o reflect_frag.spv
+
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V geometry/explosion.vert -o geometry/explosion_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V geometry/explosion.geom -o geometry/explosion_geom.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V geometry/explosion.frag -o geometry/explosion_frag.spv
+
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V geometry/normal.vert -o geometry/normal_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V geometry/normal.geom -o geometry/normal_geom.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V geometry/normal.frag -o geometry/normal_frag.spv
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V matcap.vert -o matcap_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V matcap.frag -o matcap_frag.spv
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V mesh_ctes.vert -o mesh_ctes_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V mesh_ctes.frag -o mesh_ctes_frag.spv
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V mesh_push.vert -o mesh_push_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V mesh_push.frag -o mesh_push_frag.spv
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain.vert -o terrain_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain.frag -o terrain_frag.spv
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.vert -o terrain_tess_vert.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.tese -o terrain_tess_tes.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.tesc -o terrain_tess_tcs.spv
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.frag -o terrain_tess_frag.spv

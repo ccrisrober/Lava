@@ -14,6 +14,43 @@ namespace lava
   class Sampler;
   class CommandPool;
 
+  class Texture: public VulkanResource
+  {
+  public:
+    LAVA_API
+    Texture( const DeviceRef& device );
+    vk::Image image;
+    vk::ImageLayout imageLayout;
+    vk::DeviceMemory deviceMemory;
+    vk::ImageView view;
+    uint32_t width, height;
+    uint32_t mipLevels;
+    uint32_t layerCount;
+    vk::DescriptorImageInfo descriptor;
+  };
+
+  class Texture2DArray : public VulkanResource
+  {
+  public:
+    LAVA_API
+    // All images on filePaths as same dimensions
+    Texture2DArray( const DeviceRef& device, std::vector< std::string >& filePaths,
+      const std::shared_ptr<CommandPool>& cmdPool,
+      const std::shared_ptr<Queue>& queue,
+      vk::Format format = vk::Format::eR8G8B8A8Unorm,
+      bool forceLinear = false );
+
+    LAVA_API
+    virtual ~Texture2DArray( void );
+
+    vk::Image textureImage;
+    vk::DeviceMemory textureImageMemory;
+    vk::ImageLayout imageLayout;
+
+    vk::ImageView view;
+    vk::Sampler sampler;
+  };
+
   class Texture2D: public VulkanResource
   {
   public:
@@ -27,6 +64,7 @@ namespace lava
     LAVA_API
     virtual ~Texture2D( void );
 
+    uint32_t width, height, numChannels;
     vk::Image textureImage;
     vk::DeviceMemory textureImageMemory;
     vk::ImageLayout imageLayout;

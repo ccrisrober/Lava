@@ -23,7 +23,7 @@ class MyApp : public VulkanApp
     glm::mat4 proj;
     glm::mat4 view;
     glm::mat4 model;
-    glm::vec3 lightPos = glm::vec4(0.0f, 2.0f, 1.0f);
+    glm::vec3 lightPos = glm::vec3(0.0f, 2.0f, 1.0f);
   } uboVS;
 
   struct {
@@ -49,7 +49,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof( UBOVS );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -87,8 +87,8 @@ public:
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
+    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
+    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
 
     PipelineVertexInputStateCreateInfo vertexInput( 
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ), 
