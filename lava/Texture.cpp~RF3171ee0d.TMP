@@ -283,7 +283,7 @@ namespace lava
       totalSize += size;
     }
 
-    unsigned char* pixels = (unsigned char*)malloc(totalSize);
+    /*unsigned char* pixels = (unsigned char*)malloc(totalSize);
     unsigned char* pixelData = pixels;
     for (uint32_t i = 0; i < images.size(); ++i)
     {
@@ -294,7 +294,9 @@ namespace lava
     for (uint32_t i = 0; i < images.size( ); ++i)
     {
       free( images[i].pixels );
-    }
+    }*/
+
+    std::vector< unsigned char *> pixeels( std::begin( images[ 0 ], std::begin( images[ 0 ] ) ) );
 
     vk::FormatProperties formatProps = 
       _device->_physicalDevice->getFormatProperties( format );

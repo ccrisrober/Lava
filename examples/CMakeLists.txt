@@ -107,12 +107,12 @@ if( LAVA_WITH_EXAMPLES )
   ##common_application( lavaBlur )
 
 
-  set( LAVAFOO_HEADERS )
-  set( LAVAFOO_SOURCES Foo.cpp )
-  set( LAVAFOO_LINK_LIBRARIES
+  set( LAVASKYBOX_HEADERS )
+  set( LAVASKYBOX_SOURCES Skybox.cpp )
+  set( LAVASKYBOX_LINK_LIBRARIES
     lava
   )
-  common_application( lavaFoo )
+  common_application( lavaSkybox )
 
 
   ##set( LAVAPIPELINES_HEADERS )
@@ -191,6 +191,15 @@ if( LAVA_WITH_EXAMPLES )
     lava
   )
   common_application( lavaHeightmapTess )
+  
+
+
+  set( LAVAFIREPARTICLES_HEADERS )
+  set( LAVAFIREPARTICLES_SOURCES FireParticles.cpp )
+  set( LAVAFIREPARTICLES_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaFireParticles )
   
 
 
