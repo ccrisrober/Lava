@@ -431,11 +431,13 @@ namespace lava
   SpecializationInfo::SpecializationInfo( vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries_, vk::ArrayProxy<const uint8_t> data_ )
     : mapEntries( mapEntries_.begin( ), mapEntries_.end( ) )
     , data( data_.begin( ), data_.end( ) )
-  {}
+  {
+  }
 
   SpecializationInfo::SpecializationInfo( SpecializationInfo const& rhs )
     : SpecializationInfo( rhs.mapEntries, rhs.data )
-  {}
+  {
+  }
 
   SpecializationInfo & SpecializationInfo::operator=( SpecializationInfo const& rhs )
   {

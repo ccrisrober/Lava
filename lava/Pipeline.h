@@ -146,7 +146,7 @@ namespace lava
       vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts,
       vk::ArrayProxy<const vk::PushConstantRange> pushConstantRanges );
     LAVA_API
-    ~PipelineLayout( );
+    ~PipelineLayout( void );
     
     inline operator vk::PipelineLayout( void ) const
     {

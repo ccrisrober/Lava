@@ -20,44 +20,44 @@ struct UniformBufferObject {
   glm::mat4 proj;
 };
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 pos;
-  glm::vec2 texCoord;
 };
 
-const float side = 1.0f;
+const float side = 5.0f;
 const float side2 = side / 2.0f;
 const std::vector<Vertex> vertices =
 {
-  {{-side2, -side2,  side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2, -side2,  side2 } },
+  { { side2, -side2,  side2 } },
+  { { -side2,  side2,  side2 } },
+  { { side2,  side2,  side2 } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2, -side2}, {1.0f, 1.0f}},
+  { { -side2, -side2, -side2 } },
+  { { side2, -side2, -side2 } },
+  { { -side2,  side2, -side2 } },
+  { { side2,  side2, -side2 } },
 
-  {{ side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { side2, -side2, -side2 } },
+  { { side2, -side2,  side2 } },
+  { { side2,  side2, -side2 } },
+  { { side2,  side2,  side2 } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2, -side2, -side2 } },
+  { { -side2, -side2,  side2 } },
+  { { -side2,  side2, -side2 } },
+  { { -side2,  side2,  side2 } },
 
-  {{-side2,  side2, -side2}, {0.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2,  side2, -side2 } },
+  { { -side2,  side2,  side2 } },
+  { { side2,  side2, -side2 } },
+  { { side2,  side2,  side2 } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {0.0f, 1.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 1.0f}} 
+  { { -side2, -side2, -side2 } },
+  { { -side2, -side2,  side2 } },
+  { { side2, -side2, -side2 } },
+  { { side2, -side2,  side2 } }
 };
 const std::vector<uint16_t> indices =
 {
@@ -78,7 +78,7 @@ public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-  std::shared_ptr<Texture2D> tex;
+  std::shared_ptr<TextureCubemap> tex;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -94,34 +94,43 @@ public:
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
+      _indexBuffer = std::make_shared<IndexBuffer>( _device,
         vk::IndexType::eUint16, indices.size( ) );
       _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
-        vk::BufferUsageFlagBits::eUniformBuffer, 
+      uint32_t mvpBufferSize = sizeof( UniformBufferObject );
+      _uniformBufferMVP = _device->createBuffer( mvpBufferSize,
+        vk::BufferUsageFlagBits::eUniformBuffer,
         vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-          vk::MemoryPropertyFlagBits::eHostCoherent );
+        vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent );
     }
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string( "/random.png" ), commandPool, _graphicsQueue );
+    std::array< std::string, 6 > cubeImages =
+    {
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cubemap/right.jpg" ),
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cubemap/left.jpg" ),
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cubemap/top.jpg" ),
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cubemap/bottom.jpg" ),
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cubemap/back.jpg" ),
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cubemap/front.jpg" ),
+    };
+    tex = std::make_shared<TextureCubemap>( _device, cubeImages, commandPool,
+      _graphicsQueue );
 
 
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
+    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer,
       vk::ShaderStageFlagBits::eVertex );
     dslbs.push_back( mvpDescriptor );
-    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler, 
+    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler,
       vk::ShaderStageFlagBits::eFragment );
     dslbs.push_back( mvpDescriptor2 );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
@@ -131,12 +140,12 @@ public:
 
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-        std::string( "/cubeUV_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-        std::string( "/cubeUV_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule =
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
+        std::string( "/skybox_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule =
+      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
+        std::string( "/skybox_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -145,11 +154,10 @@ public:
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
-      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, pos ) ),
-      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32Sfloat, offsetof( Vertex, texCoord ) ) }
-    );
+      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, pos ) )
+    } );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
@@ -174,66 +182,72 @@ public:
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
 
-    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr,
       DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) ) );
     wdss.push_back( w );
 
-    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
-      DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
+    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
+      DescriptorImageInfo(
+        vk::ImageLayout::eGeneral,
+        std::make_shared<vk::ImageView>( tex->view ),
         std::make_shared<vk::Sampler>( tex->sampler )
       ), nullptr
     );
     wdss.push_back( w2 );
     _device->updateDescriptorSets( wdss, {} );
   }
-  void updateUniformBuffers( )
+  glm::vec3 rotation = { -7.25f, -120.0f, 0.0f };
+  void updateUniformBuffers( void )
   {
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    static auto startTime = std::chrono::high_resolution_clock::now( );
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
+
+    rotation.y += 0.025 * time;
 
     UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    ubo.proj = glm::perspective( glm::radians( 60.0f ), ( float ) width / ( float ) height, 0.001f, 256.0f );
+    ubo.view = glm::mat4( );
+    ubo.model = glm::mat4( );
+    ubo.model = glm::translate( ubo.model, glm::vec3( 0, 0, 0 ) );
+    ubo.model = glm::rotate( ubo.model, glm::radians( rotation.x ), glm::vec3( 1.0f, 0.0f, 0.0f ) );
+    ubo.model = glm::rotate( ubo.model, glm::radians( rotation.y ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    ubo.model = glm::rotate( ubo.model, glm::radians( rotation.z ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
 
-    vk::Device device = static_cast<vk::Device>(*_device);
+    vk::Device device = static_cast<vk::Device>( *_device );
 
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+    uint32_t mvpBufferSize = sizeof( UniformBufferObject );
     void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
+    memcpy( data, &ubo, sizeof( ubo ) );
     _uniformBufferMVP->unmap( );
 
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
 
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     updateUniformBuffers( );
 
     // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    std::shared_ptr<CommandPool> commandPool =
+      _device->createCommandPool(
+        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass, 
-      _defaultFramebuffer->getFramebuffer( ), 
-      vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ),
-      { vk::ClearValue( ccv ), vk::ClearValue( 
-        vk::ClearDepthStencilValue( 1.0f, 0 ) )
-      }, vk::SubpassContents::eInline );
+    commandBuffer->beginRenderPass( _renderPass,
+      _defaultFramebuffer->getFramebuffer( ),
+      vk::Rect2D( { 0, 0 },
+        _defaultFramebuffer->getExtent( ) ),
+        { vk::ClearValue( ccv ), vk::ClearValue(
+          vk::ClearDepthStencilValue( 1.0f, 0 ) )
+        }, vk::SubpassContents::eInline );
     commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
@@ -284,7 +298,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube UV", 800, 600 );
+    VulkanApp* app = new MyApp( "Skybox", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
@@ -301,6 +315,6 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
+  // system( "PAUSE" );
   return 0;
 }

@@ -24,22 +24,24 @@ struct UniformBufferObject
 class MyApp : public VulkanApp
 {
 public:
-  struct Pipelines
-  {
-    std::shared_ptr<Pipeline> solid;
-    std::shared_ptr<Pipeline> wireframe;
-  } pipelines;
-
   std::shared_ptr<Buffer> _uniformBufferMVP;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
 
-  MyApp( char const* title, uint32_t width, uint32_t height, const char* meshFile )
+  std::array<glm::vec4, 1> pushConstants;
+
+  struct Pipelines
+  {
+    std::shared_ptr<Pipeline> solid;
+  } pipelines;
+
+  MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-    geometry = std::make_shared<lava::extras::Geometry>( _device, meshFile );
+    geometry = std::make_shared<lava::extras::Geometry>( _device, 
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
 
     // MVP buffer
     {
@@ -58,15 +60,21 @@ public:
     dslbs.push_back( mvpDescriptor );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    // Define push constant
+    // Spec requires a minimum of 128 bytes, bigger values
+    // need to be checked against maxPushConstantsSize
+    // But even at only 128 bytes, lots of stuff can fit 
+    // inside push constants
+    vk::PushConstantRange pushConstantRange( vk::ShaderStageFlagBits::eFragment, 
+      0, sizeof( pushConstants ) );
+
+    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, pushConstantRange );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "/mesh_vert.spv" ), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "/mesh_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_push_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
+      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_push_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -99,18 +107,6 @@ public:
     pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
 
-    // Wireframe rendering pipeline
-    if ( _physicalDevice->getDeviceFeatures( ).fillModeNonSolid )
-    {
-      rasterization.polygonMode = vk::PolygonMode::eLine;
-      rasterization.lineWidth = 1.0f;
-
-      rasterization.cullMode = vk::CullModeFlagBits::eNone;
-
-      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-        _pipelineLayout, _renderPass );
-    }
-
     std::array<vk::DescriptorPoolSize, 1> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
@@ -136,13 +132,9 @@ public:
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
     UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 0.5f);
-    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    ubo.view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
+    ubo.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
+    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
@@ -152,6 +144,12 @@ public:
     void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
     memcpy( data, &ubo, sizeof(ubo) );
     _uniformBufferMVP->unmap( );
+
+
+    float greenValue = ( sin( time ) / 2.0f ) + 0.5f;
+    pushConstants[ 0 ] = glm::vec4( 0.0f, greenValue, 0.0f, 1.0f );
+
+    std::cout << glm::to_string( pushConstants[ 0 ] ) << std::endl;
 
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
@@ -179,20 +177,15 @@ public:
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
 
-    if ( enable_wire )
-    {
-      std::cout << "WIREFRAME PIPELINE" << std::endl;
-      commandBuffer->bindGraphicsPipeline( pipelines.wireframe );
-    }
-    else
-    {
-      std::cout << "SOLID PIPELINE" << std::endl;
-      commandBuffer->bindGraphicsPipeline( pipelines.solid );
-    }
+    commandBuffer->bindGraphicsPipeline( pipelines.solid );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+
+    commandBuffer->pushConstants<glm::vec4>( *_pipelineLayout, 
+      vk::ShaderStageFlagBits::eFragment, 0, pushConstants );
+
     geometry->render( commandBuffer );
     commandBuffer->endRenderPass( );
 
@@ -236,19 +229,13 @@ void glfwErrorCallback( int error, const char* description )
   fprintf( stderr, "GLFW Error %d: %s\n", error, description );
 }
 
-int main( int argc, char** argv )
+int main( void )
 {
   try
   {
     //if (glfwInit())
     //{
-    if ( argc != 2 )
-    {
-      std::cerr << "Exec with lavaMesh <file.obj>" << std::endl;
-      return -1;
-    }
-
-    VulkanApp* app = new MyApp( "Mesh loading", 800, 600, argv[ 1 ] );
+    VulkanApp* app = new MyApp( "Mesh (Push Constant)", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

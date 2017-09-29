@@ -43,7 +43,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof( UniformBufferObject );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
