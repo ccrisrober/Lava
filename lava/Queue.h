@@ -37,6 +37,22 @@ namespace lava
     std::vector<std::shared_ptr<Semaphore>> signalSemaphores;
   };
 
+  struct SparseMemoryBind
+  {
+    LAVA_API
+    SparseMemoryBind( vk::DeviceMemory mem, vk::DeviceSize memOffset, 
+      vk::DeviceSize size, vk::DeviceSize resourceOffset = 0 );
+    LAVA_API
+    SparseMemoryBind( const SparseMemoryBind& other );
+    LAVA_API
+    SparseMemoryBind& operator=( const SparseMemoryBind& other );
+
+    vk::DeviceMemory memory;
+    vk::DeviceSize memoryOffset;
+    vk::DeviceSize size;
+    vk::DeviceSize resourceOffset;
+  };
+
   class Fence : public VulkanResource, private NonCopyable<Fence>
   {
   public:

@@ -24,8 +24,6 @@ struct UniformBufferObject
 class MyApp : public VulkanApp
 {
 public:
-  //std::shared_ptr<VertexBuffer> _vertexBuffer;
-  //std::shared_ptr<IndexBuffer> _indexBuffer;
   std::shared_ptr<Buffer> _uniformBufferMVP;
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
@@ -35,40 +33,10 @@ public:
 
   std::shared_ptr<lava::extras::Geometry> geometry;
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  MyApp( char const* title, uint32_t width, uint32_t height, const char* meshFile )
     : VulkanApp( title, width, height )
   {
-    geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
-
-    /*lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
-    lava::extras::Mesh mesh = mi._meshes[ 0 ];
-
-    numIndices = mesh.numIndices;
-
-    for ( const auto& v: mesh.vertices )
-    {
-      std::cout << "POSITION: " << v.position.x << ", " << v.position.y << "," << v.position.z << std::endl;
-      std::cout << "NORMAL: " << v.normal.x << ", " << v.normal.y << "," << v.normal.z << std::endl;
-      std::cout << "TEXCOORD: " << v.texCoord.x << ", " << v.texCoord.y << std::endl;
-      std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~ " << std::endl;
-    }
-
-    // Vertex buffer
-    {
-      uint32_t vertexBufferSize = mesh.numVertices * sizeof( lava::extras::Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, mesh.vertices.data( ) );
-    }
-
-    // Index buffer
-    {
-      uint32_t indexBufferSize = mesh.numIndices * sizeof( uint32_t );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
-        vk::IndexType::eUint32, mesh.numIndices );
-      _indexBuffer->writeData( 0, indexBufferSize, mesh.indices.data( ) );
-    }*/
-
+    geometry = std::make_shared<lava::extras::Geometry>( _device, meshFile );
 
     // MVP buffer
     {
@@ -104,14 +72,16 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "/mesh_vert.spv" ), 
+      vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "/mesh_frag.spv" ), 
+      vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
+    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
+    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
 
     PipelineVertexInputStateCreateInfo vertexInput( 
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ), 
@@ -151,7 +121,11 @@ public:
 
     UniformBufferObject ubo = {};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 0.5f);
+    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    ubo.view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
@@ -230,13 +204,19 @@ void glfwErrorCallback( int error, const char* description )
   fprintf( stderr, "GLFW Error %d: %s\n", error, description );
 }
 
-int main( void )
+int main( int argc, char** argv )
 {
   try
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Mesh", 800, 600 );
+    if ( argc != 2 )
+    {
+      std::cerr << "Exec with lavaMesh <file.obj>" << std::endl;
+      return -1;
+    }
+
+    VulkanApp* app = new MyApp( "Mesh loading", 800, 600, argv[ 1 ] );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

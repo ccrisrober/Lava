@@ -202,10 +202,10 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
         std::string( "/instancing_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
         std::string( "/instancing_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
@@ -272,7 +272,7 @@ public:
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
 
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     updateUniformBuffers( );
 
@@ -353,7 +353,7 @@ int main( void )
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 

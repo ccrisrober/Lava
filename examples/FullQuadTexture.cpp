@@ -77,19 +77,19 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule =_device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/fullquad_vert.spv"), 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string("/fullquad_vert.spv"), 
       vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/fullquad_frag.spv" ), 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "/fullquad_frag.spv" ), 
       vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
       _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
+      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
     PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
+      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );

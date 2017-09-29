@@ -1,3 +1,10 @@
+########## RETO ##########
+include( glsl2spirv )
+
+compileSPV( )
+
+########## RETO ##########
+
 if( LAVA_WITH_EXAMPLES )
 
   include_directories(
@@ -115,11 +122,35 @@ if( LAVA_WITH_EXAMPLES )
   common_application( lavaFoo )
 
 
-  set( LAVAPIPELINES_HEADERS )
-  set( LAVAPIPELINES_SOURCES Pipelines.cpp )
-  set( LAVAPIPELINES_LINK_LIBRARIES
+  set( LAVABUTTERFLIES_HEADERS )
+  set( LAVABUTTERFLIES_SOURCES Butterflies.cpp )
+  set( LAVABUTTERFLIES_LINK_LIBRARIES
     lava
   )
-  common_application( lavaPipelines )
+  common_application( lavaButterflies )
+
+
+  set( LAVAGRASS_HEADERS )
+  set( LAVAGRASS_SOURCES Grass.cpp )
+  set( LAVAGRASS_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaGrass )
+
+
+  set( LAVASPHERICALHARMONICS_HEADERS )
+  set( LAVASPHERICALHARMONICS_SOURCES SphericalHarmonics.cpp )
+  set( LAVASPHERICALHARMONICS_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaSphericalHarmonics )
+
+
+  set( LAVARAYTRACINGFRAG_HEADERS )
+  set( LAVARAYTRACINGFRAG_SOURCES RayTracingFrag.cpp )
+  set( LAVARAYTRACINGFRAG_LINK_LIBRARIES
+    lava
+  )
+  common_application( lavaRayTracingFrag )
   
 endif( )

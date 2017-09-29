@@ -213,10 +213,10 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
         std::string( "/normal_mapping_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
         std::string( "/normal_mapping_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
@@ -366,7 +366,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Indexed", 800, 600 );
+    VulkanApp* app = new MyApp( "Normal Mapping", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
