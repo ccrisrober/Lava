@@ -65,3 +65,6 @@ C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.vert -o terrain
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.tese -o terrain_tess_tes.spv
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.tesc -o terrain_tess_tcs.spv
 C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V terrain_tess.frag -o terrain_tess_frag.spv
+
+
+C:/VulkanSDK/1.0.57.0/Bin32/glslangValidator.exe -V raytracing.comp -o raytracing_comp.spv

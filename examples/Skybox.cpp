@@ -222,7 +222,7 @@ public:
 
     uint32_t mvpBufferSize = sizeof( UniformBufferObject );
     void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof( ubo ) );
+    memcpy( data, &ubo, mvpBufferSize );
     _uniformBufferMVP->unmap( );
 
     //std::cout<<glm::to_string(mvpc)<<std::endl;

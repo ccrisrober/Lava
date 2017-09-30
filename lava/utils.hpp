@@ -17,6 +17,7 @@ namespace lava
 
     // Put an image memory barrier for setting an image layout on the 
     //    sub resource into the given command buffer
+    LAVA_API
     static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
       vk::Image image,
       vk::ImageLayout oldImageLayout,

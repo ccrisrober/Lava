@@ -1,6 +1,8 @@
 #ifndef __LAVA_IMAGES__
 #define __LAVA_IMAGES__
 
+#include <lava/api.h>
+
 #include "includes.hpp"
 #include "VulkanResource.h"
 
@@ -13,6 +15,7 @@ namespace lava
   class Image : public VulkanResource, public std::enable_shared_from_this<Image>
   {
   public:
+    LAVA_API
     Image( const DeviceRef& device, const vk::Image& image );
     Image( const DeviceRef& device, vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,
       vk::Extent3D extent, uint32_t mipLevels, uint32_t arrayLayers, vk::SampleCountFlagBits samples, vk::ImageTiling tiling,

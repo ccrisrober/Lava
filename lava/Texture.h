@@ -17,12 +17,17 @@ namespace lava
   class Texture: public VulkanResource
   {
   public:
+    static std::shared_ptr<Texture>& create( const DeviceRef& device )
+    {
+      return std::make_shared< Texture >( device );
+    }
     LAVA_API
     Texture( const DeviceRef& device );
     vk::Image image;
     vk::ImageLayout imageLayout;
     vk::DeviceMemory deviceMemory;
     vk::ImageView view;
+    vk::Sampler sampler;
     uint32_t width, height;
     uint32_t mipLevels;
     uint32_t layerCount;

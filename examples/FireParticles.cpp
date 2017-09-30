@@ -20,35 +20,30 @@ struct Particle
   glm::vec4 color;
   float alpha;
   float size;
-}
-
-struct UniformBufferObject
-{
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
+  glm::vec4 vel;  // Only used on CPU
 };
-
 
 #define PARTICLE_COUNT 512
 #define PARTICLE_SIZE 10.0f
 
 #define FLAME_RADIUS 8.0f
 
+#ifndef M_PI
+#define M_PI 3.14159
+#endif
+
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<Texture2D> tex;
+  struct
+  {
+    std::shared_ptr<Buffer> fire;
+  } uniformBuffers;
 
   struct
   {
-    struct
-    {
-      std::shared_ptr<Texture2D> fire;
-    } particles;
+    std::shared_ptr<Texture2D> fire;
   } textures;
-
 
   glm::vec3 emitterPos = glm::vec3(0.0f, -FLAME_RADIUS + 2.0f, 0.0f);
   glm::vec3 minVel = glm::vec3(-3.0f, 0.5f, -3.0f);
@@ -60,10 +55,22 @@ public:
     size_t size;
   } particles;
 
+  struct UBOVS
+  {
+    glm::mat4 projection;
+    glm::mat4 view;
+    glm::mat4 model;
+    float pointSize = PARTICLE_SIZE;
+  } uboVS;
+
   struct
   {
     std::shared_ptr<Pipeline> particles;
   } pipelines;
+
+  std::shared_ptr<DescriptorPool> descriptorPool;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
 
   struct
   {
@@ -106,7 +113,7 @@ public:
       std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
         vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 
-      textures.particles.fire = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
+      textures.fire = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
         std::string( "/random.png" ), commandPool, _graphicsQueue );
     }
     // PREPARING PARTICLES
@@ -120,7 +127,7 @@ public:
 
       particles.size = particleBuffer.size( ) * sizeof( Particle );
 
-      particleBuffer = _device->createBuffer( particles.size, 
+      particles.buffer = _device->createBuffer( particles.size, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
@@ -130,8 +137,8 @@ public:
     // PREPARING UNIFORMS
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
+      uint32_t mvpBufferSize = sizeof( uboVS );
+      uniformBuffers.fire = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
@@ -153,7 +160,7 @@ public:
       std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
         _device->createDescriptorSetLayout( dslbs );
 
-      _pipelineLayout = _device->createPipelineLayout( 
+      pipelineLayout = _device->createPipelineLayout( 
         descriptorSetLayout, nullptr );
     }
 
@@ -198,12 +205,12 @@ public:
       // init shaders
       std::shared_ptr<ShaderModule> vertexShaderModule =
         _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-          std::string( "/cubeUV_vert.spv" ), 
+          std::string( "/particle_vert.spv" ), 
           vk::ShaderStageFlagBits::eVertex
       );
       std::shared_ptr<ShaderModule> fragmentShaderModule =
         _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-          std::string( "/cubeUV_frag.spv" ), 
+          std::string( "/particle_frag.spv" ), 
           vk::ShaderStageFlagBits::eFragment
       );
 
@@ -230,10 +237,10 @@ public:
             vk::Format::eR32G32Sfloat, offsetof( Particle, color )
           ),
           vk::VertexInputAttributeDescription( 2, 0, 
-            vk::Format::eR32float, offsetof( Particle, alpha )
+            vk::Format::eR32Sfloat, offsetof( Particle, alpha )
           ),
           vk::VertexInputAttributeDescription( 3, 0, 
-            vk::Format::eR32float, offsetof( Particle, size )
+            vk::Format::eR32Sfloat, offsetof( Particle, size )
           )
         }
       );
@@ -256,35 +263,38 @@ public:
 
       pipelines.particles = _device->createGraphicsPipeline( pipelineCache, {}, 
         { vertexStage, fragmentStage }, vertexInputState, inputAssemblyState, nullptr, viewportState, rasterizationState, multisampleState, depthStencilState, colorBlendState, dynamicState,
-        _pipelineLayout, _renderPass );
+        pipelineLayout, _renderPass );
+    }
+    
+    // SETUP DESCRIPTOR POOL
+    {
+      std::array<vk::DescriptorPoolSize, 2> poolSize;
+      poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
+      poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
+      descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
     }
 
+    // SETUP DESCRIPTOR SETS
+    {
+      descriptorSets.particles = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+      std::vector<WriteDescriptorSet> wdss;
 
-    
+      WriteDescriptorSet w( descriptorSets.particles, 0, 0, 
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo( uniformBuffers.fire, 0, sizeof( uboVS ) ) );
+      wdss.push_back( w );
 
-
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
-
-    // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-
-    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, 
-      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) ) );
-    wdss.push_back( w );
-
-    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
-      DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
-    );
-    wdss.push_back( w2 );
-    _device->updateDescriptorSets( wdss, {} );
+      WriteDescriptorSet w2( descriptorSets.particles, 1, 0, 
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        DescriptorImageInfo(
+          vk::ImageLayout::eGeneral,
+          std::make_shared<vk::ImageView>( textures.fire->view ),
+          std::make_shared<vk::Sampler>( textures.fire->sampler )
+        ), nullptr
+      );
+      wdss.push_back( w2 );
+      _device->updateDescriptorSets( wdss, {} );
+    }
   }
   void updateUniformBuffers( )
   {
@@ -295,12 +305,14 @@ public:
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
-
-    UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    
+    uboVS.projection = glm::perspective( glm::radians( 60.0f ), ( float ) width / ( float ) height, 0.001f, 256.0f );
+    uboVS.view = glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 0.0f, -75.0f ) );
+    uboVS.model = glm::mat4( );
+    uboVS.model = glm::translate( uboVS.model, glm::vec3( 0.0f, 15.0f, 0.0f ) );
+    //uboVS.model = glm::rotate( uboVS.model, glm::radians( rotation.x ), glm::vec3( 1.0f, 0.0f, 0.0f ) );
+    //uboVS.model = glm::rotate( uboVS.model, glm::radians( rotation.y ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    //uboVS.model = glm::rotate( uboVS.model, glm::radians( rotation.z ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
 
     vk::Device device = static_cast<vk::Device>(*_device);
 
@@ -312,9 +324,24 @@ public:
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
 
-  void doPaint( ) override
+  void updateParticles( void )
   {
-    updateUniformBuffers( );
+    float particleTimer = glfwGetTime( ) * 0.45f;
+    for ( auto& p : particleBuffer )
+    {
+      p.pos.y -= p.vel.y * particleTimer * 3.5f;
+      p.alpha += particleTimer * 2.5f;
+      p.size -= particleTimer * 0.5f;
+    }
+
+    particles.buffer->writeData( 0, particleBuffer.size( ) * 
+      sizeof( Particle ), particleBuffer.data( ) );
+  }
+
+  void doPaint( void ) override
+  {
+    updateParticles( );
+    //updateUniformBuffers( );
 
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = 
@@ -332,14 +359,15 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( 
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+
+    // Particle system
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    _vertexBuffer->bind( commandBuffer );
-    _indexBuffer->bind( commandBuffer );
+      _pipelineLayout, 0, { descriptorSets.particles }, nullptr );
+    commandBuffer->bindGraphicsPipeline( pipelines.particles );
+    commandBuffer->bindVertexBuffer( 0, particles.buffer, 0 );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
     commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-    commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
+    commandBuffer->draw( PARTICLE_COUNT, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
     commandBuffer->end( );

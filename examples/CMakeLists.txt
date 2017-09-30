@@ -210,4 +210,13 @@ if( LAVA_WITH_EXAMPLES )
   ##)
   ##common_application( lavaComputeConvolution )
   
+
+
+  ##set( LAVARAYTRACERCOMPUTER_HEADERS )
+  ##set( LAVARAYTRACERCOMPUTER_SOURCES RayTracerComputer.cpp )
+  ##set( LAVARAYTRACERCOMPUTER_LINK_LIBRARIES
+  ##  lava
+  ##)
+  ##common_application( lavaRayTracerComputer )
+  
 endif( )

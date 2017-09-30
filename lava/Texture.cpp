@@ -466,6 +466,7 @@ namespace lava
     }
     _device->freeMemory( textureImageMemory );
   }
+  
   Texture2D::Texture2D( const DeviceRef& device_, 
     const std::string& filename, const std::shared_ptr<CommandPool>& cmdPool,
     const std::shared_ptr<Queue>& queue, vk::Format format, bool forceLinear )

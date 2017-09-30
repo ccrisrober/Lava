@@ -96,6 +96,25 @@ namespace lava
       return indices;
     }
 
+    std::vector<uint32_t> getComputeQueueFamilyIndices(
+      const std::shared_ptr<Surface>& surface )
+    {
+      std::vector<vk::QueueFamilyProperties> props =
+        _physicalDevice.getQueueFamilyProperties( );
+      assert( !props.empty( ) );
+
+      std::vector<uint32_t> indices;
+      for ( size_t i = 0; i < props.size( ); ++i )
+      {
+        if ( ( props[ i ].queueFlags & vk::QueueFlagBits::eCompute ) &&
+          this->getSurfaceSupport( i, surface ) )
+        {
+          indices.push_back( i );
+        }
+      }
+      return indices;
+    }
+
   private:
     std::shared_ptr<Instance> _instance;
     vk::PhysicalDevice _physicalDevice;
