@@ -5,12 +5,15 @@
 PFN_vkCreateDebugReportCallbackEXT  pfnVkCreateDebugReportCallbackEXT;
 PFN_vkDestroyDebugReportCallbackEXT pfnVkDestroyDebugReportCallbackEXT;
 
-VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
+  VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, 
+  const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
 {
 	return pfnVkCreateDebugReportCallbackEXT(instance, pCreateInfo, pAllocator, pCallback);
 }
 
-VKAPI_ATTR void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
+VKAPI_ATTR void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, 
+  VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
 {
 	pfnVkDestroyDebugReportCallbackEXT(instance, callback, pAllocator);
 }
@@ -20,38 +23,61 @@ VKAPI_ATTR void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, 
 namespace lava
 {
   VKAPI_ATTR VkBool32 VKAPI_CALL debugMsgCallback( VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT objType, uint64_t srcObject,
-    size_t location, int32_t msgCode, const char* pLayerPrefix,
-    const char* pMsg, void* pUserData )
+    VkDebugReportObjectTypeEXT, uint64_t,
+    size_t, int32_t msgCode, const char* pLayerPrefix,
+    const char* pMsg, void* )
   {
     std::stringstream message;
 
     // Determine prefix
     if ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT )
+    {
       message << "ERROR";
+    }
 
     if ( flags & VK_DEBUG_REPORT_WARNING_BIT_EXT )
+    {
       message << "WARNING";
+    }
 
     if ( flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT )
+    {
       message << "PERFORMANCE";
+      
+      message << ": [" << pLayerPrefix << "] Code " << msgCode << ": "
+        << pMsg << std::endl;
+      std::cerr << message.str( ) << std::endl;
+      return VK_TRUE;
+    }
 
     if ( flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT )
+    {
       message << "INFO";
+    }
 
     if ( flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT )
+    {
       message << "DEBUG";
+    }
 
     message << ": [" << pLayerPrefix << "] Code " << msgCode << ": "
       << pMsg << std::endl;
 
     if ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT )
+    {
       std::cerr << message.str( ) << std::endl;
+    }
     else if ( flags & VK_DEBUG_REPORT_WARNING_BIT_EXT || flags &
       VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT )
+    {
       std::cerr << message.str( ) << std::endl;
+    }
     else
+    {
       std::cerr << message.str( ) << std::endl;
+    }
+
+    std::cerr << message.str( ) << std::endl;
     assert( !message );
 
     // Abort calls that caused a validation message

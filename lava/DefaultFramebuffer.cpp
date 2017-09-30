@@ -6,10 +6,12 @@ namespace lava
 {
   DefaultFramebuffer::DefaultFramebuffer( const DeviceRef& device,
     const std::shared_ptr<Surface>& surface, vk::Format surfaceFormat,
-    vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass )
+    vk::ColorSpaceKHR colorSpace, vk::Format depthFormat, 
+    const std::shared_ptr<RenderPass>& renderPass )
     : _swapchainIndex( 0 )
   {
-    vk::SurfaceCapabilitiesKHR surfaceCaps = device->_physicalDevice->getSurfaceCapabilities( surface );
+    vk::SurfaceCapabilitiesKHR surfaceCaps = 
+      device->_physicalDevice->getSurfaceCapabilities( surface );
 
     // If width/height is 0xFFFFFFFF, we can manually specify width, height
     if ( surfaceCaps.currentExtent.width != std::numeric_limits<uint32_t>::max( ) )
@@ -78,15 +80,37 @@ namespace lava
     uint32_t numImages = surfaceCaps.minImageCount;
 
     vk::SurfaceTransformFlagBitsKHR surfaceTransform =
-      ( surfaceCaps.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity ) ?
+      ( surfaceCaps.supportedTransforms & 
+        vk::SurfaceTransformFlagBitsKHR::eIdentity ) ?
       vk::SurfaceTransformFlagBitsKHR::eIdentity :
       surfaceCaps.currentTransform;
 
+    // Find a supported composite alpha format (not all devices support alpha opaque)
+    vk::CompositeAlphaFlagBitsKHR compositeAlpha = 
+      vk::CompositeAlphaFlagBitsKHR::eOpaque;
+    // Simply select the first composite alpha format available
+    std::vector<vk::CompositeAlphaFlagBitsKHR> compositeAlphaFlags =
+    {
+      vk::CompositeAlphaFlagBitsKHR::eOpaque,
+      vk::CompositeAlphaFlagBitsKHR::ePreMultiplied,
+      vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
+      vk::CompositeAlphaFlagBitsKHR::eInherit,
+    };
+    for ( auto& compositeAlphaFlag : compositeAlphaFlags )
+    {
+      if ( surfaceCaps.supportedCompositeAlpha & compositeAlphaFlag )
+      {
+        compositeAlpha = compositeAlphaFlag;
+        break;
+      };
+    }
+
     _swapchain = device->createSwapchain(
-      surface, numImages, surfaceFormat, _extent, 1,
-      vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+      surface, numImages, surfaceFormat, colorSpace, _extent, 1,
+      vk::ImageUsageFlagBits::eColorAttachment | 
+      vk::ImageUsageFlagBits::eTransferSrc,
       vk::SharingMode::eExclusive, {}, surfaceTransform,
-      vk::CompositeAlphaFlagBitsKHR::eOpaque, presentMode, true, nullptr );
+      compositeAlpha, presentMode, true, nullptr );
 
     _colorImages = _swapchain->getImages( );
 
@@ -110,11 +134,15 @@ namespace lava
 
     // depth/stencil buffer
     // assert that a depth and/or stencil format is requested
-    vk::FormatProperties formatProperties = device->_physicalDevice->getFormatProperties( depthFormat );
-    assert( ( formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
-      ( formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment ) );
+    vk::FormatProperties formatProps = 
+      device->_physicalDevice->getFormatProperties( depthFormat );
+    assert( ( formatProps.linearTilingFeatures & 
+      vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
+      ( formatProps.optimalTilingFeatures & 
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment ) );
 
-    vk::ImageTiling tiling = ( formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment )
+    vk::ImageTiling tiling = ( formatProps.optimalTilingFeatures 
+      & vk::FormatFeatureFlagBits::eDepthStencilAttachment )
       ? vk::ImageTiling::eOptimal : vk::ImageTiling::eLinear;
 
     _depthImage = device->createImage(
@@ -133,8 +161,11 @@ namespace lava
     }
 
     // add eStencil if image contains stencil
-    static std::initializer_list<vk::Format> const stencilFormats{ vk::Format::eD16UnormS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD32SfloatS8Uint, vk::Format::eS8Uint };
-    if ( std::find( stencilFormats.begin( ), stencilFormats.end( ), depthFormat ) != stencilFormats.end( ) )
+    static std::initializer_list<vk::Format> const stencilFormats{ 
+      vk::Format::eD16UnormS8Uint, vk::Format::eD24UnormS8Uint, 
+      vk::Format::eD32SfloatS8Uint, vk::Format::eS8Uint };
+    if ( std::find( stencilFormats.begin( ), stencilFormats.end( ), 
+      depthFormat ) != stencilFormats.end( ) )
     {
       aspectFlags |= vk::ImageAspectFlagBits::eStencil;
     }
@@ -149,16 +180,18 @@ namespace lava
     _framebuffers.reserve( _colorViews.size( ) );
     for ( size_t i = 0; i < _colorViews.size( ); ++i )
     {
-      _framebuffers.push_back( device->createFramebuffer( renderPass, { _colorViews[ i ], _depthView }, _extent, 1 ) );
+      _framebuffers.push_back( device->createFramebuffer( renderPass, 
+      { _colorViews[ i ], 
+        _depthView }, _extent, 1 ) );
     }
 
     std::cout << "Framebuffer Swapchain OK" << std::endl;
   }
 
-  void DefaultFramebuffer::rebuild( const DeviceRef& device,
-    const std::shared_ptr<Surface>& surface,
-    vk::Format surfaceFormat, vk::Format depthFormat,
-    const std::shared_ptr<RenderPass>& renderPass )
+  void DefaultFramebuffer::rebuild( const DeviceRef&,
+    const std::shared_ptr<Surface>&,
+    vk::Format, vk::Format,
+    const std::shared_ptr<RenderPass>& )
   {
     // TODO
   }

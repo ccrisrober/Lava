@@ -1,9 +1,13 @@
 #ifndef __LAVA_MESH__
 #define __LAVA_MESH__
 
+#ifdef LAVA_USE_ASSIMP
+
 #include <vector>
 #include <glm/glm.hpp>
 #include <assimp/mesh.h>
+
+#include <lava/api.h>
 
 namespace lava
 {
@@ -15,42 +19,12 @@ namespace lava
       glm::vec3 normal;
       glm::vec2 texCoord;
     };
-    struct Mesh
+    class Mesh
     {
-      Mesh( const aiMesh *mesh )
-      {
-        for ( uint32_t i = 0; i < mesh->mNumVertices; ++i )
-        {
-          Vertex v;
-
-          v.position = glm::vec3(
-            mesh->mVertices[ i ].x,
-            mesh->mVertices[ i ].y,
-            mesh->mVertices[ i ].z );
-          v.normal = glm::vec3(
-            mesh->mNormals[ i ].x,
-            mesh->mNormals[ i ].y,
-            mesh->mNormals[ i ].z );
-
-          if ( mesh->HasTextureCoords( 0 ) )
-            v.texCoord = glm::vec2(
-              mesh->mTextureCoords[ 0 ][ i ].x,
-              mesh->mTextureCoords[ 0 ][ i ].y );
-
-          vertices.emplace_back( v );
-        }
-
-        for ( uint32_t i = 0; i < mesh->mNumFaces; ++i )
-        {
-          for ( uint32_t j = 0; j < 3; ++j )
-          {
-            indices.emplace_back( mesh->mFaces[ i ].mIndices[ i ] );
-          }
-        }
-
-        numVertices = mesh->mNumVertices;
-        numIndices = mesh->mNumFaces * 3;
-      }
+    public:
+      LAVA_API
+      Mesh( const aiMesh *mesh );
+    public:
       uint32_t numVertices;
       uint32_t numIndices;
       std::vector< Vertex > vertices;
@@ -58,5 +32,7 @@ namespace lava
     };
   }
 }
+
+#endif
 
 #endif /* __LAVA_MESH__ */

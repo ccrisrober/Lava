@@ -3,8 +3,10 @@
 
 namespace lava
 {
-  RenderPass::RenderPass( const DeviceRef& device, const std::vector<vk::AttachmentDescription>& attachments,
-    const std::vector<vk::SubpassDescription>& subpasses, const std::vector<vk::SubpassDependency>& dependencies )
+  RenderPass::RenderPass( const DeviceRef& device, 
+    vk::ArrayProxy<const vk::AttachmentDescription> attachments, 
+    vk::ArrayProxy<const vk::SubpassDescription> subpasses,
+    vk::ArrayProxy<const vk::SubpassDependency> dependencies )
     : VulkanResource( device )
   {
     vk::RenderPassCreateInfo rpci;

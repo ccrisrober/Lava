@@ -13,9 +13,9 @@
 #define CAPS_CATEGORY_SIZE INT64_C(8)
 #define LV_CAPS_BITSHIFT (INT64_C(64) - CAPS_CATEGORY_SIZE)
 #define CAPS_CATEGORY_MASK (((INT64_C(1) << CAPS_CATEGORY_SIZE) - INT64_C(1)) << LV_CAPS_BITSHIFT)
-#define BS_CAPS_VALUE(cat, val) ((cat << LV_CAPS_BITSHIFT) | (INT64_C(1) << val))
+#define LV_CAPS_VALUE(cat, val) ((cat << LV_CAPS_BITSHIFT) | (INT64_C(1) << val))
 
-#define BS_MAX_BOUND_VERTEX_BUFFERS 16
+#define LV_MAX_BOUND_VERTEX_BUFFERS 16
 
 namespace lava
 {

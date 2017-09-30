@@ -15,7 +15,7 @@ namespace lava
     Semaphore( const DeviceRef& device );
     virtual ~Semaphore( void );
 
-    inline operator vk::Semaphore( )
+    inline operator vk::Semaphore( void )
     {
       return _semaphore;
     }

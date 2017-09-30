@@ -26,12 +26,14 @@ set( COMMON_PROJECT_DOMAIN maldicion069 )
 set( LAVA_DESCRIPTION "LAVA" )
 
 include(Common)
+
 # Allow warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
 
+set(STBI_INCLUDE_DIR ../stbi)
 
 common_find_package( Vulkan REQUIRED SYSTEM )
 common_find_package( GLFW3 REQUIRED SYSTEM )
@@ -54,6 +56,16 @@ common_find_package_post( )
 add_subdirectory( lava )
 #add_subdirectory( lava_extras )
 add_subdirectory( examples )
+#add_subdirectory( glslang )
+
+configure_file(
+  CMake/glsl2spirv.cmake
+  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake
+  COPYONLY
+  )
+install( FILES CMake/glsl2spirv.cmake
+  DESTINATION ${CMAKE_MODULE_INSTALL_PATH} COMPONENT dev )
+
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})

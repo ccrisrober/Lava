@@ -1,3 +1,5 @@
-cmake -G "Visual Studio 12 2013" .. -DGLFW3_INCLUDE_DIRS=C:/libs/glfw-3.2.1/include -DGLFW3_LIBRARIES=C:/libs/glfw-3.2.1/lib-vc2013/glfw3.lib  -DGLM_INCLUDE_DIR=C:/libs/glm-0.9.8.4 -DSTBI_INCLUDE_DIR=C:/Users/maldicion069/Pictures/VkLava/stbi -DASSIMP_ROOT_DIR="C:/Program Files/Assimp"
+cmake -G "Visual Studio 12 2013" .. -DGLFW3_INCLUDE_DIRS=C:/libs/glfw-3.2.1/include -DGLFW3_LIBRARIES=C:/libs/glfw-3.2.1/lib-vc2013/glfw3.lib -DGLM_INCLUDE_DIR=C:/libs/glm-0.9.8.4 -DASSIMP_ROOT_DIR="C:/Program Files/Assimp"
 
-cmake -G "Visual Studio 14 2015" .. -DGLFW3_INCLUDE_DIRS=C:/libs/glfw-3.2.1/include -DGLFW3_LIBRARIES=C:/libs/glfw-3.2.1/lib-vc2015/glfw3.lib  -DGLM_INCLUDE_DIR=C:/libs/glm-0.9.8.4 -DSTBI_INCLUDE_DIR=C:/Users/maldicion069/Pictures/VkLava/stbi -DASSIMP_ROOT_DIR="C:/Program Files/Assimp"
+cmake -G "Visual Studio 14 2015" .. -DGLFW3_INCLUDE_DIRS=C:/libs/glfw-3.2.1/include -DGLFW3_LIBRARIES=C:/libs/glfw-3.2.1/lib-vc2015/glfw3.lib -DGLM_INCLUDE_DIR=C:/libs/glm-0.9.8.4 -DASSIMP_ROOT_DIR="C:/Program Files/Assimp"
+
+cmake ..

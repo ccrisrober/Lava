@@ -17,19 +17,61 @@ namespace lava
   {
     static_cast< vk::Device >( *_device ).destroyCommandPool( _commandPool );
   }
-  std::shared_ptr<CommandBuffer> CommandPool::allocateCommandBuffer( vk::CommandBufferLevel level )
+  std::shared_ptr<CommandBuffer> CommandPool::allocateCommandBuffer( 
+    vk::CommandBufferLevel level )
   {
     std::shared_ptr<CommandBuffer> commandBuffer =
       std::make_shared<CommandBuffer>( shared_from_this( ), level );
     _commandBuffers.push_back( commandBuffer.get( ) );
     return( commandBuffer );
   }
-  CommandBuffer::CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool, vk::CommandBufferLevel level )
+
+
+  ImageMemoryBarrier::ImageMemoryBarrier( 
+    vk::AccessFlags srcAccessMask_, vk::AccessFlags dstAccessMask_, 
+    vk::ImageLayout oldLayout_, vk::ImageLayout newLayout_,
+    uint32_t srcQueueFamilyIndex_, uint32_t dstQueueFamilyIndex_, 
+    const std::shared_ptr<Image>& image_, 
+    const vk::ImageSubresourceRange& subresourceRange_ )
+    : srcAccessMask( srcAccessMask_ )
+    , dstAccessMask( dstAccessMask_ )
+    , oldLayout( oldLayout_ )
+    , newLayout( newLayout_ )
+    , srcQueueFamilyIndex( srcQueueFamilyIndex_ )
+    , dstQueueFamilyIndex( dstQueueFamilyIndex_ )
+    , image( image_ )
+    , subresourceRange( subresourceRange_ )
+  {}
+
+  ImageMemoryBarrier::ImageMemoryBarrier( ImageMemoryBarrier const& rhs )
+    : ImageMemoryBarrier( rhs.srcAccessMask, rhs.dstAccessMask, 
+      rhs.oldLayout, rhs.newLayout, rhs.srcQueueFamilyIndex, rhs.dstQueueFamilyIndex, 
+      rhs.image, rhs.subresourceRange )
+  {}
+
+  ImageMemoryBarrier & ImageMemoryBarrier::operator=( 
+    ImageMemoryBarrier const& rhs )
+  {
+    srcAccessMask = rhs.srcAccessMask;
+    dstAccessMask = rhs.dstAccessMask;
+    oldLayout = rhs.oldLayout;
+    newLayout = rhs.newLayout;
+    srcQueueFamilyIndex = rhs.srcQueueFamilyIndex;
+    dstQueueFamilyIndex = rhs.dstQueueFamilyIndex;
+    image = rhs.image;
+    subresourceRange = rhs.subresourceRange;
+
+    return *this;
+  }
+
+  CommandBuffer::CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool, 
+    vk::CommandBufferLevel level )
     : _commandPool( cmdPool )
   {
     vk::CommandBufferAllocateInfo info( *_commandPool, level, 1 );
     std::vector<vk::CommandBuffer> commandBuffers =
-      static_cast< vk::Device >( *_commandPool->getDevice( ) ).allocateCommandBuffers( info );
+      static_cast< vk::Device >( *_commandPool->getDevice( ) )
+        .allocateCommandBuffers( info );
     assert( !commandBuffers.empty( ) );
     _commandBuffer = commandBuffers[ 0 ];
 
@@ -39,7 +81,8 @@ namespace lava
   {
   }
 
-  void CommandBuffer::clearAttachments( vk::ArrayProxy<const vk::ClearAttachment> attachments,
+  void CommandBuffer::clearAttachments( 
+    vk::ArrayProxy<const vk::ClearAttachment> attachments,
     vk::ArrayProxy<const vk::ClearRect> rects )
   {
     _commandBuffer.clearAttachments( attachments, rects );
@@ -73,7 +116,8 @@ namespace lava
     renderPassBeginInfo.framebuffer = *framebuffer;
     renderPassBeginInfo.renderArea = area;
     renderPassBeginInfo.clearValueCount = clearValues.size( );
-    renderPassBeginInfo.pClearValues = reinterpret_cast< vk::ClearValue const* >( clearValues.data( ) );
+    renderPassBeginInfo.pClearValues = 
+      reinterpret_cast< vk::ClearValue const* >( clearValues.data( ) );
 
     _commandBuffer.beginRenderPass( renderPassBeginInfo, contents );
   }
@@ -84,17 +128,50 @@ namespace lava
 
     _commandBuffer.endRenderPass( );
   }
-  void CommandBuffer::setStencilCompareMask( vk::StencilFaceFlags faceMask, uint32_t stencilCompareMask )
+
+  void CommandBuffer::blitImage( const std::shared_ptr<Image>& srcImage, 
+    vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
+    vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 
+    vk::Filter filter )
+  {
+    _commandBuffer.blitImage( *srcImage, srcImageLayout, *dstImage, 
+      dstImageLayout, regions, filter );
+  }
+
+  void CommandBuffer::bindDescriptorSets(
+    vk::PipelineBindPoint pipelineBindPoint, 
+    const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet, 
+    vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
+    vk::ArrayProxy<const uint32_t> dynamicOffsets)
+  {
+    _bindDescriptorSets.clear( );
+    for( auto& descriptor : descriptorSets )
+    {
+      _bindDescriptorSets.push_back(*descriptor);
+    }
+
+    _commandBuffer.bindDescriptorSets(pipelineBindPoint, *pipelineLayout, 
+      firstSet, _bindDescriptorSets, dynamicOffsets);
+  }
+
+  void CommandBuffer::setStencilCompareMask( vk::StencilFaceFlags faceMask, 
+    uint32_t stencilCompareMask )
   {
     _commandBuffer.setStencilCompareMask( faceMask, stencilCompareMask );
   }
-  void CommandBuffer::setStencilReference( vk::StencilFaceFlags faceMask, uint32_t stencilReference )
+  void CommandBuffer::setStencilReference( vk::StencilFaceFlags faceMask, 
+    uint32_t stencilReference )
   {
     _commandBuffer.setStencilReference( faceMask, stencilReference );
   }
-  void CommandBuffer::setStencilWriteMask( vk::StencilFaceFlags faceMask, uint32_t stencilWriteMask )
+  void CommandBuffer::setStencilWriteMask( vk::StencilFaceFlags faceMask, 
+    uint32_t stencilWriteMask )
   {
     _commandBuffer.setStencilWriteMask( faceMask, stencilWriteMask );
+  }
+  void CommandBuffer::setBlendConstants( const float blendConst[ 4 ] )
+  {
+    _commandBuffer.setBlendConstants( blendConst );
   }
   void CommandBuffer::setLineWidth( float lineWidth )
   {
@@ -105,11 +182,34 @@ namespace lava
   {
     _commandBuffer.bindPipeline( bindingPoint, *pipeline );
   }
-  void CommandBuffer::setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors )
+  void CommandBuffer::bindGraphicsPipeline( const std::shared_ptr<Pipeline>& pipeline )
+  {
+    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eGraphics, *pipeline );
+  }
+  void CommandBuffer::bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline )
+  {
+    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *pipeline );
+  }
+  /*void CommandBuffer::bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
+    std::shared_ptr<PipelineLayout> const & pipelineLayout, uint32_t firstSet, 
+    vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
+    vk::ArrayProxy<const uint32_t> dynamicOffsets )
+  {
+    _bindDescriptorSets.clear( );
+    for ( auto & descriptor : descriptorSets )
+    {
+      _bindDescriptorSets.push_back( *descriptor );
+    }
+
+    _commandBuffer.bindDescriptorSets( pipelineBindPoint, *pipelineLayout, firstSet, _bindDescriptorSets, dynamicOffsets );
+  }*/
+  void CommandBuffer::setScissor( uint32_t first, 
+    vk::ArrayProxy<const vk::Rect2D> scissors )
   {
     _commandBuffer.setScissor( first, scissors );
   }
-  void CommandBuffer::setViewport( uint32_t first, vk::ArrayProxy<const vk::Viewport> viewports )
+  void CommandBuffer::setViewport( uint32_t first, 
+    vk::ArrayProxy<const vk::Viewport> viewports )
   {
     _commandBuffer.setViewport( first, viewports );
   }
@@ -117,24 +217,72 @@ namespace lava
   {
     _commandBuffer.dispatch( x, y, z );
   }
-  void CommandBuffer::draw( uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex,
+  void CommandBuffer::draw( uint32_t vertexCount, uint32_t instanceCount, 
+    uint32_t firstVertex,
     uint32_t firstInstance )
   {
     _commandBuffer.draw( vertexCount, instanceCount, firstVertex, firstInstance );
   }
 
-  void CommandBuffer::drawIndexed( uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
+  void CommandBuffer::drawIndirect( const std::shared_ptr<Buffer>& buffer, 
+    vk::DeviceSize offset, uint32_t count, uint32_t stride )
+  {
+    _commandBuffer.drawIndirect( *buffer, offset, count, stride );
+  }
+
+  void CommandBuffer::drawIndexed( uint32_t indexCount, uint32_t instanceCount, 
+    uint32_t firstIndex,
     int32_t vertexOffset, uint32_t firstInstance )
   {
-    _commandBuffer.drawIndexed( indexCount, instanceCount, firstIndex, vertexOffset, firstInstance );
+    _commandBuffer.drawIndexed( indexCount, instanceCount, firstIndex, 
+      vertexOffset, firstInstance );
   }
 
-  void CommandBuffer::bindVertexBuffer( uint32_t startBinding, const std::shared_ptr<Buffer>& buffer, vk::DeviceSize offset )
+  void CommandBuffer::drawIndexedIndirect( const std::shared_ptr<Buffer>& buffer, 
+    vk::DeviceSize offset, uint32_t count, uint32_t stride )
   {
-    _commandBuffer.bindVertexBuffers( startBinding, static_cast< vk::Buffer >( *buffer ), offset );
+    _commandBuffer.drawIndexedIndirect( *buffer, offset, count, stride );
   }
 
-  void CommandBuffer::bindVertexBuffers( uint32_t startBinding, vk::ArrayProxy<const std::shared_ptr<Buffer>> buffers, vk::ArrayProxy<const vk::DeviceSize> offsets )
+  void CommandBuffer::copyBuffer( const std::shared_ptr<Buffer>& srcBuffer, 
+    const std::shared_ptr<Buffer>& dstBuffer, 
+    vk::ArrayProxy<const vk::BufferCopy> regions )
+  {
+    _commandBuffer.copyBuffer( *srcBuffer, *dstBuffer, regions );
+  }
+
+  void CommandBuffer::copyBufferToImage( const std::shared_ptr<Buffer>& srcBuffer, 
+    const std::shared_ptr<Image>& dstImage, vk::ImageLayout dstImageLayout,
+    vk::ArrayProxy<const vk::BufferImageCopy> regions )
+  {
+    _commandBuffer.copyBufferToImage( *srcBuffer, *dstImage, dstImageLayout, regions );
+  }
+
+  void CommandBuffer::copyImage( const std::shared_ptr<Image>& srcImage, 
+    vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
+    vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageCopy> regions )
+  {
+    _commandBuffer.copyImage( *srcImage, srcImageLayout, *dstImage, 
+      dstImageLayout, regions );
+  }
+
+  void CommandBuffer::copyImageToBuffer( const std::shared_ptr<Image>& srcImage, 
+    vk::ImageLayout srcImageLayout, const std::shared_ptr<Buffer>& dstBuffer, 
+    vk::ArrayProxy<const vk::BufferImageCopy> regions )
+  {
+    _commandBuffer.copyImageToBuffer( *srcImage, srcImageLayout, *dstBuffer, regions );
+  }
+
+  void CommandBuffer::bindVertexBuffer( uint32_t startBinding, 
+    const std::shared_ptr<Buffer>& buffer, vk::DeviceSize offset )
+  {
+    _commandBuffer.bindVertexBuffers( startBinding, 
+      static_cast< vk::Buffer >( *buffer ), offset );
+  }
+
+  void CommandBuffer::bindVertexBuffers( uint32_t startBinding, 
+    vk::ArrayProxy<const std::shared_ptr<Buffer>> buffers, 
+    vk::ArrayProxy<const vk::DeviceSize> offsets )
   {
     assert( buffers.size( ) == offsets.size( ) );
 
@@ -153,6 +301,20 @@ namespace lava
     _commandBuffer.bindIndexBuffer( *buffer, offset, indexType );
   }
 
+  void CommandBuffer::bindIndexBuffer( 
+    const std::shared_ptr<IndexBuffer>& buffer, vk::DeviceSize offset )
+  {
+    _commandBuffer.bindIndexBuffer( *buffer, offset, buffer->getIndexType( ) );
+  }
+  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
+  {
+    assert( !_isRecording );
+    vk::CommandBufferBeginInfo cbbi;
+    cbbi.flags = flags;
+
+    _commandBuffer.begin( cbbi );
+    _isRecording = true;
+  }
   void CommandBuffer::begin( vk::CommandBufferUsageFlags flags,
     const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
     const std::shared_ptr<Framebuffer>& framebuffer, vk::Bool32 occlusionQueryEnable,
@@ -181,5 +343,25 @@ namespace lava
     assert( _isRecording );
     _isRecording = false;
     _commandBuffer.end( );
+  }
+
+
+  void CommandBuffer::pipelineBarrier( vk::PipelineStageFlags srcStageMask, 
+    vk::PipelineStageFlags destStageMask, vk::DependencyFlags dependencyFlags,
+    vk::ArrayProxy<const vk::MemoryBarrier> barriers, 
+    vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers,
+    vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers )
+  {
+    std::vector<vk::ImageMemoryBarrier> imbs;
+    imbs.reserve( imageMemoryBarriers.size( ) );
+    for ( auto const& imb : imageMemoryBarriers )
+    {
+      imbs.push_back( vk::ImageMemoryBarrier( imb.srcAccessMask, imb.dstAccessMask, 
+        imb.oldLayout, imb.newLayout, imb.srcQueueFamilyIndex, imb.dstQueueFamilyIndex,
+        imb.image ? static_cast<vk::Image>( *imb.image ) : nullptr, imb.subresourceRange ) );
+    }
+
+    _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
+      barriers, bufferMemoryBarriers, imbs );
   }
 }

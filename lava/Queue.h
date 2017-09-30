@@ -9,20 +9,26 @@
 
 #include "noncopyable.hpp"
 
+#include <lava/api.h>
+
 namespace lava
 {
   class Device;
   class Semaphore;
   class CommandBuffer;
   class Swapchain;
+  class CommandBuffer;
 
   struct SubmitInfo
   {
+    LAVA_API
     SubmitInfo( vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores,
       vk::ArrayProxy<const vk::PipelineStageFlags> waitDstStageMasks,
       vk::ArrayProxy<const std::shared_ptr<CommandBuffer>> const& commandBuffers,
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> signalSemaphores );
+    LAVA_API
     SubmitInfo( SubmitInfo const& rhs );
+    LAVA_API
     SubmitInfo & operator=( SubmitInfo const& rhs );
 
     std::vector<std::shared_ptr<Semaphore>> waitSemaphores;
@@ -31,15 +37,36 @@ namespace lava
     std::vector<std::shared_ptr<Semaphore>> signalSemaphores;
   };
 
+  struct SparseMemoryBind
+  {
+    LAVA_API
+    SparseMemoryBind( vk::DeviceMemory mem, vk::DeviceSize memOffset, 
+      vk::DeviceSize size, vk::DeviceSize resourceOffset = 0 );
+    LAVA_API
+    SparseMemoryBind( const SparseMemoryBind& other );
+    LAVA_API
+    SparseMemoryBind& operator=( const SparseMemoryBind& other );
+
+    vk::DeviceMemory memory;
+    vk::DeviceSize memoryOffset;
+    vk::DeviceSize size;
+    vk::DeviceSize resourceOffset;
+  };
+
   class Fence : public VulkanResource, private NonCopyable<Fence>
   {
   public:
+    LAVA_API
     Fence( const DeviceRef& device, bool signaled );
+    LAVA_API
     virtual ~Fence( );
 
-    bool isSignaled( ) const;
-    void reset( );
-    void wait( uint64_t timeout ) const;
+    LAVA_API
+    bool isSignaled( void ) const;
+    LAVA_API
+    void reset(  void);
+    LAVA_API
+    void wait( uint64_t timeout = UINT64_MAX ) const;
 
     inline operator vk::Fence( ) const
     {
@@ -59,12 +86,15 @@ namespace lava
   class Queue : public VulkanResource, private NonCopyable<Queue>
   {
   public:
+    LAVA_API
     void submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
       const std::shared_ptr<Fence>& fence = std::shared_ptr<Fence>( ) );
 
+    LAVA_API
     void submit( const std::shared_ptr<CommandBuffer>& commandBuffer,
       const std::shared_ptr<Fence>& fence = std::shared_ptr<Fence>( ) );
 
+    LAVA_API
     std::vector<vk::Result> present(
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores,
       vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
@@ -72,10 +102,13 @@ namespace lava
 
     void waitIdle( );
 
-    inline operator vk::Queue( ) const
+    inline operator vk::Queue( void ) const
     {
       return _queue;
     }
+
+    LAVA_API
+    void submitAndWait( std::shared_ptr<CommandBuffer>& cmd );
   protected:
     friend class Device;
     Queue( const DeviceRef& device, vk::Queue queue );

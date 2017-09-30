@@ -52,8 +52,21 @@ namespace lava
     _deviceFeatures = _physicalDevice.getFeatures( );
     _memoryProperties = _physicalDevice.getMemoryProperties( );
 
+
+    _deviceFeatures.geometryShader = VK_TRUE;
+    _deviceFeatures.tessellationShader = VK_TRUE;
+    _deviceFeatures.depthClamp = VK_TRUE;
+    _deviceFeatures.fillModeNonSolid = VK_TRUE;
+
+
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
       _physicalDevice.getQueueFamilyProperties( );
+
+    auto exts = _physicalDevice.enumerateDeviceExtensionProperties( );
+    for ( const auto& ext : exts )
+    {
+      supportedExtensions.push_back( ext.extensionName );
+    }
   }
   PhysicalDevice::~PhysicalDevice( void )
   {

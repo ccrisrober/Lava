@@ -15,14 +15,14 @@ namespace lava
   {
   public:
     Swapchain( const DeviceRef& device, const std::shared_ptr<Surface>& surface,
-      uint32_t numImageCount, vk::Format imageFormat,
+      uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
       const vk::Extent2D& imageExtent, uint32_t imageArrayLayers,
       vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
       const std::vector<uint32_t>& queueFamilyIndices,
       vk::SurfaceTransformFlagBitsKHR preTransform,
       vk::CompositeAlphaFlagBitsKHR compositeAlpha, vk::PresentModeKHR presentMode,
       bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain );
-    virtual ~Swapchain( );
+    virtual ~Swapchain( void );
 
     const std::vector<std::shared_ptr<Image>>& getImages( void ) const;
     const std::vector<std::shared_ptr<Semaphore>>& getPresentCompleteSemaphores( ) const

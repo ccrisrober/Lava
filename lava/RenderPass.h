@@ -11,9 +11,9 @@ namespace lava
   {
   public:
     RenderPass( const DeviceRef& device,
-      const std::vector<vk::AttachmentDescription>& attachments,
-      const std::vector<vk::SubpassDescription>& subpasses,
-      const std::vector<vk::SubpassDependency>& dependencies );
+      vk::ArrayProxy<const vk::AttachmentDescription> attachments, 
+      vk::ArrayProxy<const vk::SubpassDescription> subpasses,
+      vk::ArrayProxy<const vk::SubpassDependency> dependencies );
     ~RenderPass( );
 
     inline operator vk::RenderPass( ) const

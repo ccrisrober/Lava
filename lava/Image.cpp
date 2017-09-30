@@ -32,8 +32,6 @@ namespace lava
     _image = static_cast< vk::Device >( *_device ).createImage( createInfo );
 
     vk::MemoryRequirements memReqs = static_cast< vk::Device >( *_device ).getImageMemoryRequirements( _image );
-    uint32_t memoryTypeIndex = findMemoryType( _device->_physicalDevice->getMemoryProperties( ), memReqs.memoryTypeBits, _memoryPropertyFlags );
-    assert( memoryTypeIndex != -1 );
     auto mem = _device->allocateMemReqMemory( memReqs, _memoryPropertyFlags );
     vk::Device( *_device ).bindImageMemory( _image, mem, 0 );
   }

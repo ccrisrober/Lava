@@ -1,7 +1,13 @@
 #ifndef __LAVA_EXAMPLES_ROUTES__
 #define __LAVA_EXAMPLES_ROUTES__
 
-#define LAVA_EXAMPLES_RESOURCES_ROUTE\
-  std::string("@PROJECT_SOURCE_DIR@/resources")
+#define LAVA_EXAMPLES_IMAGES_ROUTE\
+  std::string("@PROJECT_SOURCE_DIR@/resources/images/")
+
+#define LAVA_EXAMPLES_MESHES_ROUTE\
+  std::string("@PROJECT_SOURCE_DIR@/resources/meshes/")
+
+#define LAVA_EXAMPLES_SPV_ROUTE\
+  std::string("@PROJECT_SOURCE_DIR@/spvs/")
 
 #endif /* __LAVA_EXAMPLES_ROUTES__ */
