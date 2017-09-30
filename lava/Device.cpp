@@ -338,7 +338,8 @@ namespace lava
   {
     return std::make_shared<DescriptorPool>( shared_from_this( ), flags, maxSets, poolSizes );
   }
-  std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, void const * initialData = nullptr )
+  std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, 
+    void const * initialData )
   {
     return std::make_shared<PipelineCache>( shared_from_this( ), vk::PipelineCacheCreateFlags( ), initialSize, initialData );
   }

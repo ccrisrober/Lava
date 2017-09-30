@@ -42,7 +42,7 @@ public:
     : VulkanApp( title, width, height )
   {
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/wolf.obj_" ) );
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
     // MVP buffer
     {
@@ -59,12 +59,12 @@ public:
     //tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE +
     //  std::string( "/MatCap_Toon3.png" ), commandPool, _graphicsQueue );
     std::vector<std::string> filePaths( 3 );
-    filePaths[ 0 ] = LAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/green_matcap.jpg" );
-    filePaths[ 1 ] = LAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/MatCap_Toon3.png" );
-    filePaths[ 2 ] = LAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/rubymatcap.jpg" );
+    filePaths[ 0 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "green_matcap.jpg" );
+    filePaths[ 1 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "MatCap_Toon3.png" );
+    filePaths[ 2 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "rubymatcap.jpg" );
     tex = std::make_shared<Texture2DArray>( _device, filePaths, commandPool, _graphicsQueue );
 
     // Init descriptor and pipeline layouts
@@ -81,9 +81,9 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/matcap_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/matcap_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );

@@ -58,6 +58,14 @@ add_subdirectory( lava )
 add_subdirectory( examples )
 #add_subdirectory( glslang )
 
+configure_file(
+  CMake/glsl2spirv.cmake
+  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake
+  COPYONLY
+  )
+install( FILES CMake/glsl2spirv.cmake
+  DESTINATION ${CMAKE_MODULE_INSTALL_PATH} COMPONENT dev )
+
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})

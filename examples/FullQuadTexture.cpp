@@ -26,26 +26,10 @@ public:
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    /*vk::Format format = vk::Format::eR8G8B8A8Unorm;
-    auto features = _device->_physicalDevice->getDeviceFeatures( );
-    if ( features.textureCompressionBC )
-    {
-      format = vk::Format::eBc3UnormBlock;
-    }
-    else if ( features.textureCompressionASTC_LDR )
-    {
-      format = vk::Format::eAstc8x8UnormBlock;
-    }
-    else if ( features.textureCompressionETC2 )
-    {
-      format = vk::Format::eEtc2R8G8B8UnormBlock;
-    }*/
-
-   
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string( "/uv_checker.png" ), commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "uv_checker.png" ), commandPool, _graphicsQueue );
 
     // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
@@ -77,10 +61,10 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule =_device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/fullquad_vert.spv"), 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquad_vert.spv"), 
       vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/fullquad_frag.spv" ), 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ), 
       vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
@@ -205,6 +189,6 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
+  //system( "PAUSE" );
   return 0;
 }

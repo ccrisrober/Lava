@@ -14,7 +14,8 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject {
+struct UniformBufferObject
+{
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
@@ -135,8 +136,12 @@ public:
     _device->updateDescriptorSets( wdss, {} );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -267,7 +272,7 @@ int main( void )
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 
@@ -278,6 +283,5 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
   return 0;
 }

@@ -43,7 +43,7 @@ public:
     : VulkanApp( title, width, height )
   {
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
 
     // MVP buffer
     {
@@ -66,9 +66,9 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_ctes_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_ctes_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -296,7 +296,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Mesh", 800, 600 );
+    VulkanApp* app = new MyApp( "Specialization Constants", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

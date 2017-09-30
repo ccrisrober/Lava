@@ -51,8 +51,8 @@ public:
 
     // Create vertex and ibo buffer
     {
-      lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/monkey.obj_" ) );
+      lava::extras::ModelImporter mi( LAVA_EXAMPLES_MESHES_ROUTE + 
+        std::string( "monkey.obj_" ) );
       lava::extras::Mesh mesh = mi._meshes[ 0 ];
 
       numIndices = mesh.numIndices;
@@ -107,11 +107,11 @@ public:
     // Init solid pipeline
     {
       std::shared_ptr<ShaderModule> vertexShaderModule =
-        _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-          std::string( "/cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
+          std::string( "cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
       std::shared_ptr<ShaderModule> fragmentShaderModule =
-        _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-          std::string( "/cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
+          std::string( "cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
       std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
       PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
@@ -131,14 +131,14 @@ public:
     // Init geometry pipeline
     {
       std::shared_ptr<ShaderModule> vertexShaderModule = 
-        _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-            std::string("/geometry/normal_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
+            std::string("normal_vert.spv"), vk::ShaderStageFlagBits::eVertex );
       std::shared_ptr<ShaderModule> geometryShaderModule = 
-        _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-            std::string("/geometry/normal_geom.spv"), vk::ShaderStageFlagBits::eGeometry );
+        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
+            std::string("normal_geom.spv"), vk::ShaderStageFlagBits::eGeometry );
       std::shared_ptr<ShaderModule> fragmentShaderModule = 
-        _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-            std::string( "/geometry/normal_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
+            std::string( "normal_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
       std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
       PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );

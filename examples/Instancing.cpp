@@ -125,18 +125,13 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string( "/random.png" ), commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
+      std::string( "random.png" ), commandPool, _graphicsQueue );
 
     // Instancing buffer
     {
       std::vector<InstanceData> instanceData;
       instanceData.resize(INSTANCE_COUNT);
-
-      /*for (uint32_t i = 0; i < INSTANCE_COUNT; ++i)
-      {
-        instanceData.push_back( InstanceData { glm::vec3(i*0.05f, 0.0f, 0.0f) } );
-      }*/
 
       std::mt19937 rndGenerator(time(NULL));
       std::uniform_real_distribution<float> uniformDist(0.0, 1.0);
@@ -202,11 +197,11 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/instancing_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "instancing_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/instancing_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "instancing_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -272,7 +267,7 @@ public:
     //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
 
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     updateUniformBuffers( );
 
@@ -353,7 +348,7 @@ int main( void )
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 

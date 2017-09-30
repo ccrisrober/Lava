@@ -48,11 +48,11 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-          std::string("/triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+          std::string("triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-          std::string( "/triangle_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+          std::string( "triangle_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -60,9 +60,15 @@ public:
     PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
-    PipelineVertexInputStateCreateInfo vertexInput( binding, { 
-      vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, position ) ), 
-      vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, color ) ) }
+    PipelineVertexInputStateCreateInfo vertexInput( binding, 
+      { 
+        vk::VertexInputAttributeDescription( 
+          0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, position )
+        ), 
+        vk::VertexInputAttributeDescription( 
+          1, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, color )
+        )
+      }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); // Dynamic viewport and scissors
@@ -79,7 +85,7 @@ public:
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
 	}
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
@@ -154,6 +160,5 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
   return 0;
 }

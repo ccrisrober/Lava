@@ -29,6 +29,7 @@ namespace lava
 
       if ( scene == nullptr )
       {
+        std::cerr << "Mesh " << path << " undefined" << std::endl;
         throw std::runtime_error( path + " does not opened" );
       }
 

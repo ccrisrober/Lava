@@ -14,25 +14,17 @@ using namespace lava;
 
 #include <routes.h>
 
+struct UniformBufferObject
+{
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
+};
 
 class MyApp : public VulkanApp
 {
-  // Same uniform buffer layout as shader
-  struct UBOVS
-  {
-    glm::mat4 proj;
-    glm::mat4 view;
-    glm::mat4 model;
-    glm::vec3 lightPos = glm::vec3(0.0f, 2.0f, 1.0f);
-  } uboVS;
-
-  struct {
-    std::shared_ptr< Pipeline > phong;
-    std::shared_ptr< Pipeline > wireframe;
-    std::shared_ptr< Pipeline > toon;
-  } pipelines;
-
 public:
+  std::shared_ptr<Buffer> _uniformBufferMVP;
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
@@ -45,11 +37,11 @@ public:
     : VulkanApp( title, width, height )
   {
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof( UBOVS );
+      uint32_t mvpBufferSize = sizeof( UniformBufferObject );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -81,9 +73,9 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "spharmonics_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "spharmonics_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -94,9 +86,10 @@ public:
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ), 
         vk::VertexInputRate::eVertex ),
       {
-        vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, position ) ),
-        vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof(lava::extras::Vertex, normal ) )/*,
-        vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof(lava::extras::Vertex, texCoord ) ) */
+        vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, 
+          offsetof(lava::extras::Vertex, position ) ),
+        vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, 
+          offsetof(lava::extras::Vertex, normal ) )
       }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -104,13 +97,21 @@ public:
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, 
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, 
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, 
+      false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, 
+      vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
+      colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
+    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, 
+      vk::DynamicState::eScissor } );
 
 
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
@@ -127,9 +128,13 @@ public:
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
     UniformBufferObject ubo = {};
-    ubo.model = glm::scale( glm::mat4(1.0f), glm::vec3(10.0f));
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 0.5f);
+    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    ubo.view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
@@ -147,9 +152,6 @@ public:
   {
     updateUniformBuffers( );
 
-    float width = ( float ) _defaultFramebuffer->getExtent( ).width;
-    float height = ( float ) _defaultFramebuffer->getExtent( ).height;
-
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = 
       _device->createCommandPool( 
@@ -157,6 +159,7 @@ public:
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
+
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 
       _defaultFramebuffer->getFramebuffer( ), 
@@ -165,31 +168,15 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( 
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
-
-    vk::Viewport viewport( 0.0f, 0.0f, width, height, 0.0f, 1.0f );
-    vk::Rect2D scissor ( { 0, 0 }, _defaultFramebuffer->getExtent( ) );
-
-    commandBuffer->setViewport( 0, viewport );
-    commandBuffer->setScissor( 0, scissors );
+    commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-
-    // Left: Solid colored
-    viewport.width = width / 3.0f;
-    commandBuffer->bindGraphicsPipeline( pipelines.phong );
+    //_vertexBuffer->bind( commandBuffer );
+    //_indexBuffer->bind( commandBuffer );
+    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
+    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    //commandBuffer->drawIndexed( numIndices, 1, 0, 0, 1 );
     geometry->render( commandBuffer );
-
-    // Center: Toon
-    viewport.x = width / 3.0f;
-    commandBuffer->bindGraphicsPipeline( pipelines.toon );
-    geometry->render( commandBuffer );
-
-    // Right: Wireframe
-    viewport.x = width / 3.0f + width / 3.0f;
-    commandBuffer->bindGraphicsPipeline( pipelines.wireframe );
-    geometry->render( commandBuffer );
-
-
     commandBuffer->endRenderPass( );
 
     commandBuffer->end( );
@@ -232,13 +219,13 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Mesh", 800, 600 );
+    VulkanApp* app = new MyApp( "Mesh Spherical Harmonics", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 

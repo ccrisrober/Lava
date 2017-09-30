@@ -14,7 +14,8 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject {
+struct UniformBufferObject
+{
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
@@ -89,9 +90,10 @@ public:
     std::shared_ptr<Buffer> fragmentShader;
   } uniformBuffers;
 
-  struct {
-
-    struct {
+  struct
+  {
+    struct
+    {
       glm::mat4 proj;
       glm::mat4 view;
       glm::mat4 model;
@@ -99,7 +101,8 @@ public:
       glm::vec4 cameraPos;
     } vertexShader;
 
-    struct {
+    struct
+    {
       float heightScale = 0.1f;
       // Basic parallax mapping needs a bias to look any good (and is hard to tweak)
       float parallaxBias = -0.02f;
@@ -116,7 +119,6 @@ public:
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
@@ -135,10 +137,10 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     // LOAD ASSETS
-    colorMap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/chesterfieldDiffuseMap.png" ), commandPool, _graphicsQueue );
-    normalMap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE +
-      std::string( "/chesterfieldNormalMap.png" ), commandPool, _graphicsQueue );
+    colorMap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "chesterfieldDiffuseMap.png" ), commandPool, _graphicsQueue );
+    normalMap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "chesterfieldNormalMap.png" ), commandPool, _graphicsQueue );
 
     // UNIFORM BUFFERS
     uniformBuffers.vertexShader = _device->createBuffer( sizeof( ubos.vertexShader ),
@@ -213,11 +215,11 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/normal_mapping_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "normal_mapping_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/normal_mapping_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "normal_mapping_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -366,7 +368,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Indexed", 800, 600 );
+    VulkanApp* app = new MyApp( "Normal Mapping", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
@@ -383,6 +385,6 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
+  //system( "PAUSE" );
   return 0;
 }

@@ -16,7 +16,7 @@ namespace lava
 
     if ( !file.is_open( ) )
     {
-      std::cerr << "File don't opened" << std::endl;
+      std::cerr << "File " << filePath << " don't opened" << std::endl;
       throw std::runtime_error( "failed to open file!" );
     }
 

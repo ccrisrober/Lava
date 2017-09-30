@@ -111,8 +111,8 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE + 
-      std::string( "/random.png" ), commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
+      std::string( "random.png" ), commandPool, _graphicsQueue );
 
 
 
@@ -131,12 +131,12 @@ public:
 
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule =
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-        std::string( "/cubeUV_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule =
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE +
-        std::string( "/cubeUV_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "cubeUV_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "cubeUV_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -284,7 +284,7 @@ int main( void )
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Indexed", 800, 600 );
+    VulkanApp* app = new MyApp( "Cube UV", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

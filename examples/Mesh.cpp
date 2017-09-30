@@ -24,23 +24,22 @@ struct UniformBufferObject
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _uniformBufferMVP;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
-
-  std::shared_ptr<lava::extras::Geometry> geometry;
-
   struct Pipelines
   {
     std::shared_ptr<Pipeline> solid;
     std::shared_ptr<Pipeline> wireframe;
   } pipelines;
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  std::shared_ptr<Buffer> _uniformBufferMVP;
+  std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<DescriptorSet> _descriptorSet;
+
+  std::shared_ptr<lava::extras::Geometry> geometry;
+
+  MyApp( char const* title, uint32_t width, uint32_t height, const char* meshFile )
     : VulkanApp( title, width, height )
   {
-    geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/monkey.obj_" ) );
+    geometry = std::make_shared<lava::extras::Geometry>( _device, meshFile );
 
     // MVP buffer
     {
@@ -62,10 +61,12 @@ public:
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), 
+      vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), 
+      vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -82,7 +83,7 @@ public:
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); 
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
@@ -135,9 +136,13 @@ public:
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
     UniformBufferObject ubo = {};
-    ubo.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 0.5f);
+    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    ubo.view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
     ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
@@ -231,13 +236,19 @@ void glfwErrorCallback( int error, const char* description )
   fprintf( stderr, "GLFW Error %d: %s\n", error, description );
 }
 
-int main( void )
+int main( int argc, char** argv )
 {
   try
   {
     //if (glfwInit())
     //{
-    VulkanApp* app = new MyApp( "Cube Mesh", 800, 600 );
+    if ( argc != 2 )
+    {
+      std::cerr << "Exec with lavaMesh <file.obj>" << std::endl;
+      return -1;
+    }
+
+    VulkanApp* app = new MyApp( "Mesh loading", 800, 600, argv[ 1 ] );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

@@ -21,9 +21,9 @@ struct Vertex
 
 const std::vector<Vertex> vertices =
 {
-  { { 1.0f,  1.0f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f } },
-  { { -1.0f,  1.0f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f } },
-  { { 0.0f, -1.0f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f } }
+  { { 0.75f,  0.75f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f } },
+  { { -0.75f,  0.75f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f } },
+  { { 0.0f, -0.750f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f } }
 };
 const std::vector<uint32_t> indices = { 0, 1, 2 };
 
@@ -58,8 +58,12 @@ public:
     }
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string("/triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + std::string( "/triangle_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string("triangle_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "triangle_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
@@ -168,6 +172,5 @@ int main( void )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
   return 0;
 }

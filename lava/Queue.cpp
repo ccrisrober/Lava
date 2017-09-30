@@ -35,6 +35,55 @@ namespace lava
   }
 
 
+  SparseMemoryBind::SparseMemoryBind( vk::DeviceMemory mem, 
+    vk::DeviceSize memOffset, vk::DeviceSize size_, 
+    vk::DeviceSize resourceOffset_ )
+    : memory( mem )
+    , memoryOffset( memOffset )
+    , size( size_ )
+    , resourceOffset( resourceOffset_ )
+  {
+    /*if (DEBUG_MODE)
+    {
+        System.out.println("Creating sparse buffer");
+    }
+    
+    VkSparseMemoryBind.Buffer memoryBinds = VkSparseMemoryBind.calloc(1)
+                                                              .memory(buffer.getMemoryBlock().getMemory())
+                                                              .memoryOffset(buffer.getMemoryBlock().getOffset())
+                                                              .size(buffer.getMemoryBlock().getSize())
+                                                              .resourceOffset(0);
+    
+    VkSparseBufferMemoryBindInfo.Buffer bindInfo = VkSparseBufferMemoryBindInfo.calloc(1)
+                                                                               .buffer(buffer.getBufferHandle())
+                                                                               .pBinds(memoryBinds);
+    
+    VkBindSparseInfo sparseInfo = VkBindSparseInfo.calloc()
+                                                  .sType(VK_STRUCTURE_TYPE_BIND_SPARSE_INFO)
+                                                  .pBufferBinds(bindInfo);
+    
+    vkQueueBindSparse(deviceQueue, sparseInfo, VK_NULL_HANDLE);
+    
+    memoryBinds.free();
+    sparseInfo.free();
+    bindInfo.free();*/
+  }
+  SparseMemoryBind::SparseMemoryBind( const SparseMemoryBind& other )
+    : memory( other.memory )
+    , memoryOffset( other.memoryOffset )
+    , size( other.size )
+    , resourceOffset( other.resourceOffset )
+  {
+  }
+  SparseMemoryBind& SparseMemoryBind::operator=( const SparseMemoryBind& other )
+  {
+    memory = other.memory;
+    memoryOffset = other.memoryOffset;
+    size = other.size;
+    resourceOffset = other.resourceOffset;
+    return *this;
+  }
+
 
 
   Fence::Fence( const DeviceRef& device, bool signaled )

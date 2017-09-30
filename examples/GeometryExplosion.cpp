@@ -36,7 +36,6 @@ public:
 
   std::vector<Vertex> vertices;
 
-
   std::shared_ptr<VertexBuffer> _vbo;
   std::shared_ptr<IndexBuffer> _ibo;
   uint32_t numIndices;
@@ -45,10 +44,9 @@ public:
     : VulkanApp( title, width, height )
   {
 
-    // Create vertex and ibo buffer
     {
-      lava::extras::ModelImporter mi( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-        std::string( "/monkey.obj_" ) );
+      lava::extras::ModelImporter mi( LAVA_EXAMPLES_MESHES_ROUTE + 
+        std::string( "monkey.obj_" ) );
       lava::extras::Mesh mesh = mi._meshes[ 0 ];
 
       numIndices = mesh.numIndices;
@@ -89,14 +87,14 @@ public:
 
     // init shaders
     std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-          std::string("/geometry/explosion_vert.spv"), vk::ShaderStageFlagBits::eVertex );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+          std::string("explosion_vert.spv"), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> geometryShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-          std::string("/geometry/explosion_geom.spv"), vk::ShaderStageFlagBits::eGeometry );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+          std::string("explosion_geom.spv"), vk::ShaderStageFlagBits::eGeometry );
     std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_RESOURCES_ROUTE + 
-          std::string( "/geometry/explosion_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
+          std::string( "explosion_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
