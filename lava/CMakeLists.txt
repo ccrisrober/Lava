@@ -31,6 +31,8 @@ set( LAVA_SOURCES
   extras/CustomMaterial.cpp
   extras/Geometry.cpp
 
+  engine/Material.cpp
+
 	#Source.cpp
   utils.cpp
 )
@@ -75,6 +77,8 @@ set( LAVA_PUBLIC_HEADERS
   extras/CustomFramebuffer.h
   extras/CustomMaterial.h
   extras/Geometry.h
+
+  engine/Material.h
 
   utils.hpp
 )

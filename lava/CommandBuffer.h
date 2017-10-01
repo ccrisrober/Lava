@@ -166,7 +166,8 @@ namespace lava
       std::shared_ptr<PipelineLayout> const& pipelineLayout, uint32_t firstSet, 
       vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
       vk::ArrayProxy<const uint32_t> dynamicOffsets );*/
-
+    LAVA_API
+    void setViewportScissors( uint32_t width, uint32_t height );
     LAVA_API
     void setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors );
     LAVA_API

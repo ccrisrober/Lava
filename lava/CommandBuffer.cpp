@@ -203,7 +203,12 @@ namespace lava
 
     _commandBuffer.bindDescriptorSets( pipelineBindPoint, *pipelineLayout, firstSet, _bindDescriptorSets, dynamicOffsets );
   }*/
-  void CommandBuffer::setScissor( uint32_t first, 
+  void CommandBuffer::setViewportScissors( uint32_t width, uint32_t height )
+  {
+    setScissor( 0, vk::Rect2D( { 0, 0 }, { width, height } ) );
+    setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) width, ( float ) height ) );
+  }
+  void CommandBuffer::setScissor( uint32_t first,
     vk::ArrayProxy<const vk::Rect2D> scissors )
   {
     _commandBuffer.setScissor( first, scissors );

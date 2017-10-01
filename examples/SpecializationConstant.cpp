@@ -14,12 +14,12 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+} uboVS;
 
 class MyApp : public VulkanApp
 {
@@ -47,7 +47,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof( uboVS );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -162,7 +162,7 @@ public:
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) );
+    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( uboVS ) );
     WriteDescriptorSet w( _descriptorSet, 0, 0, 
       vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
     wdss.push_back( w );
@@ -179,21 +179,13 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    uboVS.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
+    uboVS.model = glm::rotate( uboVS.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    uboVS.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
+    uboVS.proj[1][1] *= -1;
 
-    vk::Device device = static_cast<vk::Device>(*_device);
-
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    _uniformBufferMVP->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    _uniformBufferMVP->writeData( 0, sizeof( uboVS), &uboVS );
   }
 
   bool enable_wire = false;

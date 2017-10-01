@@ -25,7 +25,7 @@ std::vector<Vertex> vertices;
 
 #include <random>
 
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
@@ -197,16 +197,7 @@ public:
     ubo.up = 0.01f * std::sin( ubo.time );
     ubo.beta = glm::radians(-60.0f);
 
-    // std::cout << ubo.time << std::endl;
-
-    vk::Device device = static_cast<vk::Device>(*_device);
-
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = uniformBuffers.vertexShader->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    uniformBuffers.vertexShader->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    uniformBuffers.vertexShader->writeData( 0, sizeof( ubo ), &ubo );
   }
   void doPaint( void ) override
   {

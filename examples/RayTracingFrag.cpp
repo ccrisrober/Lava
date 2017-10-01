@@ -117,14 +117,7 @@ public:
 
     ubo.time = time;
 
-    vk::Device device = static_cast<vk::Device>(*_device);
-
-    uint32_t bufferSize = sizeof(ubo);
-    void* data = _uniformBuffer->map( 0, bufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    _uniformBuffer->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    _uniformBuffer->writeData( 0, sizeof(ubo), &ubo );
   }
   void doPaint( void ) override
   {

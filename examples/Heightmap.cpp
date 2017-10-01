@@ -14,14 +14,16 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject {
+struct
+{
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
   float amount = 0.5f;
 } uboVS;
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 pos;
   glm::vec2 texCoord;
 };
@@ -118,7 +120,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof( uboVS );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -203,7 +205,7 @@ public:
     std::vector<WriteDescriptorSet> wdss;
 
     WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, 
-      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) ) );
+      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) ) );
     wdss.push_back( w );
 
     WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
@@ -232,17 +234,10 @@ public:
     uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     uboVS.proj[1][1] *= -1;
 
-    vk::Device device = static_cast<vk::Device>(*_device);
-
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &uboVS, sizeof( uboVS ) );
-    _uniformBufferMVP->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     updateUniformBuffers( );
 

@@ -14,14 +14,15 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+} uboVS;
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 pos;
   glm::vec3 normal;
   glm::vec2 texCoord;
