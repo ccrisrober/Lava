@@ -3,17 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
 struct
 {
   glm::mat4 model;
@@ -51,14 +40,11 @@ public:
   std::shared_ptr<Texture2D> tex;
 
   void generatePlane( float width = 1.0f, float height = 1.0f,
-    unsigned int widthSegments = 1,
-    unsigned int heightSegments = 1 )
+    unsigned int gridX = 1,
+    unsigned int gridY = 1 )
   {
     float width_half = width / 2.0f;
     float height_half = height / 2.0f;
-
-    unsigned int gridX = std::floor( widthSegments );// || 1.0f;
-    unsigned int gridY = std::floor( heightSegments );// || 1.0f;
 
     unsigned int gridX1 = gridX + 1;
     unsigned int gridY1 = gridY + 1;
@@ -75,7 +61,8 @@ public:
       {
         float x = ix * segment_width - width_half;
 
-        vertices.push_back( Vertex{
+        vertices.push_back( Vertex
+        {
           glm::vec3( x, -y, 0.0f ),
           glm::vec2( ( ( float ) ix ) / gridX, 1.0 - ( ( ( float ) iy ) / gridY ) )
         } );
@@ -375,8 +362,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Terrain Heightmap (Tesselation)", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -388,12 +373,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

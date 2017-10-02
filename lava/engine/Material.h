@@ -26,7 +26,7 @@ namespace lava
       }*/
 
       LAVA_API
-      void render( std::shared_ptr< CommandBuffer > cmd );
+      virtual void bind( std::shared_ptr< CommandBuffer > cmd );
     //protected:
       LAVA_API
       Material( void );
@@ -42,14 +42,6 @@ namespace lava
     };
 
     class BasicTriangle: public Material
-    {
-    public:
-      LAVA_API
-      virtual void configure( const std::string& dir, std::shared_ptr< Device > dev,
-        std::shared_ptr<RenderPass> renderPass );
-    };
-
-    class UVMaterial: public Material
     {
     public:
       LAVA_API

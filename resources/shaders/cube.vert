@@ -18,5 +18,6 @@ out gl_PerVertex {
 
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-    outNormal = inNormal;
+    mat3 normal = mat3(transpose(inverse(ubo.view * ubo.model)));
+    outNormal = normal * inNormal;
 }

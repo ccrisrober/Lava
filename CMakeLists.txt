@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 0.1.0 )
+project( lava VERSION 0.1.1 )
 set( lava_VERSION_ABI 1)
 
 # Disable in source building
@@ -46,7 +46,6 @@ list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP
 #GLSLANG
 )
 
-# TODO( FIXED GLFW LINUX )
 IF (NOT WIN32)
   link_libraries( -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread )
 endif()

@@ -3,62 +3,127 @@ using namespace lava;
 
 #include <routes.h>
 
-struct UniformBuffer
+#include <functional>
+
+template <class T>
+class CustomPingPong
 {
-  float time;
-} ubo;
+public:
+  CustomPingPong( const T & elem1, const T & elem2 );
+  void swap( void );
+  void swap( std::function<void()> cb );
+  T first( void ) const;
+  T last( void ) const;
+protected:
+  T _elem1;
+  T _elem2;
+};
+
+template<typename T>
+CustomPingPong<T>::CustomPingPong(const T & elem1, const T & elem2)
+: _elem1(std::move(elem1))
+, _elem2(std::move(elem2))
+{
+}
+template<typename T>
+void CustomPingPong<T>::swap( )
+{
+  std::swap( _elem1, _elem2 );
+}
+template<typename T>
+void CustomPingPong<T>::swap(std::function<void()> cb)
+{
+  std::swap(_elem1, _elem2);
+  if (cb)
+  {
+    cb();
+  }
+}
+template<typename T>
+T CustomPingPong<T>::first() const
+{
+  return _elem1;
+}
+template<typename T>
+T CustomPingPong<T>::last() const
+{
+  return _elem2;
+}
+
 
 class MyApp : public VulkanApp
 {
 public:
   std::shared_ptr<Pipeline> _pipeline;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<vk::ImageView> _textureImageView;
+  std::shared_ptr<Sampler> _textureSampler;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-  std::shared_ptr<Buffer> _uniformBuffer;
+  std::shared_ptr<Texture2D> tex1;
+  std::shared_ptr<Texture2D> tex2;
+
+  CustomPingPong<std::shared_ptr<Texture2D>> *cpp;
+
+  virtual ~MyApp( void )
+  {
+    delete cpp;
+  }
+
+  void swapTexture( std::shared_ptr<Texture2D> tex )
+  {
+    std::vector<WriteDescriptorSet> wdss;
+
+    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
+      DescriptorImageInfo( 
+        vk::ImageLayout::eGeneral, 
+        std::make_shared<vk::ImageView>( tex->view ), 
+        std::make_shared<vk::Sampler>( tex->sampler )
+      ), nullptr
+    );
+    wdss.push_back( w );
+    _device->updateDescriptorSets( wdss, {} );
+  }
 
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    // Uniform buffer
-    {
-      uint32_t unifBufferSize = sizeof(ubo);
-      _uniformBuffer = _device->createBuffer( unifBufferSize, 
-        vk::BufferUsageFlagBits::eUniformBuffer, 
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-          vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
+    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    std::shared_ptr<Texture2D> tex1 = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "chesterfieldDiffuseMap.png" ), commandPool, _graphicsQueue );
+    std::shared_ptr<Texture2D> tex2 = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "chesterfieldNormalMap.png" ), commandPool, _graphicsQueue );
 
+    cpp = new CustomPingPong<std::shared_ptr<Texture2D>>( tex1, tex2 );
 
-    // Init descriptor and pipeline layouts
+    // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
+    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eCombinedImageSampler, 
       vk::ShaderStageFlagBits::eFragment );
     dslbs.push_back( mvpDescriptor );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+
+    std::shared_ptr<DescriptorPool> descriptorPool =
+      _device->createDescriptorPool( {}, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBuffer, 0, sizeof( ubo ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
-    _device->updateDescriptorSets( wdss, {} );
+    swapTexture( cpp->first( ) );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquadUV_vert.spv"), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "raytracing_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
+    std::shared_ptr<ShaderModule> vertexShaderModule =
+      _device->createShaderModule( 
+        LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquad_vert.spv"), 
+        vk::ShaderStageFlagBits::eVertex
+      );
+    std::shared_ptr<ShaderModule> fragmentShaderModule = 
+      _device->createShaderModule( 
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ), 
+        vk::ShaderStageFlagBits::eFragment
+      );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
@@ -85,33 +150,27 @@ public:
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
       vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
       vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
-      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG 
+      | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
       colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, 
       vk::DynamicState::eScissor } );
-
 
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
     { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
   }
-  void updateUniformBuffer( )
-  {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
-
-    ubo.time = time;
-
-    _uniformBuffer->writeData( 0, sizeof(ubo), &ubo );
-  }
   void doPaint( void ) override
   {
-    updateUniformBuffer( );
+    static int i = 0;
+    if ( ++i == 10 )
+    {
+      i = 0;
+      cpp->swap( );
+      swapTexture( cpp->first( ));
+    }
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
@@ -123,16 +182,16 @@ public:
     commandBuffer->beginRenderPass( _renderPass, 
       _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, 
         _defaultFramebuffer->getExtent( ) ),
-    { vk::ClearValue( ccv ), vk::ClearValue(
+    { vk::ClearValue( ccv ), vk::ClearValue( 
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
     commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, 
-      ( float ) _defaultFramebuffer->getExtent( ).width, 
-      ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ) );
+
+    commandBuffer->setViewportScissors( 
+      _defaultFramebuffer->getExtent( ).width,
+      _defaultFramebuffer->getExtent( ).height
+    );
     commandBuffer->draw( 4, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -174,7 +233,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Ray Tracing (Fragment Shader)", 800, 600 );
+    VulkanApp* app = new MyApp( "Swap Texture", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

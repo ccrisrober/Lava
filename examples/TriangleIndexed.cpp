@@ -3,16 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <routes.h>
-
 struct Vertex
 {
   glm::vec4 position;
@@ -69,7 +59,7 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, 
       vk::SubpassContents::eInline
     );
-    material->render( commandBuffer ); //commandBuffer->bindGraphicsPipeline( _pipeline );
+    material->bind( commandBuffer ); //commandBuffer->bindGraphicsPipeline( _pipeline );
     _vertexBuffer->bind( commandBuffer ); //commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
     _indexBuffer->bind( commandBuffer );  //commandBuffer->bindIndexBuffer( _indexBuffer, 0 );
     commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
@@ -115,8 +105,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Triangle Indexed", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -128,7 +116,6 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {

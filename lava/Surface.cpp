@@ -11,6 +11,14 @@ namespace lava
   }
   Surface::~Surface( void )
   {
-    vk::Instance( *_instance ).destroySurfaceKHR( _surface );
+    destroy( );
+  }
+  void Surface::destroy( void )
+  {
+    if ( _surface != VK_NULL_HANDLE )
+    {
+      vk::Instance( *_instance ).destroySurfaceKHR( _surface );
+      _surface = VK_NULL_HANDLE;
+    }
   }
 }
