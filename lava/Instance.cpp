@@ -125,14 +125,22 @@ namespace lava
   }
   Instance::~Instance( void )
   {
+    destroy( );
+  }
+  void Instance::destroy( void )
+  {
 #ifndef NDEBUG
     if ( _debugCallback )
     {
       _instance.destroyDebugReportCallbackEXT( _debugCallback );
     }
 #endif
-    _physicalDevices.clear( );
-    _instance.destroy( );
+    if ( _instance != VK_NULL_HANDLE )
+    {
+      _physicalDevices.clear( );
+      _instance.destroy( );
+      _instance = VK_NULL_HANDLE;
+    }
   }
   void Instance::createDebugReportCallback(
     const vk::DebugReportCallbackCreateInfoEXT& debugInfo )

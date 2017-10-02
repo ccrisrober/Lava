@@ -12,12 +12,16 @@ namespace lava
   public:
     Surface( const std::shared_ptr< Instance >& instance, 
       const vk::SurfaceKHR& surface );
-    ~Surface( );
+    Surface( const Surface& ) = delete;
+
+    Surface& operator=( const Surface& ) = delete;
+    ~Surface( void );
 
     inline operator vk::SurfaceKHR( void ) const
     {
       return _surface;
     }
+    void destroy( void );
   private:
     std::shared_ptr<Instance> _instance;
     vk::SurfaceKHR _surface;

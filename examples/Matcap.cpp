@@ -3,17 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
 struct
 {
   glm::mat4 model;
@@ -35,8 +24,7 @@ public:
     std::shared_ptr<Pipeline> solid;
   } pipelines;
 
-  std::shared_ptr<Texture2DArray> tex;
-  //std::shared_ptr<Texture2DArray> tex2;
+  std::shared_ptr<Texture2D> tex;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -56,16 +44,8 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    //tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE +
-    //  std::string( "/MatCap_Toon3.png" ), commandPool, _graphicsQueue );
-    std::vector<std::string> filePaths( 3 );
-    filePaths[ 0 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "green_matcap.jpg" );
-    filePaths[ 1 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "MatCap_Toon3.png" );
-    filePaths[ 2 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "rubymatcap.jpg" );
-    tex = std::make_shared<Texture2DArray>( _device, filePaths, commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "/MatCap_Toon3.png" ), commandPool, _graphicsQueue );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
@@ -231,8 +211,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Matcap", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -244,12 +222,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

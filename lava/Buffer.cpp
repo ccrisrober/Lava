@@ -12,9 +12,10 @@ namespace lava
     vk::SharingMode sharingMode, vk::ArrayProxy<const uint32_t>, 
     vk::MemoryPropertyFlags memoryPropertyFlags )
     : VulkanResource( device )
+    , _size( size )
   {
     vk::BufferCreateInfo bci;
-    bci.size = size;
+    bci.size = _size;
     bci.usage = usageFlags;
     bci.sharingMode = sharingMode;
 

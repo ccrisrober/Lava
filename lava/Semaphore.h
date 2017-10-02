@@ -13,12 +13,17 @@ namespace lava
   {
   public:
     Semaphore( const DeviceRef& device );
+    Semaphore( const Semaphore& ) = delete;
+
+    Semaphore& operator=( const Semaphore& ) = delete;
     virtual ~Semaphore( void );
 
     inline operator vk::Semaphore( void )
     {
       return _semaphore;
     }
+
+    void destroy( void );
 
   protected:
     vk::Semaphore _semaphore;

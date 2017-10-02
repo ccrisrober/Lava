@@ -73,10 +73,19 @@ namespace lava
     LAVA_API
     virtual ~CommandBuffer( void );
 
+    CommandBuffer( const CommandBuffer& ) = delete;
+    CommandBuffer( CommandBuffer&& ) = delete;
+
+    CommandBuffer& operator=( const CommandBuffer& ) = delete;
+    CommandBuffer& operator=( CommandBuffer&& ) = delete;
+
     inline operator vk::CommandBuffer( void ) const
     {
       return _commandBuffer;
     }
+
+    LAVA_API
+    void reset( void );
 
     LAVA_API
     void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ) );

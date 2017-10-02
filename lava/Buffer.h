@@ -38,6 +38,12 @@ namespace lava
     LAVA_API
     virtual ~Buffer( void );
 
+    Buffer( const Buffer& ) = delete;
+    Buffer( Buffer&& ) = delete;
+
+    Buffer& operator=( const Buffer& ) = delete;
+    Buffer& operator=( Buffer&& ) = delete;
+
     static vk::BufferUsageFlags getBufferUsage( const BufferType& type );
 
     LAVA_API
@@ -74,6 +80,8 @@ namespace lava
     vk::Buffer _buffer;
     vk::BufferView _view;
     vk::DeviceMemory _memory;
+
+    vk::DeviceSize _size;
   };
   template<typename T>
   inline void Buffer::update( vk::DeviceSize offset, vk::ArrayProxy<const T> data, 

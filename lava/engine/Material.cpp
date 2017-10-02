@@ -8,11 +8,10 @@ namespace lava
     Material::Material( void )
     {
     }
-    void Material::render( std::shared_ptr< CommandBuffer > cmd )
+    void Material::bind( std::shared_ptr< CommandBuffer > cmd )
     {
       cmd->bindGraphicsPipeline( _pipeline );
     }
-
 
     void BasicTriangle::configure( const std::string& dir,
       std::shared_ptr< Device > dev, std::shared_ptr<RenderPass> renderPass )
@@ -93,11 +92,6 @@ namespace lava
         viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, renderPass
       );
-    }
-    void UVMaterial::configure( const std::string& dir, std::shared_ptr< Device > dev,
-      std::shared_ptr<RenderPass> renderPass )
-    {
-
     }
   }
 }

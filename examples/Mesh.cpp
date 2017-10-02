@@ -3,17 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
 struct
 {
   glm::mat4 model;
@@ -232,8 +221,6 @@ int main( int argc, char** argv )
 {
   try
   {
-    //if (glfwInit())
-    //{
     if ( argc != 2 )
     {
       std::cerr << "Exec with lavaMesh <file.obj>" << std::endl;
@@ -251,12 +238,10 @@ int main( int argc, char** argv )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }
