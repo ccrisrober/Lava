@@ -72,14 +72,17 @@ namespace lava
     {
       return _fence;
     }
+
+    static void waitForFences(
+      vk::ArrayProxy<const std::shared_ptr<Fence>> fences, bool all, 
+      uint32_t timeout);
+    static void resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences);
+  
   private:
     vk::Fence _fence;
   };
 
-  /*
-  void waitForFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences, bool all, uint32_t timeout);
-  void resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences);
-  */
+  
 
 
 

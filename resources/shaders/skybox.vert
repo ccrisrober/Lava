@@ -9,8 +9,7 @@ layout (binding = 0) uniform UBO
 {
 	mat4 projection;
 	mat4 view;
-	mat4 model;
-} ubo;
+} cameraUBO ;
 
 layout (location = 0) out vec3 outUVW;
 
@@ -19,9 +18,16 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-void main() 
+void main( void ) 
 {
-	outUVW = inPos;
-	outUVW.x *= -1.0;
-	gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPos.xyz, 1.0);
+    outUVW = inPos;
+
+    // Remove the translation from camera view matrix
+    mat4 cameraView = cameraUBO.view;
+    cameraView[ 3 ][ 0 ] = 0.0;
+    cameraView[ 3 ][ 1 ] = 0.0;
+    cameraView[ 3 ][ 2 ] = 0.0;
+
+    gl_Position = cameraUBO.projection * cameraView * vec4( inPos, 1.0 );
+    gl_Position.y = -gl_Position.y;
 }

@@ -206,7 +206,9 @@ namespace lava
           }
         }
         if ( foundFormat )
+        {
           break;
+        }
       }
 
       wantedFormatsSRGB.clear( );
@@ -220,7 +222,9 @@ namespace lava
         //_colorSpace = surfaceFormats[0].colorSpace;
 
         if ( gamma )
+        {
           throw new std::runtime_error( R"(Cannot find a valid sRGB format for a render window surface, falling back to a default format.)" );
+        }
       }
     }
     _depthFormat = vk::Format::eD24UnormS8Uint;

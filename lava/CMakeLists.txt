@@ -43,8 +43,13 @@ set( LAVA_PUBLIC_HEADERS
 
   engine/Material.h
   engine/Node.h
+  engine/Clock.h
 
   utils.hpp
+
+  Log.h
+  MemoryUtils.h
+  StringUtils.hpp
 )
 
 set( LAVA_SOURCES
@@ -79,9 +84,12 @@ set( LAVA_SOURCES
   extras/Geometry.cpp
 
   engine/Material.cpp
+  engine/Clock.cpp
 
 	#Source.cpp
   utils.cpp
+
+  Log.cpp
 )
 
 set( LAVA_HEADERS

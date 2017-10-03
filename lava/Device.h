@@ -19,10 +19,12 @@
 
 namespace lava
 {
-  uint32_t findMemoryType( const vk::PhysicalDeviceMemoryProperties& memoryProps, 
-    uint32_t requirementBits, vk::MemoryPropertyFlags wantedFlags );
+  uint32_t findMemoryType( const vk::PhysicalDeviceMemoryProperties& memProps, 
+    uint32_t reqBits, vk::MemoryPropertyFlags wantedFlags );
   class PhysicalDevice;
-  class Device : private NonCopyable<Device>, public std::enable_shared_from_this<Device>
+  class Device : 
+    private NonCopyable<Device>, 
+    public std::enable_shared_from_this<Device>
   {
   public:
     LAVA_API
@@ -46,22 +48,26 @@ namespace lava
 
     LAVA_API
     std::shared_ptr<Buffer> createBuffer( vk::BufferCreateFlags createFlags, 
-      vk::DeviceSize size, vk::BufferUsageFlags usageFlags = vk::BufferUsageFlagBits::eTransferDst,
-      vk::SharingMode sharingMode = vk::SharingMode::eExclusive, 
-      vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr,
-      vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
+      vk::DeviceSize size, vk::BufferUsageFlags usageFlags = 
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::SharingMode sharingMode = vk::SharingMode::eExclusive, 
+        vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr,
+        vk::MemoryPropertyFlags memoryPropertyFlags 
+          = vk::MemoryPropertyFlagBits::eDeviceLocal );
     LAVA_API
     std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
       vk::BufferUsageFlags usageFlags = vk::BufferUsageFlagBits::eTransferDst, 
       vk::SharingMode sharingMode = vk::SharingMode::eExclusive,
       vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr, 
-      vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
+      vk::MemoryPropertyFlags memoryPropertyFlags 
+        = vk::MemoryPropertyFlagBits::eDeviceLocal );
     LAVA_API
     std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
       const BufferType& bufferType, 
       vk::SharingMode sharingMode = vk::SharingMode::eExclusive,
       vk::ArrayProxy<const uint32_t> queueFamilyIndices = nullptr, 
-      vk::MemoryPropertyFlags memoryPropertyFlags = vk::MemoryPropertyFlagBits::eDeviceLocal );
+      vk::MemoryPropertyFlags memoryPropertyFlags 
+        = vk::MemoryPropertyFlagBits::eDeviceLocal );
 
     LAVA_API
     std::shared_ptr<DescriptorSet> allocateDescriptorSet( 
@@ -85,7 +91,7 @@ namespace lava
       vk::ArrayProxy<const vk::SubpassDependency> dependencies );
 
     LAVA_API
-    std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIndex );
+    std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIdx );
 
     std::shared_ptr<PhysicalDevice> _physicalDevice;
 
@@ -95,8 +101,10 @@ namespace lava
       const vk::Extent2D& imageExtent,  uint32_t imageArrayLayers, 
       vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
       const std::vector<uint32_t>& queueFamilyIndices,
-      vk::SurfaceTransformFlagBitsKHR preTransform, vk::CompositeAlphaFlagBitsKHR compositeAlpha,
-      vk::PresentModeKHR presentMode, bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain );
+      vk::SurfaceTransformFlagBitsKHR preTransform, 
+      vk::CompositeAlphaFlagBitsKHR compositeAlpha,
+      vk::PresentModeKHR presentMode, bool clipped, 
+      const std::shared_ptr<Swapchain>& oldSwapchain );
 
     LAVA_API
     std::shared_ptr<Image> createImage( vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,

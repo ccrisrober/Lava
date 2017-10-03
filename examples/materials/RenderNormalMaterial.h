@@ -100,7 +100,8 @@ namespace material
           )
         }
       );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
+        vk::PrimitiveTopology::eTriangleList, VK_FALSE );
       PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
       vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
         false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,

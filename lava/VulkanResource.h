@@ -10,6 +10,11 @@ namespace lava
   typedef std::shared_ptr<Device> DeviceRef;
   class VulkanResource
   {
+  public:
+    const DeviceRef getDevice( void )
+    {
+      return _device;
+    }
   protected:
     VulkanResource( const DeviceRef& device );
 

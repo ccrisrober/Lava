@@ -15,10 +15,10 @@ namespace lava
   }
   void Surface::destroy( void )
   {
-    if ( _surface != VK_NULL_HANDLE )
+    if ( _surface )
     {
       vk::Instance( *_instance ).destroySurfaceKHR( _surface );
-      _surface = VK_NULL_HANDLE;
+      //_surface = VK_NULL_HANDLE;
     }
   }
 }

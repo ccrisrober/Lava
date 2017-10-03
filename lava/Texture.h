@@ -17,10 +17,10 @@ namespace lava
   class Texture: public VulkanResource
   {
   public:
-    static std::shared_ptr<Texture>& create( const DeviceRef& device )
+    /*static std::shared_ptr<Texture>& create( DeviceRef& device )
     {
       return std::make_shared< Texture >( device );
-    }
+    }*/
     LAVA_API
     Texture( const DeviceRef& device );
     vk::Image image;

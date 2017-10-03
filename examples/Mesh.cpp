@@ -74,7 +74,7 @@ public:
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); 
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
-      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
@@ -125,7 +125,7 @@ public:
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
     uboVS.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 0.5f);
+    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 5.5f);
     glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
 

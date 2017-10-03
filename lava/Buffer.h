@@ -83,12 +83,12 @@ namespace lava
 
     vk::DeviceSize _size;
   };
-  template<typename T>
+  /*template<typename T>
   inline void Buffer::update( vk::DeviceSize offset, vk::ArrayProxy<const T> data, 
     std::shared_ptr<CommandBuffer> const & cmdBuff )
   {
     // todo
-  }
+  }*/
 
   class VertexBuffer: public Buffer
   {
@@ -112,7 +112,8 @@ namespace lava
       return _type;
     }
   protected:
-    static vk::DeviceSize calcIndexSize( const vk::IndexType& type, uint32_t numIndices );
+    static vk::DeviceSize calcIndexSize( const vk::IndexType& type, 
+      uint32_t numIndices );
     vk::IndexType _type;
   };
 }

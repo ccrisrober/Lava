@@ -165,7 +165,7 @@ public:
   void doPaint( void ) override
   {
     static int i = 0;
-    if ( ++i == 10 )
+    if ( ++i == 25 )
     {
       i = 0;
       cpp->swap( );

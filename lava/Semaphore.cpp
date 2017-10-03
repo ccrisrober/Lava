@@ -15,10 +15,10 @@ namespace lava
   }
   void Semaphore::destroy( void )
   {
-    if ( _semaphore != VK_NULL_HANDLE )
+    if ( _semaphore )
     {
       vk::Device( *_device ).destroySemaphore( _semaphore );
-      _semaphore = VK_NULL_HANDLE;
+      //_semaphore = VK_NULL_HANDLE;
     }
   }
 }
