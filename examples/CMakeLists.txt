@@ -82,7 +82,10 @@ if( LAVA_WITH_EXAMPLES )
 ##  set( LAVABUTTERFLIES_LINK_LIBRARIES lava )
 ##  common_application( lavaButterflies )
 ##
-  set( LAVASPHERICALHARMONICS_HEADERS materials/SHMaterial.h )
+  set( LAVASPHERICALHARMONICS_HEADERS 
+    materials/SHMaterial.h
+    utils/Camera.h
+  )
   set( LAVASPHERICALHARMONICS_SOURCES SphericalHarmonics.cpp )
   set( LAVASPHERICALHARMONICS_LINK_LIBRARIES lava )
   common_application( lavaSphericalHarmonics )
@@ -151,7 +154,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAEARTH_SOURCES Earth.cpp )
   set( LAVAEARTH_LINK_LIBRARIES lava )
   common_application( lavaEarth )
-  
+
+  set( LAVAFOO_HEADERS )
+  set( LAVAFOO_SOURCES Foo.cpp )
+  set( LAVAFOO_LINK_LIBRARIES lava )
+  common_application( lavaFoo )
 
 ##
 ##

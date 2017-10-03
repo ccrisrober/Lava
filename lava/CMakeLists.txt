@@ -33,7 +33,6 @@ set( LAVA_PUBLIC_HEADERS
 
   extras/FpsController.h
 
-  extras/Camera.h
   extras/Mesh.h
   extras/Material.h
   extras/ModelImporter.h

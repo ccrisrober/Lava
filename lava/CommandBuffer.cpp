@@ -206,7 +206,7 @@ namespace lava
   void CommandBuffer::setViewportScissors( uint32_t width, uint32_t height )
   {
     setScissor( 0, vk::Rect2D( { 0, 0 }, { width, height } ) );
-    setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) width, ( float ) height ) );
+    setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) width, ( float ) height, 0.0f, 1.0f ) );
   }
   void CommandBuffer::setScissor( uint32_t first,
     vk::ArrayProxy<const vk::Rect2D> scissors )
@@ -310,6 +310,10 @@ namespace lava
     const std::shared_ptr<IndexBuffer>& buffer, vk::DeviceSize offset )
   {
     _commandBuffer.bindIndexBuffer( *buffer, offset, buffer->getIndexType( ) );
+  }
+  void CommandBuffer::reset( void )
+  {
+    _commandBuffer.reset( { } );
   }
   void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
   {

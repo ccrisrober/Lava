@@ -37,7 +37,7 @@ namespace lava
     auto mem = _device->allocateMemReqMemory( memReqs, _memoryPropertyFlags );
     vk::Device( *_device ).bindImageMemory( _image, mem, 0 );
   }
-  Image::~Image( )
+  Image::~Image( void )
   {
     if ( _managed )
     {

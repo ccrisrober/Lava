@@ -7,6 +7,8 @@ namespace lava
     glfwInit( );
     glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
     _window = glfwCreateWindow( width, height, title, nullptr, nullptr );
+
+    glfwSetInputMode( _window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
   }
 
   GLFWwindow * Window::getWindow( void )

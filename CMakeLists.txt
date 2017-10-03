@@ -55,7 +55,6 @@ common_find_package_post( )
 add_subdirectory( lava )
 #add_subdirectory( lava_extras )
 add_subdirectory( examples )
-#add_subdirectory( glslang )
 
 configure_file(
   CMake/glsl2spirv.cmake

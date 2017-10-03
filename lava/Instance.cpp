@@ -151,6 +151,7 @@ namespace lava
     {
       _physicalDevices.clear( );
       _instance.destroy( );
+      //_instance = VK_NULL_HANDLE;
     }
   }
   void Instance::createDebugReportCallback(

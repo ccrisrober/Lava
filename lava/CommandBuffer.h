@@ -85,6 +85,9 @@ namespace lava
     }
 
     LAVA_API
+    void reset( void );
+
+    LAVA_API
     void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ) );
 
     LAVA_API
