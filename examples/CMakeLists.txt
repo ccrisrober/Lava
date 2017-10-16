@@ -1,7 +1,7 @@
 ########## GLSL2SPIRV ##########
-include( glsl2spirv )
+##include( glsl2spirv )
 
-compileSPV( )
+##compileSPV( )
 
 ########## GLSL2SPIRV ##########
 
@@ -159,6 +159,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAFOO_SOURCES Foo.cpp )
   set( LAVAFOO_LINK_LIBRARIES lava )
   common_application( lavaFoo )
+
+  set( LAVATESSELATEDTRIANGLE_HEADERS )
+  set( LAVATESSELATEDTRIANGLE_SOURCES TesselatedTriangle.cpp )
+  set( LAVATESSELATEDTRIANGLE_LINK_LIBRARIES lava )
+  common_application( lavaTesselatedTriangle )
 
 ##
 ##

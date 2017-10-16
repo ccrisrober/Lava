@@ -53,7 +53,6 @@ endif()
 common_find_package_post( )
 
 add_subdirectory( lava )
-#add_subdirectory( lava_extras )
 add_subdirectory( examples )
 
 configure_file(
@@ -64,6 +63,8 @@ configure_file(
 install( FILES CMake/glsl2spirv.cmake
   DESTINATION ${CMAKE_MODULE_INSTALL_PATH} COMPONENT dev )
 
+add_custom_target( spv-gen ${CMAKE_COMMAND} -P 
+  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake )
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})

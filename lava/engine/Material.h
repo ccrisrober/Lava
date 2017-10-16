@@ -48,6 +48,14 @@ namespace lava
       virtual void configure( const std::string& dir, std::shared_ptr< Device > dev,
         std::shared_ptr<RenderPass> renderPass );
     };
+
+    class BasicTessTriangle: public Material
+    {
+    public:
+      LAVA_API
+      virtual void configure( const std::string& dir, std::shared_ptr< Device > dev,
+        std::shared_ptr<RenderPass> renderPass );
+    };
   }
 }
 
