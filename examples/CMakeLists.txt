@@ -160,6 +160,16 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAFOO_LINK_LIBRARIES lava )
   common_application( lavaFoo )
 
+  set( LAVAPOSTPROCESS_HEADERS )
+  set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
+  set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
+  common_application( lavaPostProcess )
+
+  set( LAVAHDR_HEADERS )
+  set( LAVAHDR_SOURCES HDR.cpp )
+  set( LAVAHDR_LINK_LIBRARIES lava )
+  common_application( lavaHDR )
+
 ##
 ##
 ##

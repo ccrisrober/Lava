@@ -4,6 +4,8 @@
 #include "includes.hpp"
 #include <memory>
 
+#include <lava/api.h>
+
 namespace lava
 {
   class Device;
@@ -11,6 +13,7 @@ namespace lava
   class VulkanResource
   {
   public:
+    LAVA_API
     const DeviceRef getDevice( void )
     {
       return _device;

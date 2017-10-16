@@ -178,7 +178,7 @@ namespace lava
     LAVA_API
     std::shared_ptr<PipelineLayout> createPipelineLayout( 
       vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts,
-      vk::ArrayProxy<const vk::PushConstantRange> pushConstantRanges );
+      vk::ArrayProxy<const vk::PushConstantRange> pushConstantRanges = nullptr );
 
     /**
     * Allocates memory for the provided image, and binds it to the image.

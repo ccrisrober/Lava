@@ -455,6 +455,7 @@ namespace lava
     _device->freeMemory( stagingMemory );
 
   }
+  
   TextureCubemap::~TextureCubemap( void )
   {
     vk::Device device = static_cast< vk::Device >( *_device );
