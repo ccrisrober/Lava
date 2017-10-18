@@ -50,8 +50,9 @@ namespace lava
     void* map( vk::DeviceSize offset, vk::DeviceSize length ) const;
     LAVA_API
     void unmap( void );
-    template <typename T> void update( vk::DeviceSize offset, 
-      vk::ArrayProxy<const T> data, std::shared_ptr<CommandBuffer> const& cmdBuff );
+    
+    //template <typename T> void update( vk::DeviceSize offset, 
+    //  vk::ArrayProxy<const T> data, std::shared_ptr<CommandBuffer> const& cmdBuff );
 
     inline operator vk::Buffer( void ) const
     {

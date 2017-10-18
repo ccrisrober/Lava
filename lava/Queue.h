@@ -73,9 +73,10 @@ namespace lava
       return _fence;
     }
 
-    static void waitForFences(
-      vk::ArrayProxy<const std::shared_ptr<Fence>> fences, bool all, 
-      uint32_t timeout);
+    LAVA_API
+    static void waitForFences(  vk::ArrayProxy<const std::shared_ptr<Fence>> fences,
+      bool all, uint32_t timeout);
+    LAVA_API
     static void resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences);
   
   private:
@@ -111,13 +112,20 @@ namespace lava
     }
 
     LAVA_API
+    inline uint32_t getQueueFamilyIndex( void ) const
+    {
+      return _queueFamilyIndex;
+    }
+
+    LAVA_API
     void submitAndWait( std::shared_ptr<CommandBuffer>& cmd );
   protected:
     friend class Device;
-    Queue( const DeviceRef& device, vk::Queue queue );
+    Queue( const DeviceRef& device, vk::Queue queue, uint32_t queueIndex );
 
     std::map<std::shared_ptr<Fence>, std::vector<SubmitInfo>> _submitInfos;
     vk::Queue _queue;
+    uint32_t _queueFamilyIndex;
   };
 }
 

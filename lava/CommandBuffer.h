@@ -178,6 +178,8 @@ namespace lava
     LAVA_API
     void setViewportScissors( uint32_t width, uint32_t height );
     LAVA_API
+    void setViewportScissors( const vk::Extent2D& dimensions );
+    LAVA_API
     void setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors );
     LAVA_API
     void setViewport( uint32_t first, vk::ArrayProxy<const vk::Viewport> viewports );

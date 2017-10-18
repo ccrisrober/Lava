@@ -187,11 +187,7 @@ public:
     commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-
-    commandBuffer->setViewportScissors( 
-      _defaultFramebuffer->getExtent( ).width,
-      _defaultFramebuffer->getExtent( ).height
-    );
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     commandBuffer->draw( 4, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 

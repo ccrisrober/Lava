@@ -276,10 +276,10 @@ namespace lava
     static_cast< vk::Device >( *_device ).waitForFences( vkFences, VK_TRUE, DEFAULT_FENCE_TIMEOUT );
   }
 
-  Queue::Queue( const DeviceRef& device, vk::Queue queue )
+  Queue::Queue( const DeviceRef& device, vk::Queue queue, uint32_t queueFamilyIndex )
     : VulkanResource( device )
     , _queue( queue )
+    , _queueFamilyIndex( queueFamilyIndex )
   {
-
   }
 }

@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace lava
 {
@@ -16,9 +17,16 @@ namespace lava
     class Node
     {
     public:
+      enum class TransformSpace : short
+      {
+        Local,
+        Parent,
+        World
+      };
       Node( const std::string& name )
         : _name ( name )
       {
+        _scale = glm::vec3( 1.0f );
       }
 
       Node( const Node& ) = delete;
@@ -28,6 +36,46 @@ namespace lava
       Node& operator=( Node& ) = delete;
 
       virtual ~Node( void ) = default;
+
+      Node* getNode( const std::string& name )
+      {
+        if ( name == _name )
+        {
+          return this;
+        }
+
+        for ( auto& child : _children )
+        {
+          Node* n = child->getNode( name );
+
+          if ( n )
+          {
+            return n;
+          }
+        }
+
+        return nullptr;
+      }
+
+      const Node* getNode( const std::string& name ) const
+      {
+        if ( name == _name )
+        {
+          return this;
+        }
+
+        for ( const auto& child : _children )
+        {
+          const Node* n = child->getNode( name );
+
+          if ( n )
+          {
+            return n;
+          }
+        }
+
+        return nullptr;
+      }
 
       void setParent( Node *parent )
       {
@@ -50,21 +98,50 @@ namespace lava
         _children.push_back( &child );
       }
 
-      void translate( const glm::vec3& dir )
+      void translate( const glm::vec3& direction,
+        TransformSpace space = TransformSpace::Local )
       {
-        // Local space
-        _position += glm::mat3( _rotation ) * dir;
+        if ( space == TransformSpace::Local )
+        {
+          _position += glm::toMat3( _rotation ) * direction;
+        }
+        else if ( space == TransformSpace::Parent )
+        {
+          _position += direction;
+        }
+        else if ( space == TransformSpace::World )
+        {
+          if ( _parent )
+          {
+            _position += ( glm::inverse( 
+              glm::toMat3( _parent->getAbsoluteRotation( ) )
+            ) * direction ) / _parent->getAbsoluteScale( );
+          }
+          else
+          {
+            _position += direction;
+          }
+        }
 
         needUpdate( );
       }
-      void rotate( float angle, const glm::vec3& axis )
+      void rotate( float angle, const glm::vec3& axis, 
+        TransformSpace space = TransformSpace::Local )
       {
-        rotate( glm::quat( angle, axis ) );
+        rotate( glm::quat( angle, axis ), space );
       }
-      void rotate( const glm::quat& quat )
+      void rotate( const glm::quat& quat,
+        TransformSpace space = TransformSpace::Local )
       {
-        // Local space
-        _rotation = _rotation * quat;
+        if ( space == TransformSpace::Local ) {
+          _rotation = _rotation * quat;
+        }
+        else if ( space == TransformSpace::Parent ) {
+          _rotation = quat * _rotation;
+        }
+        else if ( space == TransformSpace::World ) {
+          _rotation = _rotation * glm::inverse( getAbsoluteRotation( ) ) * quat * getAbsoluteRotation( );
+        }
 
         needUpdate( );
       }
@@ -73,59 +150,154 @@ namespace lava
         _scale *= scale;
         needUpdate( );
       }
-      void setPosition( const glm::vec3& position )
+      void setPosition( const glm::vec3& position,
+        TransformSpace space = TransformSpace::Local )
       {
-        // Local space
-        _position = glm::mat3( _rotation ) * position;
+        if ( space == TransformSpace::Local )
+        {
+          _position = glm::toMat3( _rotation ) * position;
+        }
+        else if ( space == TransformSpace::Parent )
+        {
+          _position = position;
+        }
+        else if ( space == TransformSpace::World )
+        {
+          if ( _parent )
+          {
+            _position = ( glm::toMat3( _parent->getAbsoluteRotation( ) ) *
+              position * _parent->getAbsoluteScale( ) ) + _parent->getAbsolutePosition( );
+          }
+          else {
+            _position = position;
+          }
+        }
 
         needUpdate( );
       }
-      void setRotation( float angle, const glm::vec3& axis )
+      void setRotation( float angle, const glm::vec3& axis, 
+        TransformSpace space = TransformSpace::Local )
       {
         setRotation( glm::quat( angle, axis ) );
       }
-      void setRotation( const glm::quat& rotation )
+      void setRotation( const glm::quat& rotation, 
+        TransformSpace space = TransformSpace::Local )
       {
-        // Local space
-        _rotation = rotation;
+        if ( space == TransformSpace::Local )
+        {
+          _rotation = rotation;
+        }
+        else if ( space == TransformSpace::Parent )
+        {
+          _rotation = rotation;
+        }
+        else if ( space == TransformSpace::World )
+        {
+          if ( _parent )
+          {
+            _rotation = glm::inverse( getAbsoluteRotation( ) ) * rotation;
+          }
+          else
+          {
+            _rotation = rotation;
+          }
+        }
 
         needUpdate( );
       }
 
       void setDirection( const glm::vec3& spaceTargetDirection, 
         const glm::vec3& localDirectionVector, 
-        const glm::vec3& localUpVector )
+        const glm::vec3& localUpVector,
+        TransformSpace space = TransformSpace::Local )
       {
-        /*glm::vec3 targetDir = glm::normalize( spaceTargetDirection );
+        // The direction we want the local direction point to
+        glm::vec3 targetDirection = glm::normalize( spaceTargetDirection );
 
-        // Local space
-        targetDir = glm::mat3( getAbsoluteRotation( ) ) * targetDir;
+        // Transform target direction to world space
+        if ( space == TransformSpace::Local )
+        {
+          targetDirection = glm::toMat3(getAbsoluteRotation( ) ) * targetDirection;
+        }
+        else if ( space == TransformSpace::Parent )
+        {
+          if ( _parent )
+          {
+            targetDirection = glm::toMat3( _parent->getAbsoluteRotation( ) ) * targetDirection;
+          }
+        }
+        else if ( space == TransformSpace::World )
+        {
+          // Nothing to do here
+        }
 
-        glm::vec3 x = glm::normalize( glm::cross( localUpVector, targetDir ) );
-        glm::vec3 y = glm::normalize( glm::cross( targetDir, x ) );
-        glm::vec3 z = glm::quat::*/
+        glm::vec3 xVec = glm::normalize( cross( localUpVector, targetDirection ) );
+        glm::vec3 yVec = glm::normalize( cross( targetDirection, xVec ) );
+
+        glm::mat4 rotMatrix( 1.0f );
+        rotMatrix[ 0 ][ 0 ] = xVec.x;
+        rotMatrix[ 1 ][ 0 ] = xVec.y;
+        rotMatrix[ 2 ][ 0 ] = xVec.z;
+
+        rotMatrix[ 0 ][ 1 ] = yVec.x;
+        rotMatrix[ 1 ][ 1 ] = yVec.y;
+        rotMatrix[ 2 ][ 1 ] = yVec.z;
+
+        rotMatrix[ 0 ][ 2 ] = targetDirection.x;
+        rotMatrix[ 1 ][ 2 ] = targetDirection.y;
+        rotMatrix[ 2 ][ 2 ] = targetDirection.z;
+
+        glm::quat unitZToTarget = glm::quat( rotMatrix );
+
+        glm::quat targetOrientation;
+
+        if ( localDirectionVector == glm::vec3{ 0.0f, 0.0f, -1.0f } )
+        {
+          targetOrientation = glm::quat( -unitZToTarget.y, 
+            -unitZToTarget.z, unitZToTarget.w, unitZToTarget.x );
+        }
+        else
+        {
+          //targetOrientation = unitZToTarget * directionTo( localDirectionVector, 
+          //  glm::vec3{ 0.0f, 0.0f, 1.0f } );
+        }
+
+        setRotation( targetOrientation, TransformSpace::Parent );
       }
       void lookAt( const glm::vec3& targetPosition, 
         const glm::vec3& localDirectionVector, 
-        const glm::vec3& localUpVector )
+        const glm::vec3& localUpVector,
+        TransformSpace space = TransformSpace::Local )
       {
         glm::vec3 origin;
-        // Local space
-        origin = _position;
+        if ( space == TransformSpace::Local )
+        {
+          origin = glm::vec3( 0.0f );
+        }
+        else if ( space == TransformSpace::Parent )
+        {
+          origin = _position;
+        }
+        else if ( space == TransformSpace::World )
+        {
+          origin = getAbsolutePosition( );
+        }
         
         setDirection( targetPosition - origin, localDirectionVector, localUpVector );
       }
 
       void update( void )
       {
-        // todo: Create final transform
-
         if ( _parent )
         {
-          //_absolutePosition = glm::mat3(_parent->getAbsoluteRotation( ) ) * 
-          //  ( _parent->getAbsoluteScale( ) * _position ) + _parent->getAbsolutePosition( );
-          //_absoluteRotation = _parent->getAbsoluteRotation( ) * _rotation;
-          //_absoluteScale = _parent->getAbsoluteScale( ) * _scale;
+          glm::mat3 auxRotation = glm::toMat3( _parent->getAbsoluteRotation( ) );
+          _absolutePosition = ( _parent->getAbsoluteScale( ) * _position );
+          _absolutePosition += _parent->getAbsolutePosition( );
+
+          _absolutePosition = auxRotation * _absolutePosition;
+
+          _absoluteRotation = _parent->getAbsoluteRotation( ) * _rotation;
+          _absoluteScale = _parent->getAbsoluteScale( ) * _scale;
         }
         else
         {
@@ -138,7 +310,8 @@ namespace lava
         
         _transform = glm::mat4( 1.0f );
         _transform = glm::translate( _transform, _absolutePosition );
-        //_transform = glm::rotate( _transform, _absoluteRotation );
+        glm::mat4 auxRotation = glm::toMat4( _absoluteRotation );
+        _transform = _transform * auxRotation;
         _transform = glm::scale( _transform, _absoluteScale );
 
         _needUpdate = false;
@@ -205,6 +378,30 @@ namespace lava
       glm::mat4 _transform;
 
       bool _needUpdate = true;
+    };
+    class Scene
+    {
+    public:
+      Scene( void ) = default;
+
+      Scene( const Scene& ) = delete;
+      Scene( Scene&& ) = delete;
+
+      Scene& operator=( const Scene& ) = delete;
+      Scene& operator=( Scene&& ) = delete;
+
+      ~Scene( void ) = default;
+
+      Node& getRoot( void )
+      {
+        return _root;
+      }
+      const Node& getRoot( void ) const
+      {
+        return _root;
+      }
+    private:
+      Node _root;
     };
   }
 }

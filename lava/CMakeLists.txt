@@ -30,6 +30,9 @@ set( LAVA_PUBLIC_HEADERS
   Window.h
 
   Texture.h
+  Texture2D.h
+  Texture2DArray.h
+  TextureCubemap.h
 
   extras/FpsController.h
 
@@ -74,6 +77,9 @@ set( LAVA_SOURCES
   Window.cpp
 
   Texture.cpp
+  Texture2D.cpp
+  Texture2DArray.cpp
+  TextureCubemap.cpp
 
   extras/Mesh.cpp
   extras/Material.cpp

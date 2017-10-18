@@ -1,7 +1,7 @@
 ########## GLSL2SPIRV ##########
-include( glsl2spirv )
+##include( glsl2spirv )
 
-compileSPV( )
+##compileSPV( )
 
 ########## GLSL2SPIRV ##########
 
@@ -16,6 +16,11 @@ if( LAVA_WITH_EXAMPLES )
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/routes.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
+
+  set( LAVATRIES_HEADERS )
+  set( LAVATRIES_SOURCES Tries.cpp )
+  set( LAVATRIES_LINK_LIBRARIES lava )
+  common_application( lavaTries )
 
 ##  set( LAVAINFO_HEADERS )
 ##  set( LAVAINFO_SOURCES info.cpp )
@@ -169,6 +174,16 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAHDR_SOURCES HDR.cpp )
   set( LAVAHDR_LINK_LIBRARIES lava )
   common_application( lavaHDR )
+
+  set( LAVATESSELATEDTRIANGLE_HEADERS )
+  set( LAVATESSELATEDTRIANGLE_SOURCES TesselatedTriangle.cpp )
+  set( LAVATESSELATEDTRIANGLE_LINK_LIBRARIES lava )
+  common_application( lavaTesselatedTriangle )
+
+  set( LAVACOMPUTEDEMO_HEADERS )
+  set( LAVACOMPUTEDEMO_SOURCES ComputeDemo.cpp )
+  set( LAVACOMPUTEDEMO_LINK_LIBRARIES lava )
+  common_application( lavaComputeDemo )
 
 ##
 ##

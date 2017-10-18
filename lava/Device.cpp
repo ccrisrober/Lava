@@ -228,7 +228,7 @@ namespace lava
       {
         vk::Queue queue = _device.getQueue( ci.queueFamilyIndex, qi );
         queues.push_back( std::move( std::unique_ptr<Queue>(
-          new Queue( shared_from_this( ), queue ) ) ) );
+          new Queue( shared_from_this( ), queue, ci.queueFamilyIndex ) ) ) );
       }
       auto it = _queues.emplace( ci.queueFamilyIndex, std::move( queues ) );
       assert( it.second && "duplicate queueFamilyIndex" );

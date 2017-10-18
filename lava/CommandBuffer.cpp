@@ -208,6 +208,10 @@ namespace lava
     setScissor( 0, vk::Rect2D( { 0, 0 }, { width, height } ) );
     setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) width, ( float ) height, 0.0f, 1.0f ) );
   }
+  void CommandBuffer::setViewportScissors( const vk::Extent2D& dimensions )
+  {
+    setViewportScissors( dimensions.width, dimensions.height );
+  }
   void CommandBuffer::setScissor( uint32_t first,
     vk::ArrayProxy<const vk::Rect2D> scissors )
   {
