@@ -98,7 +98,7 @@ public:
 
 
     pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
-    { vertexStage, geomStage, fragmentStage }, vertexInput, assembly, nullptr, 
+      { vertexStage, geomStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass
     );
@@ -174,12 +174,14 @@ public:
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
 
-    std::array<vk::Viewport, 2> viewports;
-    // Left
-    viewports[ 0 ] = { 0, 0, ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f };
-    // Right
-    viewports[ 1 ] = { ( float ) width / 2.0f, 0, ( float ) width / 2.0f, 
-      ( float ) height, 0.0, 1.0f };
+    std::array<vk::Viewport, 2> viewports =
+    {
+      // Left
+      vk::Viewport( 0, 0, ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f ),
+      // Right
+      vk::Viewport( ( float ) width / 2.0f, 0, ( float ) width / 2.0f,
+        ( float ) height, 0.0, 1.0f )
+    };
 
     commandBuffer->setViewport( 0, viewports );
 

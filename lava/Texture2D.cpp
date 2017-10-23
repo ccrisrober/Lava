@@ -240,7 +240,7 @@ namespace lava
     sci.setAnisotropyEnable( VK_TRUE );
     sci.setBorderColor( vk::BorderColor::eFloatOpaqueWhite );
 
-    sampler = static_cast< vk::Device >( *_device ).createSampler( sci );
+    sampler = device.createSampler( sci );
 
 
     // Create image view
@@ -253,11 +253,11 @@ namespace lava
       vk::ComponentSwizzle::eB,
       vk::ComponentSwizzle::eA
     } );
-    vci.setSubresourceRange( { vk::ImageAspectFlagBits::eColor, 0,  1, 0, 1 } );
-    vci.subresourceRange.levelCount = 1; // useStaging ? mipLevels : 1;
+    vci.setSubresourceRange( { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } );
+    vci.subresourceRange.levelCount = 1;
     vci.image = image;
 
-    view = static_cast< vk::Device >( *_device ).createImageView( vci );
+    view = device.createImageView( vci );
 
     updateDescriptor( );
   }

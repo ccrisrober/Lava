@@ -17,6 +17,11 @@ if( LAVA_WITH_EXAMPLES )
     ${CMAKE_CURRENT_SOURCE_DIR}/routes.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
+  set( LAVADEFERRED_HEADERS )
+  set( LAVADEFERRED_SOURCES Deferred.cpp )
+  set( LAVADEFERRED_LINK_LIBRARIES lava )
+  common_application( lavaDeferred )
+
   set( LAVATRIES_HEADERS )
   set( LAVATRIES_SOURCES Tries.cpp )
   set( LAVATRIES_LINK_LIBRARIES lava )
@@ -135,6 +140,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAGEOMETRYEXPLOSION_LINK_LIBRARIES lava )
   common_application( lavaGeometryExplosion )
 
+  set( LAVATEXTURE3D_HEADERS )
+  set( LAVATEXTURE3D_SOURCES Texture3D.cpp )
+  set( LAVATEXTURE3D_LINK_LIBRARIES lava )
+  common_application( lavaTexture3D )
+
   set( LAVASWAPQUADTEXTURE_HEADERS )
   set( LAVASWAPQUADTEXTURE_SOURCES SwapQuadTexture.cpp )
   set( LAVASWAPQUADTEXTURE_LINK_LIBRARIES lava )
@@ -169,6 +179,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
   set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
   common_application( lavaPostProcess )
+
+  set( LAVAPNTESSELATION_HEADERS )
+  set( LAVAPNTESSELATION_SOURCES PNTesselation.cpp )
+  set( LAVAPNTESSELATION_LINK_LIBRARIES lava )
+  common_application( lavaPNTesselation )
 
   set( LAVAMULTIVIEWPORT_HEADERS )
   set( LAVAMULTIVIEWPORT_SOURCES MultiViewport.cpp )

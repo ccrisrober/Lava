@@ -174,7 +174,7 @@ public:
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
-    vk::PipelineTessellationStateCreateInfo tessState( {}, 3 );
+    vk::PipelineTessellationStateCreateInfo tessState( { }, 3 );
 
     pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {},
     { vertexStage, fragmentStage, ctrlStage, evalStage },
