@@ -57,7 +57,7 @@ namespace lava
       LAVA_API
       Geometry( const DeviceRef& device, const std::string& path );
       LAVA_API
-      void render( std::shared_ptr<CommandBuffer> cmd );
+      void render( std::shared_ptr<CommandBuffer> cmd, uint32_t numInstances = 1 );
     protected:
       std::shared_ptr<VertexBuffer> _vbo;
       std::shared_ptr<IndexBuffer> _ibo;

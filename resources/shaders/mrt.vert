@@ -12,6 +12,7 @@ layout( binding = 0 ) uniform UniformBufferObject
 	mat4 model;
 	mat4 view;
 	mat4 proj;
+	vec3 instancePos[ 9 ];
 } ubo;
 
 layout( location = 0 ) out vec3 outPos;
@@ -25,7 +26,9 @@ out gl_PerVertex
 
 void main( )
 {
-	gl_Position = ubo.proj * ubo.view * ubo.model * vec4( inPos, 1.0 );
+	vec3 tmpPos = inPos + ubo.instancePos[ gl_InstanceIndex ];
+
+	gl_Position = ubo.proj * ubo.view * ubo.model * vec4( tmpPos, 1.0 );
 
 	outUV = inUV;
 

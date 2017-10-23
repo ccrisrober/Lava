@@ -4,10 +4,6 @@ layout(early_fragment_tests) in;
 
 layout (location = 0 ) in vec2 uv;
 
-layout(binding = 1) uniform sampler2D gPosition;
-layout(binding = 2) uniform sampler2D gNormal;
-layout(binding = 3) uniform sampler2D gAlbedoSpec;
-
 layout (location = 0 ) out vec4 fragColor;
 
 struct Light
@@ -16,13 +12,17 @@ struct Light
     vec3 Color;
 };
 
-const int NR_LIGHTS = 32;
+const int NR_LIGHTS = 6;
 
 layout( binding = 0 ) uniform UniformBufferObject
 {
     Light lights[NR_LIGHTS];
     vec3 viewPos;
 } ubo;
+
+layout(binding = 1) uniform sampler2D gPosition;
+layout(binding = 2) uniform sampler2D gNormal;
+layout(binding = 3) uniform sampler2D gAlbedoSpec;
 
 void main()
 {             
