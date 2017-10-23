@@ -162,7 +162,7 @@ public:
     }
 
     std::vector<Vertex> vertices;
-    for ( int i = 0; i < verts.size( ); i+= 3 )
+    for ( uint32_t i = 0; i < verts.size( ); i+= 3 )
     {
       vertices.push_back( Vertex{ glm::vec3(
         verts[ i ],
@@ -341,9 +341,9 @@ public:
 
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     _vertexBuffer->bind( commandBuffer );
     _indexBuffer->bind( commandBuffer );
 
@@ -366,7 +366,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;

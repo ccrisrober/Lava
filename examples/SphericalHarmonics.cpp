@@ -90,8 +90,7 @@ public:
     material->bind( commandBuffer );
 
     commandBuffer->setViewportScissors(
-      _defaultFramebuffer->getExtent( ).width,
-      _defaultFramebuffer->getExtent( ).height
+      _defaultFramebuffer->getExtent( )
     );
 
     geometry->render( commandBuffer );
@@ -132,7 +131,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;

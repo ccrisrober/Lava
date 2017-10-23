@@ -41,26 +41,23 @@ public:
     }
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex );
-    dslbs.push_back( mvpDescriptor );
+    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
@@ -85,7 +82,9 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { }, 
+    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, 
+      rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
 
     // Wireframe rendering pipeline
@@ -96,7 +95,9 @@ public:
 
       rasterization.cullMode = vk::CullModeFlagBits::eNone;
 
-      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, { },
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, _renderPass );
     }
 
@@ -106,11 +107,13 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( uboVS ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) )
+      )
+    };
     _device->updateDescriptorSets( wdss, {} );
 
   }
@@ -172,8 +175,9 @@ public:
     }
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     geometry->render( commandBuffer );
     commandBuffer->endRenderPass( );
 
@@ -200,7 +204,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;

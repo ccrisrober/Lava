@@ -41,6 +41,11 @@ namespace lava
     return !glfwWindowShouldClose( _window );
   }
 
+  void Window::close( void )
+  {
+    glfwSetWindowShouldClose( _window, GLFW_TRUE );
+  }
+
   Window::~Window( void )
   {
     glfwDestroyWindow( _window );

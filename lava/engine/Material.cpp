@@ -28,20 +28,18 @@ namespace lava
         dev->createDescriptorSetLayout( dslbs );
       _pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule =
-        dev->createShaderModule( dir + std::string( "triangle_vert.spv" ),
-          vk::ShaderStageFlagBits::eVertex
-        );
-      std::shared_ptr<ShaderModule> fragmentShaderModule =
-        dev->createShaderModule( dir + std::string( "triangle_frag.spv" ),
-          vk::ShaderStageFlagBits::eFragment
-        );
-
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "triangle_vert.spv" ),
+        vk::ShaderStageFlagBits::eVertex
+      );
+      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "triangle_frag.spv" ),
+        vk::ShaderStageFlagBits::eFragment
+      );
+
       vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding,
@@ -106,38 +104,24 @@ namespace lava
         dev->createDescriptorSetLayout( dslbs );
       _pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule =
-        dev->createShaderModule( dir + std::string( "tesstriangle_vert.spv" ),
-          vk::ShaderStageFlagBits::eVertex
-        );
-      std::shared_ptr<ShaderModule> ctrlShaderModule =
-        dev->createShaderModule( dir + std::string( "tesstriangle_tesc.spv" ),
-          vk::ShaderStageFlagBits::eVertex
-        );
-      std::shared_ptr<ShaderModule> evalShaderModule =
-        dev->createShaderModule( dir + std::string( "tesstriangle_tese.spv" ),
-          vk::ShaderStageFlagBits::eVertex
-        );
-      std::shared_ptr<ShaderModule> fragmentShaderModule =
-        dev->createShaderModule( dir + std::string( "tesstriangle_frag.spv" ),
-          vk::ShaderStageFlagBits::eFragment
-        );
-
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
         
-      PipelineShaderStageCreateInfo vertexStage( 
-        vk::ShaderStageFlagBits::eVertex, vertexShaderModule
+      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "tesstriangle_vert.spv" ),
+        vk::ShaderStageFlagBits::eVertex
       );
-      PipelineShaderStageCreateInfo ctrlStage( 
-        vk::ShaderStageFlagBits::eTessellationControl, ctrlShaderModule
+      PipelineShaderStageCreateInfo ctrlStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "tesstriangle_tesc.spv" ),
+        vk::ShaderStageFlagBits::eTessellationControl
       );
-      PipelineShaderStageCreateInfo evalStage( 
-        vk::ShaderStageFlagBits::eTessellationEvaluation, evalShaderModule
+      PipelineShaderStageCreateInfo evalStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "tesstriangle_tese.spv" ),
+        vk::ShaderStageFlagBits::eTessellationEvaluation
       );
-      PipelineShaderStageCreateInfo fragmentStage( 
-        vk::ShaderStageFlagBits::eFragment, fragmentShaderModule
+      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "tesstriangle_frag.spv" ),
+        vk::ShaderStageFlagBits::eFragment
       );
 
       vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );

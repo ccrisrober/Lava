@@ -118,7 +118,8 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "heightmap.jpg" ), commandPool, _graphicsQueue );
+      std::string( "heightmap.jpg" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
 
 
@@ -139,25 +140,21 @@ public:
 
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule =
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-        std::string( "terrain_tess_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> ctrlShaderModule =
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-        std::string( "terrain_tess_tesc.spv" ), vk::ShaderStageFlagBits::eTessellationControl );
-    std::shared_ptr<ShaderModule> evalShaderModule =
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-        std::string( "terrain_tess_tese.spv" ), vk::ShaderStageFlagBits::eTessellationEvaluation );
-    std::shared_ptr<ShaderModule> fragmentShaderModule =
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-        std::string( "/terrain_tess_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo ctrlStage( vk::ShaderStageFlagBits::eTessellationControl, ctrlShaderModule );
-    PipelineShaderStageCreateInfo evalStage( vk::ShaderStageFlagBits::eTessellationEvaluation, evalShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+    PipelineShaderStageCreateInfo vertexStage =
+      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE +
+        std::string( "terrain_tess_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo ctrlStage =
+      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE +
+        std::string( "terrain_tess_tesc.spv" ), vk::ShaderStageFlagBits::eTessellationControl );
+    PipelineShaderStageCreateInfo evalStage =
+      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE +
+        std::string( "terrain_tess_tese.spv" ), vk::ShaderStageFlagBits::eTessellationEvaluation );
+    PipelineShaderStageCreateInfo fragmentStage =
+      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE +
+        std::string( "/terrain_tess_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
@@ -205,20 +202,17 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-
-    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr,
-      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) ) );
-    wdss.push_back( w );
-
-    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
-      DescriptorImageInfo(
-        vk::ImageLayout::eGeneral,
-        std::make_shared<vk::ImageView>( tex->view ),
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
-    );
-    wdss.push_back( w2 );
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0, 
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) )
+      ),
+      WriteDescriptorSet( _descriptorSet, 1, 0,
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        tex->descriptor, nullptr
+      )
+    };
     _device->updateDescriptorSets( wdss, {} );
   }
   void updateUniformBuffers( void )
@@ -240,7 +234,7 @@ public:
     _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     updateUniformBuffers( );
 
@@ -278,8 +272,9 @@ public:
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     _vertexBuffer->bind( commandBuffer );
     _indexBuffer->bind( commandBuffer );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 
@@ -341,7 +336,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;

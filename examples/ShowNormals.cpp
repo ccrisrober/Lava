@@ -71,10 +71,12 @@ public:
     }
 
     // init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer,
-      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry );
-    dslbs.push_back( mvpDescriptor );
+    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
@@ -95,16 +97,13 @@ public:
 
     // Init solid pipeline
     {
-      std::shared_ptr<ShaderModule> vertexShaderModule =
-        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-          std::string( "cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-      std::shared_ptr<ShaderModule> fragmentShaderModule =
-        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-          std::string( "cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
       std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+      PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "cube_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "cube_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+
       vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
@@ -119,20 +118,15 @@ public:
 
     // Init geometry pipeline
     {
-      std::shared_ptr<ShaderModule> vertexShaderModule = 
-        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-            std::string("normal_vert.spv"), vk::ShaderStageFlagBits::eVertex );
-      std::shared_ptr<ShaderModule> geometryShaderModule = 
-        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-            std::string("normal_geom.spv"), vk::ShaderStageFlagBits::eGeometry );
-      std::shared_ptr<ShaderModule> fragmentShaderModule = 
-        _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-            std::string( "normal_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
       std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-      PipelineShaderStageCreateInfo geometryStage( vk::ShaderStageFlagBits::eGeometry, geometryShaderModule );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+      PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "normal_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      PipelineShaderStageCreateInfo geometryStage = _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "normal_geom.spv" ), vk::ShaderStageFlagBits::eGeometry );
+      PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "normal_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+
       vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
@@ -194,10 +188,9 @@ public:
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-
-
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     _vbo->bind( commandBuffer );
     _ibo->bind( commandBuffer );
 
@@ -227,7 +220,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;

@@ -71,16 +71,13 @@ public:
 
   void swapTexture( std::shared_ptr<Texture2D> tex )
   {
-    std::vector<WriteDescriptorSet> wdss;
-
-    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
-      DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
-    );
-    wdss.push_back( w );
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0,
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        tex->descriptor, nullptr
+      )
+    };
     _device->updateDescriptorSets( wdss, {} );
   }
 
@@ -89,18 +86,21 @@ public:
   {
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    std::shared_ptr<Texture2D> tex1 = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "chesterfieldDiffuseMap.png" ), commandPool, _graphicsQueue );
-    std::shared_ptr<Texture2D> tex2 = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "chesterfieldNormalMap.png" ), commandPool, _graphicsQueue );
+    std::shared_ptr<Texture2D> tex1 = std::make_shared<Texture2D>( _device, 
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "chesterfieldDiffuseMap.png" ), 
+      commandPool, _graphicsQueue, vk::Format::eR8G8B8A8Unorm );
+    std::shared_ptr<Texture2D> tex2 = std::make_shared<Texture2D>( _device, 
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "chesterfieldNormalMap.png" ), 
+      commandPool, _graphicsQueue, vk::Format::eR8G8B8A8Unorm );
 
     cpp = new CustomPingPong<std::shared_ptr<Texture2D>>( tex1, tex2 );
 
     // init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eCombinedImageSampler, 
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor );
+    std::vector<DescriptorSetLayoutBinding> dslbs = {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
@@ -113,25 +113,19 @@ public:
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     swapTexture( cpp->first( ) );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule =
-      _device->createShaderModule( 
-        LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquad_vert.spv"), 
-        vk::ShaderStageFlagBits::eVertex
-      );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( 
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ), 
-        vk::ShaderStageFlagBits::eFragment
-      );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
       _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
+
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
@@ -165,7 +159,7 @@ public:
   void doPaint( void ) override
   {
     static int i = 0;
-    if ( ++i == 25 )
+    if ( ++i == 50 )
     {
       i = 0;
       cpp->swap( );
@@ -187,7 +181,9 @@ public:
     commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
+
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+
     commandBuffer->draw( 4, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -208,7 +204,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;

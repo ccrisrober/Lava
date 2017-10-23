@@ -7,13 +7,18 @@
 
 namespace lava
 {
-  Texture2D::Texture2D( const DeviceRef& device_, 
-    const std::string& filename, const std::shared_ptr<CommandPool>& cmdPool,
-    const std::shared_ptr<Queue>& queue, vk::Format format, bool forceLinear )
-    : VulkanResource( device_ )
+  Texture2D::Texture2D( const DeviceRef& device_, const std::string& filename,
+    const std::shared_ptr<CommandPool>& cmdPool,
+    const std::shared_ptr<Queue>& queue, vk::Format format,
+    vk::ImageUsageFlags imageUsageFlags, vk::ImageLayout imageLayout, 
+    bool forceLinear )
+    : Texture( device_ )
   {
+    unsigned int numChannels;
     unsigned char* pixels = lava::utils::loadImageTexture( 
       filename, width, height, numChannels );
+
+    numChannels = 4; // TODO: hardcoded
 
     vk::FormatProperties formatProps = 
       _device->_physicalDevice->getFormatProperties( format );
@@ -25,12 +30,20 @@ namespace lava
     // limited amount of formats and features (mip maps, cubemaps, arrays, etc.)
     VkBool32 useStaging = !forceLinear;
 
-    VkDeviceSize texSize = width * height * 4; // todo: 4 is numChannels?
+    VkDeviceSize texSize = width * height * numChannels;
 
     vk::Device device = static_cast< vk::Device >( *_device );
 
     if ( useStaging )
     {
+      /*// Create a host-visible staging buffer that contains the raw image data
+      std::shared_ptr<Buffer> stagingBuffer = _device->createBuffer( texSize,
+        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, {},
+        vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+
+      stagingBuffer->writeData( 0, texSize, pixels );
+      free( pixels );*/
       // Create a host-visible staging buffer that contains the raw image data
       vk::Buffer stagingBuffer;
       vk::DeviceMemory stagingMemory;
@@ -41,10 +54,9 @@ namespace lava
       bci.sharingMode = vk::SharingMode::eExclusive;
 
       stagingBuffer = device.createBuffer( bci );
-      stagingMemory = _device->allocateBufferMemory( stagingBuffer, 
-        vk::MemoryPropertyFlagBits::eHostVisible 
-          | vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
-
+      stagingMemory = _device->allocateBufferMemory( stagingBuffer,
+        vk::MemoryPropertyFlagBits::eHostVisible
+        | vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
 
       // Copy texture data into staging buffer
       void* data = device.mapMemory( stagingMemory, 0, texSize );
@@ -53,11 +65,13 @@ namespace lava
 
       free( pixels );
 
+      // TODO: Generate MipLevels
+
       // Create Image
       vk::ImageCreateInfo ici;
       ici.imageType = vk::ImageType::e2D;
       ici.format = format;
-      ici.mipLevels = 1;
+      ici.mipLevels = 1;  // TODO: Generate MipLevels
       ici.arrayLayers = 1;
       ici.samples = vk::SampleCountFlagBits::e1;
       ici.tiling = vk::ImageTiling::eOptimal;
@@ -66,12 +80,17 @@ namespace lava
       ici.extent.width = width;
       ici.extent.height = height;
       ici.extent.depth = 1;
-      ici.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+      ici.usage = imageUsageFlags;
 
-      textureImage = device.createImage( ici );
-      textureImageMemory = _device->allocateImageMemory( textureImage, 
+      // Ensure that the TRANSFER_DST bit is set for staging
+      if ( !( ici.usage & vk::ImageUsageFlagBits::eTransferDst ) )
+      {
+        ici.usage |= vk::ImageUsageFlagBits::eTransferDst;
+      }
+
+      image = device.createImage( ici );
+      deviceMemory = _device->allocateImageMemory( image,
         vk::MemoryPropertyFlagBits::eDeviceLocal );  // Allocate + bind
-
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
@@ -83,7 +102,7 @@ namespace lava
       // Start at first mip level
       subresourceRange.baseMipLevel = 0;
       // We will transition on all mip levels
-      subresourceRange.levelCount = 1;// mipLevels;
+      subresourceRange.levelCount = 1;// TODO: mipLevels;
       // The 2D texture only has one layer
       subresourceRange.layerCount = 1;
 
@@ -92,15 +111,14 @@ namespace lava
       // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
       utils::setImageLayout(
         copyCmd,
-        textureImage,
-        // unnecesary (added in subresourceRange) vk::ImageAspectFlagBits::eColor,
+        image,
         vk::ImageLayout::eUndefined,          // Old layout is undefined
         vk::ImageLayout::eTransferDstOptimal, // New layout
         subresourceRange
       );
 
       // Copy buffer to image
-      // todo: we can generate manua mip levels
+      // todo: we can generate manual mip levels
       vk::BufferImageCopy region = {};
       region.bufferOffset = 0;
       region.bufferRowLength = 0;
@@ -117,18 +135,17 @@ namespace lava
       );
 
       static_cast<vk::CommandBuffer>( *copyCmd ).copyBufferToImage( 
-        stagingBuffer, textureImage, vk::ImageLayout::eTransferDstOptimal, 
-        { region }
+        stagingBuffer, image, 
+        vk::ImageLayout::eTransferDstOptimal, { region }
       );
 
       // Change texture image layout to shader read after all mip levels have been copied
-      imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+      this->imageLayout = imageLayout;
       
       // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
       utils::setImageLayout(
         copyCmd,
-        textureImage,
-        // unnecesary (added in subresourceRange) vk::ImageAspectFlagBits::eColor,
+        image,
         vk::ImageLayout::eTransferDstOptimal, // Older layout
         imageLayout,                          // New layout
         subresourceRange
@@ -142,26 +159,31 @@ namespace lava
       // Clean up staging resources
       device.destroyBuffer( stagingBuffer );
       _device->freeMemory( stagingMemory );
-
     }
     else
     {
+      // Prefer using optimal tiling, as linear tiling 
+      // may support only a small set of features 
+      // depending on implementation (e.g. no mip maps, only one layer, etc.)
+      assert( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage );
+
+      // Check if this support is supported for linear tiling
       vk::Image mappableImage;
       vk::DeviceMemory mappableMemory;
 
       vk::ImageCreateInfo ici;
       ici.imageType = vk::ImageType::e2D;
       ici.format = format;
+      ici.extent.width = width;
+      ici.extent.height = height;
+      ici.extent.depth = 1;
       ici.mipLevels = 1;
       ici.arrayLayers = 1;
       ici.samples = vk::SampleCountFlagBits::e1;
       ici.tiling = vk::ImageTiling::eLinear;
+      ici.usage = imageUsageFlags;
       ici.sharingMode = vk::SharingMode::eExclusive;
-      ici.initialLayout = vk::ImageLayout::ePreinitialized;
-      ici.extent.width = width;
-      ici.extent.height = height;
-      ici.extent.depth = 1;
-      ici.usage = vk::ImageUsageFlagBits::eSampled;
+      ici.initialLayout = vk::ImageLayout::eUndefined;
 
       mappableImage = device.createImage( ici );
       mappableMemory = _device->allocateImageMemory( mappableImage,
@@ -170,7 +192,6 @@ namespace lava
       vk::ImageSubresource subRes;
       subRes.aspectMask = vk::ImageAspectFlagBits::eColor;
       subRes.mipLevel = 0;
-
 
       // Get sub resources layout 
       // Includes row pitch, size offsets, etc.
@@ -182,8 +203,8 @@ namespace lava
 
       // Linear tiled images don't need to be staged
       // and can be directly used as textures
-      textureImage = mappableImage;
-      textureImageMemory = mappableMemory;
+      image = mappableImage;
+      deviceMemory = mappableMemory;
       imageLayout = imageLayout;
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
@@ -191,7 +212,7 @@ namespace lava
       // Setup image memory barrier
       utils::setImageLayout(
         copyCmd,
-        textureImage,
+        image,
         vk::ImageAspectFlagBits::eColor,
         vk::ImageLayout::eUndefined, // Older layout
         imageLayout                  // New layout
@@ -234,19 +255,10 @@ namespace lava
     } );
     vci.setSubresourceRange( { vk::ImageAspectFlagBits::eColor, 0,  1, 0, 1 } );
     vci.subresourceRange.levelCount = 1; // useStaging ? mipLevels : 1;
-    vci.image = textureImage;
+    vci.image = image;
 
     view = static_cast< vk::Device >( *_device ).createImageView( vci );
-  }
-  Texture2D::~Texture2D( void )
-  {
-    vk::Device device = static_cast< vk::Device >( *_device );
-    device.destroyImageView( view );
-    device.destroyImage( textureImage );
-    if ( sampler )
-    {
-      device.destroySampler( sampler );
-    }
-    _device->freeMemory( textureImageMemory );
+
+    updateDescriptor( );
   }
 }

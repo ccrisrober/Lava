@@ -104,7 +104,8 @@ namespace lava
       vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
       vk::ArrayProxy<const uint32_t> imageIndices );
 
-    void waitIdle( );
+    LAVA_API
+    void waitIdle( void );
 
     inline operator vk::Queue( void ) const
     {

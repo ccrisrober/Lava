@@ -72,18 +72,16 @@ namespace material
       };
       dev->updateDescriptorSets( wdss, {} );
 
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule =
-        dev->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-          std::string( "spharmonics_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-      std::shared_ptr<ShaderModule> fragmentShaderModule =
-        dev->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-          std::string( "spharmonics_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "spharmonics_vert.spv" ),
+        vk::ShaderStageFlagBits::eVertex
+      );
+      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "spharmonics_frag.spv" ),
+        vk::ShaderStageFlagBits::eFragment
+      );
 
       PipelineVertexInputStateCreateInfo vertexInput(
         vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),

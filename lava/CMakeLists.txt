@@ -88,6 +88,7 @@ set( LAVA_SOURCES
   extras/CustomMaterial.cpp
   extras/Geometry.cpp
 
+  engine/Node.cpp
   engine/Material.cpp
   engine/Clock.cpp
 

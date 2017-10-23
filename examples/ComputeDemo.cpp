@@ -20,7 +20,7 @@ public:
     std::shared_ptr<lava::PipelineLayout> pipelineLayout;
     std::shared_ptr<lava::DescriptorSet> descriptorSet;
   } compute;
-  
+
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
@@ -149,7 +149,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;

@@ -90,7 +90,6 @@ public:
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
@@ -119,31 +118,32 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
-      std::string( "random.png" ), commandPool, _graphicsQueue );
+      std::string( "random.png" ), commandPool, _graphicsQueue, 
+      vk::Format::eR8G8B8A8Unorm );
 
     // Instancing buffer
     {
       std::vector<InstanceData> instanceData;
-      instanceData.resize(INSTANCE_COUNT);
+      instanceData.resize( INSTANCE_COUNT );
 
-      std::mt19937 rndGenerator(time(NULL));
-      std::uniform_real_distribution<float> uniformDist(0.0, 1.0);
-      for ( auto i = 0; i < INSTANCE_COUNT / 2; ++i )
+      std::mt19937 rndGenerator( time( nullptr ) );
+      std::uniform_real_distribution<float> uniformDist( 0.0, 1.0 );
+      for ( uint32_t i = 0, l = INSTANCE_COUNT / 2; i < l; ++i )
       {
-        glm::vec2 ring0 { 7.0f, 11.0f };
-        glm::vec2 ring1 { 18.0f, 25.0f };
+        glm::vec2 ring0{ 7.0f, 11.0f };
+        glm::vec2 ring1{ 18.0f, 25.0f };
 
         float rho, theta;
 
         // Inner ring
-        rho = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniformDist(rndGenerator) + pow(ring0[0], 2.0f));
-        theta = 2.0 * M_PI * uniformDist(rndGenerator);
-        instanceData[i].pos = glm::vec3(rho*cos(theta), uniformDist(rndGenerator) * 0.5f - 0.25f, rho*sin(theta));
+        rho = sqrt( ( pow( ring0[ 1 ], 2.0f ) - pow( ring0[ 0 ], 2.0f ) ) * uniformDist( rndGenerator ) + pow( ring0[ 0 ], 2.0f ) );
+        theta = 2.0 * M_PI * uniformDist( rndGenerator );
+        instanceData[ i ].pos = glm::vec3( rho*cos( theta ), uniformDist( rndGenerator ) * 0.5f - 0.25f, rho*sin( theta ) );
 
         // Outer ring
-        rho = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniformDist(rndGenerator) + pow(ring1[0], 2.0f));
-        theta = 2.0 * M_PI * uniformDist(rndGenerator);
-        instanceData[i + INSTANCE_COUNT / 2].pos = glm::vec3(rho*cos(theta), uniformDist(rndGenerator) * 0.5f - 0.25f, rho*sin(theta));
+        rho = sqrt( ( pow( ring1[ 1 ], 2.0f ) - pow( ring1[ 0 ], 2.0f ) ) * uniformDist( rndGenerator ) + pow( ring1[ 0 ], 2.0f ) );
+        theta = 2.0 * M_PI * uniformDist( rndGenerator );
+        instanceData[ i + INSTANCE_COUNT / 2 ].pos = glm::vec3( rho*cos( theta ), uniformDist( rndGenerator ) * 0.5f - 0.25f, rho*sin( theta ) );
       }
 
       uint32_t instancingBufferSize = instanceData.size( ) * sizeof( InstanceData );
@@ -172,36 +172,33 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0, 
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo( 
+          _uniformBufferMVP, 0, sizeof( glm::mat4 )
+        )
+      ),
+      WriteDescriptorSet( _descriptorSet, 1, 0,
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        tex->descriptor, nullptr
+      )
+    };
 
-    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr, 
-      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( glm::mat4 ) ) );
-    wdss.push_back( w );
-
-    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
-      DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
-    );
-    wdss.push_back( w2 );
     _device->updateDescriptorSets( wdss, {} );
-
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-        std::string( "instancing_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-        std::string( "instancing_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
     
     
     PipelineVertexInputStateCreateInfo vertexInput( {
@@ -282,8 +279,9 @@ public:
     commandBuffer->bindVertexBuffer( INSTANCE_BUFFER_BIND_ID, _instanceBuffer, 0 );
 
     _indexBuffer->bind( commandBuffer );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->drawIndexed( indices.size( ), INSTANCE_COUNT, 0, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -304,7 +302,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;

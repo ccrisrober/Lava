@@ -82,10 +82,14 @@ namespace lava
   }
 
   PipelineVertexInputStateCreateInfo::PipelineVertexInputStateCreateInfo(
-    vk::ArrayProxy<const vk::VertexInputBindingDescription> vertexBindingDescriptions_,
-    vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttrirDescriptions_ )
-    : vertexBindingDescriptions( vertexBindingDescriptions_.begin( ), vertexBindingDescriptions_.end( ) )
-    , vertexAttrirDescriptions( vertexAttrirDescriptions_.begin( ), vertexAttrirDescriptions_.end( ) )
+    vk::ArrayProxy<const vk::VertexInputBindingDescription> vBindingDescriptions_,
+    vk::ArrayProxy<const vk::VertexInputAttributeDescription> vAttrirDescriptions_ )
+    : vertexBindingDescriptions( 
+      vBindingDescriptions_.begin( ), vBindingDescriptions_.end( )
+    )
+    , vertexAttrirDescriptions( 
+      vAttrirDescriptions_.begin( ), vAttrirDescriptions_.end( )
+    )
   {
   }
 
@@ -125,7 +129,8 @@ namespace lava
 
 
   PipelineViewportStateCreateInfo::PipelineViewportStateCreateInfo(
-    vk::ArrayProxy<const vk::Viewport> viewports_, vk::ArrayProxy<const vk::Rect2D> scissors_ )
+    vk::ArrayProxy<const vk::Viewport> viewports_, 
+    vk::ArrayProxy<const vk::Rect2D> scissors_ )
     : viewports( viewports_.begin( ), viewports_.end( ) )
     , scissors( scissors_.begin( ), scissors_.end( ) )
   {
@@ -248,7 +253,7 @@ namespace lava
     if ( result == vk::Result::eSuccess && size != 0 )
     {
       auto myfile = std::fstream( filename, std::ios::out | std::ios::binary );
-      void* data;
+      void* data = nullptr;
       result = static_cast<vk::Device>(*_device)
         .getPipelineCacheData( _pipelineCache, &size, data );
       if ( result == vk::Result::eSuccess )
@@ -335,46 +340,67 @@ namespace lava
     {
       if ( s.specializationInfo )
       {
-        specializationInfos.push_back( vk::SpecializationInfo( s.specializationInfo->mapEntries.size( ), s.specializationInfo->mapEntries.data( ),
-          s.specializationInfo->data.size( ), s.specializationInfo->data.data( ) ) );
+        specializationInfos.push_back( vk::SpecializationInfo( 
+          s.specializationInfo->mapEntries.size( ),
+          s.specializationInfo->mapEntries.data( ),
+          s.specializationInfo->data.size( ),
+          s.specializationInfo->data.data( ) )
+        );
       }
-      vStages.push_back( vk::PipelineShaderStageCreateInfo( {}, s.stage, s.module ? static_cast<vk::ShaderModule>( *s.module ) : nullptr, s.name.data( ),
-        s.specializationInfo ? &specializationInfos.back( ) : nullptr ) );
+      vStages.push_back( vk::PipelineShaderStageCreateInfo( { }, s.stage, 
+        s.module ? static_cast<vk::ShaderModule>( *s.module ) : nullptr, 
+        s.name.data( ),
+        s.specializationInfo ? &specializationInfos.back( ) : nullptr )
+      );
     }
 
     vk::PipelineVertexInputStateCreateInfo vVertexInputState;
     if ( vertexInputState )
     {
-      vVertexInputState = vk::PipelineVertexInputStateCreateInfo( {}, vertexInputState->vertexBindingDescriptions.size( ), vertexInputState->vertexBindingDescriptions.data( ),
-        vertexInputState->vertexAttrirDescriptions.size( ), vertexInputState->vertexAttrirDescriptions.data( ) );
+      vVertexInputState = vk::PipelineVertexInputStateCreateInfo( { },
+        vertexInputState->vertexBindingDescriptions.size( ), 
+        vertexInputState->vertexBindingDescriptions.data( ),
+        vertexInputState->vertexAttrirDescriptions.size( ),
+        vertexInputState->vertexAttrirDescriptions.data( )
+      );
     }
 
     vk::PipelineViewportStateCreateInfo vViewportState;
     if ( viewportState )
     {
-      vViewportState = vk::PipelineViewportStateCreateInfo( {}, viewportState->viewports.size( ), viewportState->viewports.data( ),
+      vViewportState = vk::PipelineViewportStateCreateInfo( { }, 
+        viewportState->viewports.size( ), viewportState->viewports.data( ),
         viewportState->scissors.size( ), viewportState->scissors.data( ) );
     }
 
     vk::PipelineMultisampleStateCreateInfo vMultisampleState;
     if ( multisampleState )
     {
-      vMultisampleState = vk::PipelineMultisampleStateCreateInfo( {}, multisampleState->rasterizationSamples, multisampleState->sampleShadingEnable, multisampleState->minSampleShading,
-        multisampleState->sampleMasks.empty( ) ? nullptr : multisampleState->sampleMasks.data( ), multisampleState->alphaToCoverageEnable,
+      vMultisampleState = vk::PipelineMultisampleStateCreateInfo( { }, 
+        multisampleState->rasterizationSamples, 
+        multisampleState->sampleShadingEnable, multisampleState->minSampleShading,
+        multisampleState->sampleMasks.empty( ) ? nullptr : 
+          multisampleState->sampleMasks.data( ), 
+        multisampleState->alphaToCoverageEnable,
         multisampleState->alphaToOneEnable );
     }
 
     vk::PipelineColorBlendStateCreateInfo vColorBlendState;
     if ( colorBlendState )
     {
-      vColorBlendState = vk::PipelineColorBlendStateCreateInfo( {}, colorBlendState->logicEnable, colorBlendState->logicOp,  colorBlendState->attachments.size( ),
+      vColorBlendState = vk::PipelineColorBlendStateCreateInfo( { }, 
+        colorBlendState->logicEnable, colorBlendState->logicOp,  
+        colorBlendState->attachments.size( ),
         colorBlendState->attachments.data( ), colorBlendState->blendConstants );
     }
 
     vk::PipelineDynamicStateCreateInfo vDynamicState;
     if ( dynamicState )
     {
-      vDynamicState = vk::PipelineDynamicStateCreateInfo( {}, dynamicState->dynamicStates.size( ), dynamicState->dynamicStates.data( ) );
+      vDynamicState = vk::PipelineDynamicStateCreateInfo( { }, 
+        dynamicState->dynamicStates.size( ),
+        dynamicState->dynamicStates.data( )
+      );
     }
 
     vk::GraphicsPipelineCreateInfo pci(
@@ -395,12 +421,14 @@ namespace lava
       basePipelineIdx
     );
     std::cerr << " ... " << std::endl;
-    setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
+    setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( 
+      pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
     std::cerr << " ... Pipeline created!" << std::endl;
   }
 
 
-  PipelineLayout::PipelineLayout( const std::shared_ptr<Device>& device, vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts,
+  PipelineLayout::PipelineLayout( const std::shared_ptr<Device>& device, 
+    vk::ArrayProxy<const std::shared_ptr<DescriptorSetLayout>> setLayouts,
     vk::ArrayProxy<const vk::PushConstantRange> pushConstantRanges )
     : VulkanResource( device )
     , _setLayouts( setLayouts.begin( ), setLayouts.end( ) )
@@ -412,7 +440,8 @@ namespace lava
       dsl.push_back( static_cast< vk::DescriptorSetLayout >( *l ) );
     }
 
-    vk::PipelineLayoutCreateInfo pci( {}, dsl.size( ), dsl.data( ), pushConstantRanges.size( ), pushConstantRanges.data( ) );
+    vk::PipelineLayoutCreateInfo pci( {}, dsl.size( ), dsl.data( ), 
+      pushConstantRanges.size( ), pushConstantRanges.data( ) );
     _pipelineLayout = static_cast< vk::Device >( *_device ).createPipelineLayout( pci );
   }
 
@@ -428,7 +457,9 @@ namespace lava
 
 
 
-  SpecializationInfo::SpecializationInfo( vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries_, vk::ArrayProxy<const uint8_t> data_ )
+  SpecializationInfo::SpecializationInfo( 
+    vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries_, 
+    vk::ArrayProxy<const uint8_t> data_ )
     : mapEntries( mapEntries_.begin( ), mapEntries_.end( ) )
     , data( data_.begin( ), data_.end( ) )
   {

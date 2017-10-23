@@ -43,7 +43,7 @@ public:
     material = std::make_shared<lava::engine::BasicTessTriangle>( );
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
 	}
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
@@ -61,8 +61,9 @@ public:
     material->bind( commandBuffer ); //commandBuffer->bindGraphicsPipeline( _pipeline );
     _vertexBuffer->bind( commandBuffer ); //commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
     _indexBuffer->bind( commandBuffer );  //commandBuffer->bindIndexBuffer( _indexBuffer, 0 );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 
@@ -83,7 +84,7 @@ public:
 			switch (action)
 			{
 			case GLFW_PRESS:
-				glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+				getWindow( )->close( );
 				break;
 			default:
 				break;

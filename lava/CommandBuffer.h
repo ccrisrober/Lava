@@ -46,12 +46,15 @@ namespace lava
 
   struct ImageMemoryBarrier
   {
+    LAVA_API
     ImageMemoryBarrier( vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
       vk::ImageLayout oldLayout, vk::ImageLayout newLayout, 
       uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex,
       const std::shared_ptr<Image>& image, 
       const vk::ImageSubresourceRange& subresourceRange );
+    LAVA_API
     ImageMemoryBarrier( const ImageMemoryBarrier& rhs );
+    LAVA_API
     ImageMemoryBarrier & operator=( const ImageMemoryBarrier& rhs );
 
     vk::AccessFlags           srcAccessMask;

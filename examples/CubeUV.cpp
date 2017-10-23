@@ -77,28 +77,21 @@ namespace material
         WriteDescriptorSet( 
           _descriptorSet, 1, 0, 
           vk::DescriptorType::eCombinedImageSampler, 1,
-          DescriptorImageInfo
-          (
-            vk::ImageLayout::eGeneral,
-            std::make_shared<vk::ImageView>( tex->view ),
-            std::make_shared<vk::Sampler>( tex->sampler )
-          ), nullptr
+          tex->descriptor, nullptr
         )
       };
       dev->updateDescriptorSets( wdss, {} );
 
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule =
-        dev->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-          std::string( "cubeUV_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-      std::shared_ptr<ShaderModule> fragmentShaderModule =
-        dev->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE +
-          std::string( "cubeUV_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-      PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
+        vk::ShaderStageFlagBits::eVertex
+      );
+      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
+        vk::ShaderStageFlagBits::eFragment
+      );
       vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
@@ -215,7 +208,8 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     material->tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
-      std::string( "random.png" ), commandPool, _graphicsQueue );
+      std::string( "rubymatcap.jpg" ), commandPool, _graphicsQueue, 
+      vk::Format::eR8G8B8A8Unorm );
 
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
   }
@@ -262,8 +256,7 @@ public:
 
     _vertexBuffer->bind( commandBuffer );
     _indexBuffer->bind( commandBuffer );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 
@@ -284,7 +277,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;

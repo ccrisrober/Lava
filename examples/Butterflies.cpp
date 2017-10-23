@@ -68,7 +68,8 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "butterfly.png" ), commandPool, _graphicsQueue );
+      std::string( "butterfly.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
@@ -101,30 +102,20 @@ public:
     ) );
     wdss.push_back( WriteDescriptorSet( 
       _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 
-      1, DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
+      1, tex->descriptor, nullptr
     ) );
     _device->updateDescriptorSets( wdss, {} );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-          std::string("butterflies_vert.spv"), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> geomShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-          std::string( "butterflies_geom.spv" ), vk::ShaderStageFlagBits::eGeometry );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-          std::string( "butterflies_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule, "main" );
-    PipelineShaderStageCreateInfo geomStage( vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main" );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule, "main" );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "butterflies_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo geomStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "butterflies_geom.spv" ), vk::ShaderStageFlagBits::eGeometry );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "butterflies_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, { 
@@ -197,8 +188,9 @@ public:
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->draw( uint32_t( vertices.size( ) ), 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -219,7 +211,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;

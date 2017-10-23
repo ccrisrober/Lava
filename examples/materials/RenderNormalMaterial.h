@@ -66,25 +66,16 @@ namespace material
       };
       dev->updateDescriptorSets( wdss, {} );
 
-
-      // init shaders
-      std::shared_ptr<ShaderModule> vertexShaderModule =
-        dev->createShaderModule( dir + std::string( "cube_vert.spv" ), 
-          vk::ShaderStageFlagBits::eVertex
-        );
-      std::shared_ptr<ShaderModule> fragmentShaderModule =
-        dev->createShaderModule( dir + std::string( "cube_frag.spv" ), 
-          vk::ShaderStageFlagBits::eFragment
-        );
-
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = 
         dev->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage( 
-        vk::ShaderStageFlagBits::eVertex, vertexShaderModule
+      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "cube_vert.spv" ),
+        vk::ShaderStageFlagBits::eVertex
       );
-      PipelineShaderStageCreateInfo fragmentStage( 
-        vk::ShaderStageFlagBits::eFragment, fragmentShaderModule
+      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+        dir + std::string( "cube_frag.spv" ),
+        vk::ShaderStageFlagBits::eFragment
       );
       vk::VertexInputBindingDescription binding( 0, 
         sizeof( Vertex ), vk::VertexInputRate::eVertex

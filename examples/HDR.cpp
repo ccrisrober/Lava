@@ -367,7 +367,7 @@ public:
       uboFS.enable_hdr = false;
       break;
     case GLFW_KEY_ESCAPE:
-      glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+      getWindow( )->close( );
       break;
     default:
       break;

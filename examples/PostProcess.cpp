@@ -83,20 +83,13 @@ public:
     pipelineLayouts.solid = _device->createPipelineLayout( descriptorSetLayout );
     pipelineLayouts.postprocess = _device->createPipelineLayout( descriptorSetLayout );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0 );
-    PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
@@ -139,10 +132,11 @@ public:
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayouts.solid, fbo->renderPass );
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 );
-    // Binding 1: Texture
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 );
+    std::array<vk::DescriptorPoolSize, 2> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 )
+    };
     std::shared_ptr<DescriptorPool> descriptorPool = 
       _device->createDescriptorPool( { }, 2, poolSize );
 
@@ -185,18 +179,10 @@ public:
     vk::PipelineInputAssemblyStateCreateInfo assemblyPP( {},
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> ppVertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> ppFragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "vignette_frag.spv" ),
-      vk::ShaderStageFlagBits::eFragment );
-
-    PipelineShaderStageCreateInfo ppVertexStage(
-      vk::ShaderStageFlagBits::eVertex, ppVertexShaderModule );
-    PipelineShaderStageCreateInfo ppFragmentStage(
-      vk::ShaderStageFlagBits::eFragment, ppFragmentShaderModule );
+    PipelineShaderStageCreateInfo ppVertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo ppFragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "vignette_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     pipelines.postprocess = _device->createGraphicsPipeline( pipelineCache, {},
     { ppVertexStage, ppFragmentStage }, emptyInputState, assemblyPP, nullptr,
@@ -316,7 +302,7 @@ public:
       enable_wire = false;
       break;
     case GLFW_KEY_ESCAPE:
-      glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+      getWindow( )->close( );
       break;
     default:
       break;

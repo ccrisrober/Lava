@@ -47,8 +47,9 @@ public:
     material->bind( commandBuffer );
 
     commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->draw( uint32_t( vertices.size( ) ), 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -69,7 +70,7 @@ public:
 			switch (action)
 			{
 			case GLFW_PRESS:
-				glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+				getWindow( )->close( );
 				break;
 			default:
 				break;

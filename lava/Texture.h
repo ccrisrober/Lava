@@ -4,6 +4,7 @@
 #include "includes.hpp"
 
 #include "VulkanResource.h"
+#include "Descriptor.h"
 
 #include <lava/api.h>
 
@@ -19,6 +20,11 @@ namespace lava
   public:
     LAVA_API
     Texture( const DeviceRef& device );
+    LAVA_API
+    virtual ~Texture( void );
+    LAVA_API
+    void updateDescriptor( void );
+
     vk::Image image;
     vk::ImageLayout imageLayout;
     vk::DeviceMemory deviceMemory;
@@ -27,7 +33,7 @@ namespace lava
     uint32_t width, height;
     uint32_t mipLevels;
     uint32_t layerCount;
-    vk::DescriptorImageInfo descriptor;
+    DescriptorImageInfo descriptor;
   };
 }
 

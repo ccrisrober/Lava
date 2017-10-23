@@ -128,8 +128,9 @@ namespace lava
 
 
     LAVA_API
-    const PipelineShaderStageCreateInfo& createShaderPipelineState( const std::string& spvFile, 
-      vk::ShaderStageFlagBits stage, const std::string& name = "main" );
+    const PipelineShaderStageCreateInfo createShaderPipelineShaderStage(
+      const std::string& spvFile, vk::ShaderStageFlagBits stage, 
+      const std::string& name = "main" );
 
     LAVA_API
     std::shared_ptr<Fence> createFence( bool signaled );
