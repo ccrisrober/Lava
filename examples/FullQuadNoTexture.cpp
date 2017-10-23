@@ -3,16 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <routes.h>
-
 class MyApp : public VulkanApp
 {
 public:
@@ -27,21 +17,18 @@ public:
       _device->createDescriptorSetLayout( dslbs );
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquadUV_vert.spv"), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadUV_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
       _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadUV_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadUV_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
@@ -73,7 +60,7 @@ public:
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
   }
-  void doPaint( ) override
+  void doPaint( void ) override
   {
     // create a command pool for command buffer allocation
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
@@ -89,11 +76,9 @@ public:
     { vk::ClearValue( ccv ), vk::ClearValue(
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
     commandBuffer->bindGraphicsPipeline( _pipeline );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, 
-      ( float ) _defaultFramebuffer->getExtent( ).width, 
-      ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->draw( 4, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -114,7 +99,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -135,8 +120,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "FullQuadNoTexture", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -148,12 +131,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

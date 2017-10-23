@@ -4,6 +4,7 @@
 #include "includes.hpp"
 
 #include "VulkanResource.h"
+#include "Descriptor.h"
 
 #include <lava/api.h>
 
@@ -17,12 +18,13 @@ namespace lava
   class Texture: public VulkanResource
   {
   public:
-    static std::shared_ptr<Texture>& create( const DeviceRef& device )
-    {
-      return std::make_shared< Texture >( device );
-    }
     LAVA_API
     Texture( const DeviceRef& device );
+    LAVA_API
+    virtual ~Texture( void );
+    LAVA_API
+    void updateDescriptor( void );
+
     vk::Image image;
     vk::ImageLayout imageLayout;
     vk::DeviceMemory deviceMemory;
@@ -31,102 +33,27 @@ namespace lava
     uint32_t width, height;
     uint32_t mipLevels;
     uint32_t layerCount;
-    vk::DescriptorImageInfo descriptor;
+    DescriptorImageInfo descriptor;
   };
 
-  class Texture2DArray : public VulkanResource
+
+  class Texture3D : public Texture
   {
   public:
     LAVA_API
-    // All images on filePaths as same dimensions
-    Texture2DArray( const DeviceRef& device, std::vector< std::string >& filePaths,
+    Texture3D( const DeviceRef& device, uint32_t width, uint32_t height, 
+      uint32_t depth, const void* src,
       const std::shared_ptr<CommandPool>& cmdPool,
-      const std::shared_ptr<Queue>& queue,
-      vk::Format format = vk::Format::eR8G8B8A8Unorm,
-      bool forceLinear = false );
+      const std::shared_ptr<Queue>& queue, vk::Format format );
 
     LAVA_API
-    virtual ~Texture2DArray( void );
-
-    vk::Image textureImage;
-    vk::DeviceMemory textureImageMemory;
-    vk::ImageLayout imageLayout;
-
-    vk::ImageView view;
-    vk::Sampler sampler;
+    void updateData( uint32_t width, uint32_t height, uint32_t depth,
+      uint32_t numChannels, const void * data, 
+      const std::shared_ptr<CommandPool>& cmdPool,
+      const std::shared_ptr<Queue>& queue, vk::Format format );
+    
+    uint32_t depth;
   };
-
-  class Texture2D: public VulkanResource
-  {
-  public:
-    LAVA_API
-    Texture2D( const DeviceRef& device, const std::string& filename, 
-      const std::shared_ptr<CommandPool>& cmdPool, 
-      const std::shared_ptr<Queue>& queue,
-      vk::Format format = vk::Format::eR8G8B8A8Unorm, 
-      bool forceLinear = false );
-
-    LAVA_API
-    virtual ~Texture2D( void );
-
-    uint32_t width, height, numChannels;
-    vk::Image textureImage;
-    vk::DeviceMemory textureImageMemory;
-    vk::ImageLayout imageLayout;
-
-    vk::ImageView view;
-    vk::Sampler sampler;
-  };
-  class TextureCubemap: public VulkanResource
-  {
-  public:
-    LAVA_API
-    TextureCubemap( const DeviceRef& device, 
-      const std::array< std::string, 6 >& filePaths, 
-      const std::shared_ptr<CommandPool>& cmdPool, 
-      const std::shared_ptr<Queue>& queue, 
-      vk::Format format = vk::Format::eR8G8B8A8Unorm, 
-      bool forceLinear = false );
-
-    LAVA_API
-    virtual ~TextureCubemap( void );
-
-    vk::Image textureImage;
-    vk::DeviceMemory textureImageMemory;
-    vk::ImageLayout imageLayout;
-
-    vk::ImageView view;
-    vk::Sampler sampler;
-  };
-  /*class Texture : public VulkanResource
-  {
-  public:
-    Texture( const DeviceRef& device );
-    vk::Image image;
-    vk::ImageLayout imageLayout;
-    vk::DeviceMemory memory;
-    vk::ImageView view;
-    uint32_t width, height;
-    uint32_t mipLevels;
-    uint32_t layerCount;
-
-    vk::DescriptorImageInfo descriptor;
-
-    vk::Sampler sampler;
-
-    void updateDescriptor( );
-    void destroy( );
-  };
-
-  class Texture2D : public Texture
-  {
-  public:
-    void loadFromFile( const DeviceRef& device, const std::string& filename, 
-      vk::Format format, vk::Queue copyQueue, 
-      vk::ImageUsageFlagBits = vk::ImageUsageFlagBits::eSampled,
-      vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal, 
-      bool forceLinear = false );
-  };*/
 }
 
 #endif /* __LAVA_TEXTURE__ */

@@ -3,23 +3,12 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+} uboVS;
 
 class MyApp : public VulkanApp
 {
@@ -45,7 +34,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof( uboVS );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -54,10 +43,12 @@ public:
     }
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex );
-    dslbs.push_back( mvpDescriptor );
+    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    {
+      DescriptorSetLayoutBinding( 
+        0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     // Define push constant
@@ -70,16 +61,17 @@ public:
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, pushConstantRange );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_push_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_push_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_push_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_push_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
@@ -104,7 +96,9 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { }, 
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+      viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
 
     std::array<vk::DescriptorPoolSize, 1> poolSize;
@@ -113,45 +107,43 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
+    std::vector<WriteDescriptorSet> wdss = 
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+        DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS )
+        )
+      )
+    };
+
     _device->updateDescriptorSets( wdss, {} );
 
   }
   void updateUniformBuffers( void )
   {
+
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    static auto startTime = std::chrono::high_resolution_clock::now( );
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, -1.0f, 0.0f ) );
+    glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 0.5f );
+    glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
+    glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
-    vk::Device device = static_cast<vk::Device>(*_device);
+    uboVS.view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp );
 
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    _uniformBufferMVP->unmap( );
+    uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboVS.proj[ 1 ][ 1 ] *= -1;
 
+    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
 
     float greenValue = ( sin( time ) / 2.0f ) + 0.5f;
     pushConstants[ 0 ] = glm::vec4( 0.0f, greenValue, 0.0f, 1.0f );
-
-    std::cout << glm::to_string( pushConstants[ 0 ] ) << std::endl;
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
   }
 
   bool enable_wire = false;
@@ -180,9 +172,9 @@ public:
     commandBuffer->bindGraphicsPipeline( pipelines.solid );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
-
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->pushConstants<glm::vec4>( *_pipelineLayout, 
       vk::ShaderStageFlagBits::eFragment, 0, pushConstants );
 
@@ -212,7 +204,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -233,8 +225,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Mesh (Push Constant)", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -246,12 +236,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

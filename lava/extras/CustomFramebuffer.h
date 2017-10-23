@@ -2,74 +2,82 @@
 
 #include "../includes.hpp"
 
+#include <lava/api.h>
+
 #include "../VulkanResource.h"
 
 namespace lava
 {
+  class Image;
+  class ImageView;
+  class Framebuffer;
+  class RenderPass;
+  class CommandBuffer;
+  class Semaphore;
   namespace extras
   {
-    struct FramebufferAttachment
-    {
-      vk::Image image;
-      vk::DeviceMemory memory;
-      vk::ImageView view;
-      vk::Format format;
-      vk::ImageSubresourceRange subresourceRange;
-      vk::AttachmentDescription description;
-
-      bool hasDepth( void )
-      {
-        static std::vector<vk::Format> formats =
-        {
-          vk::Format::eD16Unorm,
-          vk::Format::eX8D24UnormPack32,
-          vk::Format::eD32Sfloat,
-          vk::Format::eD16UnormS8Uint,
-          vk::Format::eD24UnormS8Uint,
-          vk::Format::eD32SfloatS8Uint
-        };
-        return std::find(
-          formats.begin( ), formats.end( ), format ) != std::end( formats );
-      }
-
-      bool hasStencil( )
-      {
-        static std::vector<vk::Format> formats =
-        {
-          vk::Format::eS8Uint,
-          vk::Format::eD16UnormS8Uint,
-          vk::Format::eD24UnormS8Uint,
-          vk::Format::eD32SfloatS8Uint
-        };
-        return std::find(
-          formats.begin( ), formats.end( ), format ) != std::end( formats );
-      }
-      bool isDepthStencil( void )
-      {
-        return( hasDepth( ) || hasStencil( ) );
-      }
-    };
-    struct AttachmentCreateInfo
-    {
-      uint32_t width, height;
-      uint32_t layerCount;
-      vk::Format format;
-      vk::ImageUsageFlags usage;
-    };
-
-    class CustomFramebuffer: public VulkanResource
+    class CustomFBO : public VulkanResource
     {
     public:
-      CustomFramebuffer( const DeviceRef& device );
-      ~CustomFramebuffer( void );
-      uint32_t addAttachment( const AttachmentCreateInfo ci );
-      void createRenderPass( void );
+      // Framebuffer for offscreen rendering
+      struct FramebufferAttachment
+      {
+        std::shared_ptr<lava::Image> image;
+        std::shared_ptr<lava::ImageView> view;
+        vk::Format format;
+        bool hasDepth( void )
+        {
+          static std::vector<vk::Format> formats =
+          {
+            vk::Format::eD16Unorm,
+            vk::Format::eX8D24UnormPack32,
+            vk::Format::eD32Sfloat,
+            vk::Format::eD16UnormS8Uint,
+            vk::Format::eD24UnormS8Uint,
+            vk::Format::eD32SfloatS8Uint
+          };
+          return std::find(
+            formats.begin( ), formats.end( ), format ) != std::end( formats );
+        }
 
-      uint32_t width, height;
-      vk::Framebuffer framebuffer;
-      vk::RenderPass renderPass;
-      vk::Sampler sampler;
-      std::vector<FramebufferAttachment> attachments;
+        bool hasStencil( void )
+        {
+          static std::vector<vk::Format> formats =
+          {
+            vk::Format::eS8Uint,
+            vk::Format::eD16UnormS8Uint,
+            vk::Format::eD24UnormS8Uint,
+            vk::Format::eD32SfloatS8Uint
+          };
+          return std::find(
+            formats.begin( ), formats.end( ), format ) != std::end( formats );
+        }
+        bool isDepthStencil( void )
+        {
+          return( hasDepth( ) || hasStencil( ) );
+        }
+      };
+      LAVA_API
+      CustomFBO( DeviceRef dev, uint32_t width, uint32_t height );
+      LAVA_API
+      void addColorAttachmentt( vk::Format format );
+      LAVA_API
+      void addDepthAttachment( vk::Format format );
+      LAVA_API
+      void build( void );
+    private:
+      void createAttachment( FramebufferAttachment& fatt, vk::Format format,
+        vk::ImageUsageFlags usage );
+    protected:
+      uint32_t _width, _height;
+      FramebufferAttachment _depthAttachment;
+    public:
+      std::shared_ptr< Framebuffer > _fbo;
+      std::vector<FramebufferAttachment> _colorAttachments;
+      std::shared_ptr<RenderPass> renderPass;
+      vk::Sampler colorSampler;
+      std::shared_ptr<CommandBuffer> commandBuffer;
+      std::shared_ptr<Semaphore> semaphore;
     };
   }
 }

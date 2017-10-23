@@ -3,16 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <routes.h>
-
 struct UniformBuffer
 {
   float time;
@@ -55,28 +45,28 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBuffer, 0, sizeof( ubo ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+        DescriptorBufferInfo( 
+          _uniformBuffer, 0, sizeof( ubo )
+        )
+      )
+    };
     _device->updateDescriptorSets( wdss, {} );
-
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquadUV_vert.spv"), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "raytracing_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
       _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadUV_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "raytracing_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
@@ -117,14 +107,7 @@ public:
 
     ubo.time = time;
 
-    vk::Device device = static_cast<vk::Device>(*_device);
-
-    uint32_t bufferSize = sizeof(ubo);
-    void* data = _uniformBuffer->map( 0, bufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    _uniformBuffer->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    _uniformBuffer->writeData( 0, sizeof(ubo), &ubo );
   }
   void doPaint( void ) override
   {
@@ -145,11 +128,9 @@ public:
     commandBuffer->bindGraphicsPipeline( _pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, 
-      ( float ) _defaultFramebuffer->getExtent( ).width, 
-      ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->draw( 4, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -170,7 +151,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -191,8 +172,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Ray Tracing (Fragment Shader)", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -204,12 +183,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
   return 0;
 }

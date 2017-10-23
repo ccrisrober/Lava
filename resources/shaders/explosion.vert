@@ -10,10 +10,12 @@ layout(binding = 0) uniform UniformBufferObject {
 
 layout(location = 0) in vec3 inPosition;
 
-out gl_PerVertex {
+out gl_PerVertex
+{
     vec4 gl_Position;
 };
 
-void main() {
+void main()
+{
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
 }

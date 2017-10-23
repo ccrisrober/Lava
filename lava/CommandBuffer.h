@@ -46,12 +46,15 @@ namespace lava
 
   struct ImageMemoryBarrier
   {
+    LAVA_API
     ImageMemoryBarrier( vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
       vk::ImageLayout oldLayout, vk::ImageLayout newLayout, 
       uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex,
       const std::shared_ptr<Image>& image, 
       const vk::ImageSubresourceRange& subresourceRange );
+    LAVA_API
     ImageMemoryBarrier( const ImageMemoryBarrier& rhs );
+    LAVA_API
     ImageMemoryBarrier & operator=( const ImageMemoryBarrier& rhs );
 
     vk::AccessFlags           srcAccessMask;
@@ -73,10 +76,19 @@ namespace lava
     LAVA_API
     virtual ~CommandBuffer( void );
 
+    CommandBuffer( const CommandBuffer& ) = delete;
+    CommandBuffer( CommandBuffer&& ) = delete;
+
+    CommandBuffer& operator=( const CommandBuffer& ) = delete;
+    CommandBuffer& operator=( CommandBuffer&& ) = delete;
+
     inline operator vk::CommandBuffer( void ) const
     {
       return _commandBuffer;
     }
+
+    LAVA_API
+    void reset( void );
 
     LAVA_API
     void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ) );
@@ -166,7 +178,10 @@ namespace lava
       std::shared_ptr<PipelineLayout> const& pipelineLayout, uint32_t firstSet, 
       vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
       vk::ArrayProxy<const uint32_t> dynamicOffsets );*/
-
+    LAVA_API
+    void setViewportScissors( uint32_t width, uint32_t height );
+    LAVA_API
+    void setViewportScissors( const vk::Extent2D& dimensions );
     LAVA_API
     void setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors );
     LAVA_API

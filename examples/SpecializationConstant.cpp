@@ -3,23 +3,12 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+} uboVS;
 
 class MyApp : public VulkanApp
 {
@@ -47,7 +36,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof( uboVS );
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -65,8 +54,6 @@ public:
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
@@ -97,61 +84,49 @@ public:
 
     vk::SpecializationMapEntry specMapEntry( 0, 0, sizeof( specData.model ) );
 
+    PipelineVertexInputStateCreateInfo vertexInput(
+      vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
+        vk::VertexInputRate::eVertex ),
+        {
+          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
+          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
+          vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
+        }
+    );
+    PipelineShaderStageCreateInfo vertexStage = 
+      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE + 
+        std::string( "mesh_ctes_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     {
       specData.model = 0;
       lava::SpecializationInfo specInfo( { specMapEntry }, { specData.model } );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
       PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment,
         fragmentShaderModule, "main", specInfo );
 
-      PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
-          vk::VertexInputRate::eVertex ),
-          {
-            vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-            vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-            vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
-          }
-      );
-      pipelines.solid_red = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelines.solid_red = _device->createGraphicsPipeline( pipelineCache, {},
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, _renderPass );
     }
     {
       specData.model = 1;
       lava::SpecializationInfo specInfo( { specMapEntry }, { specData.model } );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
       PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment,
         fragmentShaderModule, "main", specInfo );
 
-      PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
-          vk::VertexInputRate::eVertex ),
-          {
-            vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-            vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-            vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
-          }
-      );
-      pipelines.solid_green = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelines.solid_green = _device->createGraphicsPipeline( pipelineCache, { }, 
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, _renderPass );
     }
     {
       specData.model = 2;
       lava::SpecializationInfo specInfo( { specMapEntry }, { specData.model } );
-      PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
       PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment,
         fragmentShaderModule, "main", specInfo );
 
-      PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
-          vk::VertexInputRate::eVertex ),
-          {
-            vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-            vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-            vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
-          }
-      );
-      pipelines.solid_blue = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelines.solid_blue = _device->createGraphicsPipeline( pipelineCache, { }, 
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, _renderPass );
     }
 
@@ -162,7 +137,7 @@ public:
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) );
+    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( uboVS ) );
     WriteDescriptorSet w( _descriptorSet, 0, 0, 
       vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
     wdss.push_back( w );
@@ -174,26 +149,22 @@ public:
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    static auto startTime = std::chrono::high_resolution_clock::now( );
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::scale( glm::mat4( 1.0f ), glm::vec3( 7.5f ) );
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, -1.0f, 0.0f ) );
+    glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 0.5f );
+    glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
+    glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
-    vk::Device device = static_cast<vk::Device>(*_device);
+    uboVS.view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp );
 
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    _uniformBufferMVP->unmap( );
+    uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
   bool enable_wire = false;
@@ -273,7 +244,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -294,9 +265,7 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
-    VulkanApp* app = new MyApp( "Specialization Constants", 800, 600 );
+    VulkanApp* app = new MyApp( "Specialization Constants", 1200, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
@@ -307,12 +276,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

@@ -34,6 +34,8 @@ namespace lava
       return _instance;
     }
 
+    void destroy( void );
+
     LAVA_API
       void createDebugReportCallback(
         const vk::DebugReportCallbackCreateInfoEXT& debugInfo );

@@ -3,16 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <routes.h>
-
 class MyApp : public VulkanApp
 {
 public:
@@ -29,7 +19,8 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "uv_checker.png" ), commandPool, _graphicsQueue );
+      std::string( "uv_checker.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
@@ -48,32 +39,24 @@ public:
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
 
-    WriteDescriptorSet w( _descriptorSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
-      DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
+    WriteDescriptorSet w( _descriptorSet, 0, 0, 
+      vk::DescriptorType::eCombinedImageSampler, 1, 
+      tex->descriptor, nullptr
     );
     wdss.push_back( w );
     _device->updateDescriptorSets( wdss, {} );
 
-
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule =_device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string("fullquad_vert.spv"), 
-      vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule( 
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ), 
-      vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
       _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( 
-      vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( 
-      vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
@@ -124,11 +107,8 @@ public:
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
 
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, 
-      ( float ) _defaultFramebuffer->getExtent( ).width, 
-      ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ) );
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+
     commandBuffer->draw( 4, 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -149,7 +129,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -170,8 +150,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "FullQuadTexture", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -183,12 +161,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

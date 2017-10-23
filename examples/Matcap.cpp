@@ -3,23 +3,12 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+} uboVS;
 
 class MyApp : public VulkanApp
 {
@@ -35,8 +24,7 @@ public:
     std::shared_ptr<Pipeline> solid;
   } pipelines;
 
-  std::shared_ptr<Texture2DArray> tex;
-  //std::shared_ptr<Texture2DArray> tex2;
+  std::shared_ptr<Texture2D> tex;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -46,7 +34,7 @@ public:
 
     // MVP buffer
     {
-      uint32_t mvpBufferSize = sizeof(UniformBufferObject);
+      uint32_t mvpBufferSize = sizeof(uboVS);
       _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
@@ -56,39 +44,35 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    //tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_RESOURCES_ROUTE +
-    //  std::string( "/MatCap_Toon3.png" ), commandPool, _graphicsQueue );
-    std::vector<std::string> filePaths( 3 );
-    filePaths[ 0 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "green_matcap.jpg" );
-    filePaths[ 1 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "MatCap_Toon3.png" );
-    filePaths[ 2 ] = LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "rubymatcap.jpg" );
-    tex = std::make_shared<Texture2DArray>( _device, filePaths, commandPool, _graphicsQueue );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "/MatCap_Toon3.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor );
-    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler,
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor2 );
+    std::vector<DescriptorSetLayoutBinding> dslbs =
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+      ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = _device->createShaderModule(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+    
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
@@ -123,22 +107,20 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( UniformBufferObject ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
-
-    WriteDescriptorSet w2( _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
-      DescriptorImageInfo(
-        vk::ImageLayout::eGeneral,
-        std::make_shared<vk::ImageView>( tex->view ),
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
-    );
-    wdss.push_back( w2 );
+    std::vector<WriteDescriptorSet> wdss = 
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+        DescriptorBufferInfo( 
+          _uniformBufferMVP, 0, sizeof( uboVS )
+        )
+      ),
+      WriteDescriptorSet( _descriptorSet, 1, 0, 
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        tex->descriptor, nullptr
+      )
+    };
     _device->updateDescriptorSets( wdss, {} );
-
   }
   void updateUniformBuffers( void )
   {
@@ -150,22 +132,16 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
-    UniformBufferObject ubo = {};
-    ubo.model = glm::mat4( 1.0f );
-    //ubo.model = glm::scale( ubo.model, glm::vec3( 7.5f ) );
-    ubo.model = glm::rotate(ubo.model, time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    glm::vec3 cameraPos = glm::vec3( 0.0f, 1.0f, 5.5f );
+    glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
+    glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
-    vk::Device device = static_cast<vk::Device>(*_device);
+    uboVS.view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp );
+    uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = _uniformBufferMVP->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    _uniformBufferMVP->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
   bool enable_wire = false;
@@ -194,8 +170,9 @@ public:
     commandBuffer->bindGraphicsPipeline( pipelines.solid );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     geometry->render( commandBuffer );
     commandBuffer->endRenderPass( );
 
@@ -216,7 +193,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -237,8 +214,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Matcap", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -250,12 +225,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

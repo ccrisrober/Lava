@@ -1,40 +1,5 @@
 source_group(\\ FILES CMakeLists.txt)
 
-set( LAVA_SOURCES
-  Instance.cpp
-  PhysicalDevice.cpp
-  Surface.cpp
-  VulkanApp.cpp
-  Device.cpp
-  VulkanResource.cpp
-  Semaphore.cpp
-  Queue.cpp
-  RenderPass.cpp
-  DefaultFramebuffer.cpp
-  Swapchain.cpp
-  Image.cpp
-  Framebuffer.cpp
-  CommandBuffer.cpp
-  Pipeline.cpp
-  Descriptor.cpp
-  Sampler.cpp
-  Buffer.cpp
-
-  Window.cpp
-
-  Texture.cpp
-
-  extras/Mesh.cpp
-  extras/Material.cpp
-  extras/ModelImporter.cpp
-  extras/CustomFramebuffer.cpp
-  extras/CustomMaterial.cpp
-  extras/Geometry.cpp
-
-	#Source.cpp
-  utils.cpp
-)
-
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
   #../Vulkan-Hpp/vulkan/vulkan.hpp
@@ -65,10 +30,12 @@ set( LAVA_PUBLIC_HEADERS
   Window.h
 
   Texture.h
+  Texture2D.h
+  Texture2DArray.h
+  TextureCubemap.h
 
   extras/FpsController.h
 
-  extras/Camera.h
   extras/Mesh.h
   extras/Material.h
   extras/ModelImporter.h
@@ -76,9 +43,60 @@ set( LAVA_PUBLIC_HEADERS
   extras/CustomMaterial.h
   extras/Geometry.h
 
+  engine/Material.h
+  engine/Node.h
+  engine/Clock.h
+
   utils.hpp
+
+  Log.h
+  MemoryUtils.h
+  StringUtils.hpp
 )
 
+set( LAVA_SOURCES
+  Instance.cpp
+  PhysicalDevice.cpp
+  Surface.cpp
+  VulkanApp.cpp
+  Device.cpp
+  VulkanResource.cpp
+  Semaphore.cpp
+  Queue.cpp
+  RenderPass.cpp
+  DefaultFramebuffer.cpp
+  Swapchain.cpp
+  Image.cpp
+  Framebuffer.cpp
+  CommandBuffer.cpp
+  Pipeline.cpp
+  Descriptor.cpp
+  Sampler.cpp
+  Buffer.cpp
+
+  Window.cpp
+
+  Texture.cpp
+  Texture2D.cpp
+  Texture2DArray.cpp
+  TextureCubemap.cpp
+
+  extras/Mesh.cpp
+  extras/Material.cpp
+  extras/ModelImporter.cpp
+  extras/CustomFramebuffer.cpp
+  extras/CustomMaterial.cpp
+  extras/Geometry.cpp
+
+  engine/Node.cpp
+  engine/Material.cpp
+  engine/Clock.cpp
+
+	#Source.cpp
+  utils.cpp
+
+  Log.cpp
+)
 
 set( LAVA_HEADERS
 )

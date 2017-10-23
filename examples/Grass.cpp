@@ -3,16 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <routes.h>
-
 struct Vertex
 {
   glm::vec3 position;
@@ -25,7 +15,7 @@ std::vector<Vertex> vertices;
 
 #include <random>
 
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
@@ -82,7 +72,8 @@ public:
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
-      std::string( "grass.png" ), commandPool, _graphicsQueue );
+      std::string( "grass.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
@@ -115,30 +106,24 @@ public:
     ) );
     wdss.push_back( WriteDescriptorSet( 
       _descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 
-      1, DescriptorImageInfo( 
-        vk::ImageLayout::eGeneral, 
-        std::make_shared<vk::ImageView>( tex->view ), 
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
+      1, tex->descriptor, nullptr
     ) );
     _device->updateDescriptorSets( wdss, {} );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-          std::string("grass_vert.spv"), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> geomShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-          std::string( "grass_geom.spv" ), vk::ShaderStageFlagBits::eGeometry );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-          std::string( "grass_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage( vk::ShaderStageFlagBits::eVertex, vertexShaderModule );
-    PipelineShaderStageCreateInfo geomStage( vk::ShaderStageFlagBits::eGeometry, geomShaderModule );
-    PipelineShaderStageCreateInfo fragmentStage( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule );
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "grass_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo geometryStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "grass_geom.spv" ),
+      vk::ShaderStageFlagBits::eGeometry
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "grass_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, { 
@@ -166,7 +151,7 @@ public:
 
 
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-      { vertexStage, geomStage, fragmentStage }, 
+      { vertexStage, geometryStage, fragmentStage },
       vertexInput, assembly, nullptr, viewport, rasterization, multisample, 
       depthStencil, colorBlend, dynamic, _pipelineLayout, _renderPass );
   }
@@ -197,16 +182,7 @@ public:
     ubo.up = 0.01f * std::sin( ubo.time );
     ubo.beta = glm::radians(-60.0f);
 
-    // std::cout << ubo.time << std::endl;
-
-    vk::Device device = static_cast<vk::Device>(*_device);
-
-    uint32_t mvpBufferSize = sizeof(UniformBufferObject);
-    void* data = uniformBuffers.vertexShader->map( 0, mvpBufferSize );
-    memcpy( data, &ubo, sizeof(ubo) );
-    uniformBuffers.vertexShader->unmap( );
-
-    //std::cout<<glm::to_string(mvpc)<<std::endl;
+    uniformBuffers.vertexShader->writeData( 0, sizeof( ubo ), &ubo );
   }
   void doPaint( void ) override
   {
@@ -225,8 +201,9 @@ public:
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+    
     commandBuffer->draw( uint32_t( vertices.size( ) ), 1, 0, 0 );
     commandBuffer->endRenderPass( );
 
@@ -247,7 +224,7 @@ public:
       switch (action)
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose(getWindow()->getWindow( ), GLFW_TRUE);
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -268,8 +245,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Grass field", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -281,12 +256,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  system( "PAUSE" );
   return 0;
 }

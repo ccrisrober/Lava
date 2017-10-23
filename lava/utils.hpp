@@ -26,6 +26,7 @@ namespace lava
       vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands,
       vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands );
     // Uses a fixed sub resource layout with first mip level and layer
+    LAVA_API
     static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
       vk::Image image,
       vk::ImageAspectFlags aspectMask,

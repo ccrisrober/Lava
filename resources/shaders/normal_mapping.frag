@@ -12,14 +12,6 @@ layout (binding = 0) uniform UBOV
 layout (binding = 1) uniform sampler2D sColorMap;
 layout (binding = 2) uniform sampler2D sNormalMap;
 
-layout (binding = 3) uniform UBO 
-{
-	float heightScale;
-	float parallaxBias;
-	float numLayers;
-	int mappingMode;
-} ubo;
-
 layout (location = 0) in vec3 outPosition;
 layout (location = 1) in vec3 Normal;
 layout (location = 2) in vec2 TexCoord;
@@ -45,22 +37,22 @@ vec3 perturb_normal(vec3 p, vec3 n)
 
 void main( void )
 {
-    vec3 ambient = vec3(0.4);
+  vec3 ambient = vec3(0.4);
 
-    vec3 norm = normalize(Normal);
-    norm = perturb_normal(-outPosition, norm);
+  vec3 norm = normalize(Normal);
+  norm = perturb_normal(-outPosition, norm);
 
-    vec3 lightDir = normalize(uboV.lightPos.xyz - outPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    //vec3 diffuse = texture( DiffuseTexture, TexCoord ).rgb * diff;
-    vec3 diffuse = vec3(1.0) * diff;
+  vec3 lightDir = normalize(uboV.lightPos.xyz - outPosition);
+  float diff = max(dot(norm, lightDir), 0.0);
+  //vec3 diffuse = texture( DiffuseTexture, TexCoord ).rgb * diff;
+  vec3 diffuse = vec3(1.0) * diff;
 
-    vec3 viewDir = normalize(uboV.cameraPos.xyz - outPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-    vec3 specular = vec3(spec);
+  vec3 viewDir = normalize(uboV.cameraPos.xyz - outPosition);
+  vec3 reflectDir = reflect(-lightDir, norm);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+  vec3 specular = vec3(spec);
 
-    //fragColor = vec4((ambient + diffuse + specular) * DiffuseColor.rgb, 1.0);
-    fragColor = vec4((ambient + diffuse + specular) * texture( sColorMap, TexCoord ).rgb, 1.0);
-    //fragColor *= DiffuseColor;
+  //fragColor = vec4((ambient + diffuse + specular) * DiffuseColor.rgb, 1.0);
+  fragColor = vec4((ambient + diffuse + specular) * texture( sColorMap, TexCoord ).rgb, 1.0);
+  //fragColor *= DiffuseColor;
 }

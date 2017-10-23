@@ -117,11 +117,12 @@ namespace lava
         _ibo->writeData( 0, indexBufferSize, mesh.indices.data( ) );
       }
     }
-    void Geometry::render( std::shared_ptr<CommandBuffer> cmd )
+    void Geometry::render( std::shared_ptr<CommandBuffer> cmd, 
+      uint32_t numInstance )
     {
       _vbo->bind( cmd );
       _ibo->bind( cmd );
-      cmd->drawIndexed( _numIndices, 1, 0, 0, 1 );
+      cmd->drawIndexed( _numIndices, numInstance, 0, 0, 1 );
     }
   }
 }

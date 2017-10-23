@@ -109,6 +109,10 @@ namespace lava
   struct DescriptorImageInfo
   {
     LAVA_API
+    DescriptorImageInfo( void )
+    {
+    }
+    LAVA_API
     DescriptorImageInfo( vk::ImageLayout imageLayout,
       const std::shared_ptr<vk::ImageView>& imageView,
       const std::shared_ptr<vk::Sampler>& sampler );

@@ -17,6 +17,7 @@ namespace lava
   public:
     LAVA_API
     Image( const DeviceRef& device, const vk::Image& image );
+    LAVA_API
     Image( const DeviceRef& device, vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,
       vk::Extent3D extent, uint32_t mipLevels, uint32_t arrayLayers, vk::SampleCountFlagBits samples, vk::ImageTiling tiling,
       vk::ImageUsageFlags usageFlags, vk::SharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices,
@@ -27,6 +28,7 @@ namespace lava
     {
       return _image;
     }
+    LAVA_API
     std::shared_ptr<ImageView> createImageView( vk::ImageViewType viewType, vk::Format format,
       vk::ComponentMapping components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA },
       vk::ImageSubresourceRange subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } );

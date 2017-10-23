@@ -3,25 +3,15 @@ using namespace lava;
 
 #include <routes.h>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-
-#include <routes.h>
-
-struct UniformBufferObject
+struct
 {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
+} uboVS;
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 pos;
   glm::vec3 normal;
   glm::vec2 texCoord;
@@ -138,9 +128,11 @@ public:
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     // LOAD ASSETS
     colorMap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "chesterfieldDiffuseMap.png" ), commandPool, _graphicsQueue );
+      std::string( "chesterfieldDiffuseMap.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
     normalMap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "chesterfieldNormalMap.png" ), commandPool, _graphicsQueue );
+      std::string( "chesterfieldNormalMap.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // UNIFORM BUFFERS
     uniformBuffers.vertexShader = _device->createBuffer( sizeof( ubos.vertexShader ),
@@ -192,19 +184,11 @@ public:
 
     wdss.push_back( WriteDescriptorSet( _descriptorSet, 1, 0,
       vk::DescriptorType::eCombinedImageSampler, 1,
-      DescriptorImageInfo(
-        vk::ImageLayout::eGeneral,
-        std::make_shared<vk::ImageView>( colorMap->view ),
-        std::make_shared<vk::Sampler>( colorMap->sampler )
-      ), nullptr ) );
+      colorMap->descriptor, nullptr ) );
 
     wdss.push_back( WriteDescriptorSet( _descriptorSet, 2, 0,
       vk::DescriptorType::eCombinedImageSampler, 1,
-      DescriptorImageInfo(
-        vk::ImageLayout::eGeneral,
-        std::make_shared<vk::ImageView>( normalMap->view ),
-        std::make_shared<vk::Sampler>( normalMap->sampler )
-      ), nullptr ) );
+      normalMap->descriptor, nullptr ) );
 
     wdss.push_back( WriteDescriptorSet( _descriptorSet, 3, 0,
       vk::DescriptorType::eUniformBuffer, 1, nullptr,
@@ -213,22 +197,22 @@ public:
 
     _device->updateDescriptorSets( wdss, {} );
 
-    // init shaders
-    std::shared_ptr<ShaderModule> vertexShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-        std::string( "normal_mapping_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    std::shared_ptr<ShaderModule> fragmentShaderModule = 
-      _device->createShaderModule( LAVA_EXAMPLES_SPV_ROUTE + 
-        std::string( "normal_mapping_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "normal_mapping_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "normal_mapping_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     PipelineVertexInputStateCreateInfo entryInput( 
       vk::VertexInputBindingDescription( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex ), {
         vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, pos) ),
         vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, normal ) ),
-        vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord ) )
+        vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( Vertex, texCoord ) )
       }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -246,11 +230,8 @@ public:
 
 
     _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-      {
-        // Todo: replace with createShaderPipelineState
-        PipelineShaderStageCreateInfo( vk::ShaderStageFlagBits::eVertex, vertexShaderModule ),
-        PipelineShaderStageCreateInfo( vk::ShaderStageFlagBits::eFragment, fragmentShaderModule )
-      }, entryInput, assembly, nullptr, viewport, rasterization, multisample,
+      { vertexStage, fragmentStage },
+      entryInput, assembly, nullptr, viewport, rasterization, multisample,
       depthStencil, colorBlend, dynamic, _pipelineLayout, _renderPass
     );
   }
@@ -304,8 +285,9 @@ public:
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
     _vertexBuffer->bind( commandBuffer );
     _indexBuffer->bind( commandBuffer );
-    commandBuffer->setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) _defaultFramebuffer->getExtent( ).width, ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) );
-    commandBuffer->setScissor( 0, vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) );
+    
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
+
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );
 
@@ -345,7 +327,7 @@ public:
       switch ( action )
       {
       case GLFW_PRESS:
-        glfwSetWindowShouldClose( getWindow( )->getWindow( ), GLFW_TRUE );
+        getWindow( )->close( );
         break;
       default:
         break;
@@ -366,8 +348,6 @@ int main( void )
 {
   try
   {
-    //if (glfwInit())
-    //{
     VulkanApp* app = new MyApp( "Normal Mapping", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
@@ -379,12 +359,10 @@ int main( void )
     }
 
     delete app;
-    //}
   }
   catch ( std::system_error err )
   {
     std::cout << "System Error: " << err.what( ) << std::endl;
   }
-  //system( "PAUSE" );
   return 0;
 }

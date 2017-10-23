@@ -8,7 +8,8 @@
 
 namespace lava
 {
-  SubmitInfo::SubmitInfo( vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores_,
+  SubmitInfo::SubmitInfo( 
+    vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores_,
     vk::ArrayProxy<const vk::PipelineStageFlags> waitDstStageMasks_,
     vk::ArrayProxy<const std::shared_ptr<CommandBuffer>> const& commandBuffers_,
     vk::ArrayProxy<const std::shared_ptr<Semaphore>> signalSemaphores_ )
@@ -120,33 +121,36 @@ namespace lava
   }
 
 
-  /*void resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences)
+  void Fence::resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences)
   {
-    if (!fences.empty())
+    if ( !fences.empty( ) )
     {
       std::vector <vk::Fence> fencesArray;
-      for (const std::shared_ptr<Fence>& fence : fences)
+      for ( const auto& fence : fences )
       {
-        assert(fences.front()->_device == fence->_device);
-        fencesArray.push_back(*fence);
+        assert( fences.front( )->getDevice( ) == fence->getDevice( ) );
+        fencesArray.push_back( *fence );
       }
-      static_cast<vk::Device>(*fences.front()->_device).resetFences(fencesArray);
+      static_cast<vk::Device>( *fences.front( )->getDevice( ) )
+        .resetFences( fencesArray );
     }
   }
 
-  void waitForFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences, bool all, uint32_t timeout)
+  void Fence::waitForFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences, 
+    bool all, uint32_t timeout)
   {
-    if (!fences.empty())
+    if ( !fences.empty( ) )
     {
-      std::vector <vk::Fence> fencesArray;
-      for (const std::shared_ptr<Fence>& fence : fences)
+      std::vector< vk::Fence > fencesArray;
+      for (const auto& fence : fences)
       {
-        assert(fences.front()->_device == fence->_device);
+        assert( fences.front( )->getDevice( ) == fence->getDevice( ) );
         fencesArray.push_back(*fence);
       }
-      static_cast<vk::Device>(*fences.front()->_device).waitForFences(fencesArray, all, timeout);
+      static_cast<vk::Device>( *fences.front( )->getDevice( ) )
+        .waitForFences(fencesArray, all, timeout);
     }
-  }*/
+  }
 
 
 
@@ -272,10 +276,10 @@ namespace lava
     static_cast< vk::Device >( *_device ).waitForFences( vkFences, VK_TRUE, DEFAULT_FENCE_TIMEOUT );
   }
 
-  Queue::Queue( const DeviceRef& device, vk::Queue queue )
+  Queue::Queue( const DeviceRef& device, vk::Queue queue, uint32_t queueFamilyIndex )
     : VulkanResource( device )
     , _queue( queue )
+    , _queueFamilyIndex( queueFamilyIndex )
   {
-
   }
 }

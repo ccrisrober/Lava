@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <lava/version.h>
+
 PFN_vkCreateDebugReportCallbackEXT  pfnVkCreateDebugReportCallbackEXT;
 PFN_vkDestroyDebugReportCallbackEXT pfnVkDestroyDebugReportCallbackEXT;
 
@@ -88,9 +90,17 @@ namespace lava
   {
     vk::ApplicationInfo appInfo(
       appName.c_str( ),
-      VK_MAKE_VERSION( 1, 0, 0 ),
-      "FooEngine",
-      VK_MAKE_VERSION( 1, 0, 0 ),
+      VK_MAKE_VERSION( 
+        LAVA_VERSION_MAJOR, 
+        LAVA_VERSION_MINOR,
+        LAVA_VERSION_PATCH
+      ),
+      "LavaEngine",
+      VK_MAKE_VERSION( 
+        LAVA_VERSION_MAJOR, 
+        LAVA_VERSION_MINOR,
+        LAVA_VERSION_PATCH
+      ),
       VK_API_VERSION_1_0
     );
     vk::InstanceCreateInfo ci(
@@ -116,14 +126,20 @@ namespace lava
     static bool initialized = false;
     if ( !initialized )
     {
-      pfnVkCreateDebugReportCallbackEXT = reinterpret_cast< PFN_vkCreateDebugReportCallbackEXT >(
+      pfnVkCreateDebugReportCallbackEXT = reinterpret_cast
+        < PFN_vkCreateDebugReportCallbackEXT >(
         _instance.getProcAddr( "vkCreateDebugReportCallbackEXT" ) );
-      pfnVkDestroyDebugReportCallbackEXT = reinterpret_cast< PFN_vkDestroyDebugReportCallbackEXT >(
+      pfnVkDestroyDebugReportCallbackEXT = reinterpret_cast
+        < PFN_vkDestroyDebugReportCallbackEXT >(
         _instance.getProcAddr( "vkDestroyDebugReportCallbackEXT" ) );
       initialized = true;
     }
   }
   Instance::~Instance( void )
+  {
+    destroy( );
+  }
+  void Instance::destroy( void )
   {
 #ifndef NDEBUG
     if ( _debugCallback )
@@ -131,8 +147,12 @@ namespace lava
       _instance.destroyDebugReportCallbackEXT( _debugCallback );
     }
 #endif
-    _physicalDevices.clear( );
-    _instance.destroy( );
+    if ( _instance )
+    {
+      _physicalDevices.clear( );
+      _instance.destroy( );
+      //_instance = VK_NULL_HANDLE;
+    }
   }
   void Instance::createDebugReportCallback(
     const vk::DebugReportCallbackCreateInfoEXT& debugInfo )
@@ -148,16 +168,17 @@ namespace lava
     return( _physicalDevices.size( ) );
   }
 
-  std::shared_ptr<PhysicalDevice> Instance::getPhysicalDevice( uint32_t index )
+  std::shared_ptr<PhysicalDevice> Instance::getPhysicalDevice( uint32_t idx )
   {
-    assert( index < _physicalDevices.size( ) );
+    assert( idx < _physicalDevices.size( ) );
 
-    std::shared_ptr<PhysicalDevice> physicalDevice = _physicalDevicesCache[ index ].lock( );
-    if ( !physicalDevice )
+    auto phyDev = _physicalDevicesCache[ idx ].lock( );
+    if ( !phyDev )
     {
-      physicalDevice = std::make_shared<PhysicalDevice>( shared_from_this( ), _physicalDevices[ index ] );
-      _physicalDevicesCache[ index ] = physicalDevice;
+      phyDev = std::make_shared<PhysicalDevice>( shared_from_this( ), 
+        _physicalDevices[ idx ] );
+      _physicalDevicesCache[ idx ] = phyDev;
     }
-    return physicalDevice;
+    return phyDev;
   }
 }

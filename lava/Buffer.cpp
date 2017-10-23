@@ -12,9 +12,10 @@ namespace lava
     vk::SharingMode sharingMode, vk::ArrayProxy<const uint32_t>, 
     vk::MemoryPropertyFlags memoryPropertyFlags )
     : VulkanResource( device )
+    , _size( size )
   {
     vk::BufferCreateInfo bci;
-    bci.size = size;
+    bci.size = _size;
     bci.usage = usageFlags;
     bci.sharingMode = sharingMode;
 
@@ -83,7 +84,9 @@ namespace lava
   void * Buffer::map( vk::DeviceSize offset, vk::DeviceSize length ) const
   {
     void* data;
-    vk::Result result = static_cast< vk::Device >( *_device ).mapMemory( _memory, offset, length, {}, &data );
+    vk::Result result = static_cast< vk::Device >( *_device ).mapMemory( 
+      _memory, offset, length, {}, &data
+    );
     lava::utils::translateVulkanResult( result );
     assert( result == vk::Result::eSuccess );
     return data;
@@ -136,7 +139,8 @@ namespace lava
     memcpy( dst, data, length );
     unmap( );
   }
-  void Buffer::writeData( vk::DeviceSize offset, vk::DeviceSize length, const void * src )
+  void Buffer::writeData( vk::DeviceSize offset, vk::DeviceSize length, 
+    const void * src )
   {
     void* data = map( offset, length );
     memcpy( data, src, length );

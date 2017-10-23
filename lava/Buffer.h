@@ -38,14 +38,21 @@ namespace lava
     LAVA_API
     virtual ~Buffer( void );
 
+    Buffer( const Buffer& ) = delete;
+    Buffer( Buffer&& ) = delete;
+
+    Buffer& operator=( const Buffer& ) = delete;
+    Buffer& operator=( Buffer&& ) = delete;
+
     static vk::BufferUsageFlags getBufferUsage( const BufferType& type );
 
     LAVA_API
     void* map( vk::DeviceSize offset, vk::DeviceSize length ) const;
     LAVA_API
     void unmap( void );
-    template <typename T> void update( vk::DeviceSize offset, 
-      vk::ArrayProxy<const T> data, std::shared_ptr<CommandBuffer> const& cmdBuff );
+    
+    //template <typename T> void update( vk::DeviceSize offset, 
+    //  vk::ArrayProxy<const T> data, std::shared_ptr<CommandBuffer> const& cmdBuff );
 
     inline operator vk::Buffer( void ) const
     {
@@ -74,13 +81,15 @@ namespace lava
     vk::Buffer _buffer;
     vk::BufferView _view;
     vk::DeviceMemory _memory;
+
+    vk::DeviceSize _size;
   };
-  template<typename T>
+  /*template<typename T>
   inline void Buffer::update( vk::DeviceSize offset, vk::ArrayProxy<const T> data, 
     std::shared_ptr<CommandBuffer> const & cmdBuff )
   {
     // todo
-  }
+  }*/
 
   class VertexBuffer: public Buffer
   {
@@ -104,7 +113,8 @@ namespace lava
       return _type;
     }
   protected:
-    static vk::DeviceSize calcIndexSize( const vk::IndexType& type, uint32_t numIndices );
+    static vk::DeviceSize calcIndexSize( const vk::IndexType& type, 
+      uint32_t numIndices );
     vk::IndexType _type;
   };
 }

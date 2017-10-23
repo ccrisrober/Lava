@@ -6,161 +6,63 @@ namespace lava
 {
   namespace extras
   {
-    CustomFramebuffer::CustomFramebuffer( const DeviceRef & device )
-      : VulkanResource( device )
+    CustomFBO::CustomFBO( DeviceRef dev, uint32_t width, uint32_t height )
+      : VulkanResource( dev )
+      , _width( width )
+      , _height( height )
     {
     }
-    CustomFramebuffer::~CustomFramebuffer( void )
+    void CustomFBO::addColorAttachmentt( vk::Format format )
     {
-      vk::Device d = static_cast< vk::Device >( *_device );
-      for ( auto& att : attachments )
-      {
-        d.destroyImage( att.image );
-        d.destroyImageView( att.view );
-        d.freeMemory( att.memory );
-      }
-      d.destroySampler( sampler );
-      d.destroyRenderPass( renderPass );
-      d.destroyFramebuffer( framebuffer );
+      FramebufferAttachment att;
+      createAttachment( att, format, vk::ImageUsageFlagBits::eColorAttachment );
+      _colorAttachments.push_back( att );
     }
-    uint32_t CustomFramebuffer::addAttachment( const AttachmentCreateInfo ci )
+    void CustomFBO::addDepthAttachment( vk::Format format )
     {
-      FramebufferAttachment fatt;
-      fatt.format = ci.format;
-      vk::ImageAspectFlags aspectMask;
-
-      // Select aspect mask and layout depending on usage
-
-      // Color attachment
-      if ( ci.usage & vk::ImageUsageFlagBits::eColorAttachment )
-      {
-        aspectMask = vk::ImageAspectFlagBits::eColor;
-      }
-
-      // Depth (and/or stencil) attachment
-      if ( ci.usage & vk::ImageUsageFlagBits::eDepthStencilAttachment )
-      {
-        if ( fatt.hasDepth( ) )
-        {
-          aspectMask = vk::ImageAspectFlagBits::eDepth;
-        }
-        if ( fatt.hasStencil( ) )
-        {
-          aspectMask = aspectMask | vk::ImageAspectFlagBits::eStencil;
-        }
-      }
-
-      vk::ImageCreateInfo image;
-      image.setImageType( vk::ImageType::e2D );
-      image.setFormat( ci.format );
-      image.setExtent({ ci.width, ci.height, 1 });
-      image.setMipLevels( 1 );
-      image.setSamples( vk::SampleCountFlagBits::e1 );
-      image.setTiling( vk::ImageTiling::eOptimal );
-      image.setUsage( ci.usage );
-
-      vk::MemoryAllocateInfo memAlloc;
-
-      vk::Device d = static_cast< vk::Device >( *_device );
-      fatt.image = d.createImage( image );
-
-      fatt.memory = _device->allocateImageMemory( fatt.image, vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      //fatt.subresourceRange = {};
-      fatt.subresourceRange.aspectMask = aspectMask;
-      fatt.subresourceRange.levelCount = 1;
-      fatt.subresourceRange.layerCount = ci.layerCount;
-
-      vk::ImageViewCreateInfo imageView;
-      imageView.viewType = ( ci.layerCount == 1 ) ? 
-        vk::ImageViewType::e2D : vk::ImageViewType::e2DArray;
-      imageView.format = ci.format;
-      imageView.subresourceRange = fatt.subresourceRange;
-
-      imageView.subresourceRange.aspectMask = ( fatt.hasDepth( ) ) ?
-        vk::ImageAspectFlagBits::eDepth : aspectMask;
-      imageView.image = fatt.image;
-      fatt.view = d.createImageView( imageView );
-
-
-      // Fill attachment description
-      //fatt.description = {};
-      fatt.description.samples = vk::SampleCountFlagBits::e1;
-      fatt.description.loadOp = vk::AttachmentLoadOp::eClear;
-      fatt.description.storeOp = ( ci.usage & vk::ImageUsageFlagBits::eSampled ) ? 
-        vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare;
-      fatt.description.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-      fatt.description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-      fatt.description.format = ci.format;
-      fatt.description.initialLayout = vk::ImageLayout::eUndefined;
-
-      // Final layout
-      // If not, final layout depends on attachment type
-      if ( fatt.hasDepth( ) || fatt.hasStencil( ) )
-      {
-        fatt.description.finalLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-      }
-      else
-      {
-        fatt.description.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-      }
-
-      attachments.push_back( fatt );
-
-      return attachments.size( ) - 1;
+      createAttachment( _depthAttachment, format, 
+        vk::ImageUsageFlagBits::eDepthStencilAttachment );
     }
-    void CustomFramebuffer::createRenderPass( void )
+    void CustomFBO::build( void )
     {
-      vk::Device d = static_cast< vk::Device >( *_device );
-
-      std::vector<vk::AttachmentDescription> attDescriptions( attachments.size( ) );
-      for ( auto& att : attachments )
+      std::vector<std::shared_ptr<ImageView>> imageViewVector;
+      std::vector<vk::AttachmentDescription> attDesc; // ( _colorAttachments.size( ) + 1 );
+      for ( auto& att : _colorAttachments )
       {
-        attDescriptions.push_back( att.description );
+        attDesc.push_back( vk::AttachmentDescription(
+          {}, att.format, vk::SampleCountFlagBits::e1,
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+          vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal
+        ) );
+
+        imageViewVector.push_back( att.view );
+      }
+      attDesc.push_back( vk::AttachmentDescription(
+        {}, _depthAttachment.format, vk::SampleCountFlagBits::e1,
+        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal
+      ) );
+      imageViewVector.push_back( _depthAttachment.view );
+
+
+      std::vector<vk::AttachmentReference> colorAttachments;
+      for ( uint32_t i = 0, l = _colorAttachments.size( ); i < l; ++i )
+      {
+        colorAttachments.push_back( { i, vk::ImageLayout::eColorAttachmentOptimal } );
       }
 
-      // Collection attachments references
-      std::vector<vk::AttachmentReference> colorReferences;
-      vk::AttachmentReference depthRef;
-      bool hasDepth = false;
+      vk::AttachmentReference depthRef( colorAttachments.size( ),
+        vk::ImageLayout::eDepthStencilAttachmentOptimal );
 
-      uint32_t attachmentIndex = 0;
-
-      for ( auto& att : attachments )
-      {
-        if ( att.isDepthStencil( ) )
-        {
-          // Only one depth attachment allowed
-          assert( !hasDepth );
-          depthRef.attachment = attachmentIndex;
-          depthRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-          hasDepth = true;
-        }
-        else
-        {
-          colorReferences.push_back( vk::AttachmentReference
-          { 
-            attachmentIndex, 
-            vk::ImageLayout::eColorAttachmentOptimal 
-          } );
-          ++attachmentIndex;
-        }
-      }
-
-      // Default render pass setup uses only one subpass
-      vk::SubpassDescription subpass = {};
+      vk::SubpassDescription subpass;
       subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-      if ( !colorReferences.empty( ) )
-      {
-        subpass.pColorAttachments = colorReferences.data( );
-        subpass.colorAttachmentCount = static_cast<uint32_t>( colorReferences.size( ) );
-      }
-      if ( hasDepth )
-      {
-        subpass.pDepthStencilAttachment = &depthRef;
-      }
+      subpass.colorAttachmentCount = colorAttachments.size( );
+      subpass.pColorAttachments = colorAttachments.data( );
+      subpass.pDepthStencilAttachment = &depthRef;
 
-      // Use subpass dependencies for attachment layout transitions
+      // Use subpass dependencies for attachment layput transitions
       std::array<vk::SubpassDependency, 2> dependencies;
 
       dependencies[ 0 ].srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -168,53 +70,95 @@ namespace lava
       dependencies[ 0 ].srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
       dependencies[ 0 ].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
       dependencies[ 0 ].srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-      dependencies[ 0 ].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+      dependencies[ 0 ].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead
+        | vk::AccessFlagBits::eColorAttachmentWrite;
       dependencies[ 0 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
       dependencies[ 1 ].srcSubpass = 0;
       dependencies[ 1 ].dstSubpass = VK_SUBPASS_EXTERNAL;
       dependencies[ 1 ].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
       dependencies[ 1 ].dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
-      dependencies[ 1 ].srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+      dependencies[ 1 ].srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead
+        | vk::AccessFlagBits::eColorAttachmentWrite;
       dependencies[ 1 ].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
       dependencies[ 1 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
-      // Create render pass
-      vk::RenderPassCreateInfo renderPassInfo;
-      renderPassInfo.pAttachments = attDescriptions.data( );
-      renderPassInfo.attachmentCount = static_cast<uint32_t>( attDescriptions.size( ) );
-      renderPassInfo.subpassCount = 1;
-      renderPassInfo.pSubpasses = &subpass;
-      renderPassInfo.dependencyCount = 2;
-      renderPassInfo.pDependencies = dependencies.data( );
-      renderPass = d.createRenderPass( renderPassInfo );
+      renderPass = _device->createRenderPass( attDesc, subpass, dependencies );
 
-      std::vector<vk::ImageView> attachmentViews;
-      for ( auto attachment : attachments )
+      _fbo = _device->createFramebuffer( renderPass,
+        imageViewVector, { _width, _height }, 1
+      );
+
+
+
+      // Create sampler to sample from the color attachments
+      vk::SamplerCreateInfo sampler;
+      sampler.magFilter = vk::Filter::eNearest;
+      sampler.minFilter = vk::Filter::eNearest;
+      sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
+      sampler.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+      sampler.addressModeV = sampler.addressModeU;
+      sampler.addressModeW = sampler.addressModeU;
+      sampler.mipLodBias = 0.0f;
+      sampler.maxAnisotropy = 1.0f;
+      sampler.minLod = 0.0f;
+      sampler.maxLod = 1.0f;
+      sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
+
+      vk::Device device = static_cast< vk::Device >( *_device );
+
+      colorSampler = device.createSampler( sampler );
+
+      semaphore = _device->createSemaphore( );
+    }
+    void CustomFBO::createAttachment( FramebufferAttachment& fatt, vk::Format format,
+      vk::ImageUsageFlags usage )
+    {
+      vk::ImageAspectFlags aspectMask;
+      vk::ImageLayout imageLayout;
+
+      fatt.format = format;
+
+      if ( usage & vk::ImageUsageFlagBits::eColorAttachment )
       {
-        attachmentViews.push_back( attachment.view );
+        aspectMask = vk::ImageAspectFlagBits::eColor;
+        imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+      }
+      if ( usage & vk::ImageUsageFlagBits::eDepthStencilAttachment )
+      {
+        aspectMask = vk::ImageAspectFlagBits::eDepth
+          | vk::ImageAspectFlagBits::eStencil;
+        imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
       }
 
-      // Find. max number of layers across attachments
-      uint32_t maxLayers = 0;
-      for ( auto attachment : attachments )
-      {
-        if ( attachment.subresourceRange.layerCount > maxLayers )
-        {
-          maxLayers = attachment.subresourceRange.layerCount;
-        }
-      }
+      vk::ImageCreateInfo ici;
+      ici.imageType = vk::ImageType::e2D;
+      ici.format = format;
+      ici.extent.width = _width;
+      ici.extent.height = _height;
+      ici.mipLevels = 1;
+      ici.extent.depth = 1;
+      ici.arrayLayers = 1;
+      ici.samples = vk::SampleCountFlagBits::e1;
+      ici.tiling = vk::ImageTiling::eOptimal;
+      ici.usage = usage | vk::ImageUsageFlagBits::eSampled;
 
-      vk::FramebufferCreateInfo fci;
-      fci.setRenderPass( renderPass );
-      fci.setAttachmentCount( attachmentViews.size( ) );
-      fci.setPAttachments( attachmentViews.data( ) );
+      fatt.image = _device->createImage( {}, ici.imageType, ici.format,
+        ici.extent, 1, 1, ici.samples,
+        ici.tiling, ici.usage,
+        ici.sharingMode, {}, ici.initialLayout, {} );
 
-      fci.setWidth( width );
-      fci.setHeight( height );
-      fci.setLayers( maxLayers );
-
-      framebuffer = d.createFramebuffer( fci );
+      vk::ImageSubresourceRange isr;
+      isr.aspectMask = aspectMask;
+      isr.baseMipLevel = 0;
+      isr.levelCount = 1;
+      isr.baseArrayLayer = 0;
+      isr.layerCount = 1;
+      fatt.view = fatt.image->createImageView( vk::ImageViewType::e2D, format,
+        vk::ComponentMapping{ vk::ComponentSwizzle::eR,
+        vk::ComponentSwizzle::eG,
+        vk::ComponentSwizzle::eB,
+        vk::ComponentSwizzle::eA }, isr );
     }
   }
 }

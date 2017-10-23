@@ -1,6 +1,8 @@
 #ifndef __LAVA_FRAMEBUFFER__
 #define __LAVA_FRAMEBUFFER__
 
+#include <lava/api.h>
+
 #include "includes.hpp"
 
 #include "VulkanResource.h"
@@ -14,9 +16,12 @@ namespace lava
   class Framebuffer : public VulkanResource, private NonCopyable<Framebuffer>
   {
   public:
+    LAVA_API
     Framebuffer( const DeviceRef& device, const std::shared_ptr<RenderPass>& renderPass,
-      const std::vector<std::shared_ptr<ImageView>>& attachments, const vk::Extent2D& extent, uint32_t layers );
-    virtual ~Framebuffer( );
+      const std::vector<std::shared_ptr<ImageView>>& attachments, 
+      const vk::Extent2D& extent, uint32_t layers );
+    LAVA_API
+    virtual ~Framebuffer( void );
 
     inline operator vk::Framebuffer( void ) const
     {
