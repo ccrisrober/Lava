@@ -17,10 +17,22 @@ if( LAVA_WITH_EXAMPLES )
     ${CMAKE_CURRENT_SOURCE_DIR}/routes.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
+  set( LAVAMULTILIGHT_HEADERS
+    utils/Camera.h
+  )
+  set( LAVAMULTILIGHT_SOURCES MultiLight.cpp )
+  set( LAVAMULTILIGHT_LINK_LIBRARIES lava )
+  common_application( lavaMultiLight )
+
   set( LAVADEFERRED_HEADERS )
   set( LAVADEFERRED_SOURCES Deferred.cpp )
   set( LAVADEFERRED_LINK_LIBRARIES lava )
   common_application( lavaDeferred )
+
+  set( LAVALIGHTDEMO_HEADERS )
+  set( LAVALIGHTDEMO_SOURCES LightDemo.cpp )
+  set( LAVALIGHTDEMO_LINK_LIBRARIES lava )
+  common_application( lavaLightDemo )
 
   set( LAVATRIES_HEADERS )
   set( LAVATRIES_SOURCES Tries.cpp )
@@ -124,6 +136,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAMATCAP_SOURCES Matcap.cpp )
   set( LAVAMATCAP_LINK_LIBRARIES lava )
   common_application( lavaMatcap )
+
+  set( LAVASHADOWMAPPING_HEADERS )
+  set( LAVASHADOWMAPPING_SOURCES ShadowMapping.cpp )
+  set( LAVASHADOWMAPPING_LINK_LIBRARIES lava )
+  common_application( lavaShadowMapping )
   
   set( LAVASPECIALIZATIONCONSTANT_HEADERS )
   set( LAVASPECIALIZATIONCONSTANT_SOURCES SpecializationConstant.cpp )
@@ -159,6 +176,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAMULTIVERTEX_SOURCES MultiVertex.cpp )
   set( LAVAMULTIVERTEX_LINK_LIBRARIES lava )
   common_application( lavaMultiVertex )
+
+  set( LAVACOMPUTERAYTRACING_HEADERS )
+  set( LAVACOMPUTERAYTRACING_SOURCES ComputeRaytracing.cpp )
+  set( LAVACOMPUTERAYTRACING_LINK_LIBRARIES lava )
+  common_application( lavaComputeRaytracing )
 ##
 ##  set( LAVAICO_HEADERS )
 ##  set( LAVAICO_SOURCES Ico.cpp )
@@ -189,16 +211,21 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAMULTIVIEWPORT_SOURCES MultiViewport.cpp )
   set( LAVAMULTIVIEWPORT_LINK_LIBRARIES lava )
   common_application( lavaMultiViewport )
-##
-##  set( LAVAHDR_HEADERS )
-##  set( LAVAHDR_SOURCES HDR.cpp )
-##  set( LAVAHDR_LINK_LIBRARIES lava )
-##  common_application( lavaHDR )
+
+  set( LAVAHDR_HEADERS )
+  set( LAVAHDR_SOURCES HDR.cpp )
+  set( LAVAHDR_LINK_LIBRARIES lava )
+  common_application( lavaHDR )
 
   set( LAVATESSELATEDTRIANGLE_HEADERS )
   set( LAVATESSELATEDTRIANGLE_SOURCES TesselatedTriangle.cpp )
   set( LAVATESSELATEDTRIANGLE_LINK_LIBRARIES lava )
   common_application( lavaTesselatedTriangle )
+
+  set( LAVAMULTIDESCRIPTOR_HEADERS )
+  set( LAVAMULTIDESCRIPTOR_SOURCES MultiDescriptor.cpp )
+  set( LAVAMULTIDESCRIPTOR_LINK_LIBRARIES lava )
+  common_application( lavaMultiDescriptor )
 ##
 ##  set( LAVACOMPUTEDEMO_HEADERS )
 ##  set( LAVACOMPUTEDEMO_SOURCES ComputeDemo.cpp )
@@ -214,6 +241,17 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
   set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
   common_application( lavaPlanarReflection )
+
+  set( LAVASKYBOX_HEADERS )
+  set( LAVASKYBOX_SOURCES Skybox.cpp )
+  set( LAVASKYBOX_LINK_LIBRARIES lava )
+  common_application( lavaSkybox )
+
+  set( LAVADEPTHOFFIELD_HEADERS )
+  set( LAVADEPTHOFFIELD_SOURCES DepthOfField.cpp )
+  set( LAVADEPTHOFFIELD_LINK_LIBRARIES lava )
+  common_application( lavaDepthOfField )
+  
 ##
 ##  set( LAVACOMPUTEPOSTEFFECT_HEADERS )
 ##  set( LAVACOMPUTEPOSTEFFECT_SOURCES ComputePostEffect.cpp )

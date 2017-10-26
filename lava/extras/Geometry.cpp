@@ -122,7 +122,7 @@ namespace lava
     {
       _vbo->bind( cmd );
       _ibo->bind( cmd );
-      cmd->drawIndexed( _numIndices, numInstance, 0, 0, 1 );
+      cmd->drawIndexed( _numIndices, numInstance, 0, 0, 0 );
     }
   }
 }

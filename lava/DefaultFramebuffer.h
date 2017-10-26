@@ -6,6 +6,8 @@
 #include "Device.h"
 #include "Surface.h"
 
+#include "utils.hpp"
+
 namespace lava
 {
   class DefaultFramebuffer
@@ -27,7 +29,7 @@ namespace lava
       return _framebuffers[ _swapchainIndex ];
     }
     void acquireNextFrame( uint64_t timeout = UINT64_MAX, 
-      const std::shared_ptr<Fence>& fence = {} )
+      const std::shared_ptr<Fence>& fence = nullptr )
     {
       _swapchainIndex = _swapchain->acquireNextImage( timeout, fence );
     }
@@ -41,6 +43,8 @@ namespace lava
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = {} )
     {
       auto results = queue->present( waitSemaphores, _swapchain, _swapchainIndex );
+      //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
+      //std::cout << str << std::endl;
     }
   private:
     void clear( vk::SwapchainKHR swapChain );

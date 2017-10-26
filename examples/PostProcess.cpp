@@ -215,7 +215,6 @@ public:
     uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
-  bool enable_wire = false;
   std::shared_ptr<CommandBuffer> cmdSolidBuffer;
 
   void buildCmdBuffers( void )
@@ -295,12 +294,6 @@ public:
   {
     switch ( key )
     {
-    case GLFW_KEY_E:
-      enable_wire = true;
-      break;
-    case GLFW_KEY_R:
-      enable_wire = false;
-      break;
     case GLFW_KEY_ESCAPE:
       getWindow( )->close( );
       break;

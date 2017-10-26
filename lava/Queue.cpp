@@ -254,7 +254,7 @@ namespace lava
     return results;
   }
 
-  void Queue::waitIdle( )
+  void Queue::waitIdle( void )
   {
     _queue.waitIdle( );
   }

@@ -27,7 +27,6 @@ void main( void )
         result = vec3(1.0) - exp(-hdrColor * uboHDR.exposure);
         // also gamma correct while we're at it       
         result = pow(result, vec3(1.0 / gamma));
-        fragColor = vec4(result, 1.0);
     }
     else
     {

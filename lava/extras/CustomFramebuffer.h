@@ -62,6 +62,8 @@ namespace lava
       LAVA_API
       void addColorAttachmentt( vk::Format format );
       LAVA_API
+      void addColorDepthAttachment( vk::Format format );
+      LAVA_API
       void addDepthAttachment( vk::Format format );
       LAVA_API
       void build( void );
@@ -71,6 +73,7 @@ namespace lava
     protected:
       uint32_t _width, _height;
       FramebufferAttachment _depthAttachment;
+      bool hasDepth = false;
     public:
       std::shared_ptr< Framebuffer > _fbo;
       std::vector<FramebufferAttachment> _colorAttachments;

@@ -451,6 +451,7 @@ public:
   }
 
   std::shared_ptr<CommandBuffer> cmdMRTBuffer;
+
   void buildCmdBuffers( void )
   {
     uint32_t width = _defaultFramebuffer->getExtent( ).width;

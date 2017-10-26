@@ -8,13 +8,8 @@ struct
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
+  glm::vec3 instances[ 3 ];
 } uboVS;
-
-struct
-{
-  bool enable_hdr = true;
-  float exposure = 2.2f;
-} uboFS;
 
 class MyApp : public VulkanApp
 {
@@ -38,17 +33,14 @@ public:
   } descriptorSets;
 
   std::shared_ptr<Buffer> uniformBufferMVP;
-  std::shared_ptr<Buffer> uniformBufferHDR;
 
-  struct
-  {
-    std::shared_ptr<DescriptorSetLayout> solid;
-    std::shared_ptr<DescriptorSetLayout> postprocess;
-  } descriptorSetLayout;
+  std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
 
   std::shared_ptr<lava::extras::CustomFBO> fbo;
+
+  std::shared_ptr<lava::extras::CustomFBO> shadowFBO;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -56,12 +48,26 @@ public:
     geometry = std::make_shared<lava::extras::Geometry>( _device,
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
 
-    fbo = std::make_shared<lava::extras::CustomFBO>( _device, width, height );
+    shadowFBO = std::make_shared<lava::extras::CustomFBO>( _device, 2048, 2048 );
+    shadowFBO->addDepthAttachment( vk::Format::eD16Unorm );
+    shadowFBO->build( );
 
-    fbo->addColorAttachmentt( vk::Format::eR16G16B16A16Sfloat );
-    fbo->addDepthAttachment( this->_depthFormat );
+    vk::SamplerCreateInfo sampler;
+    sampler.magFilter = vk::Filter::eLinear;
+    sampler.minFilter = vk::Filter::eLinear;
+    sampler.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    sampler.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+    sampler.addressModeV = sampler.addressModeU;
+    sampler.addressModeW = sampler.addressModeU;
+    sampler.mipLodBias = 0.0f;
+    sampler.maxAnisotropy = 1.0f;
+    sampler.minLod = 0.0f;
+    sampler.maxLod = 1.0f;
+    sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
 
-    fbo->build( );
+    vk::Device device = static_cast< vk::Device >( *_device );
+
+    shadowFBO->colorSampler = device.createSampler( sampler );
 
     // MVP buffer
     {
@@ -73,18 +79,6 @@ public:
         vk::MemoryPropertyFlagBits::eHostCoherent );
     }
 
-    // HDR buffer
-    {
-      uint32_t hdrBufferSize = sizeof( uboFS );
-      uniformBufferHDR = _device->createBuffer( hdrBufferSize,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
-
-    updateUniformBuffers( );
-
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -93,60 +87,37 @@ public:
         0,
         vk::DescriptorType::eUniformBuffer,
         vk::ShaderStageFlagBits::eVertex
-      )
-    };
-    descriptorSetLayout.solid = _device->createDescriptorSetLayout( dslbs );
-    pipelineLayouts.solid = _device->createPipelineLayout( descriptorSetLayout.solid );
-
-    dslbs =
-    {
-      // Binding 0 : Color texture target
-      DescriptorSetLayoutBinding(
-        0,
-        vk::DescriptorType::eCombinedImageSampler,
-        vk::ShaderStageFlagBits::eFragment
       ),
-      // Binding 1 : fragment shader uniform buffer (ubo HDR)
+      // Binding 1 : Color texture target
       DescriptorSetLayoutBinding(
         1,
-        vk::DescriptorType::eUniformBuffer,
+        vk::DescriptorType::eCombinedImageSampler,
         vk::ShaderStageFlagBits::eFragment
       )
     };
-    descriptorSetLayout.postprocess = _device->createDescriptorSetLayout( dslbs );
-    pipelineLayouts.postprocess = _device->createPipelineLayout( 
-      descriptorSetLayout.postprocess
-    );
+    descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+
+    pipelineLayouts.solid = _device->createPipelineLayout( descriptorSetLayout );
+    pipelineLayouts.postprocess = _device->createPipelineLayout( descriptorSetLayout );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0 );
-    PipelineShaderStageCreateInfo vertexStage = 
-      _device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ),
-        vk::ShaderStageFlagBits::eVertex
-      );
-    PipelineShaderStageCreateInfo fragmentStage =
-      _device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ),
-        vk::ShaderStageFlagBits::eFragment
-      );
+
+    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0,
-            vk::Format::eR32G32B32Sfloat, 
-            offsetof( lava::extras::Vertex, position )
-          ),
+          vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
           vk::VertexInputAttributeDescription( 1, 0,
-            vk::Format::eR32G32B32Sfloat, 
-            offsetof( lava::extras::Vertex, normal )
-          ),
+          vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
           vk::VertexInputAttributeDescription( 2, 0,
-            vk::Format::eR32G32Sfloat, 
-            offsetof( lava::extras::Vertex, texCoord )
-          )
+          vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {},
@@ -178,15 +149,17 @@ public:
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayouts.solid, fbo->renderPass );
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
+    std::array<vk::DescriptorPoolSize, 2> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 )
+    };
     std::shared_ptr<DescriptorPool> descriptorPool =
       _device->createDescriptorPool( {}, 2, poolSize );
 
     // Init descriptor set
     descriptorSets.solid = _device->allocateDescriptorSet(
-      descriptorPool, descriptorSetLayout.solid );
+      descriptorPool, descriptorSetLayout );
 
     std::vector<lava::WriteDescriptorSet> wdss =
     {
@@ -203,23 +176,18 @@ public:
 
     // Init descriptor set
     descriptorSets.postprocess = _device->allocateDescriptorSet(
-      descriptorPool, descriptorSetLayout.postprocess );
+      descriptorPool, descriptorSetLayout );
 
     std::vector<lava::WriteDescriptorSet> wdss2 =
     {
       lava::WriteDescriptorSet(
-        descriptorSets.postprocess, 0, 0,
+        descriptorSets.postprocess, 1, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         DescriptorImageInfo(
           vk::ImageLayout::eShaderReadOnlyOptimal,
           std::make_shared<vk::ImageView>( *fbo->_colorAttachments[ 0 ].view ),
           std::make_shared<vk::Sampler>( fbo->colorSampler )
         ), nullptr
-      ),
-      lava::WriteDescriptorSet(
-        descriptorSets.postprocess, 1, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( uniformBufferHDR, 0,
-          sizeof( uboFS ) )
       )
     };
     _device->updateDescriptorSets( wdss2, {} );
@@ -228,25 +196,16 @@ public:
     vk::PipelineInputAssemblyStateCreateInfo assemblyPP( {},
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
 
-    // init shaders
-    PipelineShaderStageCreateInfo ppVertexStage = 
-      _device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
-        vk::ShaderStageFlagBits::eVertex
-      );
-    PipelineShaderStageCreateInfo ppFragmentStage = 
-      _device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "hdr_frag.spv" ),
-        vk::ShaderStageFlagBits::eFragment
-      );
+    PipelineShaderStageCreateInfo ppVertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+    PipelineShaderStageCreateInfo ppFragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "vignette_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     pipelines.postprocess = _device->createGraphicsPipeline( pipelineCache, {},
     { ppVertexStage, ppFragmentStage }, emptyInputState, assemblyPP, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayouts.postprocess, _renderPass );
-
-    //updateUniformBuffers( );
-    //buildCmdBuffers( );
+    buildCmdBuffers( );
   }
   void updateUniformBuffers( void )
   {
@@ -271,8 +230,6 @@ public:
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
     uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
-
-    uniformBufferHDR->writeData( 0, sizeof( uboFS ), &uboFS );
   }
 
   std::shared_ptr<CommandBuffer> cmdSolidBuffer;
@@ -354,18 +311,6 @@ public:
   {
     switch ( key )
     {
-    case GLFW_KEY_Q:
-      uboFS.enable_hdr = false;
-      break;
-    case GLFW_KEY_W:
-      uboFS.enable_hdr = true;
-      break;
-    case GLFW_KEY_A:
-      uboFS.exposure -= 0.1f;
-      break;
-    case GLFW_KEY_S:
-      uboFS.exposure += 0.1f;
-      break;
     case GLFW_KEY_ESCAPE:
       getWindow( )->close( );
       break;
@@ -384,13 +329,13 @@ int main( int argc, char** argv )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Postprocess (HDR)", 800, 600 );
+    VulkanApp* app = new MyApp( "Shadow Mapping", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      // app->waitEvents( );
       app->paint( );
     }
 

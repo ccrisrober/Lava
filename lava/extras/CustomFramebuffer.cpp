@@ -18,10 +18,18 @@ namespace lava
       createAttachment( att, format, vk::ImageUsageFlagBits::eColorAttachment );
       _colorAttachments.push_back( att );
     }
+    void CustomFBO::addColorDepthAttachment( vk::Format format )
+    {
+      createAttachment( _depthAttachment, format,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment |
+        vk::ImageUsageFlagBits::eSampled );
+    }
     void CustomFBO::addDepthAttachment( vk::Format format )
     {
+      if ( hasDepth ) throw;
       createAttachment( _depthAttachment, format, 
         vk::ImageUsageFlagBits::eDepthStencilAttachment );
+      hasDepth = true;
     }
     void CustomFBO::build( void )
     {
@@ -30,7 +38,7 @@ namespace lava
       for ( auto& att : _colorAttachments )
       {
         attDesc.push_back( vk::AttachmentDescription(
-          {}, att.format, vk::SampleCountFlagBits::e1,
+        {}, att.format, vk::SampleCountFlagBits::e1,
           vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
           vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
           vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal
@@ -38,13 +46,16 @@ namespace lava
 
         imageViewVector.push_back( att.view );
       }
-      attDesc.push_back( vk::AttachmentDescription(
+      if ( hasDepth )
+      {
+        attDesc.push_back( vk::AttachmentDescription(
         {}, _depthAttachment.format, vk::SampleCountFlagBits::e1,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal
-      ) );
-      imageViewVector.push_back( _depthAttachment.view );
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+          vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal
+        ) );
+        imageViewVector.push_back( _depthAttachment.view );
+      }
 
 
       std::vector<vk::AttachmentReference> colorAttachments;
@@ -53,14 +64,17 @@ namespace lava
         colorAttachments.push_back( { i, vk::ImageLayout::eColorAttachmentOptimal } );
       }
 
-      vk::AttachmentReference depthRef( colorAttachments.size( ),
-        vk::ImageLayout::eDepthStencilAttachmentOptimal );
-
       vk::SubpassDescription subpass;
       subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
       subpass.colorAttachmentCount = colorAttachments.size( );
       subpass.pColorAttachments = colorAttachments.data( );
-      subpass.pDepthStencilAttachment = &depthRef;
+
+      if ( hasDepth )
+      {
+        vk::AttachmentReference depthRef( colorAttachments.size( ),
+          vk::ImageLayout::eDepthStencilAttachmentOptimal );
+        subpass.pDepthStencilAttachment = &depthRef;
+      }
 
       // Use subpass dependencies for attachment layput transitions
       std::array<vk::SubpassDependency, 2> dependencies;
@@ -111,8 +125,8 @@ namespace lava
 
       semaphore = _device->createSemaphore( );
     }
-    void CustomFBO::createAttachment( FramebufferAttachment& fatt, vk::Format format,
-      vk::ImageUsageFlags usage )
+    void CustomFBO::createAttachment( FramebufferAttachment& fatt, 
+      vk::Format format, vk::ImageUsageFlags usage )
     {
       vk::ImageAspectFlags aspectMask;
       vk::ImageLayout imageLayout;
@@ -128,6 +142,13 @@ namespace lava
       {
         aspectMask = vk::ImageAspectFlagBits::eDepth
           | vk::ImageAspectFlagBits::eStencil;
+        imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+      }
+      // For only depth textures ( shadow mapping )
+      if ( usage & (vk::ImageUsageFlagBits::eDepthStencilAttachment | 
+        vk::ImageUsageFlagBits::eSampled ) )
+      {
+        aspectMask = vk::ImageAspectFlagBits::eDepth;
         imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
       }
 

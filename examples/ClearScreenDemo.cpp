@@ -10,6 +10,35 @@ public:
     : VulkanApp( title, width, height )
   {
   }
+  virtual void doPaint( void ) override
+  {
+    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+
+    float timeValue = glfwGetTime( );
+    float greenValue = sin( timeValue ) / 2.0f + 0.5f;
+
+    std::array<float, 4> ccv = { 0.0f, greenValue, 0.0f, 1.0f };
+    commandBuffer->begin( );
+    commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ),
+      vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ), { vk::ClearValue( ccv ),
+      vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) },
+      vk::SubpassContents::eInline );
+    commandBuffer->setViewport( 0, { vk::Viewport( 0.0f, 0.0f,
+      ( float ) _defaultFramebuffer->getExtent( ).width,
+      ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) } );
+    commandBuffer->setScissor( 0, { vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) } );
+    commandBuffer->endRenderPass( );
+    commandBuffer->end( );
+
+    _graphicsQueue->submit( SubmitInfo{
+      { _defaultFramebuffer->getPresentSemaphore( ) },
+      { vk::PipelineStageFlagBits::eColorAttachmentOutput },
+      commandBuffer,
+      _renderComplete
+    } );
+  }
   void keyEvent(int key, int scancode, int action, int mods)
   {
     switch (key)

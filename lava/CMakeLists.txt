@@ -31,6 +31,7 @@ set( LAVA_PUBLIC_HEADERS
 
   Texture.h
   Texture2D.h
+  Texture3D.h
   Texture2DArray.h
   TextureCubemap.h
 
@@ -78,6 +79,7 @@ set( LAVA_SOURCES
 
   Texture.cpp
   Texture2D.cpp
+  Texture3D.cpp
   Texture2DArray.cpp
   TextureCubemap.cpp
 
