@@ -6,8 +6,195 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stbi/stb_image.h>
 
+#include "Device.h"
+#include "PhysicalDevice.h"
+
 namespace lava
 {
+  void utils::saveToImage( const std::string & filename, vk::Format colorFormat, 
+    std::shared_ptr<Device> dev, std::shared_ptr<Image> currentImage,
+    uint32_t width, uint32_t height, std::shared_ptr<CommandPool> cmdPool,
+    std::shared_ptr<Queue> queue )
+  {
+    bool supportBlit = true;
+
+    vk::FormatProperties formatProps = dev->_physicalDevice->getFormatProperties( colorFormat );
+    // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
+    if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
+    {
+      supportBlit = false;
+    }
+    // Check if the device supports blitting to linear images 
+    formatProps = dev->_physicalDevice->getFormatProperties( vk::Format::eR8G8B8A8Snorm );
+    if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) )
+    {
+      supportBlit = false;
+    }
+
+    // Source for the copy in the last renderer swapchain image
+    std::shared_ptr<Image> srcImage = currentImage;
+
+    std::shared_ptr<Image> dstImage = dev->createImage( { },
+      vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm, { width, height, 1 }, 1, 1,
+      vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, 
+      vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive, { }, 
+      vk::ImageLayout::eUndefined, vk::MemoryPropertyFlagBits::eHostVisible | 
+      vk::MemoryPropertyFlagBits::eHostCoherent
+    );  // create, allocate + bind
+
+    std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
+
+    copyCmd->beginSimple( );
+
+    // Transition destination image to transfer destination layout
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
+        lava::ImageMemoryBarrier(
+          ( vk::AccessFlagBits )0, vk::AccessFlagBits::eTransferWrite,
+          vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
+          0, 0, dstImage,
+          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
+        )
+      }
+    );
+
+    // Transition swapchain image from present to transfer source layout
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
+        lava::ImageMemoryBarrier(
+          vk::AccessFlagBits::eMemoryRead, vk::AccessFlagBits::eTransferRead,
+          vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eTransferSrcOptimal,
+          0, 0, srcImage,
+          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
+        )
+      }
+    );
+
+    // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
+    if ( supportBlit )
+    {
+      // Define the region to blit (we will blit the whole swapchain image)
+      vk::Offset3D blitSize( width, height, 1 );
+      vk::ImageBlit imageBlitRegion;
+      imageBlitRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageBlitRegion.srcSubresource.layerCount = 1;
+      imageBlitRegion.srcOffsets[ 1 ] = blitSize;
+      imageBlitRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageBlitRegion.dstSubresource.layerCount = 1;
+      imageBlitRegion.dstOffsets[ 1 ] = blitSize;
+
+      // Issue the blit command
+      copyCmd->blitImage( 
+        srcImage, vk::ImageLayout::eTransferSrcOptimal, 
+        dstImage, vk::ImageLayout::eTransferDstOptimal, 
+        imageBlitRegion, vk::Filter::eNearest
+      );
+    }
+    else
+    {
+      // Otherwise use image copy (requires us to manually flip components)
+      vk::ImageCopy imageCopyRegion;
+      imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageCopyRegion.srcSubresource.layerCount = 1;
+      imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageCopyRegion.dstSubresource.layerCount = 1;
+      imageCopyRegion.extent.width = width;
+      imageCopyRegion.extent.height = height;
+      imageCopyRegion.extent.depth = 1;
+
+      // Issue the copy command
+      copyCmd->copyImage(
+        srcImage, vk::ImageLayout::eTransferSrcOptimal,
+        dstImage, vk::ImageLayout::eTransferDstOptimal,
+        imageCopyRegion
+      );
+    }
+
+    // Transition destination image to general layout, which is the required layout for mapping the image memory later on
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
+        lava::ImageMemoryBarrier(
+          vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eMemoryRead,
+          vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
+          0, 0, dstImage,
+          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
+        )
+      }
+    );
+
+    // Transition back the swap chain image after the blit is done
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
+        lava::ImageMemoryBarrier(
+          vk::AccessFlagBits::eTransferRead, vk::AccessFlagBits::eMemoryRead,
+          vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::ePresentSrcKHR,
+          0, 0, srcImage,
+          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
+        )
+      }
+    );
+    // Send command buffer
+    copyCmd->end( );
+
+    queue->submitAndWait( copyCmd );
+
+    // Get layout of the image (including row pitch)
+    vk::ImageSubresource subResource;
+    subResource.aspectMask = vk::ImageAspectFlagBits::eColor;
+    vk::SubresourceLayout subResourceLayout;
+
+    static_cast< vk::Device >( *dev ).getImageSubresourceLayout( 
+      static_cast< vk::Image >( *dstImage ), subResource );
+    const char* data;
+    static_cast< vk::Device >( *dev ).mapMemory( 
+      dstImage->imageMemory, 0, VK_WHOLE_SIZE, { }, ( void** ) &data );
+    data += subResourceLayout.offset;
+
+    std::ofstream file( filename, std::ios::out | std::ios::binary );
+
+
+    // ppm header
+    file << "P6\n" << width << "\n" << height << "\n" << 255 << "\n";
+
+    // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
+    bool colorSwizzle = false;
+    // Check if source is BGR 
+    // Note: Not complete, only contains most common and basic BGR surface formats for demonstation purposes
+    if ( !supportBlit )
+    {
+      std::vector<vk::Format> formatsBGR = { vk::Format::eB8G8R8A8Srgb, vk::Format::eB8G8R8A8Unorm, vk::Format::eB8G8R8A8Snorm };
+      colorSwizzle = ( std::find( formatsBGR.begin( ), formatsBGR.end( ), colorFormat ) != formatsBGR.end( ) );
+    }
+
+    // ppm binary pixel data
+    for ( uint32_t y = 0; y < height; ++y )
+    {
+      unsigned int *row = ( unsigned int* ) data;
+      for ( uint32_t x = 0; x < width; ++x )
+      {
+        if ( colorSwizzle )
+        {
+          file.write( ( char* ) row + 2, 1 );
+          file.write( ( char* ) row + 1, 1 );
+          file.write( ( char* ) row, 1 );
+        }
+        else
+        {
+          file.write( ( char* ) row, 3 );
+        }
+        row++;
+      }
+      data += subResourceLayout.rowPitch;
+    }
+    file.close( );
+
+    std::cout << "Screenshot saved to disk" << std::endl;
+
+    // Clean up resources
+    // TODO: vkUnmapMemory( device, dstImageMemory );
+    // TODO: vkFreeMemory( device, dstImageMemory, nullptr );
+    // TODO: vkDestroyImage( device, dstImage, nullptr );
+  }
   unsigned char* utils::loadImageTexture( const std::string& fileName,
     uint32_t& width, uint32_t& height, uint32_t& numChannels )
   {

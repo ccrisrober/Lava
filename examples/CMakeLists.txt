@@ -24,6 +24,20 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAMULTILIGHT_LINK_LIBRARIES lava )
   common_application( lavaMultiLight )
 
+  set( LAVASPECULARMODE_HEADERS
+    utils/Camera.h
+  )
+  set( LAVASPECULARMODE_SOURCES SpecularMode.cpp )
+  set( LAVASPECULARMODE_LINK_LIBRARIES lava )
+  common_application( lavaSpecularMode )
+
+  set( LAVASTENCILOUTLINE_HEADERS
+    utils/Camera.h
+  )
+  set( LAVASTENCILOUTLINE_SOURCES StencilOutline.cpp )
+  set( LAVASTENCILOUTLINE_LINK_LIBRARIES lava )
+  common_application( lavaStencilOutline )
+
   set( LAVADEFERRED_HEADERS )
   set( LAVADEFERRED_SOURCES Deferred.cpp )
   set( LAVADEFERRED_LINK_LIBRARIES lava )
@@ -201,6 +215,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
   set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
   common_application( lavaPostProcess )
+
+  set( LAVAFRESNEL_HEADERS )
+  set( LAVAFRESNEL_SOURCES Fresnel.cpp )
+  set( LAVAFRESNEL_LINK_LIBRARIES lava )
+  common_application( lavaFresnel )
 
   set( LAVAPNTESSELATION_HEADERS )
   set( LAVAPNTESSELATION_SOURCES PNTesselation.cpp )

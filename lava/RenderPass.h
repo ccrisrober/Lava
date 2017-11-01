@@ -14,9 +14,9 @@ namespace lava
       vk::ArrayProxy<const vk::AttachmentDescription> attachments, 
       vk::ArrayProxy<const vk::SubpassDescription> subpasses,
       vk::ArrayProxy<const vk::SubpassDependency> dependencies );
-    ~RenderPass( );
+    ~RenderPass( void );
 
-    inline operator vk::RenderPass( ) const
+    inline operator vk::RenderPass( void ) const
     {
       return _renderPass;
     }

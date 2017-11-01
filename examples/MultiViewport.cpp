@@ -84,7 +84,10 @@ public:
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); 
+    PipelineViewportStateCreateInfo viewport( 
+      { vk::Viewport( ), vk::Viewport( ) },
+      { vk::Rect2D( ), vk::Rect2D( ) }
+    );
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );

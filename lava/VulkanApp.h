@@ -26,7 +26,7 @@ namespace lava
     }
 
     LAVA_API
-      void waitEvents( void )
+    void waitEvents( void )
     {
       glfwWaitEvents( );
     }
@@ -57,6 +57,12 @@ namespace lava
     LAVA_API
     virtual void mouseButtonEvent( int button, int action, int mods );
 
+    LAVA_API
+    inline const vk::Format getColorFormat( void ) const
+    {
+      return _colorFormat;
+    }
+
   private:
     static void paintCallback( GLFWwindow *w );
     static void resizeCallback( GLFWwindow *w, int width, int height );
@@ -78,7 +84,6 @@ namespace lava
     std::shared_ptr<Surface> _surface;
 
     uint32_t _queueFamilyIndex;
-
     vk::ColorSpaceKHR _colorSpace;
     vk::Format _colorFormat;
     vk::Format _depthFormat;

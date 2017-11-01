@@ -22,9 +22,11 @@ namespace lava
       vk::Extent3D extent, uint32_t mipLevels, uint32_t arrayLayers, vk::SampleCountFlagBits samples, vk::ImageTiling tiling,
       vk::ImageUsageFlags usageFlags, vk::SharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices,
       vk::ImageLayout initialLayout, vk::MemoryPropertyFlags memoryPropertyFlags );
-    virtual ~Image( );
+    LAVA_API
+    virtual ~Image( void );
 
-    inline operator vk::Image( ) const
+    LAVA_API
+    inline operator vk::Image( void ) const
     {
       return _image;
     }
@@ -51,6 +53,8 @@ namespace lava
     vk::SharingMode _sharingMode;
     vk::ImageTiling _tiling;
     vk::ImageType _type;
+  public:
+    vk::DeviceMemory imageMemory;
   };
 
   class ImageView : private NonCopyable<ImageView>

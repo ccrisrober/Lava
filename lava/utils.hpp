@@ -5,11 +5,19 @@
 
 #include "CommandBuffer.h"
 
+#include "Device.h"
+
 namespace lava
 {
 	class utils
 	{
   public:
+    LAVA_API
+    static void saveToImage( const std::string & filename, vk::Format colorFormat, 
+      std::shared_ptr<Device> dev, std::shared_ptr<Image> currentImage, 
+      uint32_t width, uint32_t height, std::shared_ptr<CommandPool> cmdPool,
+      std::shared_ptr<Queue> queue );
+
     static unsigned char* loadImageTexture( const std::string& fileName,
       uint32_t& width, uint32_t& height, uint32_t& numChannels );
     static std::vector<char> readBinaryile( const std::string& fileName );

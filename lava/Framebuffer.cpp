@@ -28,7 +28,7 @@ namespace lava
     _framebuffer = static_cast< vk::Device >( *_device ).createFramebuffer( fci );
   }
 
-  Framebuffer::~Framebuffer( )
+  Framebuffer::~Framebuffer( void )
   {
     static_cast< vk::Device >( *_device ).destroyFramebuffer( _framebuffer );
   }

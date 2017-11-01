@@ -87,7 +87,7 @@ namespace lava
     vk::Result result = static_cast< vk::Device >( *_device ).mapMemory( 
       _memory, offset, length, {}, &data
     );
-    lava::utils::translateVulkanResult( result );
+    // lava::utils::translateVulkanResult( result );
     assert( result == vk::Result::eSuccess );
     return data;
   }
