@@ -140,7 +140,9 @@ namespace lava
           bic.imageSubresource.mipLevel = mipLevel;
           bic.imageSubresource.baseArrayLayer = face;
           bic.imageSubresource.layerCount = 1;
-          bic.imageExtent = { textureWidth, textureHeight, 1};
+          bic.imageExtent.width = textureWidth;
+          bic.imageExtent.height = textureHeight;
+          bic.imageExtent.depth = 1;
           bic.bufferOffset = offset;
           
           bufferCopyRegions.push_back( bic );
