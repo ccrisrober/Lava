@@ -24,10 +24,14 @@ public:
   std::shared_ptr<DescriptorSet> _descriptorSet;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
+  std::shared_ptr<CommandPool> commandPool;
 
   MyApp( char const* title, uint32_t width, uint32_t height, const char* meshFile )
     : VulkanApp( title, width, height )
   {
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool( 
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     geometry = std::make_shared<lava::extras::Geometry>( _device, meshFile );
 
     // MVP buffer
@@ -52,8 +56,6 @@ public:
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
     PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
@@ -146,10 +148,6 @@ public:
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );

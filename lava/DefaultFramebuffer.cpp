@@ -149,7 +149,7 @@ namespace lava
     {}, vk::ImageType::e2D, depthFormat,
       vk::Extent3D( _extent.width, _extent.height, 1 ), 1, 1,
       vk::SampleCountFlagBits::e1, tiling,
-      vk::ImageUsageFlagBits::eDepthStencilAttachment,
+      vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc,
       vk::SharingMode::eExclusive, {},
       vk::ImageLayout::eUndefined, {} );
 

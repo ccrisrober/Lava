@@ -32,16 +32,6 @@ public:
     {
       float time;
     } ubo;
-
-    struct Sphere
-    {
-      glm::vec3 center;
-      float radius;
-    };
-    struct
-    {
-      Sphere sphere;
-    } ssbo;
   } compute;
 
   std::shared_ptr<DescriptorPool> descriptorPool;
@@ -264,7 +254,7 @@ public:
     // Create compute shader pipelines
     std::shared_ptr<ShaderModule> computeShaderModule =
       _device->createShaderModule(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "raytracing_comp.spv" ),
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "computeUV_comp.spv" ),
         vk::ShaderStageFlagBits::eCompute
       );
 
@@ -457,7 +447,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Compute Raytracing", 736, 512 );
+    VulkanApp* app = new MyApp( "Compute UV", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

@@ -12,11 +12,12 @@ public:
   std::shared_ptr<Sampler> _textureSampler;
   std::shared_ptr<DescriptorSet> _descriptorSet;
   std::shared_ptr<Texture2D> tex;
+  std::shared_ptr<CommandPool> commandPool;
 
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+    commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), commandPool, _graphicsQueue,
@@ -47,8 +48,6 @@ public:
     _device->updateDescriptorSets( wdss, {} );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = 
-      _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
@@ -90,12 +89,9 @@ public:
   }
   void doPaint( void ) override
   {
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 

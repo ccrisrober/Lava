@@ -25,35 +25,35 @@ const float side = 1.0f;
 const float side2 = side / 2.0f;
 const std::vector<Vertex> vertices =
 {
-  {{-side2, -side2,  side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2, -side2,  side2 }, { 0.0f, 0.0f } },
+  { {  side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { { -side2,  side2,  side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2, -side2}, {1.0f, 1.0f}},
+  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { {  side2, -side2, -side2 }, { 1.0f, 0.0f } },
+  { { -side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2, -side2 }, { 1.0f, 1.0f } },
 
-  {{ side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { {  side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { {  side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { {  side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { { -side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { { -side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { { -side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2,  side2, -side2}, {0.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2,  side2, -side2 }, { 0.0f, 0.0f } },
+  { { -side2,  side2,  side2 }, { 1.0f, 0.0f } },
+  { {  side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {0.0f, 1.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 1.0f}} 
+  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { { -side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { {  side2, -side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2, -side2,  side2 }, { 1.0f, 1.0f } } 
 };
 const std::vector<uint16_t> indices =
 {
@@ -86,10 +86,15 @@ public:
   std::shared_ptr<Texture2D> tex;
 
   std::shared_ptr<VertexBuffer> _instanceBuffer;
+    std::shared_ptr<CommandPool> commandPool;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool( 
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
@@ -115,8 +120,6 @@ public:
           vk::MemoryPropertyFlagBits::eHostCoherent );
     }
 
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
       std::string( "random.png" ), commandPool, _graphicsQueue, 
       vk::Format::eR8G8B8A8Unorm );
@@ -189,8 +192,6 @@ public:
     _device->updateDescriptorSets( wdss, {} );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
@@ -253,13 +254,9 @@ public:
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 

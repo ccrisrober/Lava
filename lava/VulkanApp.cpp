@@ -133,6 +133,8 @@ namespace lava
       throw std::runtime_error( "Failed to find a device with presentation support" );
     }
 
+    // TODO: Method for enabledFeatures on ApplicationInstance
+
     initCapabilities( );
 
     _surface = instance->createSurfaceKHR( _window->getWindow( ) );
@@ -227,8 +229,9 @@ namespace lava
         }
       }
     }
-    _depthFormat = vk::Format::eD24UnormS8Uint;
-
+    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat( 
+      _physicalDevice, _depthFormat );
+    assert( validDepthFormat );
 
     // Search for a graphics queue and a present queue in the array of 
     //    queue families, try to find one that supports both
@@ -275,23 +278,25 @@ namespace lava
     );
 
     _renderPass = _device->createRenderPass(
-    {
-      vk::AttachmentDescription( // attachment 0
-        {}, _colorFormat, vk::SampleCountFlagBits::e1,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // color
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
-        vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
-      ),
-      vk::AttachmentDescription( // attachment 1
-        {}, _depthFormat, vk::SampleCountFlagBits::e1,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // depth
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
-        vk::ImageLayout::eUndefined,vk::ImageLayout::eDepthStencilAttachmentOptimal
-      )
-    }, sd, {}
+      {
+        vk::AttachmentDescription( // attachment 0
+          {}, _colorFormat, vk::SampleCountFlagBits::e1,
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // color
+          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
+          vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
+        ),
+        vk::AttachmentDescription( // attachment 1
+          {}, _depthFormat, vk::SampleCountFlagBits::e1,
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // depth
+          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
+          vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal
+        )
+      }, sd, {}
     );
 
     _renderComplete = _device->createSemaphore( );
+
+    pipelineCache = _device->createPipelineCache( 0, nullptr );
 
     // create Framebuffer & Swapchain
     resize( width, height );

@@ -37,9 +37,12 @@ namespace lava
   {
     if ( _view )
     {
+      std::cerr << "Destroy Buffer view" << std::endl;
       static_cast<vk::Device>( *_device ).destroyBufferView( _view );
     }
+    std::cerr << "Free Buffer memory" << std::endl;
     _device->freeMemory( _memory );
+    std::cerr << "Destroy Buffer" << std::endl;
     static_cast< vk::Device >( *_device ).destroyBuffer( _buffer );
   }
 
@@ -183,5 +186,13 @@ namespace lava
   void IndexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index )
   {
     cmd->bindIndexBuffer( shared_from_this( ), index, _type );
+  }
+  UniformBuffer::UniformBuffer( const DeviceRef& device, vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eUniformBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
   }
 }

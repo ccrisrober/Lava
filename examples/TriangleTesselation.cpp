@@ -22,6 +22,7 @@ public:
   std::shared_ptr<VertexBuffer> _vertexBuffer;
   std::shared_ptr<IndexBuffer> _indexBuffer;
   std::shared_ptr<lava::engine::Material> material;
+  std::shared_ptr<CommandPool> commandPool;
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
@@ -42,14 +43,16 @@ public:
 
     material = std::make_shared<lava::engine::BasicTessTriangle>( );
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
+
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 	}
   void doPaint( void ) override
   {
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 

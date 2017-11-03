@@ -5,6 +5,7 @@
 
 #include "CommandBuffer.h"
 
+#include "PhysicalDevice.h"
 #include "Device.h"
 
 namespace lava
@@ -12,6 +13,35 @@ namespace lava
 	class utils
 	{
   public:
+    static VkBool32 getSupportedDepthFormat( std::shared_ptr<PhysicalDevice> physicalDevice, 
+      vk::Format& depthFormat )
+    {
+      // Since all depth formats may be optional, we need to find a suitable depth format to use
+      // Start with the highest precision packed format
+      std::vector<vk::Format> depthFormats =
+      {
+        vk::Format::eD32SfloatS8Uint,
+        vk::Format::eD32Sfloat,
+        vk::Format::eD24UnormS8Uint,
+        vk::Format::eD16UnormS8Uint,
+        vk::Format::eD16Unorm
+      };
+
+      for ( auto& format : depthFormats )
+      {
+        vk::FormatProperties formatProps = physicalDevice->getFormatProperties( format );
+        // Format must support depth stencil attachment for optimal tiling
+        if ( formatProps.optimalTilingFeatures & 
+          vk::FormatFeatureFlagBits::eDepthStencilAttachment )
+        {
+          depthFormat = format;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     LAVA_API
     static void saveToImage( const std::string & filename, vk::Format colorFormat, 
       std::shared_ptr<Device> dev, std::shared_ptr<Image> currentImage, 

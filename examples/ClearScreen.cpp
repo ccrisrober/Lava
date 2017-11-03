@@ -6,33 +6,41 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
+  std::shared_ptr<CommandPool> commandPool;
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
   }
   virtual void doPaint( void ) override
   {
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    float timeValue = glfwGetTime( );
-    float greenValue = sin( timeValue ) / 2.0f + 0.5f;
+    static auto startTime = std::chrono::high_resolution_clock::now( );
+
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>(
+      currentTime - startTime ).count( ) / 1000.0f;
+
+    float greenValue = sin( time ) / 2.0f + 0.5f;
 
     std::array<float, 4> ccv = { 0.0f, greenValue, 0.0f, 1.0f };
-    commandBuffer->begin( );
-    commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ),
-      vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ), { vk::ClearValue( ccv ),
-      vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) },
+    commandBuffer->beginSimple( );
+    commandBuffer->beginRenderPass( 
+      _renderPass, 
+      _defaultFramebuffer->getFramebuffer( ),
+      vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
+        { 
+          vk::ClearValue( ccv ),
+          vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) )
+        },
       vk::SubpassContents::eInline );
-    commandBuffer->setViewport( 0, { vk::Viewport( 0.0f, 0.0f,
-      ( float ) _defaultFramebuffer->getExtent( ).width,
-      ( float ) _defaultFramebuffer->getExtent( ).height, 0.0f, 1.0f ) } );
-    commandBuffer->setScissor( 0, { vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ) } );
+    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     commandBuffer->endRenderPass( );
     commandBuffer->end( );
 
-    _graphicsQueue->submit( SubmitInfo{
+    _graphicsQueue->submit( SubmitInfo {
       { _defaultFramebuffer->getPresentSemaphore( ) },
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
       commandBuffer,

@@ -13,36 +13,29 @@ struct
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _uniformBufferMVP;
+  std::shared_ptr<lava::UniformBuffer> _uniformBufferMVP;
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
 
-  struct Pipelines
-  {
-    std::shared_ptr<Pipeline> solid;
-  } pipelines;
+  std::shared_ptr<Pipeline> pipeline;
 
   std::shared_ptr<Texture2D> tex;
+  std::shared_ptr<CommandPool> commandPool;
+
+  std::shared_ptr<lava::engine::Node> node;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    node = std::make_shared<lava::engine::Node>( "GeometryNode" );
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    // MVP buffer
-    {
-      uint32_t mvpBufferSize = sizeof(uboVS);
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
-        vk::BufferUsageFlagBits::eUniformBuffer, 
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-          vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
+    _uniformBufferMVP = std::make_shared<lava::UniformBuffer>( _device, sizeof( uboVS ) );
 
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+    commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "/MatCap_Toon3.png" ), commandPool, _graphicsQueue,
@@ -63,8 +56,6 @@ public:
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
@@ -78,8 +69,12 @@ public:
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
-          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) )
+          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, 
+            offsetof( lava::extras::Vertex, position )
+          ),
+          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, 
+            offsetof( lava::extras::Vertex, normal )
+          )
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -96,7 +91,7 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       _pipelineLayout, _renderPass );
 
 
@@ -132,6 +127,8 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
+    //node->rotate( glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ); // , lava::engine::Node::TransformSpace::World );
+    //uboVS.model = node->getTransform( );
     uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
     glm::vec3 cameraPos = glm::vec3( 0.0f, 1.0f, 5.5f );
     glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
@@ -144,19 +141,13 @@ public:
     _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
-  bool enable_wire = false;
-
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 
@@ -167,7 +158,7 @@ public:
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
 
-    commandBuffer->bindGraphicsPipeline( pipelines.solid );
+    commandBuffer->bindGraphicsPipeline( pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       _pipelineLayout, 0, { _descriptorSet }, nullptr );
 
@@ -194,8 +185,6 @@ public:
       {
       case GLFW_PRESS:
         getWindow( )->close( );
-        break;
-      default:
         break;
       }
       break;

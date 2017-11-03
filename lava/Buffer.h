@@ -77,7 +77,7 @@ namespace lava
     void writeData( vk::DeviceSize offset, vk::DeviceSize length, const void* src );
 
     // todo: virtual void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 ) = 0;
-  protected:
+  //protected:
     vk::Buffer _buffer;
     vk::BufferView _view;
     vk::DeviceMemory _memory;
@@ -116,6 +116,13 @@ namespace lava
     static vk::DeviceSize calcIndexSize( const vk::IndexType& type, 
       uint32_t numIndices );
     vk::IndexType _type;
+  };
+
+  class UniformBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    UniformBuffer( const DeviceRef&, vk::DeviceSize size );
   };
 }
 

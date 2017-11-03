@@ -223,10 +223,14 @@ class MyApp : public VulkanApp
 public:
   std::shared_ptr<VertexBuffer> _vertexBuffer;
   std::shared_ptr<material::SpecularMaterial> material;
-
+  std::shared_ptr<CommandPool> commandPool;
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( material::SpecularMaterial::Vertex );
@@ -235,8 +239,6 @@ public:
     }
     material = std::make_shared<material::SpecularMaterial>( );
 
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     material->texAlbedo = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "tileable-light-wood-textures-5.jpg" ), commandPool, _graphicsQueue,
       vk::Format::eR8G8B8A8Unorm );
@@ -288,13 +290,10 @@ public:
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool =
-      _device->createCommandPool(
-        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    std::shared_ptr<CommandBuffer> commandBuffer = 
+      commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.1f, 0.1f, 0.1f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass,
@@ -392,7 +391,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Specular Mode", SCR_WIDTH, SCR_HEIGHT );
+    VulkanApp* app = new MyApp( "Specular Lights", SCR_WIDTH, SCR_HEIGHT );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
