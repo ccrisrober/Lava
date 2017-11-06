@@ -75,6 +75,16 @@ namespace lava
       FramebufferAttachment _depthAttachment;
       bool hasDepth = false;
     public:
+      LAVA_API
+        const std::shared_ptr<ImageView> view( uint32_t i )
+      {
+        return _colorAttachments[ i ].view;
+      }
+      LAVA_API
+      const vk::Sampler sampler( uint32_t )
+      {
+        return colorSampler;
+      }
       std::shared_ptr< Framebuffer > _fbo;
       std::vector<FramebufferAttachment> _colorAttachments;
       std::shared_ptr<RenderPass> renderPass;

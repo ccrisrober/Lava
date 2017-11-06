@@ -107,7 +107,11 @@ public:
   {
     std::shared_ptr<VertexBuffer> vertexBuffer;
     std::shared_ptr<IndexBuffer> indexBuffer;
-    std::shared_ptr<Pipeline> pipeline;
+    struct
+    {
+      std::shared_ptr<Pipeline> refract;
+      std::shared_ptr<Pipeline> reflect;
+    } pipelines;
     std::shared_ptr<PipelineLayout> pipelineLayout;
     std::shared_ptr<DescriptorSet> descriptorSet;
   } model;
@@ -175,8 +179,23 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    model.pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+    model.pipelines.reflect = _device->createGraphicsPipeline( pipelineCache, {},
+    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+      viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      model.pipelineLayout, _renderPass );
+
+
+    vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "refract_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "refract_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
+
+    model.pipelines.refract = _device->createGraphicsPipeline( pipelineCache, {},
+    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       model.pipelineLayout, _renderPass );
 
@@ -358,6 +377,8 @@ public:
     uniformViewPos->writeData( 0, sizeof( uboFS ), &uboFS );
   }
 
+  bool modeReflect = true;
+
   void doPaint( void ) override
   {
     updateUniformBuffers( );
@@ -383,7 +404,14 @@ public:
     
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
 
-    commandBuffer->bindGraphicsPipeline( model.pipeline );
+    if ( modeReflect )
+    {
+      commandBuffer->bindGraphicsPipeline( model.pipelines.reflect );
+    }
+    else
+    {
+      commandBuffer->bindGraphicsPipeline( model.pipelines.refract );
+    }
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       model.pipelineLayout, 0, { model.descriptorSet }, nullptr );
 
@@ -430,6 +458,12 @@ public:
       default:
         break;
       }
+      break;
+    case GLFW_KEY_Z:
+      modeReflect = false;
+      break;
+    case GLFW_KEY_X:
+      modeReflect = true;
       break;
     case GLFW_KEY_W:
       switch ( action )

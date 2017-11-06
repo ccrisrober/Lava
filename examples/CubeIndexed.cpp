@@ -88,7 +88,9 @@ public:
     // create a command pool for command buffer allocation
     commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+
   }
+  std::shared_ptr<CommandBuffer> commandBuffer;
   void updateUniformBuffers( void )
   {
     uint32_t width = _window->getWidth( );

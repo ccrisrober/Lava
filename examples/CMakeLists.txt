@@ -72,15 +72,35 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASPECULARLIGHTS_LINK_LIBRARIES lava )
   common_application( lavaSpecularLights )
 
+  set( LAVAPOSTPROCESS_HEADERS )
+  set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
+  set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
+  common_application( lavaPostProcess )
+
   set( LAVAMESH_HEADERS )
   set( LAVAMESH_SOURCES Mesh.cpp )
   set( LAVAMESH_LINK_LIBRARIES lava )
   common_application( lavaMesh )
 
+  set( LAVAMESHUV_HEADERS )
+  set( LAVAMESHUV_SOURCES MeshUV.cpp )
+  set( LAVAMESHUV_LINK_LIBRARIES lava )
+  common_application( lavaMeshUV )
+
   set( LAVAMATCAP_HEADERS )
   set( LAVAMATCAP_SOURCES Matcap.cpp )
   set( LAVAMATCAP_LINK_LIBRARIES lava )
   common_application( lavaMatcap )
+
+  set( LAVAMULTIVIEWPORT_HEADERS )
+  set( LAVAMULTIVIEWPORT_SOURCES MultiViewport.cpp )
+  set( LAVAMULTIVIEWPORT_LINK_LIBRARIES lava )
+  common_application( lavaMultiViewport )
+
+  set( LAVAPUSHCONSTANTS_HEADERS )
+  set( LAVAPUSHCONSTANTS_SOURCES PushConstants.cpp )
+  set( LAVAPUSHCONSTANTS_LINK_LIBRARIES lava )
+  common_application( lavaPushConstants )
 
   set( LAVASKYBOX_HEADERS utils/Camera.h )
   set( LAVASKYBOX_SOURCES Skybox.cpp )
@@ -101,6 +121,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVACOMPUTEUV_SOURCES ComputeUV.cpp )
   set( LAVACOMPUTEUV_LINK_LIBRARIES lava )
   common_application( lavaComputeUV )
+
+  set( LAVATEXTURE2DARRAY_HEADERS )
+  set( LAVATEXTURE2DARRAY_SOURCES Texture2DArray.cpp )
+  set( LAVATEXTURE2DARRAY_LINK_LIBRARIES lava )
+  common_application( lavaTexture2DArray )
 
   set( LAVAARRAYSUM_HEADERS )
   set( LAVAARRAYSUM_SOURCES ArraySum.cpp )

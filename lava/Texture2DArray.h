@@ -3,7 +3,7 @@
 
 #include "includes.hpp"
 
-#include "VulkanResource.h"
+#include "Texture.h"
 
 #include <lava/api.h>
 
@@ -14,26 +14,18 @@ namespace lava
   class Sampler;
   class CommandPool;
 
-  class Texture2DArray : public VulkanResource
+  class Texture2DArray : public Texture
   {
   public:
     LAVA_API
     // All images on filePaths as same dimensions
     Texture2DArray( const DeviceRef& device, std::vector< std::string >& filePaths,
-      const std::shared_ptr<CommandPool>& cmdPool,
+      const std::shared_ptr<CommandPool>& cmdPool, 
       const std::shared_ptr<Queue>& queue,
-      vk::Format format = vk::Format::eR8G8B8A8Unorm,
+      vk::Format format,
+      vk::ImageUsageFlags imageUsageFlags = vk::ImageUsageFlagBits::eSampled,
+      vk::ImageLayout imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
       bool forceLinear = false );
-
-    LAVA_API
-    virtual ~Texture2DArray( void );
-
-    vk::Image textureImage;
-    vk::DeviceMemory textureImageMemory;
-    vk::ImageLayout imageLayout;
-
-    vk::ImageView view;
-    vk::Sampler sampler;
   };
 }
 

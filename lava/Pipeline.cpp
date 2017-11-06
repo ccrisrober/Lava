@@ -127,6 +127,14 @@ namespace lava
   }
 
 
+  PipelineViewportStateCreateInfo::PipelineViewportStateCreateInfo
+    ( uint32_t dummyViews, uint32_t dummySci )
+    : PipelineViewportStateCreateInfo( 
+      std::vector< vk::Viewport>( dummyViews ), 
+      std::vector< vk::Rect2D>( dummySci )
+    )
+  {
+  }
 
   PipelineViewportStateCreateInfo::PipelineViewportStateCreateInfo(
     vk::ArrayProxy<const vk::Viewport> viewports_, 

@@ -13,11 +13,7 @@ layout (location = 0) out vec4 outColor;
 
 void main( )
 {
-    /*vec3 I = normalize(Position - ubo.viewPos);
+   	vec3 I = normalize(Position - ubo.viewPos);
     vec3 R = reflect(I, normalize(Normal));
-    outColor = vec4(texture(skybox, R).rgb, 1.0);*/
-    float ratio = 1.00 / 1.52;
-    vec3 I = normalize(Position - ubo.viewPos);
-    vec3 R = refract(I, normalize(Normal), ratio);
     outColor = vec4(texture(skybox, R).rgb, 1.0);
 }
