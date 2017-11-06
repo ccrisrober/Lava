@@ -31,6 +31,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLE_SOURCES Triangle.cpp )
   set( LAVATRIANGLE_LINK_LIBRARIES lava )
   common_application( lavaTriangle )
+  
+  set( LAVATRIANGLEBYJGM_HEADERS )
+  set( LAVATRIANGLEBYJGM_SOURCES TriangleByJGM.cpp )
+  set( LAVATRIANGLEBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaTriangleByJGM )
 
   set( LAVATRIANGLEINDEXED_HEADERS )
   set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
