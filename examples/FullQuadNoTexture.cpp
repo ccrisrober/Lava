@@ -6,8 +6,8 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<Pipeline> pipeline;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<CommandPool> commandPool;
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
@@ -20,7 +20,7 @@ public:
     std::vector<DescriptorSetLayoutBinding> dslbs;
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
       _device->createDescriptorSetLayout( dslbs );
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
@@ -57,10 +57,10 @@ public:
       vk::DynamicState::eScissor } );
 
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
     { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+      pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
@@ -74,7 +74,7 @@ public:
         _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue(
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+    commandBuffer->bindGraphicsPipeline( pipeline );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

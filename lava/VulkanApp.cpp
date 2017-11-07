@@ -287,8 +287,8 @@ namespace lava
         ),
         vk::AttachmentDescription( // attachment 1
           {}, _depthFormat, vk::SampleCountFlagBits::e1,
-          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // depth
-          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // depth
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // stencil
           vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal
         )
       }, sd, {}

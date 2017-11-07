@@ -111,28 +111,28 @@ namespace material
 
 
       // Init descriptor set
-      _descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+      descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
       std::vector<WriteDescriptorSet> wdss =
       {
         WriteDescriptorSet(
-          _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
+          descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo(
             uniformBufferMVP, 0, sizeof( uboVS )
           )
         ),
         WriteDescriptorSet(
-          _descriptorSet, 1, 0,
+          descriptorSet, 1, 0,
           vk::DescriptorType::eCombinedImageSampler, 1,
           texAlbedo->descriptor, nullptr
         ),
         WriteDescriptorSet(
-          _descriptorSet, 2, 0,
+          descriptorSet, 2, 0,
           vk::DescriptorType::eCombinedImageSampler, 1,
           texSpec->descriptor, nullptr
         ),
         WriteDescriptorSet(
-          _descriptorSet, 3, 0, vk::DescriptorType::eUniformBuffer,
+          descriptorSet, 3, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo(
             uniformBufferFS, 0, sizeof( uboFS )
@@ -189,10 +189,10 @@ namespace material
     virtual void bind( std::shared_ptr< CommandBuffer > cmd )
     {
       lava::engine::Material::bind( cmd );
-      if ( _descriptorSet )
+      if ( descriptorSet )
       {
         cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-          _pipelineLayout, 0, { _descriptorSet }, nullptr );
+          _pipelineLayout, 0, { descriptorSet }, nullptr );
       }
       cmd->pushConstants<VkBool32>( *_pipelineLayout,
         vk::ShaderStageFlagBits::eFragment, 0, pushConstants );
@@ -204,7 +204,7 @@ namespace material
 
     std::array<VkBool32, 1> pushConstants;
   protected:
-    std::shared_ptr<DescriptorSet> _descriptorSet;
+    std::shared_ptr<DescriptorSet> descriptorSet;
   };
 }
 
@@ -221,7 +221,7 @@ const std::vector<material::SpecularMaterial::Vertex> vertices =
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
+  std::shared_ptr<VertexBuffer> vertexBuffer;
   std::shared_ptr<material::SpecularMaterial> material;
   std::shared_ptr<CommandPool> commandPool;
   MyApp( char const* title, uint32_t width, uint32_t height )
@@ -234,8 +234,8 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( material::SpecularMaterial::Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
     material = std::make_shared<material::SpecularMaterial>( );
 
@@ -306,7 +306,7 @@ public:
 
     material->bind( commandBuffer );
 
-    _vertexBuffer->bind( commandBuffer );
+    vertexBuffer->bind( commandBuffer );
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
 
     commandBuffer->draw( 6, 1, 0, 0 );

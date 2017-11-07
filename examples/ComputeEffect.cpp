@@ -16,6 +16,8 @@ public:
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
   } graphics;
 
+  std::shared_ptr<Texture2D> tex;
+
   struct
   {
     std::shared_ptr<Buffer> uniformBuffer;
@@ -27,41 +29,7 @@ public:
     std::shared_ptr<PipelineLayout> pipelineLayout;
     std::shared_ptr<DescriptorSet> descriptorSet;
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
-
-    struct
-    {
-      float time;
-    } ubo;
-
-    struct Light
-    {
-      glm::vec3 color;
-      glm::vec3 direction;
-    } ssboLight;
-
-    struct
-    {
-      std::shared_ptr<Buffer> light;
-    } storageBuffers;
   } compute;
-
-  void prepareStorageBuffers( )
-  {
-    // Light
-    vk::DeviceSize lightBufferSize = sizeof( compute.ssboLight );
-
-    // TODO: Move to GPU using Staging Buffer
-    compute.storageBuffers.light = _device->createBuffer( lightBufferSize,
-      vk::BufferUsageFlagBits::eStorageBuffer,
-      vk::SharingMode::eExclusive, nullptr,
-      vk::MemoryPropertyFlagBits::eHostVisible |
-      vk::MemoryPropertyFlagBits::eHostCoherent );
-
-    compute.ssboLight.color = glm::vec3( 1.0f, 1.0f, 1.0f );
-    compute.ssboLight.direction = glm::normalize( glm::vec3( -1.0, 0.75, 1.0 ) );
-    
-    compute.storageBuffers.light->writeData( 0, lightBufferSize, &compute.ssboLight );
-  }
 
   std::shared_ptr<DescriptorPool> descriptorPool;
 
@@ -148,15 +116,13 @@ public:
 
   void setupDescriptorPool( void )
   {
-    std::array<vk::DescriptorPoolSize, 4> poolSize;
+    std::array<vk::DescriptorPoolSize, 3> poolSize;
     // Compute UBO
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
     // Graphics image samplers
     poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    // Storage image for ray traced image output
-    poolSize[ 2 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 1 );
-    // Storage buffer for light buffer
-    poolSize[ 3 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 1 );
+    // Storage image for compute image input and output
+    poolSize[ 2 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 2 );
 
     descriptorPool = _device->createDescriptorPool( { }, 2, poolSize );
   }
@@ -250,18 +216,14 @@ public:
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
-      // Binding 0: Storage image (raytracer output)
+      // Binding 0: Storage image (compute input)
       DescriptorSetLayoutBinding(
         0, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute
       ),
-      // Binding 1: Uniform buffer block
+      // Binding 1: Storage image (compute output)
       DescriptorSetLayoutBinding(
-        1, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eCompute
-      ),
-      // Binding 2: Light SSBO
-      DescriptorSetLayoutBinding(
-        2, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute
-      ),
+        1, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute
+      )
     };
 
     compute.descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
@@ -271,22 +233,15 @@ public:
 
     std::vector<WriteDescriptorSet> wdss =
     {
-      // Binding 0: Storage image (raytracer output)
+      // Binding 0: Storage image (read)
       lava::WriteDescriptorSet(
         compute.descriptorSet, 0, 0, vk::DescriptorType::eStorageImage,
+        1, tex->descriptor, nullptr
+      ),
+      // Binding 1: Storage image (write)
+      lava::WriteDescriptorSet(
+        compute.descriptorSet, 1, 0, vk::DescriptorType::eStorageImage,
         1, textureComputeTarget->descriptor, nullptr
-      ),
-      // Binding 1: Uniform buffer block
-      lava::WriteDescriptorSet(
-        compute.descriptorSet, 1, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( compute.uniformBuffer, 0,
-          sizeof( compute.ubo ) )
-      ),
-      // Binding 2: Light SSBO
-      lava::WriteDescriptorSet(
-        compute.descriptorSet, 2, 0, vk::DescriptorType::eStorageBuffer,
-        1, nullptr, DescriptorBufferInfo( compute.storageBuffers.light, 0,
-          sizeof( compute.ssboLight ) )
       )
     };
 
@@ -295,7 +250,7 @@ public:
     // Create compute shader pipelines
     std::shared_ptr<ShaderModule> computeShaderModule =
       _device->createShaderModule(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "raytracing_comp.spv" ),
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "emboss_comp.spv" ),
         vk::ShaderStageFlagBits::eCompute
       );
 
@@ -347,17 +302,6 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(
       currentTime - startTime ).count( ) / 1000.0f;
-
-    compute.ubo.time = time;
-
-    compute.uniformBuffer->writeData( 0, sizeof( compute.ubo ), &compute.ubo );
-
-    compute.ssboLight.direction = glm::normalize(
-      glm::vec3(
-        -1.0f + 4.0f * cos( time ),
-        4.75f,
-        1.0f + 4.0f * sin( time ) ) );
-      compute.storageBuffers.light->writeData( 0, sizeof( compute.ssboLight ), &compute.ssboLight );
   }
 
   std::shared_ptr<CommandPool> commandPool;
@@ -396,15 +340,6 @@ public:
 
     commandBuffer->end( );
   }
-  void prepareUniformsBuffers( void )
-  {
-    uint32_t bufferSize = sizeof( compute.ubo );
-    compute.uniformBuffer = _device->createBuffer( bufferSize,
-      vk::BufferUsageFlagBits::eUniformBuffer,
-      vk::SharingMode::eExclusive, nullptr,
-      vk::MemoryPropertyFlagBits::eHostVisible |
-      vk::MemoryPropertyFlagBits::eHostCoherent );
-  }
 
   void setupDescriptorSetLayout( void )
   {
@@ -427,10 +362,14 @@ public:
     commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "/earth_diffuse.jpg" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | 
+      vk::ImageUsageFlagBits::eStorage, vk::ImageLayout::eGeneral
+    );
+
     textureComputeTarget = std::make_shared<Texture>( _device );
-    prepareStorageBuffers( );
-    prepareUniformsBuffers( );
-    prepareTextureTarget( textureComputeTarget, width, height, 
+    prepareTextureTarget( textureComputeTarget, tex->width, tex->height, 
       vk::Format::eR8G8B8A8Unorm, commandPool );
     setupDescriptorSetLayout( );
     preparePipelines( );

@@ -64,18 +64,18 @@ namespace material
 
 
       // Init descriptor set
-      _descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+      descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
       std::vector<WriteDescriptorSet> wdss =
       {
         WriteDescriptorSet( 
-          _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
+          descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo( 
             uniformBufferMVP, 0, sizeof( uboVS )
           )
         ),
         WriteDescriptorSet( 
-          _descriptorSet, 1, 0, 
+          descriptorSet, 1, 0, 
           vk::DescriptorType::eCombinedImageSampler, 1,
           tex->descriptor, nullptr
         )
@@ -121,16 +121,16 @@ namespace material
     virtual void bind( std::shared_ptr< CommandBuffer > cmd )
     {
       lava::engine::Material::bind( cmd );
-      if ( _descriptorSet )
+      if ( descriptorSet )
       {
         cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-          _pipelineLayout, 0, { _descriptorSet }, nullptr );
+          _pipelineLayout, 0, { descriptorSet }, nullptr );
       }
     }
     std::shared_ptr<Texture2D> tex;
     std::shared_ptr<Buffer> uniformBufferMVP;
   protected:
-    std::shared_ptr<DescriptorSet> _descriptorSet;
+    std::shared_ptr<DescriptorSet> descriptorSet;
   };
 }
 
@@ -181,8 +181,8 @@ const std::vector<uint16_t> indices =
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
-  std::shared_ptr<IndexBuffer> _indexBuffer;
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<IndexBuffer> indexBuffer;
   std::shared_ptr<material::UVMaterial> material;
 
   std::shared_ptr<CommandPool> commandPool;
@@ -192,16 +192,16 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( material::UVMaterial::Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( indices[ 0 ] );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
+      indexBuffer = std::make_shared<IndexBuffer>( _device, 
         vk::IndexType::eUint16, indices.size( ) );
-      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     material = std::make_shared<material::UVMaterial>( );
@@ -252,8 +252,8 @@ public:
 
     material->bind( commandBuffer );
 
-    _vertexBuffer->bind( commandBuffer );
-    _indexBuffer->bind( commandBuffer );
+    vertexBuffer->bind( commandBuffer );
+    indexBuffer->bind( commandBuffer );
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     commandBuffer->endRenderPass( );

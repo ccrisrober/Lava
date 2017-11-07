@@ -22,9 +22,9 @@ std::vector<Vertex> vertices =
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _vertexBuffer;
-  std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<Buffer> vertexBuffer;
+  std::shared_ptr<Pipeline> pipeline;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<CommandPool> commandPool;
 
   MyApp(char const* title, uint32_t width, uint32_t height)
@@ -35,15 +35,15 @@ public:
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 
     uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-    _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-    _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+    vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+    vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
       _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
@@ -106,10 +106,10 @@ public:
       vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
       { vertexStage, geomStage, fragmentStage }, 
       vertexInput, assembly, nullptr, viewport, rasterization, multisample, 
-      depthStencil, colorBlend, dynamic, _pipelineLayout, _renderPass );
+      depthStencil, colorBlend, dynamic, pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
@@ -120,8 +120,8 @@ public:
     std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
-    commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
+    commandBuffer->bindGraphicsPipeline( pipeline );
+    commandBuffer->bindVertexBuffer( 0, vertexBuffer, 0 );
 
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
 

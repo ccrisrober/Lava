@@ -8,7 +8,6 @@ layout(binding = 0) uniform UniformBufferObject
     mat4 proj;
 } ubo;
 
-
 //layout(binding = 1) uniform sampler2DArray texSampler;
 layout(binding = 1) uniform sampler2D texSampler;
 

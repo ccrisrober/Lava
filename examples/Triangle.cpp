@@ -19,7 +19,7 @@ const std::vector<Vertex> vertices =
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _vertexBuffer;
+  std::shared_ptr<Buffer> vertexBuffer;
 
   std::shared_ptr<lava::engine::Material> material;
   std::shared_ptr<CommandPool> commandPool;
@@ -28,8 +28,8 @@ public:
 		: VulkanApp( title, width, height )
 	{
     uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-    _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-    _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+    vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+    vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
     material = std::make_shared<lava::engine::BasicTriangle>( );
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
@@ -55,7 +55,7 @@ public:
     
     material->bind( commandBuffer );
 
-    commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
+    commandBuffer->bindVertexBuffer( 0, vertexBuffer, 0 );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

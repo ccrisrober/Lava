@@ -13,9 +13,9 @@ struct
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<lava::UniformBuffer> _uniformBufferMVP;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<lava::UniformBuffer> uniformBufferMVP;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<DescriptorSet> descriptorSet;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
 
@@ -33,7 +33,7 @@ public:
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    _uniformBufferMVP = std::make_shared<lava::UniformBuffer>( _device, sizeof( uboVS ) );
+    uniformBufferMVP = std::make_shared<lava::UniformBuffer>( _device, sizeof( uboVS ) );
 
     commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
@@ -53,7 +53,7 @@ public:
     };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
@@ -92,7 +92,7 @@ public:
 
 
     pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+      pipelineLayout, _renderPass );
 
 
     std::array<vk::DescriptorPoolSize, 2> poolSize;
@@ -101,16 +101,16 @@ public:
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss = 
     {
-      WriteDescriptorSet( _descriptorSet, 0, 0,
+      WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr, 
         DescriptorBufferInfo( 
-          _uniformBufferMVP, 0, sizeof( uboVS )
+          uniformBufferMVP, 0, sizeof( uboVS )
         )
       ),
-      WriteDescriptorSet( _descriptorSet, 1, 0, 
+      WriteDescriptorSet( descriptorSet, 1, 0, 
         vk::DescriptorType::eCombinedImageSampler, 1,
         tex->descriptor, nullptr
       )
@@ -138,7 +138,7 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
   void doPaint( void ) override
@@ -160,7 +160,7 @@ public:
 
     commandBuffer->bindGraphicsPipeline( pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      _pipelineLayout, 0, { _descriptorSet }, nullptr );
+      pipelineLayout, 0, { descriptorSet }, nullptr );
 
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

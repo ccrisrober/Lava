@@ -77,12 +77,12 @@ struct InstanceData
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
-  std::shared_ptr<IndexBuffer> _indexBuffer;
-  std::shared_ptr<Buffer> _uniformBufferMVP;
-  std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<IndexBuffer> indexBuffer;
+  std::shared_ptr<Buffer> uniformBufferMVP;
+  std::shared_ptr<Pipeline> pipeline;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<DescriptorSet> descriptorSet;
   std::shared_ptr<Texture2D> tex;
 
   std::shared_ptr<VertexBuffer> _instanceBuffer;
@@ -98,22 +98,22 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
+      indexBuffer = std::make_shared<IndexBuffer>( _device, 
         vk::IndexType::eUint16, indices.size( ) );
-      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     // MVP buffer
     {
       uint32_t mvpBufferSize = sizeof(uboVS);
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
+      uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
@@ -166,7 +166,7 @@ public:
     dslbs.push_back( mvpDescriptor2 );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
@@ -174,16 +174,16 @@ public:
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss =
     {
-      WriteDescriptorSet( _descriptorSet, 0, 0, 
+      WriteDescriptorSet( descriptorSet, 0, 0, 
         vk::DescriptorType::eUniformBuffer, 1, nullptr,
         DescriptorBufferInfo( 
-          _uniformBufferMVP, 0, sizeof( glm::mat4 )
+          uniformBufferMVP, 0, sizeof( glm::mat4 )
         )
       ),
-      WriteDescriptorSet( _descriptorSet, 1, 0,
+      WriteDescriptorSet( descriptorSet, 1, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         tex->descriptor, nullptr
       )
@@ -229,8 +229,8 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelineLayout, _renderPass );
   }
   void updateUniformBuffers( void )
   {
@@ -247,7 +247,7 @@ public:
     uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     uboVS.proj[1][1] *= -1;
 
-    _uniformBufferMVP->writeData( 0, sizeof( uboVS), &uboVS );
+    uniformBufferMVP->writeData( 0, sizeof( uboVS), &uboVS );
   }
 
   void doPaint( void ) override
@@ -266,16 +266,16 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( 
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+    commandBuffer->bindGraphicsPipeline( pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      _pipelineLayout, 0, { _descriptorSet }, nullptr );
+      pipelineLayout, 0, { descriptorSet }, nullptr );
 
     // Binding point 0 : Mesh vertex buffer
-    commandBuffer->bindVertexBuffer( VERTEX_BUFFER_BIND_ID, _vertexBuffer, 0 );
+    commandBuffer->bindVertexBuffer( VERTEX_BUFFER_BIND_ID, vertexBuffer, 0 );
     // Binding point 1 : Instance data buffer
     commandBuffer->bindVertexBuffer( INSTANCE_BUFFER_BIND_ID, _instanceBuffer, 0 );
 
-    _indexBuffer->bind( commandBuffer );
+    indexBuffer->bind( commandBuffer );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

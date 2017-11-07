@@ -16,13 +16,21 @@ namespace lava
     {
       FramebufferAttachment att;
       createAttachment( att, format, vk::ImageUsageFlagBits::eColorAttachment );
+      att.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
       _colorAttachments.push_back( att );
     }
     void CustomFBO::addColorDepthAttachment( vk::Format format )
     {
-      createAttachment( _depthAttachment, format,
+      /*FramebufferAttachment att;
+      createAttachment( att, format, vk::ImageUsageFlagBits::eDepthStencilAttachment |
+        vk::ImageUsageFlagBits::eSampled );
+      att.finalLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+      _colorAttachments.push_back( att );*/
+      if ( hasDepth ) throw;
+      createAttachment( _depthAttachment, format, 
         vk::ImageUsageFlagBits::eDepthStencilAttachment |
         vk::ImageUsageFlagBits::eSampled );
+      hasDepth = true;
     }
     void CustomFBO::addDepthAttachment( vk::Format format )
     {
@@ -41,7 +49,7 @@ namespace lava
         {}, att.format, vk::SampleCountFlagBits::e1,
           vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
           vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-          vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal
+          vk::ImageLayout::eUndefined, att.finalLayout
         ) );
 
         imageViewVector.push_back( att.view );

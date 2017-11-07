@@ -5,39 +5,51 @@ using namespace lava;
 
 struct
 {
-  glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
 } uboVS;
 
+#define OBJECT_INSTANCES 500
+
 class MyApp : public VulkanApp
 {
 public:
-  struct Pipelines
+  struct UboDataDynamic
   {
-    std::shared_ptr<Pipeline> solid;
-    std::shared_ptr<Pipeline> wireframe;
-  } pipelines;
+    glm::mat4* model = nullptr;
+  } uboDataDynamic;
 
-  std::shared_ptr<Buffer> uniformBufferMVP;
+  std::shared_ptr<Pipeline> pipeline;
+
+  std::shared_ptr<Buffer> uniformBufferVP;
+  std::shared_ptr<Buffer> uniformDynamic;
   std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<DescriptorSet> descriptorSet;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
   std::shared_ptr<CommandPool> commandPool;
 
-  MyApp( char const* title, uint32_t width, uint32_t height, const char* meshFile )
+  size_t dynamicAlignment;
+  void prepareUniformBuffers( void )
+  {
+    uint32_t uboAlignment = _device->_physicalDevice->getProperties( ).limits.minUniformBufferOffsetAlignment;
+    dynamicAlignment = (sizeof(glm::mat4) / uboAlignment) * uboAlignment + ((sizeof(glm::mat4) % uboAlignment) > 0 ? uboAlignment : 0);
+
+    size_t bufferSize = OBJECT_INSTANCES * dynamicAlignment;
+  }
+
+  MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     // create a command pool for command buffer allocation
     commandPool = _device->createCommandPool( 
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    geometry = std::make_shared<lava::extras::Geometry>( _device, meshFile );
+    geometry = std::make_shared<lava::extras::Geometry>( _device, 
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
 
-    // MVP buffer
+    // VP buffer
     {
-      uint32_t mvpBufferSize = sizeof( uboVS );
-      uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
+      uniformBufferVP = _device->createBuffer( sizeof( uboVS ), 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
@@ -48,6 +60,9 @@ public:
     std::vector<DescriptorSetLayoutBinding> dslbs = 
     {
       DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex
+      ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eUniformBufferDynamic,
         vk::ShaderStageFlagBits::eVertex
       )
     };
@@ -84,27 +99,14 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { }, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
     { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, 
       rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _renderPass );
 
-    // Wireframe rendering pipeline
-    if ( _physicalDevice->getDeviceFeatures( ).fillModeNonSolid )
-    {
-      rasterization.polygonMode = vk::PolygonMode::eLine;
-      rasterization.lineWidth = 1.0f;
-
-      rasterization.cullMode = vk::CullModeFlagBits::eNone;
-
-      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, { },
-        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
-        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-        pipelineLayout, _renderPass );
-    }
-
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
+    std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
+    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBufferDynamic, 1 );
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
 
     // Init descriptor set
@@ -113,7 +115,11 @@ public:
     {
       WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr,
-        DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS ) )
+        DescriptorBufferInfo( uniformBufferVP, 0, sizeof( uboVS ) )
+      ),
+      WriteDescriptorSet( descriptorSet, 1, 0,
+        vk::DescriptorType::eUniformBufferDynamic, 1, nullptr,
+        DescriptorBufferInfo( uniformDynamic, 0, sizeof( uboDataDynamic ) )
       )
     };
     _device->updateDescriptorSets( wdss, {} );
@@ -139,10 +145,8 @@ public:
     uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     uboVS.proj[1][1] *= -1;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformBufferVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
-
-  bool enable_wire = false;
 
   void doPaint( void ) override
   {
@@ -161,16 +165,7 @@ public:
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
 
-    if ( enable_wire )
-    {
-      std::cout << "WIREFRAME PIPELINE" << std::endl;
-      commandBuffer->bindGraphicsPipeline( pipelines.wireframe );
-    }
-    else
-    {
-      std::cout << "SOLID PIPELINE" << std::endl;
-      commandBuffer->bindGraphicsPipeline( pipelines.solid );
-    }
+    commandBuffer->bindGraphicsPipeline( pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       pipelineLayout, 0, { descriptorSet }, nullptr );
     
@@ -192,12 +187,6 @@ public:
   {
     switch ( key )
     {
-    case GLFW_KEY_E:
-      enable_wire = true;
-      break;
-    case GLFW_KEY_R:
-      enable_wire = false;
-      break;
     case GLFW_KEY_ESCAPE:
       switch ( action )
       {
@@ -229,7 +218,7 @@ int main( int argc, char** argv )
       return -1;
     }
 
-    VulkanApp* app = new MyApp( "Mesh loading", 800, 600, argv[ 1 ] );
+    VulkanApp* app = new MyApp( "Dynamic Uniform Buffer", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
