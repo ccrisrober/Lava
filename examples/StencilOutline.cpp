@@ -340,7 +340,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Matcap", 800, 600 );
+    VulkanApp* app = new MyApp( "Stencil Outline", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

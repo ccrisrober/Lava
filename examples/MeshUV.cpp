@@ -25,6 +25,7 @@ public:
 
   std::shared_ptr<lava::extras::Geometry> geometry;
   std::shared_ptr<CommandPool> commandPool;
+  std::shared_ptr<Texture2D> tex;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -138,7 +139,6 @@ public:
     };
     _device->updateDescriptorSets( wdss, {} );
   }
-  std::shared_ptr<Texture2D> tex;
   void updateUniformBuffers( void )
   {
     uint32_t width = _window->getWidth( );

@@ -22,9 +22,9 @@ bool firstMouse = true;
 struct
 {
   glm::mat4 model;
-  glm::mat4 view;
+  glm::mat4 view[2];
   glm::mat4 proj[2];
-} uboVS;
+} uboGS;
 
 class MyApp : public VulkanApp
 {
@@ -49,7 +49,7 @@ public:
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    uniformBufferMVP = std::make_shared<lava::UniformBuffer>( _device, sizeof( uboVS ) );
+    uniformBufferMVP = std::make_shared<lava::UniformBuffer>( _device, sizeof( uboGS ) );
 
     commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
@@ -72,20 +72,7 @@ public:
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
-    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcapMV_vert.spv" ),
-      vk::ShaderStageFlagBits::eVertex
-    );
-    PipelineShaderStageCreateInfo geomStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcapMV_geom.spv" ),
-      vk::ShaderStageFlagBits::eGeometry
-    );
-    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ),
-      vk::ShaderStageFlagBits::eFragment
-    );
-
-    PipelineVertexInputStateCreateInfo vertexInput(
+    PipelineVertexInputStateCreateInfo vertexInputBindings(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
@@ -97,25 +84,63 @@ public:
           )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( 1, 1 );   // two dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState( 
+      {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE
+    );
+    vk::PipelineRasterizationStateCreateInfo rasterizationState( {}, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
-      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
+      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f
+    );
+    vk::PipelineColorBlendAttachmentState blendAttachmentState(
+      false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+    );
+    PipelineColorBlendStateCreateInfo colorBlendState( false, 
+      vk::LogicOp::eNoOp, blendAttachmentState, { 1.0f, 1.0f, 1.0f, 1.0f }
+    );
 
+    // We use two viewports
+    PipelineViewportStateCreateInfo viewportState( 2, 2 );
+    
+    PipelineMultisampleStateCreateInfo multisampleState(
+      vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false
+    );
+    vk::StencilOpState stencilOpState( 
+      vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, 
+      vk::CompareOp::eAlways, 0, 0, 0
+    );
+    vk::PipelineDepthStencilStateCreateInfo depthStencilState( 
+      {}, true, true, vk::CompareOp::eLessOrEqual, false, false, 
+      stencilOpState, stencilOpState, 0.0f, 0.0f
+    );
+    PipelineDynamicStateCreateInfo dynamicStateEnables( { 
+      vk::DynamicState::eViewport,
+      vk::DynamicState::eScissor
+    } );
 
-    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-      { vertexStage, geomStage, fragmentStage }, vertexInput, assembly, 
-      nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, 
-      dynamic, pipelineLayout, _renderPass );
+    std::array<PipelineShaderStageCreateInfo, 3> shaderStages =
+    {
+      _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcapMV_vert.spv" ),
+        vk::ShaderStageFlagBits::eVertex
+      ),
+      _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcapMV_geom.spv" ),
+        vk::ShaderStageFlagBits::eGeometry
+      ),
+      _device->createShaderPipelineShaderStage(
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcapMV_frag.spv" ),
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, shaderStages, 
+      vertexInputBindings, inputAssemblyState, nullptr, viewportState, 
+      rasterizationState, multisampleState,  depthStencilState, colorBlendState,
+      dynamicStateEnables, pipelineLayout, _renderPass
+    );
 
     std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
@@ -129,7 +154,7 @@ public:
       WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr, 
         DescriptorBufferInfo( 
-          uniformBufferMVP, 0, sizeof( uboVS )
+          uniformBufferMVP, 0, sizeof( uboGS )
         )
       ),
       WriteDescriptorSet( descriptorSet, 1, 0, 
@@ -153,14 +178,22 @@ public:
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 25.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-    uboVS.view = camera.GetViewMatrix( );
-    uboVS.proj[0] = glm::perspective( glm::radians( camera.Zoom ), width / ( float ) height, 0.1f, 10.0f );
-    uboVS.proj[0][ 1 ][ 1 ] *= -1;
+    uboGS.model = glm::mat4( 1.0f );
+    uboGS.model = glm::rotate( uboGS.model, time * glm::radians( 25.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    
+    uboGS.proj[0] = glm::perspective( glm::radians( camera.Zoom ), width / ( float ) height, 0.1f, 10.0f );
+    uboGS.proj[0][ 1 ][ 1 ] *= -1;
+    uboGS.proj[ 1 ] = uboGS.proj[ 0 ];
 
-    uboVS.proj[ 1 ] = uboVS.proj[ 0 ];
+    camera.ProcessKeyboard( LEFT, 0.5f );
+    uboGS.view[ 0 ] = camera.GetViewMatrix( );
+    camera.ProcessKeyboard( LEFT, -0.5f );
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    camera.ProcessKeyboard( RIGHT, 0.5f );
+    uboGS.view[ 1 ] = camera.GetViewMatrix( );
+    camera.ProcessKeyboard( RIGHT, -0.5f );
+
+    uniformBufferMVP->writeData( 0, sizeof( uboGS ), &uboGS );
   }
 
   void doPaint( void ) override
@@ -186,7 +219,7 @@ public:
 
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
-    /*std::array<vk::Viewport, 2> viewports;
+    std::array<vk::Viewport, 2> viewports;
     // Left
     viewports[ 0 ] = { 0, 0, ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f };
     // Right
@@ -195,12 +228,10 @@ public:
 
     std::array<vk::Rect2D, 2> scissorRects =
     {
-      vk::Rect2D( vk::Offset2D( width / 2, height ), vk::Extent2D( 0, 0 ) ),
-      vk::Rect2D( vk::Offset2D( width / 2, height), vk::Extent2D( width / 2, 0 ) )
+      vk::Rect2D( vk::Offset2D( 0, 0 ), vk::Extent2D( width / 2, height ) ),
+      vk::Rect2D( vk::Offset2D( width / 2, 0 ), vk::Extent2D( width / 2, height ) )
     };
-    commandBuffer->setScissor( 0, scissorRects );*/
-
-    commandBuffer->setViewportScissors( width / 2, height );
+    commandBuffer->setScissor( 0, scissorRects );
 
     geometry->render( commandBuffer );
     commandBuffer->endRenderPass( );
