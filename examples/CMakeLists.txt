@@ -157,6 +157,16 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVACOMPUTEUV_LINK_LIBRARIES lava )
   common_application( lavaComputeUV )
 
+  set( LAVAGRAVEYARDSCENE_HEADERS )
+  set( LAVAGRAVEYARDSCENE_SOURCES GraveyardScene.cpp )
+  set( LAVAGRAVEYARDSCENE_LINK_LIBRARIES lava )
+  common_application( lavaGraveyardScene )
+
+  set( LAVAFRACTALCOMPUTETEXTURE_HEADERS )
+  set( LAVAFRACTALCOMPUTETEXTURE_SOURCES FractalComputeTexture.cpp )
+  set( LAVAFRACTALCOMPUTETEXTURE_LINK_LIBRARIES lava )
+  common_application( lavaFractalComputeTexture )
+
   set( LAVATEXTURE2DARRAY_HEADERS )
   set( LAVATEXTURE2DARRAY_SOURCES Texture2DArray.cpp )
   set( LAVATEXTURE2DARRAY_LINK_LIBRARIES lava )

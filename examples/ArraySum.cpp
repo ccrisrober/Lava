@@ -33,6 +33,8 @@ public:
     : VulkanApp( title, width, height )
   {
     const int arraySize = 10;
+    std::vector<float> computeOutput( arraySize );
+
     float A[ arraySize ]; // Input array A
     float B[ arraySize ]; // Input array B
     float O[ arraySize ]; // Output array
@@ -56,7 +58,8 @@ public:
       vk::MemoryPropertyFlagBits::eHostCoherent );
 
     compute.storageBufferOutput = _device->createBuffer( arraySize * sizeof( float ),
-      vk::BufferUsageFlagBits::eStorageBuffer | vk ::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst,
+      vk::BufferUsageFlagBits::eStorageBuffer | 
+      vk ::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst,
       vk::SharingMode::eExclusive, nullptr,
       vk::MemoryPropertyFlagBits::eHostVisible |
       vk::MemoryPropertyFlagBits::eHostCoherent );
@@ -202,7 +205,7 @@ public:
     copyRegion.size = arraySize * sizeof( float );
 
     std::shared_ptr<Buffer> hostBuffer = _device->createBuffer( arraySize * sizeof( float ),
-      vk::BufferUsageFlagBits::eStorageBuffer,
+      vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst,
       vk::SharingMode::eExclusive, nullptr,
       vk::MemoryPropertyFlagBits::eHostVisible |
       vk::MemoryPropertyFlagBits::eHostCoherent );
@@ -223,22 +226,31 @@ public:
     compute.commandBuffer->end( );
 
     // Submit compute commands
+    lava::Fence::resetFences( { compute.fence } );
     compute.queue->submit( compute.commandBuffer, compute.fence );
-    lava::Fence::waitForFences( { compute.fence }, true, std::numeric_limits<uint64_t>::max( ) );
+    uint32_t timeout = std::numeric_limits<uint64_t>::max();
+    lava::Fence::waitForFences( { compute.fence }, true, timeout );
 
-    /*// Make device writes visible to the host
-    void *mapped;
-    hostBuffer->map( VK_WHOLE_SIZE, 0 );
+    // Make device writes visible to the host
+    void *mapped = hostBuffer->map( 0, VK_WHOLE_SIZE );
     vk::MappedMemoryRange mappedRange;
     mappedRange.memory = hostBuffer->_memory;
     mappedRange.offset = 0;
     mappedRange.size = VK_WHOLE_SIZE;
-    _device->inva
-    vkInvalidateMappedMemoryRanges( device, 1, &mappedRange );
+    static_cast< vk::Device >( *_device ).invalidateMappedMemoryRanges( { mappedRange } );
 
     // Copy to output
-    memcpy( computeOutput.data( ), mapped, bufferSize );
-    vkUnmapMemory( device, hostMemory );*/
+    memcpy( computeOutput.data( ), mapped, arraySize * sizeof( float ) );
+    hostBuffer->unmap( );
+
+    compute.queue->waitIdle( );
+
+    // Output buffer contents
+    for ( const auto& n : computeOutput )
+    {
+      std::cout << n << ", ";
+    }
+    std::cout << std::endl;
   }
   virtual void doPaint( void ) override
   {
