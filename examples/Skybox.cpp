@@ -288,13 +288,13 @@ public:
     createGeometryPipeline( );
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer,
-      vk::ShaderStageFlagBits::eVertex );
-    dslbs.push_back( mvpDescriptor );
-    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler,
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor2 );
+    std::vector<DescriptorSetLayoutBinding> dslbs =
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     skybox.pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
@@ -335,20 +335,19 @@ public:
 
     // Init descriptor set
     skybox.descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
+    std::vector<WriteDescriptorSet> wdss = 
+    {
+      WriteDescriptorSet( skybox.descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS ) ) ),
+      WriteDescriptorSet( skybox.descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
+        DescriptorImageInfo(
+          vk::ImageLayout::eGeneral,
+          std::make_shared<vk::ImageView>( tex->view ),
+          std::make_shared<vk::Sampler>( tex->sampler )
+        ), nullptr
+      )
+    };
 
-    WriteDescriptorSet w( skybox.descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer, 1, nullptr,
-      DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS ) ) );
-    wdss.push_back( w );
-
-    WriteDescriptorSet w2( skybox.descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
-      DescriptorImageInfo(
-        vk::ImageLayout::eGeneral,
-        std::make_shared<vk::ImageView>( tex->view ),
-        std::make_shared<vk::Sampler>( tex->sampler )
-      ), nullptr
-    );
-    wdss.push_back( w2 );
     _device->updateDescriptorSets( wdss, {} );
   }
   glm::vec3 rotation = { -7.25f, -120.0f, 0.0f };

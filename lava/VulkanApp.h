@@ -38,7 +38,7 @@ namespace lava
     }
 
     LAVA_API
-    void paint( void );
+    virtual void paint( void ); // TODO: Remove virtual
     LAVA_API
     const std::shared_ptr<Window> getWindow( ) const { return _window; }
   protected:
