@@ -1,4 +1,8 @@
-#version 450
+#version 440
+
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 layout( triangles ) in;
 layout( location = 0 ) in float tese_height[];
 layout( set = 0, binding = 0 ) uniform UniformBuffer
@@ -12,10 +16,8 @@ layout( location = 0 ) out vec3 geom_normal;
 layout( location = 1 ) out float geom_height;
 void main()
 {
-	vec3 v0v1 = gl_in[1].gl_Position.xyz -
-	gl_in[0].gl_Position.xyz;
-	vec3 v0v2 = gl_in[2].gl_Position.xyz -
-	gl_in[0].gl_Position.xyz;
+	vec3 v0v1 = gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz;
+	vec3 v0v2 = gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz;
 	vec3 normal = normalize( cross( v0v1, v0v2 ) );
 	for( int vertex = 0; vertex < 3; ++vertex )
 	{
