@@ -12,7 +12,7 @@ struct
 
 struct
 {
-  glm::vec3 Kd = glm::vec3( 0.0f, 0.82f, 0.039f );
+  glm::vec3 Kd = glm::vec3( 1.0f, 159.0f/255.0f, 130.0f/255.0f );
   float Sigma = 150.0f;
   VkBool32 TronEffect = false;
 } uboPP;
@@ -60,7 +60,7 @@ public:
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 
     geometry = std::make_shared<lava::extras::Geometry>( _device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "dragon.obj_" ) );
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "ear_study3.obj_" ) );
 
     fbo = std::make_shared<lava::extras::CustomFBO>( _device, width, height );
 
@@ -176,7 +176,7 @@ public:
       )
     };
     _device->updateDescriptorSets( wdss, {} );
-
+  https://github.com/McNopper/OpenGL/blob/master/Example34/shader/subsurfacescattering.vert.glsl
 
     // POSTPROCESS PIPELINE
     {
@@ -244,9 +244,9 @@ public:
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(
       currentTime - startTime ).count( ) / 1000.0f;
 
-    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ),
-      glm::vec3( 0.0f, 1.0f, 0.0f ) );
-    glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 2.5f );
+    uboVS.model = glm::mat4( 1.0f );
+    uboVS.model = glm::rotate( uboVS.model, time * glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 5.5f );
     glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
     glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 

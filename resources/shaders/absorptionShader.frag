@@ -22,7 +22,7 @@ void main( void )
 	vec2 tex = texture( dataTexture, uv ).rg;
 	float thickness = abs( tex.r );
 	if( thickness <= 0.0 ) discard;
-    float fresnel = ubo.TronEffect ? tex.g : ( 1.0 - 0.5 * tex.g );
+    float fresnel = ubo.TronEffect ? tex.g : ( 1.0 - tex.g );
     float intensity = fresnel * exp( -ubo.Sigma * thickness );    // http://omlc.org/classroom/ece532/class3/muadefinition.html
     fragColor = vec4( intensity * ubo.Kd, 1.0 );
 }

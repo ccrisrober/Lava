@@ -32,5 +32,5 @@ void main( )
 	uv = vec2( 1.0, -1.0 );
 	EmitVertex( );
 
-	EmitPrimitive( ); 
+	EndPrimitive( ); 
 }
