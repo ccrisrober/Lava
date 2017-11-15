@@ -1,4 +1,8 @@
-#version 450
+#version 440
+
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 layout( triangles, fractional_even_spacing, cw ) in;
 layout( location = 0 ) in vec2 tesc_texcoord[];
 layout( set = 0, binding = 1 ) uniform sampler2D HeightMap;
