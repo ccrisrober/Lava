@@ -15,11 +15,11 @@ const float Shininess = 100.0;
 
 vec3 iluminatti( )
 {
-    vec3 s = normalize(vec3(lightPosition) - pos);
-    vec3 v = normalize(-pos.xyz);
-    vec3 r = reflect( -s, norm );
+    vec3 s = normalize(vec3(lightPosition) - Position);
+    vec3 v = normalize(-Position.xyz);
+    vec3 r = reflect( -s, Normal );
     vec3 ambient = lightIntensity * Ka;
-    float sDotN = max( dot(s, norm), 0.0 );
+    float sDotN = max( dot(s, Normal), 0.0 );
     vec3 diffuse = lightIntensity * Kd * sDotN;
     vec3 spec = vec3(0.0);
     if( sDotN > 0.0 )

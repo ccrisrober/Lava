@@ -72,7 +72,7 @@ namespace lava
     sci.setMinLod( 0.0f );
     sci.setMaxLod( 0.0f );
     sci.setMaxAnisotropy( 1.0f );
-    sci.setAnisotropyEnable( VK_TRUE );
+    sci.setAnisotropyEnable( VK_FALSE );
     sci.setBorderColor( vk::BorderColor::eFloatOpaqueWhite );
 
     sampler = device.createSampler( sci );

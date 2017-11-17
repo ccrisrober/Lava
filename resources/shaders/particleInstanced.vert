@@ -42,12 +42,12 @@ void main()
     {
         float t = Time - StartTime;
 
-        if( t < ParticleLifetime )
+        if( t < ParticleLifeTime )
         {
             Position += v0 * t + Gravity * t * t;
         }
     }
 
     // Draw at the current position
-    gl_Position = ProjectionMatrix * vec4(Position, 1.0);
+    gl_Position = proj * vec4(Position, 1.0);
 }
