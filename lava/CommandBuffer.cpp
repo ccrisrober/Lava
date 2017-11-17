@@ -322,8 +322,7 @@ namespace lava
   void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
   {
     assert( !_isRecording );
-    vk::CommandBufferBeginInfo cbbi;
-    cbbi.flags = flags;
+    vk::CommandBufferBeginInfo cbbi( flags );
 
     _commandBuffer.begin( cbbi );
     _isRecording = true;

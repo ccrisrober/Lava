@@ -6,17 +6,16 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<vk::ImageView> _textureImageView;
-  std::shared_ptr<Sampler> _textureSampler;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<Pipeline> pipeline;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<DescriptorSet> descriptorSet;
   std::shared_ptr<Texture2D> tex;
+  std::shared_ptr<CommandPool> commandPool;
 
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
+    commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), commandPool, _graphicsQueue,
@@ -29,17 +28,17 @@ public:
     dslbs.push_back( mvpDescriptor );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
 
     std::shared_ptr<DescriptorPool> descriptorPool =
       _device->createDescriptorPool( {}, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss;
 
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
+    WriteDescriptorSet w( descriptorSet, 0, 0, 
       vk::DescriptorType::eCombinedImageSampler, 1, 
       tex->descriptor, nullptr
     );
@@ -47,8 +46,6 @@ public:
     _device->updateDescriptorSets( wdss, {} );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = 
-      _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
@@ -83,19 +80,16 @@ public:
       vk::DynamicState::eScissor } );
 
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
     { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+      pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 
@@ -103,9 +97,9 @@ public:
         _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue( 
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+    commandBuffer->bindGraphicsPipeline( pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      _pipelineLayout, 0, { _descriptorSet }, nullptr );
+      pipelineLayout, 0, { descriptorSet }, nullptr );
 
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
 

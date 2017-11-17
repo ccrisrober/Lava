@@ -7,9 +7,10 @@ layout (location = 0) in vec3 inPos;
 
 layout (binding = 0) uniform UBO 
 {
-	mat4 projection;
-	mat4 view;
-} cameraUBO ;
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
 
 layout (location = 0) out vec3 outUVW;
 
@@ -21,13 +22,7 @@ out gl_PerVertex
 void main( void ) 
 {
     outUVW = inPos;
-
-    // Remove the translation from camera view matrix
-    mat4 cameraView = cameraUBO.view;
-    cameraView[ 3 ][ 0 ] = 0.0;
-    cameraView[ 3 ][ 1 ] = 0.0;
-    cameraView[ 3 ][ 2 ] = 0.0;
-
-    gl_Position = cameraUBO.projection * cameraView * vec4( inPos, 1.0 );
-    gl_Position.y = -gl_Position.y;
+    // Truncate translation part of view matrix so skybox is always "around" the camera
+    vec4 pos = ubo.proj * mat4(mat3(ubo.view)) * ubo.model * vec4(inPos, 1.0);
+    gl_Position = pos.xyww; // Clip coords to NDC to ensure skybox is rendered at far plane
 }

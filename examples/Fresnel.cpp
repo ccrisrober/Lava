@@ -12,14 +12,9 @@ struct
 
 struct
 {
-  float expFresnel = 3.0f;
-} uboFS;
-
-struct
-{
-  glm::vec3 Kd = glm::vec3( 0.0f, 0.82f, 0.039f);
-  float Sigma = 15.0f;
-  VkBool32 TronEffect = VK_TRUE;
+  glm::vec3 Kd = glm::vec3( 0.0f, 0.82f, 0.039f );
+  float Sigma = 150.0f;
+  VkBool32 TronEffect = false;
 } uboPP;
 
 class MyApp : public VulkanApp
@@ -44,7 +39,6 @@ public:
   } descriptorSets;
 
   std::shared_ptr<Buffer> uniformBufferMVP;
-  std::shared_ptr<Buffer> uniformBufferFS;
   std::shared_ptr<Buffer> uniformBufferPP;
 
   struct
@@ -66,12 +60,12 @@ public:
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 
     geometry = std::make_shared<lava::extras::Geometry>( _device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "dragon.obj_" ) );
 
     fbo = std::make_shared<lava::extras::CustomFBO>( _device, width, height );
 
-    fbo->addColorAttachmentt( vk::Format::eR32G32Sfloat );
-    fbo->addDepthAttachment( this->_depthFormat );
+    fbo->addColorAttachmentt( vk::Format::eR16G16Sfloat );
+    //fbo->addDepthAttachment( this->_depthFormat );
 
     fbo->build( );
 
@@ -84,29 +78,15 @@ public:
         vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
     }
-    {
-      uint32_t bufferSize = sizeof( uboFS );
-      uniformBufferFS = _device->createBuffer( bufferSize,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    std::vector<DescriptorSetLayoutBinding> dslbs =
     {
       // Binding 0 : Vertex shader uniform buffer
-      DescriptorSetLayoutBinding( 
-        0, 
+      DescriptorSetLayoutBinding(
+        0,
         vk::DescriptorType::eUniformBuffer,
         vk::ShaderStageFlagBits::eVertex
-      ),
-      // Binding 1 : ExpFresnel Uniform Buffer
-      DescriptorSetLayoutBinding(
-        1,
-        vk::DescriptorType::eUniformBuffer,
-        vk::ShaderStageFlagBits::eFragment
       )
     };
     descriptorSetLayouts.solid = _device->createDescriptorSetLayout( dslbs );
@@ -140,38 +120,38 @@ public:
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
-          vk::VertexInputAttributeDescription( 0, 0, 
-            vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-          vk::VertexInputAttributeDescription( 1, 0, 
-            vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) )
+          vk::VertexInputAttributeDescription( 0, 0,
+          vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
+          vk::VertexInputAttributeDescription( 1, 0,
+          vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) )
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {},
       vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { { } }, { { } } );
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, 
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
       false, 0.0f, nullptr, false, false );
-    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, 
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
-      vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, false, true,
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
       stencilOpState, 0.0f, 0.0f );
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment( true,
       vk::BlendFactor::eOne, vk::BlendFactor::eOne, vk::BlendOp::eAdd,
-      vk::BlendFactor::eOne, vk::BlendFactor::eOne, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-    PipelineColorBlendStateCreateInfo colorBlend( true, vk::LogicOp::eNoOp, 
-      colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, 
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp,
+      colorBlendAttachment, { 0.0f, 0.0f, 0.0f, 1.0f } );
+    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport,
       vk::DynamicState::eScissor } );
 
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { },
-      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {},
+    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayouts.solid, fbo->renderPass );
 
@@ -180,11 +160,11 @@ public:
       vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 3 ),
       vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 )
     };
-    std::shared_ptr<DescriptorPool> descriptorPool = 
-      _device->createDescriptorPool( { }, 2, poolSize );
+    std::shared_ptr<DescriptorPool> descriptorPool =
+      _device->createDescriptorPool( {}, 2, poolSize );
 
     // Init descriptor set
-    descriptorSets.solid = _device->allocateDescriptorSet( 
+    descriptorSets.solid = _device->allocateDescriptorSet(
       descriptorPool, descriptorSetLayouts.solid );
 
     std::vector<lava::WriteDescriptorSet> wdss =
@@ -193,12 +173,6 @@ public:
         descriptorSets.solid, 0, 0, vk::DescriptorType::eUniformBuffer,
         1, nullptr, DescriptorBufferInfo( uniformBufferMVP, 0,
           sizeof( uboVS ) )
-      ),
-
-      lava::WriteDescriptorSet(
-        descriptorSets.solid, 1, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( uniformBufferFS, 0,
-          sizeof( uboFS ) )
       )
     };
     _device->updateDescriptorSets( wdss, {} );
@@ -213,9 +187,8 @@ public:
         vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
     }
-
     // Init descriptor set
-    descriptorSets.postprocess = _device->allocateDescriptorSet( 
+    descriptorSets.postprocess = _device->allocateDescriptorSet(
       descriptorPool, descriptorSetLayouts.postprocess );
 
     wdss =
@@ -246,6 +219,11 @@ public:
     PipelineShaderStageCreateInfo ppFragmentStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "absorptionShader_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
+    colorBlendAttachment = vk::PipelineColorBlendAttachmentState( false,
+      vk::BlendFactor::eOne, vk::BlendFactor::eOne, vk::BlendOp::eAdd,
+      vk::BlendFactor::eOne, vk::BlendFactor::eOne, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     colorBlend = PipelineColorBlendStateCreateInfo( false, vk::LogicOp::eNoOp,
       colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
 
@@ -260,25 +238,24 @@ public:
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    static auto startTime = std::chrono::high_resolution_clock::now( );
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(
-      currentTime - startTime).count() / 1000.0f;
+      currentTime - startTime ).count( ) / 1000.0f;
 
-    uboVS.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), 
-      glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 0.5f);
-    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ),
+      glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 2.5f );
+    glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
+    glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
-    uboVS.view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    uboVS.view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp );
 
-    uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    uboVS.proj[1][1] *= -1;
+    uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboVS.proj[ 1 ][ 1 ] *= -1;
 
     uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
-    uniformBufferFS->writeData( 0, sizeof( uboFS ), &uboFS );
     uniformBufferPP->writeData( 0, sizeof( uboPP ), &uboPP );
   }
 
@@ -293,13 +270,14 @@ public:
 
     cmdSolidBuffer->begin( );
 
-    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
+    std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };
     cmdSolidBuffer->beginRenderPass( fbo->renderPass,
       fbo->_fbo,
       vk::Rect2D( { 0, 0 },
         _defaultFramebuffer->getExtent( ) ),
-        { vk::ClearValue( ccv ), vk::ClearValue(
-          vk::ClearDepthStencilValue( 1.0f, 0 ) )
+        {
+          vk::ClearValue( ccv ),
+          //vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) )
         }, vk::SubpassContents::eInline );
 
     cmdSolidBuffer->setViewportScissors( width, height );
@@ -313,9 +291,10 @@ public:
 
 
     fbo->commandBuffer = commandPool->allocateCommandBuffer( );
-    
+
     fbo->commandBuffer->begin( );
 
+    ccv = { 1.0f, 1.0f, 1.0f, 1.0f };
     fbo->commandBuffer->beginRenderPass( _renderPass,
       _defaultFramebuffer->getFramebuffer( ),
       vk::Rect2D( { 0, 0 },
@@ -330,7 +309,7 @@ public:
     fbo->commandBuffer->bindGraphicsPipeline( pipelines.postprocess );
     fbo->commandBuffer->draw( 4, 1, 0, 0 );
     fbo->commandBuffer->endRenderPass( );
-    
+
     fbo->commandBuffer->end( );
   }
 
@@ -342,7 +321,7 @@ public:
     _graphicsQueue->submit( SubmitInfo{
       { _defaultFramebuffer->getPresentSemaphore( ) }, // wait 
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      cmdSolidBuffer, 
+      cmdSolidBuffer,
       { fbo->semaphore }// signal
     } );
 
@@ -357,6 +336,12 @@ public:
   {
     switch ( key )
     {
+    case GLFW_KEY_Z:
+      uboPP.TronEffect = false;
+      break;
+    case GLFW_KEY_X:
+      uboPP.TronEffect = true;
+      break;
     case GLFW_KEY_ESCAPE:
       getWindow( )->close( );
       break;
@@ -381,7 +366,7 @@ int main( int argc, char** argv )
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 

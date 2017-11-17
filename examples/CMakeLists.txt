@@ -17,332 +17,188 @@ if( LAVA_WITH_EXAMPLES )
     ${CMAKE_CURRENT_SOURCE_DIR}/routes.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
-  set( LAVAMULTILIGHT_HEADERS
-    utils/Camera.h
-  )
-  set( LAVAMULTILIGHT_SOURCES MultiLight.cpp )
-  set( LAVAMULTILIGHT_LINK_LIBRARIES lava )
-  common_application( lavaMultiLight )
-
-  set( LAVASPECULARMODE_HEADERS
-    utils/Camera.h
-  )
-  set( LAVASPECULARMODE_SOURCES SpecularMode.cpp )
-  set( LAVASPECULARMODE_LINK_LIBRARIES lava )
-  common_application( lavaSpecularMode )
-
-  set( LAVASTENCILOUTLINE_HEADERS
-    utils/Camera.h
-  )
-  set( LAVASTENCILOUTLINE_SOURCES StencilOutline.cpp )
-  set( LAVASTENCILOUTLINE_LINK_LIBRARIES lava )
-  common_application( lavaStencilOutline )
-
-  set( LAVADEFERRED_HEADERS )
-  set( LAVADEFERRED_SOURCES Deferred.cpp )
-  set( LAVADEFERRED_LINK_LIBRARIES lava )
-  common_application( lavaDeferred )
-
-  set( LAVALIGHTDEMO_HEADERS )
-  set( LAVALIGHTDEMO_SOURCES LightDemo.cpp )
-  set( LAVALIGHTDEMO_LINK_LIBRARIES lava )
-  common_application( lavaLightDemo )
-
-  set( LAVATRIES_HEADERS )
-  set( LAVATRIES_SOURCES Tries.cpp )
-  set( LAVATRIES_LINK_LIBRARIES lava )
-  common_application( lavaTries )
-
-  set( LAVAINFO_HEADERS )
-  set( LAVAINFO_SOURCES info.cpp )
-  set( LAVAINFO_LINK_LIBRARIES lava )
-  common_application( lavaInfo )
-
-  set( LAVACLEARSCREENDEMO_HEADERS )
-  set( LAVACLEARSCREENDEMO_SOURCES ClearScreenDemo.cpp )
-  set( LAVACLEARSCREENDEMO_LINK_LIBRARIES lava )
-  common_application( lavaClearScreenDemo )
-
-  set( LAVATRIANGLE_HEADERS )
-  set( LAVATRIANGLE_SOURCES Triangle.cpp )
-  set( LAVATRIANGLE_LINK_LIBRARIES lava )
-  common_application( lavaTriangle )
-
-  set( LAVATRIANGLEINDEXED_HEADERS )
-  set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
-  set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava )
-  common_application( lavaTriangleIndexed )
-
-  set( LAVACUBEINDEXED_HEADERS materials/RenderNormalMaterial.h )
-  set( LAVACUBEINDEXED_SOURCES CubeIndexed.cpp )
-  set( LAVACUBEINDEXED_LINK_LIBRARIES lava )
-  common_application( lavaCubeIndexed )
-
-  set( LAVACUBEUV_HEADERS )
-  set( LAVACUBEUV_SOURCES CubeUV.cpp )
-  set( LAVACUBEUV_LINK_LIBRARIES lava )
-  common_application( lavaCubeUV )
-
-  set( LAVAFULLQUADNOTEXTURE_HEADERS )
-  set( LAVAFULLQUADNOTEXTURE_SOURCES FullQuadNoTexture.cpp )
-  set( LAVAFULLQUADNOTEXTURE_LINK_LIBRARIES lava )
-  common_application( lavaFullQuadNoTexture )
-
-  set( LAVAFULLQUADTEXTURE_HEADERS )
-  set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
-  set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES lava )
-  common_application( lavaFullQuadTexture )
-
-  set( LAVAMESH_HEADERS )
-  set( LAVAMESH_SOURCES Mesh.cpp )
-  set( LAVAMESH_LINK_LIBRARIES lava )
-  common_application( lavaMesh )
-
-  set( LAVANORMALTEXTURE_HEADERS )
-  set( LAVANORMALTEXTURE_SOURCES NormalTexture.cpp )
-  set( LAVANORMALTEXTURE_LINK_LIBRARIES lava )
-  common_application( lavaNormalTexture )
-
-  set( LAVAINSTANCING_HEADERS )
-  set( LAVAINSTANCING_SOURCES Instancing.cpp )
-  set( LAVAINSTANCING_LINK_LIBRARIES lava )
-  common_application( lavaInstancing )
-
-  set( LAVAGRASS_HEADERS )
-  set( LAVAGRASS_SOURCES Grass.cpp )
-  set( LAVAGRASS_LINK_LIBRARIES lava )
-  common_application( lavaGrass )
-
-  set( LAVABUTTERFLIES_HEADERS )
-  set( LAVABUTTERFLIES_SOURCES Butterflies.cpp )
-  set( LAVABUTTERFLIES_LINK_LIBRARIES lava )
-  common_application( lavaButterflies )
-
-  set( LAVASPHERICALHARMONICS_HEADERS 
-    materials/SHMaterial.h
-    utils/Camera.h
-  )
-  set( LAVASPHERICALHARMONICS_SOURCES SphericalHarmonics.cpp )
-  set( LAVASPHERICALHARMONICS_LINK_LIBRARIES lava )
-  common_application( lavaSphericalHarmonics )
-
-  set( LAVASHOWNORMALS_HEADERS )
-  set( LAVASHOWNORMALS_SOURCES ShowNormals.cpp )
-  set( LAVASHOWNORMALS_LINK_LIBRARIES lava )
-  common_application( lavaShowNormals )
-
-  set( LAVAHEIGHTMAP_HEADERS )
-  set( LAVAHEIGHTMAP_SOURCES Heightmap.cpp )
-  set( LAVAHEIGHTMAP_LINK_LIBRARIES lava )
-  common_application( lavaHeightmap )
-  
-  set( LAVAHEIGHTMAPTESS_HEADERS )
-  set( LAVAHEIGHTMAPTESS_SOURCES HeightmapTess.cpp )
-  set( LAVAHEIGHTMAPTESS_LINK_LIBRARIES lava )
-  common_application( lavaHeightmapTess )
-
-  set( LAVARAYTRACINGFRAG_HEADERS )
-  set( LAVARAYTRACINGFRAG_SOURCES RayTracingFrag.cpp )
-  set( LAVARAYTRACINGFRAG_LINK_LIBRARIES lava )
-  common_application( lavaRayTracingFrag )
-
-  set( LAVAMATCAP_HEADERS )
-  set( LAVAMATCAP_SOURCES Matcap.cpp )
-  set( LAVAMATCAP_LINK_LIBRARIES lava )
-  common_application( lavaMatcap )
-
-  set( LAVASHADOWMAPPING_HEADERS )
-  set( LAVASHADOWMAPPING_SOURCES ShadowMapping.cpp )
-  set( LAVASHADOWMAPPING_LINK_LIBRARIES lava )
-  common_application( lavaShadowMapping )
-  
-  set( LAVASPECIALIZATIONCONSTANT_HEADERS )
-  set( LAVASPECIALIZATIONCONSTANT_SOURCES SpecializationConstant.cpp )
-  set( LAVASPECIALIZATIONCONSTANT_LINK_LIBRARIES lava )
-  common_application( lavaSpecializationConstant )
-
-  set( LAVAPUSHCONSTANT_HEADERS )
-  set( LAVAPUSHCONSTANT_SOURCES PushConstant.cpp )
-  set( LAVAPUSHCONSTANT_LINK_LIBRARIES lava )
-  common_application( lavaPushConstant )
-
-  set( LAVAGEOMETRYEXPLOSION_HEADERS )
-  set( LAVAGEOMETRYEXPLOSION_SOURCES GeometryExplosion.cpp )
-  set( LAVAGEOMETRYEXPLOSION_LINK_LIBRARIES lava )
-  common_application( lavaGeometryExplosion )
-
-  set( LAVATEXTURE3D_HEADERS )
-  set( LAVATEXTURE3D_SOURCES Texture3D.cpp )
-  set( LAVATEXTURE3D_LINK_LIBRARIES lava )
-  common_application( lavaTexture3D )
-
-  set( LAVASWAPQUADTEXTURE_HEADERS )
-  set( LAVASWAPQUADTEXTURE_SOURCES SwapQuadTexture.cpp )
-  set( LAVASWAPQUADTEXTURE_LINK_LIBRARIES lava )
-  common_application( lavaSwapQuadTexture )
+##  set( LAVAVKINFO_HEADERS )
+##  set( LAVAVKINFO_SOURCES VkInfo.cpp )
+##  set( LAVAVKINFO_LINK_LIBRARIES lava )
+##  common_application( lavaVkInfo )
 ##
-##  set( LAVAVERTEXDISPLACEMENT_HEADERS )
-##  set( LAVAVERTEXDISPLACEMENT_SOURCES VertexDisplacement.cpp )
-##  set( LAVAVERTEXDISPLACEMENT_LINK_LIBRARIES lava )
-##  common_application( lavaVertexDisplacement )
-
-  set( LAVAMULTIVERTEX_HEADERS )
-  set( LAVAMULTIVERTEX_SOURCES MultiVertex.cpp )
-  set( LAVAMULTIVERTEX_LINK_LIBRARIES lava )
-  common_application( lavaMultiVertex )
-
-  set( LAVACOMPUTERAYTRACING_HEADERS )
-  set( LAVACOMPUTERAYTRACING_SOURCES ComputeRaytracing.cpp )
-  set( LAVACOMPUTERAYTRACING_LINK_LIBRARIES lava )
-  common_application( lavaComputeRaytracing )
+##  set( LAVACLEARSCREEN_HEADERS )
+##  set( LAVACLEARSCREEN_SOURCES ClearScreen.cpp )
+##  set( LAVACLEARSCREEN_LINK_LIBRARIES lava )
+##  common_application( lavaClearScreen )
 ##
-##  set( LAVAICO_HEADERS )
-##  set( LAVAICO_SOURCES Ico.cpp )
-##  set( LAVAICO_LINK_LIBRARIES lava )
-##  common_application( lavaIco )
-
-  set( LAVAEARTH_HEADERS )
-  set( LAVAEARTH_SOURCES Earth.cpp )
-  set( LAVAEARTH_LINK_LIBRARIES lava )
-  common_application( lavaEarth )
+##  set( LAVATRIANGLE_HEADERS )
+##  set( LAVATRIANGLE_SOURCES Triangle.cpp )
+##  set( LAVATRIANGLE_LINK_LIBRARIES lava )
+##  common_application( lavaTriangle )
 ##
-##  set( LAVAFOO_HEADERS )
-##  set( LAVAFOO_SOURCES Foo.cpp )
-##  set( LAVAFOO_LINK_LIBRARIES lava )
-##  common_application( lavaFoo )
-
-  set( LAVAPOSTPROCESS_HEADERS )
-  set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
-  set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
-  common_application( lavaPostProcess )
-
+##  set( LAVATRIANGLEINDEXED_HEADERS )
+##  set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
+##  set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava )
+##  common_application( lavaTriangleIndexed )
+##
+##  set( LAVATRIANGLETESSELATION_HEADERS )
+##  set( LAVATRIANGLETESSELATION_SOURCES TriangleTesselation.cpp )
+##  set( LAVATRIANGLETESSELATION_LINK_LIBRARIES lava )
+##  common_application( lavaTriangleTesselation )
+##
+##  set( LAVACUBEINDEXED_HEADERS )
+##  set( LAVACUBEINDEXED_SOURCES CubeIndexed.cpp )
+##  set( LAVACUBEINDEXED_LINK_LIBRARIES lava )
+##  common_application( lavaCubeIndexed )
+##
+##  set( LAVACUBEUV_HEADERS )
+##  set( LAVACUBEUV_SOURCES CubeUV.cpp )
+##  set( LAVACUBEUV_LINK_LIBRARIES lava )
+##  common_application( lavaCubeUV )
+##
+##  set( LAVAINSTANCING_HEADERS )
+##  set( LAVAINSTANCING_SOURCES Instancing.cpp )
+##  set( LAVAINSTANCING_LINK_LIBRARIES lava )
+##  common_application( lavaInstancing )
+##
   set( LAVAFRESNEL_HEADERS )
   set( LAVAFRESNEL_SOURCES Fresnel.cpp )
   set( LAVAFRESNEL_LINK_LIBRARIES lava )
   common_application( lavaFresnel )
+##
+  set( LAVASUBSURFACESCATTERING_HEADERS )
+  set( LAVASUBSURFACESCATTERING_SOURCES SubsurfaceScattering.cpp )
+  set( LAVASUBSURFACESCATTERING_LINK_LIBRARIES lava )
+  common_application( lavaSubsurfaceScattering )
+##
+##  set( LAVAHEIGHTMAPTESS_HEADERS )
+##  set( LAVAHEIGHTMAPTESS_SOURCES HeightmapTess.cpp )
+##  set( LAVAHEIGHTMAPTESS_LINK_LIBRARIES lava )
+##  common_application( lavaHeightmapTess )
+##
+##  set( LAVAFULLQUADNOTEXTURE_HEADERS )
+##  set( LAVAFULLQUADNOTEXTURE_SOURCES FullQuadNoTexture.cpp )
+##  set( LAVAFULLQUADNOTEXTURE_LINK_LIBRARIES lava )
+##  common_application( lavaFullQuadNoTexture )
+##
+##  set( LAVAFULLQUADTEXTURE_HEADERS )
+##  set( LAVAFULLQUADTEXTURE_SOURCES FullQuadTexture.cpp )
+##  set( LAVAFULLQUADTEXTURE_LINK_LIBRARIES lava )
+##  common_application( lavaFullQuadTexture )
+##
+##  set( LAVASPECULARLIGHTS_HEADERS )
+##  set( LAVASPECULARLIGHTS_SOURCES SpecularLights.cpp )
+##  set( LAVASPECULARLIGHTS_LINK_LIBRARIES lava )
+##  common_application( lavaSpecularLights )
+##
+##  set( LAVASTENCILOUTLINE_HEADERS )
+##  set( LAVASTENCILOUTLINE_SOURCES StencilOutline.cpp )
+##  set( LAVASTENCILOUTLINE_LINK_LIBRARIES lava )
+##  common_application( lavaStencilOutline )
+##
+##  set( LAVAPOSTPROCESS_HEADERS )
+##  set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
+##  set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
+##  common_application( lavaPostProcess )
+##
+##  set( LAVAMESH_HEADERS )
+##  set( LAVAMESH_SOURCES Mesh.cpp )
+##  set( LAVAMESH_LINK_LIBRARIES lava )
+##  common_application( lavaMesh )
+##
+##  set( LAVAMESHUV_HEADERS )
+##  set( LAVAMESHUV_SOURCES MeshUV.cpp )
+##  set( LAVAMESHUV_LINK_LIBRARIES lava )
+##  common_application( lavaMeshUV )
+##
+##  set( LAVAPLANARREFLECTION_HEADERS )
+##  set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
+##  set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
+##  common_application( lavaPlanarReflection )
+##
+##  set( LAVAMATCAP_HEADERS )
+##  set( LAVAMATCAP_SOURCES Matcap.cpp )
+##  set( LAVAMATCAP_LINK_LIBRARIES lava )
+##  common_application( lavaMatcap )
+##
+##  set( LAVAMULTIVIEWPORT_HEADERS )
+##  set( LAVAMULTIVIEWPORT_SOURCES MultiViewport.cpp )
+##  set( LAVAMULTIVIEWPORT_LINK_LIBRARIES lava )
+##  common_application( lavaMultiViewport )
+##
+##  set( LAVAPUSHCONSTANTS_HEADERS )
+##  set( LAVAPUSHCONSTANTS_SOURCES PushConstants.cpp )
+##  set( LAVAPUSHCONSTANTS_LINK_LIBRARIES lava )
+##  common_application( lavaPushConstants )
+##
+##  set( LAVASKYBOX_HEADERS utils/Camera.h )
+##  set( LAVASKYBOX_SOURCES Skybox.cpp )
+##  set( LAVASKYBOX_LINK_LIBRARIES lava )
+##  common_application( lavaSkybox )
+##
+##  set( LAVABLENDINGCUBE_HEADERS )
+##  set( LAVABLENDINGCUBE_SOURCES BlendingCube.cpp )
+##  set( LAVABLENDINGCUBE_LINK_LIBRARIES lava )
+##  common_application( lavaBlendingCube )
+##
+##  set( LAVASHADOWMAPPING_HEADERS )
+##  set( LAVASHADOWMAPPING_SOURCES ShadowMapping.cpp )
+##  set( LAVASHADOWMAPPING_LINK_LIBRARIES lava )
+##  common_application( lavaShadowMapping )
+##
+##  set( LAVAGEOMETRY2DFIGURES_HEADERS )
+##  set( LAVAGEOMETRY2DFIGURES_SOURCES Geometry2DFigures.cpp )
+##  set( LAVAGEOMETRY2DFIGURES_LINK_LIBRARIES lava )
+##  common_application( lavaGeometry2DFigures )
+##
+##  set( LAVACOMPUTERAYTRACING_HEADERS )
+##  set( LAVACOMPUTERAYTRACING_SOURCES ComputeRayTracing.cpp )
+##  set( LAVACOMPUTERAYTRACING_LINK_LIBRARIES lava )
+##  common_application( lavaComputeRayTracing )
+##
+##  set( LAVACOMPUTEEFFECT_HEADERS )
+##  set( LAVACOMPUTEEFFECT_SOURCES ComputeEffect.cpp )
+##  set( LAVACOMPUTEEFFECT_LINK_LIBRARIES lava )
+##  common_application( lavaComputeEffect )
+##
+##  set( LAVACOMPUTEUV_HEADERS )
+##  set( LAVACOMPUTEUV_SOURCES ComputeUV.cpp )
+##  set( LAVACOMPUTEUV_LINK_LIBRARIES lava )
+##  common_application( lavaComputeUV )
+##
+##  set( LAVAGRAVEYARDSCENE_HEADERS )
+##  set( LAVAGRAVEYARDSCENE_SOURCES GraveyardScene.cpp )
+##  set( LAVAGRAVEYARDSCENE_LINK_LIBRARIES lava )
+##  common_application( lavaGraveyardScene )
+##
+##  set( LAVAFRACTALCOMPUTETEXTURE_HEADERS )
+##  set( LAVAFRACTALCOMPUTETEXTURE_SOURCES FractalComputeTexture.cpp )
+##  set( LAVAFRACTALCOMPUTETEXTURE_LINK_LIBRARIES lava )
+##  common_application( lavaFractalComputeTexture )
 
-  set( LAVAPNTESSELATION_HEADERS )
-  set( LAVAPNTESSELATION_SOURCES PNTesselation.cpp )
-  set( LAVAPNTESSELATION_LINK_LIBRARIES lava )
-  common_application( lavaPNTesselation )
+  set( LAVAFRACTALCOMPUTETEXTUREFPSLIMIT_HEADERS )
+  set( LAVAFRACTALCOMPUTETEXTUREFPSLIMIT_SOURCES FractalComputeTextureFPSLimit.cpp )
+  set( LAVAFRACTALCOMPUTETEXTUREFPSLIMIT_LINK_LIBRARIES lava )
+  common_application( lavaFractalComputeTextureFPSLimit )
 
-  set( LAVAMULTIVIEWPORT_HEADERS )
-  set( LAVAMULTIVIEWPORT_SOURCES MultiViewport.cpp )
-  set( LAVAMULTIVIEWPORT_LINK_LIBRARIES lava )
-  common_application( lavaMultiViewport )
+  set( LAVATEXTURE2DARRAY_HEADERS )
+  set( LAVATEXTURE2DARRAY_SOURCES Texture2DArray.cpp )
+  set( LAVATEXTURE2DARRAY_LINK_LIBRARIES lava )
+  common_application( lavaTexture2DArray )
 
-  set( LAVAHDR_HEADERS )
-  set( LAVAHDR_SOURCES HDR.cpp )
-  set( LAVAHDR_LINK_LIBRARIES lava )
-  common_application( lavaHDR )
+  set( LAVAARRAYSUM_HEADERS )
+  set( LAVAARRAYSUM_SOURCES ArraySum.cpp )
+  set( LAVAARRAYSUM_LINK_LIBRARIES lava )
+  common_application( lavaArraySum )
 
-  set( LAVATESSELATEDTRIANGLE_HEADERS )
-  set( LAVATESSELATEDTRIANGLE_SOURCES TesselatedTriangle.cpp )
-  set( LAVATESSELATEDTRIANGLE_LINK_LIBRARIES lava )
-  common_application( lavaTesselatedTriangle )
+  set( LAVAHEIGHTMAPTESS2_HEADERS )
+  set( LAVAHEIGHTMAPTESS2_SOURCES HeightmapTess2.cpp )
+  set( LAVAHEIGHTMAPTESS2_LINK_LIBRARIES lava )
+  common_application( lavaHeightmapTess2 )
 
-  set( LAVAMULTIDESCRIPTOR_HEADERS )
-  set( LAVAMULTIDESCRIPTOR_SOURCES MultiDescriptor.cpp )
-  set( LAVAMULTIDESCRIPTOR_LINK_LIBRARIES lava )
-  common_application( lavaMultiDescriptor )
-##
-##  set( LAVACOMPUTEDEMO_HEADERS )
-##  set( LAVACOMPUTEDEMO_SOURCES ComputeDemo.cpp )
-##  set( LAVACOMPUTEDEMO_LINK_LIBRARIES lava )
-##  common_application( lavaComputeDemo )
+  set( LAVACLIPPLANE_HEADERS )
+  set( LAVACLIPPLANE_SOURCES ClipPlane.cpp )
+  set( LAVACLIPPLANE_LINK_LIBRARIES lava )
+  common_application( lavaClipPlane )
 
-  set( LAVAGEOMETRY2DFIGURES_HEADERS )
-  set( LAVAGEOMETRY2DFIGURES_SOURCES Geometry2DFigures.cpp )
-  set( LAVAGEOMETRY2DFIGURES_LINK_LIBRARIES lava )
-  common_application( lavaGeometry2DFigures )
-
-  set( LAVAPLANARREFLECTION_HEADERS )
-  set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
-  set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
-  common_application( lavaPlanarReflection )
-
-  set( LAVASKYBOX_HEADERS )
-  set( LAVASKYBOX_SOURCES Skybox.cpp )
-  set( LAVASKYBOX_LINK_LIBRARIES lava )
-  common_application( lavaSkybox )
-
-  set( LAVADEPTHOFFIELD_HEADERS )
-  set( LAVADEPTHOFFIELD_SOURCES DepthOfField.cpp )
-  set( LAVADEPTHOFFIELD_LINK_LIBRARIES lava )
-  common_application( lavaDepthOfField )
-  
-##
-##  set( LAVACOMPUTEPOSTEFFECT_HEADERS )
-##  set( LAVACOMPUTEPOSTEFFECT_SOURCES ComputePostEffect.cpp )
-##  set( LAVACOMPUTEPOSTEFFECT_LINK_LIBRARIES lava )
-##  common_application( lavaComputePostEffect )
-##
-##
-##
-##
-  ##set( LAVACOMPUTEEXAMPLE_HEADERS
-  ##  lodepng.h
-  ##)
-  ##set( LAVACOMPUTEEXAMPLE_SOURCES
-  ##  lodepng.cpp
-  ##  ComputeExample.cpp
-  ##)
-  ##set( LAVACOMPUTEEXAMPLE_LINK_LIBRARIES
-  ##  lava
-  ##)
-  ##common_application( lavaComputeExample )
-##
-##
-##
-##
-  ####set( LAVABLUR_HEADERS )
-  ####set( LAVABLUR_SOURCES Blur.cpp )
-  ####set( LAVABLUR_LINK_LIBRARIES
-  ####  lava
-  ####)
-  ####common_application( lavaBlur )
-##
-##
-  ##set( LAVASKYBOX_HEADERS )
-  ##set( LAVASKYBOX_SOURCES Skybox.cpp )
-  ##set( LAVASKYBOX_LINK_LIBRARIES
-  ##  lava
-  ##)
-  ##common_application( lavaSkybox )
-##
-##
-##
-##
-##
-  ##
-##
-##
-##
-##
-##
-  ####set( LAVAFIREPARTICLES_HEADERS )
-  ####set( LAVAFIREPARTICLES_SOURCES FireParticles.cpp )
-  ####set( LAVAFIREPARTICLES_LINK_LIBRARIES
-  ####  lava
-  ####)
-  ####common_application( lavaFireParticles )
-  ##
-##
-##
-  ####set( LAVACOMPUTECONVOLUTION_HEADERS )
-  ####set( LAVACOMPUTECONVOLUTION_SOURCES ComputeConvolution.cpp )
-  ####set( LAVACOMPUTECONVOLUTION_LINK_LIBRARIES
-  ####  lava
-  ####)
-  ####common_application( lavaComputeConvolution )
-  ##
-##
-##
-  ####set( LAVARAYTRACERCOMPUTER_HEADERS )
-  ####set( LAVARAYTRACERCOMPUTER_SOURCES RayTracerComputer.cpp )
-  ####set( LAVARAYTRACERCOMPUTER_LINK_LIBRARIES
-  ####  lava
-  ####)
-  ####common_application( lavaRayTracerComputer )
-  
+  set( LAVAPERFECTTOON_HEADERS )
+  set( LAVAPERFECTTOON_SOURCES PerfectToon.cpp )
+  set( LAVAPERFECTTOON_LINK_LIBRARIES lava )
+  common_application( lavaPerfectToon )
 endif( )

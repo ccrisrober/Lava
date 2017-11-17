@@ -57,6 +57,8 @@ namespace lava
     _deviceFeatures.tessellationShader = VK_TRUE;
     _deviceFeatures.depthClamp = VK_TRUE;
     _deviceFeatures.fillModeNonSolid = VK_TRUE;
+    _deviceFeatures.multiViewport = VK_TRUE;
+    _deviceFeatures.shaderClipDistance = VK_TRUE;
 
 
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties =

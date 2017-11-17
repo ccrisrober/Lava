@@ -25,17 +25,17 @@ namespace material
       dslbs.push_back( mvpDescriptor );
       std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = dev->createDescriptorSetLayout( dslbs );
 
-      _pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
+      pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
       std::array<vk::DescriptorPoolSize, 1> poolSize;
       poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
       std::shared_ptr<DescriptorPool> descriptorPool = dev->createDescriptorPool( {}, 1, poolSize );
 
       // Init descriptor set
-      _descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+      descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
       std::vector<WriteDescriptorSet> wdss;
-      DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( glm::mat4 ) );
-      WriteDescriptorSet w( _descriptorSet, 0, 0, 
+      DescriptorBufferInfo buffInfo( uniformBufferMVP, 0, sizeof( glm::mat4 ) );
+      WriteDescriptorSet w( descriptorSet, 0, 0, 
         vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
       wdss.push_back( w );
       dev->updateDescriptorSets( wdss, {} );
@@ -83,8 +83,8 @@ namespace material
         vk::DynamicState::eScissor } );
 
 
-      _pipeline = dev->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-        _pipelineLayout, _renderPass );
+      pipeline = dev->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+        pipelineLayout, _renderPass );
       }
     private:
       std::string fileName;

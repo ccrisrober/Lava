@@ -28,6 +28,7 @@ namespace lava
     {
       return _framebuffers[ _swapchainIndex ];
     }
+    LAVA_API // TODO: Remove API
     void acquireNextFrame( uint64_t timeout = UINT64_MAX, 
       const std::shared_ptr<Fence>& fence = nullptr )
     {
@@ -39,6 +40,7 @@ namespace lava
       return _swapchain->getPresentCompleteSemaphores( )[ _swapchainIndex ];
     }
 
+    LAVA_API // TODO: Remove API
     void present( const std::shared_ptr<Queue>& queue,
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = {} )
     {

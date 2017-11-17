@@ -11,7 +11,7 @@ namespace lava
       _scale = glm::vec3( 1.0f );
     }
 
-    Node* Node::getNode( const std::string& name )
+    Node* Node::node( const std::string& name )
     {
       if ( name == _name )
       {
@@ -20,7 +20,7 @@ namespace lava
 
       for ( auto& child : _children )
       {
-        Node* n = child->getNode( name );
+        Node* n = child->node( name );
 
         if ( n )
         {
@@ -304,9 +304,13 @@ namespace lava
         c->needUpdate( );
       }
     }
-    const Node& Scene::getRoot( void ) const
+    /*Node& Scene::root( void )
     {
       return _root;
     }
+    const Node& Scene::getRoot( void ) const
+    {
+      return _root;
+    }*/
   }
 }

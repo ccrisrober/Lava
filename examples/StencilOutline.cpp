@@ -3,21 +3,6 @@ using namespace lava;
 
 #include <routes.h>
 
-#include "utils/Camera.h"
-
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-
-// camera
-Camera camera( glm::vec3( 0.0f, 0.0f, 3.0f ) );
-// timing
-float deltaTime = 0.0f; // time between current frame and last frame
-float lastFrame = 0.0f;
-
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
 struct
 {
   glm::mat4 model;
@@ -25,11 +10,17 @@ struct
   glm::mat4 proj;
 } uboVS;
 
-std::array<float, 1> pushConstants;
+struct
+{
+  float outlineWidth = 0.05f;
+} uboVS2;
 
 class MyApp : public VulkanApp
 {
 public:
+  std::shared_ptr<lava::UniformBuffer> uniformBufferMVP;
+  std::shared_ptr<lava::UniformBuffer> uniformBufferOutline;
+
   struct
   {
     std::shared_ptr<Pipeline> solid;
@@ -42,198 +33,261 @@ public:
     std::shared_ptr<PipelineLayout> outline;
   } pipelineLayouts;
 
-  std::shared_ptr<Buffer> _uniformBufferMVP;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  struct
+  {
+    std::shared_ptr<DescriptorSet> solid;
+    std::shared_ptr<DescriptorSet> outline;
+  } descriptorSets;
+
+  struct
+  {
+    std::shared_ptr<DescriptorSetLayout> solid;
+    std::shared_ptr<DescriptorSetLayout> outline;
+  } descriptorSetLayouts;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
+
+  std::shared_ptr<Texture2D> tex;
+  std::shared_ptr<CommandPool> commandPool;
+
+  std::shared_ptr<lava::engine::Node> node;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    node = std::make_shared<lava::engine::Node>( "GeometryNode" );
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "dragon.obj_" ) );
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    // MVP buffer
-    {
-      uint32_t mvpBufferSize = sizeof( uboVS );
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
+    uniformBufferMVP = std::make_shared<lava::UniformBuffer>( 
+      _device, sizeof( uboVS )
+    );
+    uniformBufferOutline = std::make_shared<lava::UniformBuffer>( 
+      _device, sizeof( uboVS2 )
+    );
+
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "/green_matcap.jpg" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
       DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
-      vk::ShaderStageFlagBits::eVertex
+      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
+      ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment
       )
     };
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    descriptorSetLayouts.solid = _device->createDescriptorSetLayout( dslbs );
 
-    pipelineLayouts.solid = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayouts.solid = _device->createPipelineLayout( descriptorSetLayouts.solid, nullptr );
 
-    vk::PushConstantRange pushConstantRange( vk::ShaderStageFlagBits::eVertex,
-      0, sizeof( pushConstants ) );
-    pipelineLayouts.outline = _device->createPipelineLayout( descriptorSetLayout, pushConstantRange );
+    dslbs =
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex
+      ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex
+      )
+    };
+    descriptorSetLayouts.outline = _device->createDescriptorSetLayout( dslbs );
+
+    pipelineLayouts.outline = _device->createPipelineLayout( descriptorSetLayouts.outline, nullptr );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
     PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
-          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-          vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
+          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, 
+            offsetof( lava::extras::Vertex, position )
+          ),
+          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, 
+            offsetof( lava::extras::Vertex, normal )
+          )
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
+    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
-      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
-      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
+      vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineDepthStencilStateCreateInfo depthStencilState( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
-    depthStencil.stencilTestEnable = true;
+    depthStencilState.stencilTestEnable = VK_TRUE;
 
     // glStencilFunc( GL_ALWAYS, 1, 0xFF );
-    depthStencil.back.compareOp = vk::CompareOp::eAlways;
-    depthStencil.back.compareMask = 0xff;
-    depthStencil.back.reference = 1;
+    depthStencilState.back.compareOp = vk::CompareOp::eAlways;
+    depthStencilState.back.compareMask = 0xff;
+    depthStencilState.back.reference = 1;
     // glStencilMask(0xFF);
-    depthStencil.back.writeMask = 0xff;
+    depthStencilState.back.writeMask = 0xff;
     // glEnable( GL_DEPTH );
-    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencilState.depthTestEnable = VK_TRUE;
 
-    depthStencil.back.failOp = vk::StencilOp::eKeep;
-    depthStencil.back.depthFailOp = vk::StencilOp::eKeep;
-    depthStencil.back.passOp = vk::StencilOp::eReplace;
+    depthStencilState.back.failOp = vk::StencilOp::eKeep;
+    depthStencilState.back.depthFailOp = vk::StencilOp::eKeep;
+    depthStencilState.back.passOp = vk::StencilOp::eReplace;
 
-    /*depthStencil.back.failOp = vk::StencilOp::eReplace;
-    depthStencil.back.depthFailOp = vk::StencilOp::eReplace;
-    depthStencil.back.passOp = vk::StencilOp::eReplace;*/
-    depthStencil.front = depthStencil.back;
+    //depthStencilState.back.failOp = vk::StencilOp::eReplace;
+    //depthStencilState.back.depthFailOp = vk::StencilOp::eReplace;
+    //depthStencilState.back.passOp = vk::StencilOp::eReplace;
+    depthStencilState.front = depthStencilState.back;
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport,
-      rasterization, multisample, depthStencil, colorBlend, dynamic,
-      pipelineLayouts.solid, _renderPass );
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, 
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+      viewport, rasterization, multisample, depthStencilState, colorBlend, 
+      dynamic, pipelineLayouts.solid, _renderPass
+    );
 
-
+    // Outline pass
     // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    depthStencil.back.compareOp = vk::CompareOp::eNotEqual;
-    // depthStencil.back.compareMask = 0xff;
-    // depthStencil.back.reference = 1;
+    depthStencilState.back.compareOp = vk::CompareOp::eNotEqual;
+    // depthStencilState.back.compareMask = 0xff;
+    // depthStencilState.back.reference = 1;
     // glDisable( GL_DEPTH );
-    depthStencil.depthTestEnable = VK_FALSE;
+    depthStencilState.depthTestEnable = VK_FALSE;
 
-    /*depthStencil.back.failOp = vk::StencilOp::eKeep;
-    depthStencil.back.depthFailOp = vk::StencilOp::eKeep;
-    depthStencil.back.passOp = vk::StencilOp::eReplace;*/
-    depthStencil.front = depthStencil.back;
+    //depthStencilState.back.failOp = vk::StencilOp::eKeep;
+    //depthStencilState.back.depthFailOp = vk::StencilOp::eKeep;
+    //depthStencilState.back.passOp = vk::StencilOp::eReplace;
+    depthStencilState.front = depthStencilState.back;
 
     vertexStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "outline_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "outline_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
     fragmentStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "outline_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
-
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "outline_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     pipelines.outline = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport,
-      rasterization, multisample, depthStencil, colorBlend, dynamic,
-      pipelineLayouts.outline, _renderPass );
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+      viewport, rasterization, multisample, depthStencilState, colorBlend,
+      dynamic, pipelineLayouts.outline, _renderPass
+    );
 
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    std::array<vk::DescriptorPoolSize, 2> poolSize;
+    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 3 );
+    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
+    std::shared_ptr<DescriptorPool> descriptorPool = 
+      _device->createDescriptorPool( {}, 2, poolSize );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSets.solid = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayouts.solid );
     std::vector<WriteDescriptorSet> wdss =
     {
-      WriteDescriptorSet( _descriptorSet, 0, 0,
+      WriteDescriptorSet( descriptorSets.solid, 0, 0,
       vk::DescriptorType::eUniformBuffer, 1, nullptr,
-      DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) )
+      DescriptorBufferInfo(
+        uniformBufferMVP, 0, sizeof( uboVS )
+      )
+      ),
+      WriteDescriptorSet( descriptorSets.solid, 1, 0,
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        tex->descriptor, nullptr
       )
     };
     _device->updateDescriptorSets( wdss, {} );
 
+    descriptorSets.outline = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayouts.outline );
+    wdss =
+    {
+      WriteDescriptorSet( descriptorSets.outline, 0, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo(
+          uniformBufferMVP, 0, sizeof( uboVS )
+        )
+      ),
+      WriteDescriptorSet( descriptorSets.outline, 1, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo(
+          uniformBufferOutline, 0, sizeof( uboVS2 )
+        )
+      )
+    };
+    _device->updateDescriptorSets( wdss, {} );
   }
   void updateUniformBuffers( void )
   {
     uint32_t width = _window->getWidth( );
     uint32_t height = _window->getHeight( );
 
-    static auto startTime = std::chrono::high_resolution_clock::now( );
+    static auto startTime = std::chrono::high_resolution_clock::now();
 
-    auto currentTime = std::chrono::high_resolution_clock::now( );
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
-    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-    glm::vec3 cameraPos = glm::vec3( 0.0f, 0.0f, 3.0f );
+    //node->rotate( glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) ); // , lava::engine::Node::TransformSpace::World );
+    //uboVS.model = node->getTransform( );
+    uboVS.model = glm::mat4( 1.0f );
+    uboVS.model = glm::rotate( uboVS.model, time * glm::radians( 90.0f ), glm::vec3( 0.0f, -1.0f, 0.0f ) );
+    //uboVS.model = glm::rotate( uboVS.model, glm::radians( 90.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    glm::vec3 cameraPos = glm::vec3( 0.0f, 1.0f, 5.5f );
     glm::vec3 cameraFront = glm::vec3( 0.0f, 0.0f, -1.0f );
     glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f );
 
     uboVS.view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp );
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
-
-    uboVS.view = camera.GetViewMatrix( );
-    uboVS.proj = glm::perspective( glm::radians( camera.Zoom ), ( float ) width / ( float ) height, 0.1f, 100.0f );
-
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+
+    uniformBufferOutline->writeData( 0, sizeof( uboVS2 ), &uboVS2 );
   }
 
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool =
-      _device->createCommandPool(
-        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
-    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass,
-      _defaultFramebuffer->getFramebuffer( ),
-      vk::Rect2D( { 0, 0 },
-        _defaultFramebuffer->getExtent( ) ),
-        { vk::ClearValue( ccv ), vk::ClearValue(
-          vk::ClearDepthStencilValue( 1.0f, 0 ) )
-        }, vk::SubpassContents::eInline );
+    std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 0.0f };
+    commandBuffer->beginRenderPass( _renderPass, 
+      _defaultFramebuffer->getFramebuffer( ), 
+      vk::Rect2D( { 0, 0 }, 
+      _defaultFramebuffer->getExtent( ) ),
+      { vk::ClearValue( ccv ), vk::ClearValue( 
+        vk::ClearDepthStencilValue( 1.0f, 0 ) )
+      }, vk::SubpassContents::eInline );
 
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
 
-    // First step: Basic rendering (fill stencil buffer)
-    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      pipelineLayouts.solid, 0, { _descriptorSet }, nullptr );
+    // First pass renders object (toon shaded) and fills stencil buffer
     commandBuffer->bindGraphicsPipeline( pipelines.solid );
+    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      pipelineLayouts.solid, 0, { descriptorSets.solid }, nullptr );
+      
     geometry->render( commandBuffer );
 
-    // Second step: Render scaled objet only where stencil was not set by first step
-    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      pipelineLayouts.outline, 0, { _descriptorSet }, nullptr );
+    // Second pass renders scaled object only where stencil was not set by first pass
     commandBuffer->bindGraphicsPipeline( pipelines.outline );
-    commandBuffer->pushConstants<float>( *pipelineLayouts.outline,
-      vk::ShaderStageFlagBits::eVertex, 0, pushConstants );
+    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      pipelineLayouts.outline, 0, { descriptorSets.outline }, nullptr );
+
     geometry->render( commandBuffer );
     commandBuffer->endRenderPass( );
 
@@ -246,88 +300,28 @@ public:
       _renderComplete
     } );
   }
-  /*virtual void cursorPosEvent( double xPos, double yPos )
+  void updateOutlineWidth( float inc )
   {
-    if ( firstMouse )
+    if ( uboVS2.outlineWidth + inc > 0.01f )
     {
-      lastX = xPos;
-      lastY = yPos;
-      firstMouse = false;
-    }
-
-    float xoffset = xPos - lastX;
-    float yoffset = lastY - yPos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xPos;
-    lastY = yPos;
-
-    camera.ProcessMouseMovement( xoffset, yoffset );
-  }*/
-  void changeOutlineWidth( float delta )
-  {
-    if ( pushConstants[ 0 ] + delta > 0.01f )
-    {
-      pushConstants[ 0 ] += delta;
+      uboVS2.outlineWidth += inc;
     }
   }
-
-  virtual void keyEvent( int key, int scancode, int action, int mods )
+  void keyEvent( int key, int, int action, int )
   {
     switch ( key )
     {
-    case GLFW_KEY_C:
-      changeOutlineWidth( -0.01f );
+    case GLFW_KEY_Z:
+      updateOutlineWidth( -0.005f );
       break;
-    case GLFW_KEY_V:
-      changeOutlineWidth( 0.01f );
+    case GLFW_KEY_X:
+      updateOutlineWidth( 0.005f );
       break;
     case GLFW_KEY_ESCAPE:
       switch ( action )
       {
       case GLFW_PRESS:
         getWindow( )->close( );
-        break;
-      default:
-        break;
-      }
-      break;
-    case GLFW_KEY_W:
-      switch ( action )
-      {
-      case GLFW_PRESS:
-        camera.ProcessKeyboard( FORWARD, deltaTime );
-        break;
-      default:
-        break;
-      }
-      break;
-    case GLFW_KEY_S:
-      switch ( action )
-      {
-      case GLFW_PRESS:
-        camera.ProcessKeyboard( BACKWARD, deltaTime );
-        break;
-      default:
-        break;
-      }
-      break;
-    case GLFW_KEY_A:
-      switch ( action )
-      {
-      case GLFW_PRESS:
-        camera.ProcessKeyboard( LEFT, deltaTime );
-        break;
-      default:
-        break;
-      }
-      break;
-    case GLFW_KEY_D:
-      switch ( action )
-      {
-      case GLFW_PRESS:
-        camera.ProcessKeyboard( RIGHT, deltaTime );
-        break;
-      default:
         break;
       }
       break;
@@ -342,11 +336,11 @@ void glfwErrorCallback( int error, const char* description )
   fprintf( stderr, "GLFW Error %d: %s\n", error, description );
 }
 
-int main( int argc, char** argv )
+int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Stencil Outline loading", 800, 600 );
+    VulkanApp* app = new MyApp( "Stencil Outline", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

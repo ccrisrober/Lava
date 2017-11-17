@@ -28,7 +28,7 @@ namespace material
       // MVP buffer
       {
         uint32_t mvpBufferSize = sizeof( uboVS );
-        _uniformBufferMVP = dev->createBuffer( mvpBufferSize,
+        uniformBufferMVP = dev->createBuffer( mvpBufferSize,
           vk::BufferUsageFlagBits::eUniformBuffer,
           vk::SharingMode::eExclusive, nullptr,
           vk::MemoryPropertyFlagBits::eHostVisible |
@@ -58,11 +58,11 @@ namespace material
 
 
       // Init descriptor set
-      _descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+      descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
       std::vector<WriteDescriptorSet> wdss =
       {
-        WriteDescriptorSet( _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) ) )
+        WriteDescriptorSet( descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
+        1, nullptr, DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS ) ) )
       };
       dev->updateDescriptorSets( wdss, {} );
 
@@ -106,20 +106,22 @@ namespace material
       PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-      _pipeline = dev->createGraphicsPipeline( pipelineCache, { }, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      _pipeline = dev->createGraphicsPipeline( pipelineCache, { }, 
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+        viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, renderPass );
     }
     virtual void bind( std::shared_ptr< CommandBuffer > cmd )
     {
       lava::engine::Material::bind( cmd );
-      if ( _descriptorSet )
+      if ( descriptorSet )
       {
         cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-          _pipelineLayout, 0, { _descriptorSet }, nullptr );
+          _pipelineLayout, 0, { descriptorSet }, nullptr );
       }
     }
-    std::shared_ptr<Buffer> _uniformBufferMVP;
+    std::shared_ptr<Buffer> uniformBufferMVP;
   protected:
-    std::shared_ptr<DescriptorSet> _descriptorSet;
+    std::shared_ptr<DescriptorSet> descriptorSet;
   };
 }

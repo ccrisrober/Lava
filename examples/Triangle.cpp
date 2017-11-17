@@ -19,34 +19,43 @@ const std::vector<Vertex> vertices =
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> _vertexBuffer;
+  std::shared_ptr<Buffer> vertexBuffer;
 
   std::shared_ptr<lava::engine::Material> material;
+  std::shared_ptr<CommandPool> commandPool;
 
 	MyApp(char const* title, uint32_t width, uint32_t height)
 		: VulkanApp( title, width, height )
 	{
     uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-    _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-    _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+    vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+    vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+
     material = std::make_shared<lava::engine::BasicTriangle>( );
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
+
+    commandPool = _device->createCommandPool( 
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 	}
   void doPaint( void ) override
   {
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass, _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
-    { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
+    commandBuffer->beginRenderPass( _renderPass, 
+      _defaultFramebuffer->getFramebuffer( ), 
+      vk::Rect2D( { 0, 0 }, _defaultFramebuffer->getExtent( ) ),
+      { 
+        vk::ClearValue( ccv ), 
+        vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) )
+      }, vk::SubpassContents::eInline
+    );
     
     material->bind( commandBuffer );
 
-    commandBuffer->bindVertexBuffer( 0, _vertexBuffer, 0 );
+    commandBuffer->bindVertexBuffer( 0, vertexBuffer, 0 );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

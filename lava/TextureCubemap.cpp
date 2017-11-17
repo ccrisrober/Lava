@@ -15,7 +15,9 @@ namespace lava
       vk::ImageLayout imageLayout, bool forceLinear )
     : Texture( device_ )
   {
-    unsigned int numChannels;
+    uint32_t textureWidth = 0;
+    uint32_t textureHeight = 0;
+    uint32_t textureChannels = 0;
 
     struct Image
     {
@@ -28,41 +30,35 @@ namespace lava
 
     std::vector<Image> images;
     uint32_t totalSize = 0;
-
     images.reserve( filePaths.size( ) );
-    for ( uint32_t i = 0; i < filePaths.size( ); ++i )
+    for ( uint32_t i = 0, l = filePaths.size( ); i < l; ++i )
     {
       unsigned char* pixels = lava::utils::loadImageTexture(
-        filePaths[ i ].c_str( ), width, height,
-        numChannels );
-      if ( !pixels )
-      {
-        throw;
-      }
+        filePaths[ i ].c_str( ), textureWidth, textureHeight, textureChannels);
 
       // The load function returns the original channel count, 
       // but it was forced to 4 because of the last parameter
-      numChannels = 4; // TODO: hardcoded
+      textureChannels = 4;
 
-      uint32_t size = width * height * numChannels
-        * sizeof( unsigned char );
-      images.push_back( { pixels, width, height,
-        numChannels, size } );
+      uint32_t size = textureWidth * textureHeight * textureChannels * sizeof( unsigned char );
+      images.push_back( { pixels, textureWidth, textureHeight, textureChannels, size } );
       totalSize += size;
     }
 
     unsigned char* pixels = ( unsigned char* ) malloc( totalSize );
     unsigned char* pixelData = pixels;
-    for ( uint32_t i = 0; i < images.size( ); ++i )
+    for ( uint32_t i = 0, l = images.size( ); i < l; ++i )
     {
       memcpy( pixelData, images[ i ].pixels, images[ i ].size );
       pixelData += ( images[ i ].size / sizeof( unsigned char ) );
     }
-
-    for ( uint32_t i = 0; i < images.size( ); ++i )
+    for ( uint32_t i = 0, l = images.size( ); i < l; ++i )
     {
       free( images[ i ].pixels );
     }
+
+    width = textureWidth;
+    height = textureHeight;
 
     vk::FormatProperties formatProps =
       _device->_physicalDevice->getFormatProperties( format );
@@ -74,8 +70,6 @@ namespace lava
     // limited amount of formats and features (mip maps, cubemaps, arrays, etc.)
     VkBool32 useStaging = !forceLinear;
 
-    VkDeviceSize texSize = width * height * numChannels;
-
     vk::Device device = static_cast< vk::Device >( *_device );
 
     if ( useStaging )
@@ -85,7 +79,7 @@ namespace lava
       vk::DeviceMemory stagingMemory;
 
       vk::BufferCreateInfo bci;
-      bci.size = texSize;
+      bci.size = totalSize;
       bci.usage = vk::BufferUsageFlagBits::eTransferSrc;
       bci.sharingMode = vk::SharingMode::eExclusive;
 
@@ -94,38 +88,37 @@ namespace lava
         vk::MemoryPropertyFlagBits::eHostVisible
         | vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
 
-                                                        // Copy texture data into staging buffer
-      void* data = device.mapMemory( stagingMemory, 0, texSize );
-      memcpy( data, pixels, texSize );
-      device.unmapMemory( stagingMemory );
-
+      // Copy texture data into staging buffer
+      void* data = device.mapMemory( stagingMemory, 0, totalSize );
+      memcpy( data, pixels, totalSize );
       free( pixels );
+      device.unmapMemory( stagingMemory );
 
       // TODO: Generate MipLevels
 
-      // Create Image
+      // Create optimal tiled target image
       vk::ImageCreateInfo ici;
       ici.imageType = vk::ImageType::e2D;
       ici.format = format;
       ici.mipLevels = 1;  // TODO: Generate MipLevels
-      // Cube faces count as array layers in Vulkan
-      ici.arrayLayers = 6;
-      // This flag is required for cube map images
-      ici.flags = vk::ImageCreateFlagBits::eCubeCompatible;
       ici.samples = vk::SampleCountFlagBits::e1;
       ici.tiling = vk::ImageTiling::eOptimal;
+      ici.usage = imageUsageFlags;
       ici.sharingMode = vk::SharingMode::eExclusive;
       ici.initialLayout = vk::ImageLayout::eUndefined;
-      ici.extent.width = width;
-      ici.extent.height = height;
-      ici.extent.depth = 1;
-      ici.usage = imageUsageFlags;
+      ici.extent.width = textureWidth;
+      ici.extent.height = textureHeight;
+      ici.extent.depth = 1u;
 
       // Ensure that the TRANSFER_DST bit is set for staging
       if ( !( ici.usage & vk::ImageUsageFlagBits::eTransferDst ) )
       {
         ici.usage |= vk::ImageUsageFlagBits::eTransferDst;
       }
+      // Cube faces count as array layers in Vulkan
+      ici.arrayLayers = 6;
+      // This flag is required for cube map images
+      ici.flags = vk::ImageCreateFlagBits::eCubeCompatible;
 
       image = device.createImage( ici );
       deviceMemory = _device->allocateImageMemory( image,
@@ -133,6 +126,29 @@ namespace lava
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+
+
+      // Setup buffer copy regions for each face including all of it's miplevels
+      std::vector<vk::BufferImageCopy> bufferCopyRegions;
+      uint32_t offset = 0;
+      for ( uint32_t face = 0; face < 6; ++face )
+      {
+        for ( uint32_t mipLevel = 0; mipLevel < 1; ++mipLevel )
+        {
+          vk::BufferImageCopy bic;
+          bic.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+          bic.imageSubresource.mipLevel = mipLevel;
+          bic.imageSubresource.baseArrayLayer = face;
+          bic.imageSubresource.layerCount = 1;
+          bic.imageExtent.width = textureWidth;
+          bic.imageExtent.height = textureHeight;
+          bic.imageExtent.depth = 1;
+          bic.bufferOffset = offset;
+          
+          bufferCopyRegions.push_back( bic );
+          offset += images[ face ].size;
+        }
+      }
 
       // The sub resource range describes the regions of the image we will be transition
       vk::ImageSubresourceRange subresourceRange;
@@ -156,26 +172,10 @@ namespace lava
         subresourceRange
       );
 
-      // Copy buffer to image
-      // todo: we can generate manual mip levels
-      vk::BufferImageCopy region = {};
-      region.bufferOffset = 0;
-      region.bufferRowLength = 0;
-      region.bufferImageHeight = 0;
-      region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-      region.imageSubresource.mipLevel = 0;
-      region.imageSubresource.baseArrayLayer = 0;
-      region.imageSubresource.layerCount = 1;
-      region.imageOffset = vk::Offset3D( 0, 0, 0 );
-      region.imageExtent = vk::Extent3D(
-        width,
-        height,
-        1
-      );
-
+      // Copy the cube map faces from the staging buffer to the optimal tiled image
       static_cast<vk::CommandBuffer>( *copyCmd ).copyBufferToImage(
         stagingBuffer, image,
-        vk::ImageLayout::eTransferDstOptimal, { region }
+        vk::ImageLayout::eTransferDstOptimal, bufferCopyRegions
       );
 
       // Change texture image layout to shader read after all mip levels have been copied
@@ -239,8 +239,8 @@ namespace lava
       // Includes row pitch, size offsets, etc.
       vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
 
-      void* data = device.mapMemory( mappableMemory, 0, texSize );
-      memcpy( data, pixels, texSize );
+      void* data = device.mapMemory( mappableMemory, 0, totalSize );
+      memcpy( data, pixels, totalSize );
       device.unmapMemory( mappableMemory );
 
       // Linear tiled images don't need to be staged
@@ -295,10 +295,10 @@ namespace lava
       vk::ComponentSwizzle::eB,
       vk::ComponentSwizzle::eA
     } );
+    vci.setSubresourceRange( { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } );
     // 6 array layers (faces)
-    vci.setSubresourceRange( { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 6 } );
+    vci.subresourceRange.layerCount = 6;
     vci.subresourceRange.levelCount = 1;
-		// 6 array layers (faces)
     vci.image = image;
 
     view = device.createImageView( vci );

@@ -8,11 +8,11 @@ layout(binding = 0) uniform UniformBufferObject
 	mat4 proj;
 } ubo;
 
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec3 aNormal;
+layout(location = 0) in vec3 vertPosition;
+layout(location = 1) in vec3 vertNormal;
 
-layout(location = 0) out vec3 FragPos;
-layout(location = 1) out vec3 Normal;
+layout(location = 0) out vec3 fragPos;
+layout(location = 1) out vec3 fragNormal;
 
 out gl_PerVertex
 {
@@ -21,8 +21,7 @@ out gl_PerVertex
 
 void main( )
 {
-    FragPos = vec3(ubo.model * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(ubo.model))) * aNormal;  
-    
-    gl_Position = ubo.proj * ubo.view * vec4(FragPos, 1.0);
+	fragNormal = (transpose(inverse(ubo.view * ubo.model)) * vec4(vertNormal, 1.0)).xyz;
+	fragPos = (ubo.view * ubo.model * vec4(vertPosition, 1.0)).xyz;
+	gl_Position = ubo.proj * ubo.view * ubo.model * vec4(vertPosition, 1.0);
 }

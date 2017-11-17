@@ -65,6 +65,8 @@ namespace lava
   struct PipelineViewportStateCreateInfo
   {
     LAVA_API
+    PipelineViewportStateCreateInfo( uint32_t dummyViews, uint32_t dummySci );
+    LAVA_API
     PipelineViewportStateCreateInfo(
       vk::ArrayProxy<const vk::Viewport> viewports_,
       vk::ArrayProxy<const vk::Rect2D> scissors_ );

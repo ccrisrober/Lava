@@ -6,23 +6,25 @@ using namespace lava;
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<Pipeline> pipeline;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<CommandPool> commandPool;
   MyApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool( 
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+
     // init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs;
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
       _device->createDescriptorSetLayout( dslbs );
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = 
-      _device->createPipelineCache( 0, nullptr );
-
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadUV_vert.spv" ),
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
@@ -55,19 +57,16 @@ public:
       vk::DynamicState::eScissor } );
 
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
     { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+      pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool( 
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 
@@ -75,7 +74,7 @@ public:
         _defaultFramebuffer->getExtent( ) ),
     { vk::ClearValue( ccv ), vk::ClearValue(
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+    commandBuffer->bindGraphicsPipeline( pipeline );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

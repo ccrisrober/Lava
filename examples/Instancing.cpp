@@ -25,35 +25,35 @@ const float side = 1.0f;
 const float side2 = side / 2.0f;
 const std::vector<Vertex> vertices =
 {
-  {{-side2, -side2,  side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2, -side2,  side2 }, { 0.0f, 0.0f } },
+  { {  side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { { -side2,  side2,  side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2, -side2}, {1.0f, 1.0f}},
+  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { {  side2, -side2, -side2 }, { 1.0f, 0.0f } },
+  { { -side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2, -side2 }, { 1.0f, 1.0f } },
 
-  {{ side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { {  side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { {  side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { {  side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{-side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { { -side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { { -side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { { -side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2,  side2, -side2}, {0.0f, 0.0f}},
-  {{-side2,  side2,  side2}, {1.0f, 0.0f}},
-  {{ side2,  side2, -side2}, {0.0f, 1.0f}},
-  {{ side2,  side2,  side2}, {1.0f, 1.0f}},
+  { { -side2,  side2, -side2 }, { 0.0f, 0.0f } },
+  { { -side2,  side2,  side2 }, { 1.0f, 0.0f } },
+  { {  side2,  side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
 
-  {{-side2, -side2, -side2}, {0.0f, 0.0f}},
-  {{-side2, -side2,  side2}, {1.0f, 0.0f}},
-  {{ side2, -side2, -side2}, {0.0f, 1.0f}},
-  {{ side2, -side2,  side2}, {1.0f, 1.0f}} 
+  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
+  { { -side2, -side2,  side2 }, { 1.0f, 0.0f } },
+  { {  side2, -side2, -side2 }, { 0.0f, 1.0f } },
+  { {  side2, -side2,  side2 }, { 1.0f, 1.0f } } 
 };
 const std::vector<uint16_t> indices =
 {
@@ -77,46 +77,49 @@ struct InstanceData
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
-  std::shared_ptr<IndexBuffer> _indexBuffer;
-  std::shared_ptr<Buffer> _uniformBufferMVP;
-  std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<IndexBuffer> indexBuffer;
+  std::shared_ptr<Buffer> uniformBufferMVP;
+  std::shared_ptr<Pipeline> pipeline;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<DescriptorSet> descriptorSet;
   std::shared_ptr<Texture2D> tex;
 
   std::shared_ptr<VertexBuffer> _instanceBuffer;
+    std::shared_ptr<CommandPool> commandPool;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool( 
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
+      indexBuffer = std::make_shared<IndexBuffer>( _device, 
         vk::IndexType::eUint16, indices.size( ) );
-      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     // MVP buffer
     {
       uint32_t mvpBufferSize = sizeof(uboVS);
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
+      uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
           vk::MemoryPropertyFlagBits::eHostCoherent );
     }
 
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
       std::string( "random.png" ), commandPool, _graphicsQueue, 
       vk::Format::eR8G8B8A8Unorm );
@@ -163,7 +166,7 @@ public:
     dslbs.push_back( mvpDescriptor2 );
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
@@ -171,16 +174,16 @@ public:
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss =
     {
-      WriteDescriptorSet( _descriptorSet, 0, 0, 
+      WriteDescriptorSet( descriptorSet, 0, 0, 
         vk::DescriptorType::eUniformBuffer, 1, nullptr,
         DescriptorBufferInfo( 
-          _uniformBufferMVP, 0, sizeof( glm::mat4 )
+          uniformBufferMVP, 0, sizeof( glm::mat4 )
         )
       ),
-      WriteDescriptorSet( _descriptorSet, 1, 0,
+      WriteDescriptorSet( descriptorSet, 1, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         tex->descriptor, nullptr
       )
@@ -189,8 +192,6 @@ public:
     _device->updateDescriptorSets( wdss, {} );
 
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
@@ -228,8 +229,8 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelineLayout, _renderPass );
   }
   void updateUniformBuffers( void )
   {
@@ -246,20 +247,16 @@ public:
     uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     uboVS.proj[1][1] *= -1;
 
-    _uniformBufferMVP->writeData( 0, sizeof( uboVS), &uboVS );
+    uniformBufferMVP->writeData( 0, sizeof( uboVS), &uboVS );
   }
 
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 
@@ -269,16 +266,16 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( 
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( _pipeline );
+    commandBuffer->bindGraphicsPipeline( pipeline );
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      _pipelineLayout, 0, { _descriptorSet }, nullptr );
+      pipelineLayout, 0, { descriptorSet }, nullptr );
 
     // Binding point 0 : Mesh vertex buffer
-    commandBuffer->bindVertexBuffer( VERTEX_BUFFER_BIND_ID, _vertexBuffer, 0 );
+    commandBuffer->bindVertexBuffer( VERTEX_BUFFER_BIND_ID, vertexBuffer, 0 );
     // Binding point 1 : Instance data buffer
     commandBuffer->bindVertexBuffer( INSTANCE_BUFFER_BIND_ID, _instanceBuffer, 0 );
 
-    _indexBuffer->bind( commandBuffer );
+    indexBuffer->bind( commandBuffer );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

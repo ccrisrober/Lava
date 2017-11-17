@@ -24,6 +24,7 @@ namespace lava
       {
         std::shared_ptr<lava::Image> image;
         std::shared_ptr<lava::ImageView> view;
+        vk::ImageLayout finalLayout;
         vk::Format format;
         bool hasDepth( void )
         {
@@ -62,7 +63,7 @@ namespace lava
       LAVA_API
       void addColorAttachmentt( vk::Format format );
       LAVA_API
-      void addColorDepthAttachment( vk::Format format );
+      void addColorDepthAttachment( vk::Format format );  // TODO: Change method name or something :P
       LAVA_API
       void addDepthAttachment( vk::Format format );
       LAVA_API
@@ -75,6 +76,16 @@ namespace lava
       FramebufferAttachment _depthAttachment;
       bool hasDepth = false;
     public:
+      LAVA_API
+        const std::shared_ptr<ImageView> view( uint32_t i )
+      {
+        return _colorAttachments[ i ].view;
+      }
+      LAVA_API
+      const vk::Sampler sampler( uint32_t )
+      {
+        return colorSampler;
+      }
       std::shared_ptr< Framebuffer > _fbo;
       std::vector<FramebufferAttachment> _colorAttachments;
       std::shared_ptr<RenderPass> renderPass;

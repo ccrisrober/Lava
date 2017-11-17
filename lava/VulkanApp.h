@@ -38,7 +38,7 @@ namespace lava
     }
 
     LAVA_API
-    void paint( void );
+    virtual void paint( void ); // TODO: Remove virtual
     LAVA_API
     const std::shared_ptr<Window> getWindow( ) const { return _window; }
   protected:
@@ -62,7 +62,7 @@ namespace lava
     {
       return _colorFormat;
     }
-
+    std::shared_ptr<PipelineCache> pipelineCache;
   private:
     static void paintCallback( GLFWwindow *w );
     static void resizeCallback( GLFWwindow *w, int width, int height );

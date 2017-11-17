@@ -57,10 +57,11 @@ const std::vector<uint16_t> indices =
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
-  std::shared_ptr<IndexBuffer> _indexBuffer;
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<IndexBuffer> indexBuffer;
 
   std::shared_ptr<material::RenderNormalMaterial> material;
+  std::shared_ptr<CommandPool> commandPool;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -69,21 +70,27 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( 
         material::RenderNormalMaterial::Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device, 
+      indexBuffer = std::make_shared<IndexBuffer>( _device, 
         vk::IndexType::eUint16, indices.size( ) );
-      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     material = std::make_shared<material::RenderNormalMaterial>( );
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
+
+    // create a command pool for command buffer allocation
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+
   }
+  std::shared_ptr<CommandBuffer> commandBuffer;
   void updateUniformBuffers( void )
   {
     uint32_t width = _window->getWidth( );
@@ -101,20 +108,16 @@ public:
     material->uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
     material->uboVS.proj[1][1] *= -1;
 
-    material->_uniformBufferMVP->writeData(0, sizeof( material->uboVS), &material->uboVS );
+    material->uniformBufferMVP->writeData(0, sizeof( material->uboVS), &material->uboVS );
   }
 
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
     std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
 
-    commandBuffer->begin( );
+    commandBuffer->beginSimple( );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
     commandBuffer->beginRenderPass( _renderPass, 
@@ -125,8 +128,8 @@ public:
         vk::ClearDepthStencilValue( 1.0f, 0 ) )
       }, vk::SubpassContents::eInline );
     material->bind( commandBuffer );
-    _vertexBuffer->bind( commandBuffer );
-    _indexBuffer->bind( commandBuffer );
+    vertexBuffer->bind( commandBuffer );
+    indexBuffer->bind( commandBuffer );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

@@ -141,7 +141,7 @@ namespace lava
     // Get layout of the image (including row pitch)
     vk::ImageSubresource subResource;
     subResource.aspectMask = vk::ImageAspectFlagBits::eColor;
-    vk::SubresourceLayout subResourceLayout;
+    vk::SubresourceLayout subResourceLayout = {};
 
     static_cast< vk::Device >( *dev ).getImageSubresourceLayout( 
       static_cast< vk::Image >( *dstImage ), subResource );

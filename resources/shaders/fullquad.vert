@@ -1,22 +1,15 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-out gl_PerVertex {
+layout(location = 0) out vec2 uv;
+
+out gl_PerVertex
+{
   vec4 gl_Position;
 };
 
-layout(location = 0) out vec2 uv;
-
-vec2 positions[4] = vec2[]
-(
-  vec2(-1.0, -1.0),
-  vec2(1.0, -1.0),
-  vec2(-1.0, 1.0),
-  vec2(1.0, 1.0)
-);
-
 void main( void )
 {
-  gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-  uv = positions[gl_VertexIndex] * 0.5 + 0.5;
+	uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(uv * 2.0 + -1.0, 0.0, 1.0);
 }

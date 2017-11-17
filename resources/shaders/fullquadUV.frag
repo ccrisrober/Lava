@@ -8,5 +8,5 @@ layout(location = 0) out vec4 fragColor;
 
 void main( void )
 {
-  fragColor = vec4( uv, 0.0, 1.0);
+  fragColor = vec4( uv.x, 1.0 - uv.y, 0.0, 1.0);
 }

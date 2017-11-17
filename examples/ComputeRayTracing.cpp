@@ -32,7 +32,36 @@ public:
     {
       float time;
     } ubo;
+
+    struct Light
+    {
+      glm::vec3 color;
+      glm::vec3 direction;
+    } ssboLight;
+
+    struct
+    {
+      std::shared_ptr<Buffer> light;
+    } storageBuffers;
   } compute;
+
+  void prepareStorageBuffers( )
+  {
+    // Light
+    vk::DeviceSize lightBufferSize = sizeof( compute.ssboLight );
+
+    // TODO: Move to GPU using Staging Buffer
+    compute.storageBuffers.light = _device->createBuffer( lightBufferSize,
+      vk::BufferUsageFlagBits::eStorageBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent );
+
+    compute.ssboLight.color = glm::vec3( 1.0f, 1.0f, 1.0f );
+    compute.ssboLight.direction = glm::normalize( glm::vec3( -1.0, 0.75, 1.0 ) );
+    
+    compute.storageBuffers.light->writeData( 0, lightBufferSize, &compute.ssboLight );
+  }
 
   std::shared_ptr<DescriptorPool> descriptorPool;
 
@@ -119,13 +148,15 @@ public:
 
   void setupDescriptorPool( void )
   {
-    std::array<vk::DescriptorPoolSize, 3> poolSize;
+    std::array<vk::DescriptorPoolSize, 4> poolSize;
     // Compute UBO
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
     // Graphics image samplers
     poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
     // Storage image for ray traced image output
     poolSize[ 2 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 1 );
+    // Storage buffer for light buffer
+    poolSize[ 3 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 1 );
 
     descriptorPool = _device->createDescriptorPool( { }, 2, poolSize );
   }
@@ -161,11 +192,9 @@ public:
     _device->updateDescriptorSets( wdss, {} );
   }
 
-  void preparePipelines( )
+  void preparePipelines( void )
   {
     // init pipeline
-    std::shared_ptr<PipelineCache> pipelineCache =
-      _device->createPipelineCache( 0, nullptr );
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
@@ -229,6 +258,10 @@ public:
       DescriptorSetLayoutBinding(
         1, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eCompute
       ),
+      // Binding 2: Light SSBO
+      DescriptorSetLayoutBinding(
+        2, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute
+      ),
     };
 
     compute.descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
@@ -248,15 +281,18 @@ public:
         compute.descriptorSet, 1, 0, vk::DescriptorType::eUniformBuffer,
         1, nullptr, DescriptorBufferInfo( compute.uniformBuffer, 0,
           sizeof( compute.ubo ) )
+      ),
+      // Binding 2: Light SSBO
+      lava::WriteDescriptorSet(
+        compute.descriptorSet, 2, 0, vk::DescriptorType::eStorageBuffer,
+        1, nullptr, DescriptorBufferInfo( compute.storageBuffers.light, 0,
+          sizeof( compute.ssboLight ) )
       )
     };
 
     _device->updateDescriptorSets( wdss, { } );
 
     // Create compute shader pipelines
-    std::shared_ptr<PipelineCache> pipelineCache =
-      _device->createPipelineCache( 0, nullptr );
-
     std::shared_ptr<ShaderModule> computeShaderModule =
       _device->createShaderModule(
         LAVA_EXAMPLES_SPV_ROUTE + std::string( "raytracing_comp.spv" ),
@@ -315,6 +351,13 @@ public:
     compute.ubo.time = time;
 
     compute.uniformBuffer->writeData( 0, sizeof( compute.ubo ), &compute.ubo );
+
+    compute.ssboLight.direction = glm::normalize(
+      glm::vec3(
+        -1.0f + 4.0f * cos( time ),
+        4.75f,
+        1.0f + 4.0f * sin( time ) ) );
+      compute.storageBuffers.light->writeData( 0, sizeof( compute.ssboLight ), &compute.ssboLight );
   }
 
   std::shared_ptr<CommandPool> commandPool;
@@ -385,7 +428,7 @@ public:
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
 
     textureComputeTarget = std::make_shared<Texture>( _device );
-    
+    prepareStorageBuffers( );
     prepareUniformsBuffers( );
     prepareTextureTarget( textureComputeTarget, width, height, 
       vk::Format::eR8G8B8A8Unorm, commandPool );
@@ -398,6 +441,8 @@ public:
   }
   void doPaint( void ) override
   {
+    updateUniformBuffers( );
+    buildCommandBuffers( );
     _graphicsQueue->submit( SubmitInfo{
       { _defaultFramebuffer->getPresentSemaphore( ) },
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
@@ -406,7 +451,8 @@ public:
     } );
 
     // Submit compute commands
-    lava::Fence::waitForFences( { compute.fence }, true, UINT64_MAX );
+    uint32_t timeout = std::numeric_limits<uint64_t>::max();
+    lava::Fence::waitForFences( { compute.fence }, true, timeout );
     lava::Fence::resetFences( { compute.fence } );
 
     compute.queue->submit( compute.commandBuffer, compute.fence );
@@ -429,6 +475,15 @@ public:
       break;
     }
   }
+  virtual void doResize( uint32_t width, uint32_t height ) override
+  {
+    prepareTextureTarget( textureComputeTarget, width, height,
+      vk::Format::eR8G8B8A8Unorm, commandPool );
+
+    compute.commandBuffer.reset( );
+    compute.commandBuffer = compute.commandPool->allocateCommandBuffer( );
+    buildComputeCommandBuffer( );
+  }
 };
 
 void glfwErrorCallback( int error, const char* description )
@@ -440,13 +495,13 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Compute Raytracing", 800, 600 );
+    VulkanApp* app = new MyApp( "Compute Raytracing", 736, 512 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
     while ( app->isRunning( ) )
     {
-      app->waitEvents( );
+      //app->waitEvents( );
       app->paint( );
     }
 

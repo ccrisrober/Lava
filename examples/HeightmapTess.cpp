@@ -3,6 +3,21 @@ using namespace lava;
 
 #include <routes.h>
 
+#include "utils/Camera.h"
+
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+// camera
+Camera camera( glm::vec3( 0.0f, 1.0f, 3.5f ) );
+// timing
+float deltaTime = 0.0f; // time between current frame and last frame
+float lastFrame = 0.0f;
+
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
 struct
 {
   glm::mat4 model;
@@ -37,7 +52,8 @@ public:
 
   std::shared_ptr<PipelineLayout> _pipelineLayout;
   std::shared_ptr<DescriptorSet> _descriptorSet;
-  std::shared_ptr<Texture2D> tex;
+  std::shared_ptr<Texture2D> texAlbedo;
+  std::shared_ptr<Texture2D> texHeightmap;
 
   void generatePlane( float width = 1.0f, float height = 1.0f,
     unsigned int gridX = 1,
@@ -63,7 +79,7 @@ public:
 
         vertices.push_back( Vertex
         {
-          glm::vec3( x, -y, 0.0f ),
+          glm::vec3( x, 0.0f, -y ),
           glm::vec2( ( ( float ) ix ) / gridX, 1.0 - ( ( ( float ) iy ) / gridY ) )
         } );
       }
@@ -88,7 +104,7 @@ public:
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
-    generatePlane( 2.5f, 2.5f, 5, 5 );
+    generatePlane( 2.5f, 2.5f, 25, 25 );
 
     // Vertex buffer
     {
@@ -117,22 +133,32 @@ public:
 
     std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "heightmap.jpg" ), commandPool, _graphicsQueue,
+
+    texHeightmap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "DisplacementMapEarth.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
+
+
+    texAlbedo = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "earth_diffuse.jpg" ), commandPool, _graphicsQueue,
       vk::Format::eR8G8B8A8Unorm );
 
 
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer,
-      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eTessellationEvaluation | vk::ShaderStageFlagBits::eTessellationControl );
-    dslbs.push_back( mvpDescriptor );
-    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler,
-      vk::ShaderStageFlagBits::eVertex | 
-      vk::ShaderStageFlagBits::eTessellationEvaluation | 
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor2 );
+    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eVertex | 
+        vk::ShaderStageFlagBits::eTessellationEvaluation | vk::ShaderStageFlagBits::eTessellationControl
+      ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eTessellationEvaluation
+      ),
+      DescriptorSetLayoutBinding( 2, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
@@ -164,7 +190,7 @@ public:
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::ePatchList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
     vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
-      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
@@ -197,7 +223,7 @@ public:
 
     std::array<vk::DescriptorPoolSize, 2> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
+    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 );
     std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
 
     // Init descriptor set
@@ -210,7 +236,11 @@ public:
       ),
       WriteDescriptorSet( _descriptorSet, 1, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
-        tex->descriptor, nullptr
+        texHeightmap->descriptor, nullptr
+      ),
+      WriteDescriptorSet( _descriptorSet, 2, 0,
+        vk::DescriptorType::eCombinedImageSampler, 1,
+        texAlbedo->descriptor, nullptr
       )
     };
     _device->updateDescriptorSets( wdss, {} );
@@ -225,10 +255,15 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
+    float currentFrame = time;
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
     uboVS.model = glm::mat4( 1.0f );
+    //uboVS.model = glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, -1.0f, 0.0f ) );
     //uboVS.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    uboVS.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboVS.view = camera.GetViewMatrix( );
+    uboVS.proj = glm::perspective( glm::radians( camera.Zoom ), ( float ) width / ( float ) height, 0.1f, 100.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
     _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
@@ -287,18 +322,50 @@ public:
       _renderComplete
     } );
   }
-  bool enable_wire = false;
+  bool enable_wire = true;
   void keyEvent( int key, int scancode, int action, int mods )
   {
     switch ( key )
     {
+    case GLFW_KEY_W:
+      switch ( action )
+      {
+      case GLFW_PRESS:
+        camera.ProcessKeyboard( FORWARD, deltaTime );
+        break;
+      }
+      break;
+    case GLFW_KEY_S:
+      switch ( action )
+      {
+      case GLFW_PRESS:
+        camera.ProcessKeyboard( BACKWARD, deltaTime );
+        break;
+      }
+      break;
+    case GLFW_KEY_A:
+      switch ( action )
+      {
+      case GLFW_PRESS:
+        camera.ProcessKeyboard( LEFT, deltaTime );
+        break;
+      }
+      break;
+    case GLFW_KEY_D:
+      switch ( action )
+      {
+      case GLFW_PRESS:
+        camera.ProcessKeyboard( RIGHT, deltaTime );
+        break;
+      }
+      break;
     case GLFW_KEY_E:
       enable_wire = true;
       break;
     case GLFW_KEY_R:
       enable_wire = false;
       break;
-    case GLFW_KEY_D:
+    case GLFW_KEY_V:
       switch ( action )
       {
       case GLFW_PRESS:
@@ -306,7 +373,7 @@ public:
         break;
       }
       break;
-    case GLFW_KEY_S:
+    case GLFW_KEY_C:
       switch ( action )
       {
       case GLFW_PRESS:
@@ -346,6 +413,24 @@ public:
       break;
     }
   }
+
+  virtual void cursorPosEvent( double xPos, double yPos )
+  {
+    if ( firstMouse )
+    {
+      lastX = xPos;
+      lastY = yPos;
+      firstMouse = false;
+    }
+
+    float xoffset = xPos - lastX;
+    float yoffset = lastY - yPos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xPos;
+    lastY = yPos;
+
+    camera.ProcessMouseMovement( xoffset, yoffset );
+  }
 };
 
 void glfwErrorCallback( int error, const char* description )
@@ -357,7 +442,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Terrain Heightmap (Tesselation)", 800, 600 );
+    VulkanApp* app = new MyApp( "Terrain Heightmap (Tesselation)", SCR_WIDTH, SCR_HEIGHT );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

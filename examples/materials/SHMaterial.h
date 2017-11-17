@@ -47,7 +47,7 @@ namespace material
       std::shared_ptr<DescriptorSetLayout> descriptorSetLayout =
         dev->createDescriptorSetLayout( dslbs );
 
-      _pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
+      pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
       std::array<vk::DescriptorPoolSize, 1> poolSize =
       {
@@ -59,11 +59,11 @@ namespace material
 
 
       // Init descriptor set
-      _descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+      descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
       std::vector<WriteDescriptorSet> wdss =
       {
         WriteDescriptorSet(
-          _descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
+          descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo(
             uniformBufferMVP, 0, sizeof( uboVS )
@@ -116,23 +116,23 @@ namespace material
         vk::DynamicState::eScissor
       } );
 
-      _pipeline = dev->createGraphicsPipeline( pipelineCache, {},
+      pipeline = dev->createGraphicsPipeline( pipelineCache, {},
       { vertexStage, fragmentStage }, vertexInput, assembly,
         nullptr, viewport, rasterization, multisample,
         depthStencil, colorBlend, dynamic,
-        _pipelineLayout, renderPass );
+        pipelineLayout, renderPass );
     }
     virtual void bind( std::shared_ptr< CommandBuffer > cmd )
     {
       lava::engine::Material::bind( cmd );
-      if ( _descriptorSet )
+      if ( descriptorSet )
       {
         cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-          _pipelineLayout, 0, { _descriptorSet }, nullptr );
+          pipelineLayout, 0, { descriptorSet }, nullptr );
       }
     }
     std::shared_ptr<Buffer> uniformBufferMVP;
   protected:
-    std::shared_ptr<DescriptorSet> _descriptorSet;
+    std::shared_ptr<DescriptorSet> descriptorSet;
   };
 }
