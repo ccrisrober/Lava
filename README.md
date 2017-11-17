@@ -7,6 +7,7 @@ Lava is a library built to facilitate the use of Vulkan features.
 ## Contributors
 * Cristian Rodríguez Bernal
 * Juan Guerrero Martín 
+* Gonzalo Bayo
 
 ## Dependencies
 
