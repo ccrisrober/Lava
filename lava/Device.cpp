@@ -127,6 +127,12 @@ namespace lava
         diis.back( ).get( ), 
         dbis.back( ).get( )
       );
+
+      if ( w.texelBufferView )
+      {
+        vk::BufferView bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        write.setPTexelBufferView( &bufferView );
+      }
       
       writes.push_back( std::move( write ) );
     }

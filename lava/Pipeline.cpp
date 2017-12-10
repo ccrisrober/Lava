@@ -224,6 +224,55 @@ namespace lava
     return *this;
   }
 
+  PipelineCache::PipelineCache( const DeviceRef& device, const char* filename )
+    : VulkanResource( device )
+  {
+    // Check disk for existing cache data
+    size_t startCacheSize = 0;
+    void *startCacheData = nullptr;
+
+    FILE *pReadFile = fopen(filename, "rb");
+    if (pReadFile)
+    {
+      // Determine cache size
+      fseek(pReadFile, 0, SEEK_END);
+      startCacheSize = ftell(pReadFile);
+      rewind(pReadFile);
+
+      // Allocate memory to hold the initial cache data
+      startCacheData = (char *)malloc(sizeof(char) * startCacheSize);
+      if (startCacheData == nullptr)
+      {
+        fputs("Memory error", stderr);
+        throw;
+      }
+
+      // Read the data into our buffer
+      size_t result = fread(startCacheData, 1, startCacheSize, pReadFile);
+      if (result != startCacheSize)
+      {
+        fputs("Reading error", stderr);
+        free(startCacheData);
+        throw;
+      }
+
+      // Clean up and print results
+      fclose(pReadFile);
+      printf( "  Pipeline cache HIT!\n" );
+      printf("  cacheData loaded from %s\n", filename );
+
+    } else {
+      // No cache found on disk
+      printf("  Pipeline cache miss!\n");
+    }
+
+    // https://github.com/LunarG/VulkanSamples/blob/master/API-Samples/pipeline_cache/pipeline_cache.cpp 
+    // TODO: NOT COMPLETE 
+
+    vk::PipelineCacheCreateInfo createInfo{ {}, startCacheSize, startCacheData };
+    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+  }
+
   PipelineCache::PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
     size_t initialSize, void const* initialData )
     : VulkanResource( device )
@@ -232,7 +281,7 @@ namespace lava
     _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
   }
 
-  PipelineCache::~PipelineCache( )
+  PipelineCache::~PipelineCache( void )
   {
     static_cast< vk::Device >( *_device ).destroyPipelineCache( _pipelineCache );
   }
@@ -261,7 +310,7 @@ namespace lava
     if ( result == vk::Result::eSuccess && size != 0 )
     {
       auto myfile = std::fstream( filename, std::ios::out | std::ios::binary );
-      void* data = nullptr;
+      void* data = ( char * ) malloc( sizeof( char ) * size );
       result = static_cast<vk::Device>(*_device)
         .getPipelineCacheData( _pipelineCache, &size, data );
       if ( result == vk::Result::eSuccess )

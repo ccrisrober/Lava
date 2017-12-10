@@ -173,6 +173,29 @@ namespace lava
   {
     _commandBuffer.setBlendConstants( blendConst );
   }
+  void CommandBuffer::beginOcclusionQuery( vk::QueryPool queryPool,
+    uint32_t query, vk::QueryControlFlags flags )
+  {
+    _commandBuffer.beginQuery( queryPool, query, flags );
+  }
+  void CommandBuffer::endOcclusionQuery( vk::QueryPool queryPool,
+    uint32_t query )
+  {
+    _commandBuffer.endQuery( queryPool, query );
+  }
+
+  void CommandBuffer::executeCommands( 
+    const std::vector<std::shared_ptr<lava::CommandBuffer>>& secondaryCmds )
+  {
+    std::vector< vk::CommandBuffer > v;
+    std::transform( secondaryCmds.begin( ), secondaryCmds.end( ),
+      std::back_inserter( v ), []( std::shared_ptr<lava::CommandBuffer> c )
+    {
+      return static_cast< vk::CommandBuffer >( *c );
+    } );
+    _commandBuffer.executeCommands( v );
+  }
+
   void CommandBuffer::setLineWidth( float lineWidth )
   {
     _commandBuffer.setLineWidth( lineWidth );
@@ -319,10 +342,10 @@ namespace lava
   {
     _commandBuffer.reset( { } );
   }
-  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
+  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags, vk::CommandBufferInheritanceInfo* inheritInfo )
   {
     assert( !_isRecording );
-    vk::CommandBufferBeginInfo cbbi( flags );
+    vk::CommandBufferBeginInfo cbbi( flags, inheritInfo );
 
     _commandBuffer.begin( cbbi );
     _isRecording = true;

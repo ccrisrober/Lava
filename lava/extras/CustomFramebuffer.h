@@ -63,6 +63,8 @@ namespace lava
       LAVA_API
       void addColorAttachmentt( vk::Format format );
       LAVA_API
+      void addInputAttachment( vk::Format format );
+      LAVA_API
       void addColorDepthAttachment( vk::Format format );  // TODO: Change method name or something :P
       LAVA_API
       void addDepthAttachment( vk::Format format );
@@ -88,6 +90,7 @@ namespace lava
       }
       std::shared_ptr< Framebuffer > _fbo;
       std::vector<FramebufferAttachment> _colorAttachments;
+      std::vector<FramebufferAttachment> _inputAttachments;
       std::shared_ptr<RenderPass> renderPass;
       vk::Sampler colorSampler;
       std::shared_ptr<CommandBuffer> commandBuffer;

@@ -12,6 +12,7 @@ namespace lava
 {
   class Device;
   class Buffer;
+  class BufferView;
   class Sampler;
   struct DescriptorSetLayoutBinding
   {
@@ -133,7 +134,9 @@ namespace lava
       uint32_t dstBinding, uint32_t dstArrayElement,
       vk::DescriptorType descriptorType, uint32_t descriptorCount,
       vk::Optional<const DescriptorImageInfo> imageInfo,
-      vk::Optional<const DescriptorBufferInfo> bufferInfo );
+      vk::Optional<const DescriptorBufferInfo> bufferInfo,
+      const std::shared_ptr<lava::BufferView>& bufferView = { }
+    );
     LAVA_API
     WriteDescriptorSet( const WriteDescriptorSet& rhs );
     LAVA_API
@@ -146,7 +149,7 @@ namespace lava
     uint32_t descriptorCount;
     std::unique_ptr<DescriptorImageInfo> imageInfo;
     std::unique_ptr<DescriptorBufferInfo> bufferInfo;
-    // todo: pTexelBufferView
+    std::shared_ptr<BufferView> texelBufferView;
   };
 
   struct CopyDescriptorSet

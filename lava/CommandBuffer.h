@@ -91,7 +91,7 @@ namespace lava
     void reset( void );
 
     LAVA_API
-    void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ) );
+    void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ), vk::CommandBufferInheritanceInfo* inheritInfo = nullptr );
 
     LAVA_API
     void clearAttachments( vk::ArrayProxy< const vk::ClearAttachment> attachments,
@@ -136,6 +136,16 @@ namespace lava
     void setStencilWriteMask( vk::StencilFaceFlags faceMask, uint32_t stencilWriteMask );
     LAVA_API
     void setBlendConstants( const float blendConst[ 4 ] );
+
+    LAVA_API
+    void beginOcclusionQuery( vk::QueryPool queryPool, uint32_t query, 
+      vk::QueryControlFlags flags = {} );
+    LAVA_API
+    void endOcclusionQuery( vk::QueryPool queryPool, uint32_t query );
+
+    LAVA_API
+    void executeCommands( const std::vector< std::shared_ptr<lava::CommandBuffer> >& secondaryCmds );
+
 
     LAVA_API
     void begin( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ),

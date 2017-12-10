@@ -149,7 +149,8 @@ namespace lava
     uint32_t dstBinding_, uint32_t dstArrayElement_, vk::DescriptorType descriptorType_, 
     uint32_t descriptorCount_, 
     vk::Optional<const DescriptorImageInfo> imageInfo_, 
-    vk::Optional<const DescriptorBufferInfo> bufferInfo_ )
+    vk::Optional<const DescriptorBufferInfo> bufferInfo_, 
+    const std::shared_ptr<lava::BufferView>& bufferView_ )
     : dstSet( dstSet_ )
     , dstBinding( dstBinding_ )
     , dstArrayElement( dstArrayElement_ )
@@ -157,6 +158,7 @@ namespace lava
     , descriptorCount( descriptorCount_ )
     , imageInfo( imageInfo_ ? new DescriptorImageInfo( *imageInfo_ ) : nullptr )
     , bufferInfo( bufferInfo_ ? new DescriptorBufferInfo( *bufferInfo_ ) : nullptr )
+    , texelBufferView( bufferView_ )
   {
   }
   WriteDescriptorSet::WriteDescriptorSet( const WriteDescriptorSet & rhs )
@@ -165,7 +167,7 @@ namespace lava
       rhs.imageInfo.get( ) ? vk::Optional<const DescriptorImageInfo>( *rhs.imageInfo )
         : vk::Optional<const DescriptorImageInfo>( nullptr ),
       rhs.bufferInfo.get( ) ? vk::Optional<const DescriptorBufferInfo>( *rhs.bufferInfo ) 
-      : vk::Optional<const DescriptorBufferInfo>( nullptr ) )
+      : vk::Optional<const DescriptorBufferInfo>( nullptr ), rhs.texelBufferView )
   {
   }
   WriteDescriptorSet & WriteDescriptorSet::operator=( const WriteDescriptorSet & rhs )
@@ -177,6 +179,7 @@ namespace lava
     descriptorCount = rhs.descriptorCount;
     imageInfo.reset( rhs.imageInfo ? new DescriptorImageInfo( *rhs.imageInfo ) : nullptr );
     bufferInfo.reset( rhs.bufferInfo ? new DescriptorBufferInfo( *rhs.bufferInfo ) : nullptr );
+    texelBufferView = rhs.texelBufferView;
     return *this;
   }
   CopyDescriptorSet::CopyDescriptorSet( 

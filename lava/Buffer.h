@@ -124,6 +124,30 @@ namespace lava
     LAVA_API
     UniformBuffer( const DeviceRef&, vk::DeviceSize size );
   };
+
+  class BufferView
+  {
+    public:
+    LAVA_API
+    BufferView(const std::shared_ptr<lava::Buffer>& buffer, 
+      vk::Format format, vk::DeviceSize offset, 
+      vk::DeviceSize range );
+    LAVA_API
+    virtual ~BufferView( void );
+
+    LAVA_API
+    inline operator vk::BufferView( void ) const
+    {
+      return _bufferView;
+    }
+
+    BufferView(BufferView const& rhs) = delete;
+    BufferView & operator=(BufferView const& rhs) = delete;
+
+  private:
+    vk::BufferView  _bufferView;
+    std::shared_ptr<lava::Buffer> _buffer;
+  };
 }
 
 #endif /* __LAVA_BUFFER__ */

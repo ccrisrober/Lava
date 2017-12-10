@@ -195,4 +195,28 @@ namespace lava
       vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
+
+  BufferView::BufferView(const std::shared_ptr<lava::Buffer>& buffer, 
+    vk::Format format, vk::DeviceSize offset, vk::DeviceSize range )
+    : _buffer( buffer )
+  {
+    if ( range == ~0 )
+    {
+      range = buffer->_size - offset;
+    }
+    assert( offset + range <= buffer->_size );
+
+    vk::BufferViewCreateInfo bvci(
+      vk::BufferViewCreateFlags(), *buffer, format, offset, range
+    );
+    vk::Device dev = static_cast< vk::Device >( *_buffer->getDevice( ) );
+    _bufferView = dev.createBufferView( bvci );
+  }
+
+  BufferView::~BufferView( void )
+  {
+    vk::Device dev = static_cast< vk::Device >( *_buffer->getDevice( ) );
+    dev.destroyBufferView(_bufferView );
+  }
+
 }

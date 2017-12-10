@@ -119,6 +119,8 @@ namespace lava
   {
   public:
     LAVA_API
+    PipelineCache( const DeviceRef& device, const char* filename );
+    LAVA_API
     PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
       size_t initialSize, void const* initialData );
     LAVA_API

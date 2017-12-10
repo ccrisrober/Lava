@@ -19,6 +19,13 @@ namespace lava
       att.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
       _colorAttachments.push_back( att );
     }
+    void CustomFBO::addInputAttachment( vk::Format format )
+    {
+      FramebufferAttachment att;
+      createAttachment( att, format, vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eTransferDst );
+      att.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+      _inputAttachments.push_back( att );
+    }
     void CustomFBO::addColorDepthAttachment( vk::Format format )
     {
       /*FramebufferAttachment att;
@@ -46,7 +53,7 @@ namespace lava
       for ( auto& att : _colorAttachments )
       {
         attDesc.push_back( vk::AttachmentDescription(
-        {}, att.format, vk::SampleCountFlagBits::e1,
+          { }, att.format, vk::SampleCountFlagBits::e1,
           vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
           vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
           vk::ImageLayout::eUndefined, att.finalLayout
@@ -54,10 +61,21 @@ namespace lava
 
         imageViewVector.push_back( att.view );
       }
+      for ( auto& att : _inputAttachments )
+      {
+        attDesc.push_back( vk::AttachmentDescription(
+          { }, att.format, vk::SampleCountFlagBits::e1,
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+          vk::ImageLayout::eShaderReadOnlyOptimal, att.finalLayout
+        ) );
+
+        imageViewVector.push_back( att.view );
+      }
       if ( hasDepth )
       {
         attDesc.push_back( vk::AttachmentDescription(
-        {}, _depthAttachment.format, vk::SampleCountFlagBits::e1,
+          { }, _depthAttachment.format, vk::SampleCountFlagBits::e1,
           vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
           vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
           vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal
@@ -71,11 +89,18 @@ namespace lava
       {
         colorAttachments.push_back( { i, vk::ImageLayout::eColorAttachmentOptimal } );
       }
+      std::vector<vk::AttachmentReference> inputAttachments;
+      for ( uint32_t i = 0, l = _inputAttachments.size( ); i < l; ++i )
+      {
+        inputAttachments.push_back( { i, vk::ImageLayout::eShaderReadOnlyOptimal } );
+      }
 
       vk::SubpassDescription subpass;
       subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
       subpass.colorAttachmentCount = colorAttachments.size( );
       subpass.pColorAttachments = colorAttachments.data( );
+      subpass.inputAttachmentCount = inputAttachments.size( );
+      subpass.pInputAttachments = inputAttachments.data( );
 
       if ( hasDepth )
       {
@@ -137,11 +162,13 @@ namespace lava
       vk::Format format, vk::ImageUsageFlags usage )
     {
       vk::ImageAspectFlags aspectMask;
-      vk::ImageLayout imageLayout;
+      vk::ImageLayout imageLayout;  // TODO: Unused???
 
       fatt.format = format;
 
-      if ( usage & vk::ImageUsageFlagBits::eColorAttachment )
+      if ( 
+        ( usage & vk::ImageUsageFlagBits::eColorAttachment ) ||
+        ( usage & vk::ImageUsageFlagBits::eInputAttachment ) )
       {
         aspectMask = vk::ImageAspectFlagBits::eColor;
         imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
