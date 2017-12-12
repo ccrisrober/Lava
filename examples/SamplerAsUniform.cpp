@@ -35,9 +35,11 @@ public:
         vk::ShaderStageFlagBits::eFragment
       )
     };
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
+      _device->createDescriptorSetLayout( dslbs );
 
-    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( 
+      descriptorSetLayout, nullptr );
 
 
     std::shared_ptr<DescriptorPool> descriptorPool =

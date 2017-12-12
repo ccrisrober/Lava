@@ -221,9 +221,14 @@ public:
     uint32_t height = _window->getHeight( );
     std::array<vk::Viewport, 2> viewports;
     // Left
-    viewports[ 0 ] = { 0, 0, ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f };
+    viewports[ 0 ] = vk::Viewport( 
+      0, 0, ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f
+    );
     // Right
-    viewports[ 1 ] = { ( float ) width / 2.0f, 0, ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f };
+    viewports[ 1 ] = vk::Viewport( 
+      ( float ) width / 2.0f, 0, 
+      ( float ) width / 2.0f, ( float ) height, 0.0, 1.0f
+    );
     commandBuffer->setViewport( 0, viewports );
 
     std::array<vk::Rect2D, 2> scissorRects =

@@ -13,12 +13,13 @@ public:
 
   std::shared_ptr<CommandPool> commandPool;
   std::shared_ptr<Buffer> texelBuffer;
+  std::shared_ptr<lava::BufferView> texelView;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     auto devProp = _device->_physicalDevice->getDeviceProperties( );
-    if ( ( devProp.limits.maxTexelBufferElements < /* 4 */ 4 * 3 ) )
+    if ( ( devProp.limits.maxTexelBufferElements < 4 * 3 ) )
     {
       std::cout << "maxTexelBufferElements too small" << std::endl;
       exit( -1 );
@@ -42,14 +43,16 @@ public:
         vk::BufferUsageFlagBits::eUniformTexelBuffer,
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
+        vk::MemoryPropertyFlagBits::eHostCoherent
+      );
     }
     texelBuffer->writeData( 0, sizeof( texels ), &texels );
 
-    std::shared_ptr<lava::BufferView> texelView =
+    texelView =
       std::make_shared<lava::BufferView>( texelBuffer, 
         vk::Format::eR32G32B32Sfloat,
-        0, sizeof( texels ) );
+        0, sizeof( texels )
+      );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs =

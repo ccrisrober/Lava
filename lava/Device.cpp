@@ -106,7 +106,7 @@ namespace lava
 
     std::vector<vk::WriteDescriptorSet> writes;
     writes.reserve( descriptorWrites.size( ) );
-    for ( auto const& w : descriptorWrites )
+    for ( const auto& w : descriptorWrites )
     {
       diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>( 
         w.imageInfo ? new vk::DescriptorImageInfo( w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
