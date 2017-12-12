@@ -19,11 +19,15 @@ namespace material
       std::shared_ptr<RenderPass> renderPass )
     {
       // Init descriptor and pipeline layouts
-      std::vector<DescriptorSetLayoutBinding> dslbs;
-      DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-        vk::ShaderStageFlagBits::eVertex );
-      dslbs.push_back( mvpDescriptor );
-      std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = dev->createDescriptorSetLayout( dslbs );
+      std::vector<DescriptorSetLayoutBinding> dslbs = 
+      {
+        DescriptorSetLayoutBinding( 
+          0, vk::DescriptorType::eUniformBuffer, 
+          vk::ShaderStageFlagBits::eVertex
+        );
+      };
+      std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
+        dev->createDescriptorSetLayout( dslbs );
 
       pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
@@ -33,11 +37,15 @@ namespace material
 
       // Init descriptor set
       descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-      std::vector<WriteDescriptorSet> wdss;
-      DescriptorBufferInfo buffInfo( uniformBufferMVP, 0, sizeof( glm::mat4 ) );
-      WriteDescriptorSet w( descriptorSet, 0, 0, 
-        vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-      wdss.push_back( w );
+      std::vector<WriteDescriptorSet> wdss = 
+      {
+        WriteDescriptorSet( descriptorSet, 0, 0, 
+          vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+          DescriptorBufferInfo( 
+            uniformBufferMVP, 0, sizeof( glm::mat4 )
+          )
+        )
+      };
       dev->updateDescriptorSets( wdss, {} );
 
       // init shaders

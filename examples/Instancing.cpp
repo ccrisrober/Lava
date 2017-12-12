@@ -157,14 +157,17 @@ public:
 
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex );
-    dslbs.push_back( mvpDescriptor );
-    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler, 
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor2 );
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer, 
+        vk::ShaderStageFlagBits::eVertex
+      ),
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler, 
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
+      _device->createDescriptorSetLayout( dslbs );
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 

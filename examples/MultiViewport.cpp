@@ -182,8 +182,8 @@ public:
     uboGS.model = glm::rotate( uboGS.model, time * glm::radians( 25.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
     
     uboGS.proj[0] = glm::perspective( glm::radians( camera.Zoom ), width / ( float ) height, 0.1f, 10.0f );
-    uboGS.proj[0][ 1 ][ 1 ] *= -1;
     uboGS.proj[ 1 ] = uboGS.proj[ 0 ];
+    uboGS.proj[0][ 1 ][ 1 ] *= -1;
 
     camera.ProcessKeyboard( LEFT, 0.5f );
     uboGS.view[ 0 ] = camera.GetViewMatrix( );

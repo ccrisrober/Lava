@@ -44,10 +44,12 @@ public:
     }
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex );
-    dslbs.push_back( mvpDescriptor );
+    std::vector<DescriptorSetLayoutBinding> dslbs =
+    {
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer, 
+        vk::ShaderStageFlagBits::eVertex
+      )
+    };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
@@ -132,11 +134,15 @@ public:
 
     // Init descriptor set
     _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
-    DescriptorBufferInfo buffInfo( _uniformBufferMVP, 0, sizeof( uboVS ) );
-    WriteDescriptorSet w( _descriptorSet, 0, 0, 
-      vk::DescriptorType::eUniformBuffer, 1, nullptr, buffInfo );
-    wdss.push_back( w );
+    std::vector<WriteDescriptorSet> wdss = 
+    {
+      WriteDescriptorSet( _descriptorSet, 0, 0, 
+        vk::DescriptorType::eUniformBuffer, 1, nullptr, 
+        DescriptorBufferInfo( 
+          _uniformBufferMVP, 0, sizeof( uboVS )
+        )
+      )
+    };
     _device->updateDescriptorSets( wdss, {} );
 
 

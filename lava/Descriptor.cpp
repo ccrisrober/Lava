@@ -6,17 +6,21 @@ namespace lava
 {
   DescriptorSetLayoutBinding::DescriptorSetLayoutBinding(
     uint32_t binding_, vk::DescriptorType descriptorType_,
-    vk::ShaderStageFlags stageFlags_ )
+    vk::ShaderStageFlags stageFlags_,
+    vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> iss )
     : binding( binding_ )
     , descriptorType( descriptorType_ )
     , stageFlags( stageFlags_ )
-    , immutableSamplers( { } )
-  {}
+    , immutableSamplers( iss.begin( ), iss.end( ) )
+  {
+  }
 
   DescriptorSetLayoutBinding::DescriptorSetLayoutBinding( 
     DescriptorSetLayoutBinding const& rhs )
-    : DescriptorSetLayoutBinding( rhs.binding, rhs.descriptorType, rhs.stageFlags )
-  {}
+    : DescriptorSetLayoutBinding( rhs.binding, rhs.descriptorType, 
+      rhs.stageFlags, rhs.immutableSamplers)
+  {
+  }
 
   DescriptorSetLayoutBinding& 
   DescriptorSetLayoutBinding::operator=( DescriptorSetLayoutBinding const& rhs )
@@ -24,9 +28,9 @@ namespace lava
     binding = rhs.binding;
     descriptorType = rhs.descriptorType;
     stageFlags = rhs.stageFlags;
+    immutableSamplers = rhs.immutableSamplers;
     return *this;
   }
-
 
   DescriptorBufferInfo::DescriptorBufferInfo( const std::shared_ptr<Buffer>& buffer_, 
     vk::DeviceSize offset_, vk::DeviceSize range_ )
@@ -34,7 +38,6 @@ namespace lava
     , offset( offset_ )
     , range( range_ )
   {
-
   }
   DescriptorBufferInfo::DescriptorBufferInfo( const DescriptorBufferInfo& rhs )
     : DescriptorBufferInfo( rhs.buffer, rhs.offset, rhs.range )
@@ -55,15 +58,40 @@ namespace lava
     : VulkanResource( device )
     , _bindings( bindings.begin( ), bindings.end( ) )
   {
+    std::vector< std::vector< vk::Sampler > > samplers;
+    samplers.reserve( _bindings.size( ) );
+
     std::vector<vk::DescriptorSetLayoutBinding> dslb;
     dslb.reserve( _bindings.size( ) );
 
-    for ( auto b : _bindings )
+    for ( const auto& bind : _bindings )
     {
-      dslb.push_back( vk::DescriptorSetLayoutBinding( b.binding, b.descriptorType, 1, b.stageFlags, nullptr ) );
+      samplers.push_back(std::vector< vk::Sampler> ( ) );
+      samplers.back( ).reserve( bind.immutableSamplers.size( ) );
+
+      for( const auto& samp: bind.immutableSamplers )
+      {
+        samplers.back( ).push_back( static_cast< vk::Sampler > ( *samp ) );
+      }
+
+      uint32_t dscptCount = 1;
+      if (bind.descriptorType == vk::DescriptorType::eSampler )
+      {
+        dscptCount = samplers.back( ).size( );
+      }
+
+      dslb.push_back( 
+        vk::DescriptorSetLayoutBinding( 
+          bind.binding, 
+          bind.descriptorType, 
+          dscptCount, 
+          bind.stageFlags, 
+          samplers.back( ).data( )
+        )
+      );
     }
     vk::DescriptorSetLayoutCreateInfo dci(
-      {},
+      { },
       dslb.size( ),
       dslb.data( )
     );

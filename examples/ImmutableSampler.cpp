@@ -9,7 +9,7 @@ public:
   std::shared_ptr<Pipeline> pipeline;
   std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<DescriptorSet> descriptorSet;
-  std::shared_ptr<Texture2DArray> tex;
+  std::shared_ptr<Texture2D> tex, tex2;
   std::shared_ptr<CommandPool> commandPool;
 
   MyApp(char const* title, uint32_t width, uint32_t height)
@@ -17,40 +17,60 @@ public:
   {
     commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-
-    std::vector< std::string > cubeImages =
-    {
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/cubemap - copia/right.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/cubemap - copia/left.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/cubemap - copia/top.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/cubemap - copia/bottom.jpg" )
-    };
-    tex = std::make_shared<Texture2DArray>( _device, cubeImages, commandPool,
-      _graphicsQueue, vk::Format::eR8G8B8A8Unorm );
+    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "uv_checker.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
+    tex2 = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "sample.png" ), commandPool, _graphicsQueue,
+      vk::Format::eR8G8B8A8Unorm );
 
     // init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs = 
+    std::vector<DescriptorSetLayoutBinding> dslbs =
     {
       DescriptorSetLayoutBinding( 
         0, vk::DescriptorType::eCombinedImageSampler, 
-        vk::ShaderStageFlagBits::eFragment
+        vk::ShaderStageFlagBits::eFragment,
+        std::make_shared<vk::Sampler>( tex->sampler )
+      ),
+      DescriptorSetLayoutBinding( 
+        1, vk::DescriptorType::eCombinedImageSampler, 
+        vk::ShaderStageFlagBits::eFragment,
+        std::make_shared<vk::Sampler>( tex2->sampler )
       )
     };
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
+      _device->createDescriptorSetLayout( dslbs );
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
+      _device->createDescriptorPool( {}, 1, { 
+        { vk::DescriptorType::eCombinedImageSampler, 2 }
+      } );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss = 
+
+    // We set a null sampler as a immutable sampler on DescriptorSetLayoutBinsing
+    DescriptorImageInfo descriptor;
+    descriptor.imageLayout = tex->imageLayout;
+    descriptor.imageView = std::make_shared< vk::ImageView>( tex->view );
+    descriptor.sampler = VK_NULL_HANDLE;
+
+    DescriptorImageInfo descriptor2;
+    descriptor2.imageLayout = tex2->imageLayout;
+    descriptor2.imageView = std::make_shared< vk::ImageView>( tex2->view );
+    descriptor2.sampler = VK_NULL_HANDLE;
+
+    std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet( descriptorSet, 0, 0, 
         vk::DescriptorType::eCombinedImageSampler, 1, 
-        tex->descriptor, nullptr
+        descriptor, nullptr
+      ),
+      WriteDescriptorSet( descriptorSet, 1, 0, 
+        vk::DescriptorType::eCombinedImageSampler, 1, 
+        descriptor2, nullptr
       )
     };
 
@@ -62,7 +82,7 @@ public:
       vk::ShaderStageFlagBits::eVertex
     );
     PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad2DArray_frag.spv" ),
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadTwoTexture_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
     PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
@@ -155,7 +175,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Texture2DArray", 800, 600 );
+    VulkanApp* app = new MyApp( "Immutable Sampler", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

@@ -22,27 +22,34 @@ public:
       vk::Format::eR8G8B8A8Unorm );
 
     // init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eCombinedImageSampler, 
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor );
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    std::vector<DescriptorSetLayoutBinding> dslbs =
+    {
+      DescriptorSetLayoutBinding( 
+        0, vk::DescriptorType::eCombinedImageSampler, 
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
+    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
+      _device->createDescriptorSetLayout( dslbs );
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
 
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
+      _device->createDescriptorPool( {}, 1, {
+        { vk::DescriptorType::eCombinedImageSampler, 1 }
+      } );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss;
+    std::vector<WriteDescriptorSet> wdss = 
+    {
+      WriteDescriptorSet( descriptorSet, 0, 0, 
+        vk::DescriptorType::eCombinedImageSampler, 1, 
+        tex->descriptor, nullptr
+      )
+    };
 
-    WriteDescriptorSet w( descriptorSet, 0, 0, 
-      vk::DescriptorType::eCombinedImageSampler, 1, 
-      tex->descriptor, nullptr
-    );
-    wdss.push_back( w );
     _device->updateDescriptorSets( wdss, {} );
 
     // init pipeline

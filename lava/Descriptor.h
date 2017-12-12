@@ -19,7 +19,9 @@ namespace lava
     LAVA_API
     DescriptorSetLayoutBinding( uint32_t binding,
       vk::DescriptorType descriptorType,
-      vk::ShaderStageFlags stageFlags );
+      vk::ShaderStageFlags stageFlags, 
+      vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> immutableSamplers = { }
+    );
     LAVA_API
     DescriptorSetLayoutBinding( DescriptorSetLayoutBinding const& rhs );
     LAVA_API
@@ -28,7 +30,8 @@ namespace lava
     uint32_t binding;
     vk::DescriptorType descriptorType;
     vk::ShaderStageFlags stageFlags;
-    std::vector<std::shared_ptr<Sampler>> immutableSamplers;
+    // TODO: Use lava::Sampler?
+    std::vector<std::shared_ptr<vk::Sampler>> immutableSamplers;
   };
 
   class DescriptorSetLayout : public VulkanResource,
