@@ -52,7 +52,7 @@ namespace lava
 #endif
 
     // TODO: HARDCODED
-    extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
+    // extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
     // TODO: HARDCODED
 
     std::cout << "available extensions:" << std::endl;
