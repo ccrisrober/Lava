@@ -191,6 +191,11 @@ namespace lava
     _device.updateDescriptorSets( writes, copies );
   }
 
+  std::shared_ptr<Event> Device::createEvent( void )
+  {
+    return std::make_shared< Event >( shared_from_this( ) );
+  }
+
   void Device::init(
     const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
     const std::vector<std::string>& enabledLayerNames,

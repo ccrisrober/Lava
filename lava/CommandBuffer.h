@@ -13,6 +13,7 @@ namespace lava
   class Device;
   class Buffer;
   class IndexBuffer;
+  class Event;
   class Image;
   class RenderPass;
   class Framebuffer;
@@ -26,6 +27,15 @@ namespace lava
       uint32_t familyIndex = 0 );
     LAVA_API
     virtual ~CommandPool( void );
+
+    LAVA_API
+    bool supportsCompute( void ) const;
+
+    LAVA_API
+    bool supportsGraphics( void ) const;
+
+    LAVA_API
+    bool supportsTransfer( void ) const;
 
     inline operator vk::CommandPool( void ) const
     {
@@ -41,6 +51,7 @@ namespace lava
   protected:
     vk::CommandPool _commandPool;
     std::vector<CommandBuffer*> _commandBuffers;
+    uint32_t _familyIndex;
   };
 
 
@@ -260,7 +271,22 @@ namespace lava
       vk::DependencyFlags dependencyFlags, 
       vk::ArrayProxy<const vk::MemoryBarrier> barriers, 
       vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
-      vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers );
+      vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers
+    );
+
+    
+    LAVA_API
+    void resetEvent( const std::shared_ptr<Event>& event, vk::PipelineStageFlags stageMask);
+    LAVA_API
+    void setEvent( const std::shared_ptr<Event>& event, vk::PipelineStageFlags stageMask);
+    LAVA_API
+    void waitEvents(vk::ArrayProxy<const std::shared_ptr<Event>> events, 
+      vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
+      vk::ArrayProxy<const vk::MemoryBarrier> memoryBarriers, 
+      vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
+      vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
+    );
+
 
   protected:
     std::shared_ptr<CommandPool> _commandPool;

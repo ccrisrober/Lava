@@ -1,19 +1,22 @@
 #include "CommandBuffer.h"
 
 #include "Device.h"
+#include "PhysicalDevice.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "Event.h"
 
 namespace lava
 {
   CommandPool::CommandPool( const DeviceRef& device, vk::CommandPoolCreateFlags flags,
     uint32_t familyIndex )
     : VulkanResource( device )
+    , _familyIndex( familyIndex )
   {
     vk::CommandPoolCreateInfo cci( flags, familyIndex );
     _commandPool = static_cast< vk::Device >( *_device ).createCommandPool( cci );
   }
-  CommandPool::~CommandPool( )
+  CommandPool::~CommandPool( void )
   {
     static_cast< vk::Device >( *_device ).destroyCommandPool( _commandPool );
   }
@@ -26,6 +29,23 @@ namespace lava
     return( commandBuffer );
   }
 
+  bool CommandPool::supportsCompute( void ) const
+  {
+    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+      .queueFlags & vk::QueueFlagBits::eCompute);
+  }
+
+  bool CommandPool::supportsGraphics( void ) const
+  {
+    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+      .queueFlags & vk::QueueFlagBits::eGraphics);
+  }
+
+  bool CommandPool::supportsTransfer( void ) const
+  {
+    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+      .queueFlags & vk::QueueFlagBits::eTransfer);
+  }
 
   ImageMemoryBarrier::ImageMemoryBarrier( 
     vk::AccessFlags srcAccessMask_, vk::AccessFlags dstAccessMask_, 
@@ -447,5 +467,38 @@ namespace lava
 
     _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
       barriers, bufferMemoryBarriers, imbs );
+  }
+
+
+  
+  void CommandBuffer::resetEvent( const std::shared_ptr<Event>& e, 
+    vk::PipelineStageFlags stageMask)
+  {
+    _commandBuffer.resetEvent( *e, stageMask );
+  }
+  
+  void CommandBuffer::setEvent( const std::shared_ptr<Event>& e, 
+    vk::PipelineStageFlags stageMask)
+  {
+    _commandBuffer.setEvent( *e, stageMask );
+  }
+  
+  void CommandBuffer::waitEvents(vk::ArrayProxy<const std::shared_ptr<Event>> events, 
+    vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
+    vk::ArrayProxy<const vk::MemoryBarrier> memoryBarriers, 
+    vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
+    vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
+  )
+  {
+    std::vector<vk::Event> evts;
+    for( const auto& e : events )
+    {
+      evts.push_back( *e );
+    }
+
+    _commandBuffer.waitEvents(
+      evts, srcStageMask, dstStageMask, memoryBarriers, 
+      bufferMemoryBarriers, imageMemoryBarriers
+    );
   }
 }

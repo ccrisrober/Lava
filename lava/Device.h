@@ -11,6 +11,7 @@
 #include "Sampler.h"
 #include "Descriptor.h"
 #include "Buffer.h"
+#include "Event.h"
 
 #include <vector>
 #include <map>
@@ -77,6 +78,9 @@ namespace lava
     void updateDescriptorSets( 
       std::vector<WriteDescriptorSet> descriptorWrites,
       std::vector<CopyDescriptorSet> descriptorCopies );
+
+    LAVA_API
+    std::shared_ptr<Event> createEvent( void );
 
     LAVA_API
     void waitIdle( void );

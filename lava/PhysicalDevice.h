@@ -76,6 +76,11 @@ namespace lava
       return ( std::find( supportedExtensions.begin( ), 
         supportedExtensions.end( ), extension ) != supportedExtensions.end( ) );
     }
+    
+    std::vector<vk::QueueFamilyProperties> getQueueFamilyProperties( void ) const
+    {
+      return _physicalDevice.getQueueFamilyProperties( );
+    }
 
     std::vector<uint32_t> getGraphicsPresentQueueFamilyIndices(
       const std::shared_ptr<Surface>& surface )

@@ -7,6 +7,7 @@ set( LAVA_PUBLIC_HEADERS
   noncopyable.hpp
 
   Instance.h
+  Event.h
   PhysicalDevice.h
   Surface.h
   VulkanApp.h
@@ -55,6 +56,7 @@ set( LAVA_PUBLIC_HEADERS
 
 set( LAVA_SOURCES
   Instance.cpp
+  Event.cpp
   PhysicalDevice.cpp
   Surface.cpp
   VulkanApp.cpp
