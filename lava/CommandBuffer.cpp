@@ -174,7 +174,7 @@ namespace lava
 
       writes.push_back( std::move( write ) );
     }
-    _commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, firstSet, writes );
+    //_commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, firstSet, writes );
   }
 //#endif
 

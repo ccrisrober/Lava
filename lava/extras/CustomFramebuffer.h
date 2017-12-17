@@ -75,7 +75,9 @@ namespace lava
         vk::ImageUsageFlags usage );
     protected:
       uint32_t _width, _height;
+    public:
       FramebufferAttachment _depthAttachment;
+    protected:
       bool hasDepth = false;
     public:
       LAVA_API

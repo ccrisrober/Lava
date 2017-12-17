@@ -130,6 +130,16 @@ namespace lava
       dependencies[ 1 ].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
       dependencies[ 1 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
+      if ( _colorAttachments.empty( ) )
+      {
+        dependencies[ 0 ].dstStageMask = vk::PipelineStageFlagBits::eLateFragmentTests;
+        dependencies[ 0 ].dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+        dependencies[ 1 ].srcStageMask = vk::PipelineStageFlagBits::eLateFragmentTests;
+        dependencies[ 1 ].dstStageMask = vk::PipelineStageFlagBits::eFragmentShader;
+        dependencies[ 1 ].srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+      }
+
       renderPass = _device->createRenderPass( attDesc, subpass, dependencies );
 
       _fbo = _device->createFramebuffer( renderPass,
