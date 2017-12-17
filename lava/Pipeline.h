@@ -134,6 +134,9 @@ namespace lava
     LAVA_API
     void saveToFile( const char* filename );
 
+    LAVA_API
+    void saveToFile( const std::string& filename );
+
     inline operator vk::PipelineCache( void ) const
     {
       return _pipelineCache;

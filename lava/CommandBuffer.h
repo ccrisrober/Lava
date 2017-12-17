@@ -122,6 +122,15 @@ namespace lava
     LAVA_API
     void endRenderPass( void );
 
+//#ifdef VK_HEADER_VERSION >= 46
+    LAVA_API
+    void pushDescriptorSetKHR(
+      vk::PipelineBindPoint pipelineBindPoint,
+      const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
+      vk::ArrayProxy< WriteDescriptorSet > descriptorSets
+    );
+//#endif
+
     LAVA_API
     void blitImage( const std::shared_ptr<Image>& srcImage, 
       vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 

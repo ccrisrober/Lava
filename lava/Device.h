@@ -138,7 +138,8 @@ namespace lava
     std::shared_ptr<Sampler> createSampler( const SamplerStateDesc & desc );
     LAVA_API
     std::shared_ptr<DescriptorSetLayout> createDescriptorSetLayout(
-      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings );
+      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings, 
+      vk::DescriptorSetLayoutCreateFlags flags = { } );
     LAVA_API
     std::shared_ptr<DescriptorPool> createDescriptorPool(
       vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,

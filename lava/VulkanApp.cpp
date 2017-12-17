@@ -50,6 +50,11 @@ namespace lava
       glfwExtensions[ 1 ],	// OS specific surface extension
     };
 #endif
+
+    // TODO: HARDCODED
+    extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
+    // TODO: HARDCODED
+
     std::cout << "available extensions:" << std::endl;
     bool founded = false;
     for ( const auto& extension : extensions_ )

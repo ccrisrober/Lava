@@ -307,6 +307,22 @@ namespace lava
     setImageLayout( cmd, image, oldImageLayout, newImageLayout, 
       subresourceRange, srcStageMask, dstStageMask );
   }
+  void utils::insertImageMemoryBarrier( 
+    const std::shared_ptr<CommandBuffer> cmdbuffer, 
+    std::shared_ptr<Image> image, 
+    vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
+    vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout, 
+    vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
+    vk::ImageSubresourceRange subresourceRange )
+  {
+    lava::ImageMemoryBarrier imr( 
+      srcAccessMask, dstAccessMask, 
+      oldImageLayout, newImageLayout, 
+      0, 0, image, subresourceRange
+    );
+    cmdbuffer->pipelineBarrier( srcStageMask, dstStageMask, {}, {}, {}, imr );
+  }
+
   void utils::setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
     vk::Image image,
     vk::ImageLayout oldImageLayout,

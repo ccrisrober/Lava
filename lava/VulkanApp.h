@@ -15,9 +15,9 @@ namespace lava
   {
   public:
     LAVA_API
-      VulkanApp( const char* title, uint32_t width, uint32_t height );
+    VulkanApp( const char* title, uint32_t width, uint32_t height );
     LAVA_API
-      virtual ~VulkanApp( void );
+    virtual ~VulkanApp( void );
 
     LAVA_API
     inline const RenderAPICapabilities& getCapabilities( void ) const

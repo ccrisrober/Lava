@@ -334,9 +334,10 @@ namespace lava
     return std::make_shared<Sampler>( shared_from_this( ), desc );
   }
   std::shared_ptr<DescriptorSetLayout> Device::createDescriptorSetLayout(
-    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings )
+    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings, 
+    vk::DescriptorSetLayoutCreateFlags flags )
   {
-    return std::make_shared<DescriptorSetLayout>( shared_from_this( ), bindings );
+    return std::make_shared<DescriptorSetLayout>( shared_from_this( ), bindings, flags );
   }
   std::shared_ptr<DescriptorPool> Device::createDescriptorPool(
     vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,

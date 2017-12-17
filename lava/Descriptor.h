@@ -40,7 +40,8 @@ namespace lava
   public:
     LAVA_API
     DescriptorSetLayout( const DeviceRef& device,
-      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings );
+      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings,
+      vk::DescriptorSetLayoutCreateFlags flags = { } );
     LAVA_API
     ~DescriptorSetLayout( void );
 

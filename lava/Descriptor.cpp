@@ -54,7 +54,8 @@ namespace lava
 
 
   DescriptorSetLayout::DescriptorSetLayout( const DeviceRef& device,
-    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings )
+    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings,
+    vk::DescriptorSetLayoutCreateFlags flags )
     : VulkanResource( device )
     , _bindings( bindings.begin( ), bindings.end( ) )
   {
@@ -75,7 +76,7 @@ namespace lava
       }
 
       uint32_t dscptCount = 1;
-      if (bind.descriptorType == vk::DescriptorType::eSampler )
+      if (!samplers.back( ).empty( ) && bind.descriptorType == vk::DescriptorType::eSampler )
       {
         dscptCount = samplers.back( ).size( );
       }
@@ -91,7 +92,7 @@ namespace lava
       );
     }
     vk::DescriptorSetLayoutCreateInfo dci(
-      { },
+      flags,
       dslb.size( ),
       dslb.data( )
     );

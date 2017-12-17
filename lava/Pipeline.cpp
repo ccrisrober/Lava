@@ -302,6 +302,11 @@ namespace lava
     static_cast< vk::Device >( *_device ).mergePipelineCaches( _pipelineCache, caches );
   }
 
+  void PipelineCache::saveToFile( const std::string& filename )
+  {
+    saveToFile( filename.c_str( ) );
+  }
+
   void PipelineCache::saveToFile( const char* filename )
   {
     size_t size = 0;

@@ -62,7 +62,8 @@ namespace lava
       vk::ImageLayout newImageLayout,
       vk::ImageSubresourceRange subresourceRange,
       vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands,
-      vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands );
+      vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands
+    );
     // Uses a fixed sub resource layout with first mip level and layer
     LAVA_API
     static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
@@ -71,7 +72,18 @@ namespace lava
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,
       vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands,
-      vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands );
+      vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands
+    );
+    // Insert an image memory barrier into the command buffer
+    LAVA_API
+    static void insertImageMemoryBarrier(
+      const std::shared_ptr<CommandBuffer> cmdbuffer,
+      std::shared_ptr<Image> image,
+      vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask,
+      vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout,
+      vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask,
+      vk::ImageSubresourceRange subresourceRange
+     );
 	};
 }
 

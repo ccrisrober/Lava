@@ -7165,12 +7165,7 @@ namespace vk
 
   struct WriteDescriptorSet
   {
-    WriteDescriptorSet( DescriptorSet dstSet_ = DescriptorSet(), 
-      uint32_t dstBinding_ = 0, uint32_t dstArrayElement_ = 0, 
-      uint32_t descriptorCount_ = 0, DescriptorType descriptorType_ = DescriptorType::eSampler, 
-      const DescriptorImageInfo* pImageInfo_ = nullptr, 
-      const DescriptorBufferInfo* pBufferInfo_ = nullptr, 
-      const BufferView* pTexelBufferView_ = nullptr )
+    WriteDescriptorSet( DescriptorSet dstSet_ = DescriptorSet(), uint32_t dstBinding_ = 0, uint32_t dstArrayElement_ = 0, uint32_t descriptorCount_ = 0, DescriptorType descriptorType_ = DescriptorType::eSampler, const DescriptorImageInfo* pImageInfo_ = nullptr, const DescriptorBufferInfo* pBufferInfo_ = nullptr, const BufferView* pTexelBufferView_ = nullptr )
       : sType( StructureType::eWriteDescriptorSet )
       , pNext( nullptr )
       , dstSet( dstSet_ )

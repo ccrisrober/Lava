@@ -129,6 +129,55 @@ namespace lava
     _commandBuffer.endRenderPass( );
   }
 
+//#ifdef VK_HEADER_VERSION >= 46
+  void CommandBuffer::pushDescriptorSetKHR(
+    vk::PipelineBindPoint pipelineBindPoint,
+    const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
+    vk::ArrayProxy<WriteDescriptorSet> descriptorWrites )
+  {
+    std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
+    diis.reserve( descriptorWrites.size( ) );
+
+    std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> dbis;
+    dbis.reserve( descriptorWrites.size( ) );
+
+    std::vector<vk::WriteDescriptorSet> writes;
+    writes.reserve( descriptorWrites.size( ) );
+    for ( const auto& w : descriptorWrites )
+    {
+      diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>(
+        w.imageInfo ? new vk::DescriptorImageInfo( 
+          w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
+          w.imageInfo->imageView ? static_cast<vk::ImageView>( *w.imageInfo->imageView ) : nullptr,
+          w.imageInfo->imageLayout )
+        : nullptr ) );
+      dbis.push_back( std::unique_ptr<vk::DescriptorBufferInfo>(
+        w.bufferInfo ? new vk::DescriptorBufferInfo( w.bufferInfo->buffer ?
+          static_cast<vk::Buffer>( *w.bufferInfo->buffer ) : nullptr,
+          w.bufferInfo->offset, w.bufferInfo->range )
+        : nullptr ) );
+      vk::WriteDescriptorSet write(
+        w.dstSet ? static_cast<vk::DescriptorSet>( *w.dstSet ) : nullptr,
+        w.dstBinding,
+        w.dstArrayElement,
+        w.descriptorCount,
+        w.descriptorType,
+        diis.back( ).get( ),
+        dbis.back( ).get( )
+      );
+
+      if ( w.texelBufferView )
+      {
+        vk::BufferView bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        write.setPTexelBufferView( &bufferView );
+      }
+
+      writes.push_back( std::move( write ) );
+    }
+    _commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, firstSet, writes );
+  }
+//#endif
+
   void CommandBuffer::blitImage( const std::shared_ptr<Image>& srcImage, 
     vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
     vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 

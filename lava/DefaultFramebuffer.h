@@ -40,6 +40,11 @@ namespace lava
       return _swapchain->getPresentCompleteSemaphores( )[ _swapchainIndex ];
     }
 
+    const std::shared_ptr<Image> getLastImage( void )
+    {
+      return _colorImages[ _swapchainIndex ];
+    }
+
     LAVA_API // TODO: Remove API
     void present( const std::shared_ptr<Queue>& queue,
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = {} )
