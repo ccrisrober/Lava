@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "TextureCubemap.h"
 
 #include "Device.h"
@@ -17,14 +36,14 @@ namespace lava
   {
     uint32_t textureWidth = 0;
     uint32_t textureHeight = 0;
-    uint32_t textureChannels = 0;
+    uint32_t channels = 0;
 
     struct Image
     {
       unsigned char* pixels;
       uint32_t width;
       uint32_t height;
-      uint32_t textureChannels;
+      uint32_t channels;
       uint32_t size;
     };
 
@@ -34,14 +53,15 @@ namespace lava
     for ( uint32_t i = 0, l = filePaths.size( ); i < l; ++i )
     {
       unsigned char* pixels = lava::utils::loadImageTexture(
-        filePaths[ i ].c_str( ), textureWidth, textureHeight, textureChannels);
+        filePaths[ i ].c_str( ), textureWidth, textureHeight, channels);
 
       // The load function returns the original channel count, 
       // but it was forced to 4 because of the last parameter
-      textureChannels = 4;
+      channels = 4;
 
-      uint32_t size = textureWidth * textureHeight * textureChannels * sizeof( unsigned char );
-      images.push_back( { pixels, textureWidth, textureHeight, textureChannels, size } );
+      uint32_t size = textureWidth * textureHeight * channels 
+        * sizeof( unsigned char );
+      images.push_back( { pixels, textureWidth, textureHeight, channels, size } );
       totalSize += size;
     }
 

@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -13,9 +32,10 @@ struct
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<Buffer> uniformBufferMVP;
+  std::shared_ptr<Buffer> uniformMVP;
   std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<DescriptorSet> descriptorSet;
+  std::shared_ptr<CommandPool> commandPool;
 
   std::shared_ptr<lava::extras::Geometry> geometry;
 
@@ -29,13 +49,16 @@ public:
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    commandPool = _device->createCommandPool( 
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "/monkey.obj_" ) );
 
     // MVP buffer
     {
       uint32_t mvpBufferSize = sizeof( uboVS );
-      uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
+      uniformMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
@@ -82,14 +105,14 @@ public:
           vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -101,9 +124,11 @@ public:
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _renderPass );
 
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    std::array<vk::DescriptorPoolSize, 1> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 )
+    };
+    auto descriptorPool = _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -111,12 +136,12 @@ public:
     {
       WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr, 
-        DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS )
+        DescriptorBufferInfo( uniformMVP, 0, sizeof( uboVS )
         )
       )
     };
 
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
   }
   void updateUniformBuffers( void )
@@ -140,7 +165,7 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
 
     float greenValue = ( sin( time ) / 2.0f ) + 0.5f;
     pushConstants[ 0 ] = glm::vec4( 0.0f, greenValue, 0.0f, 1.0f );
@@ -152,11 +177,7 @@ public:
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool = 
-      _device->createCommandPool( 
-          vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 

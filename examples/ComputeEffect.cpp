@@ -1,9 +1,28 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
 #include <routes.h>
 
-class MyApp : public VulkanApp
+class ComputeEffectApp : public VulkanApp
 {
 public:
   std::shared_ptr<Texture> textureComputeTarget;
@@ -116,13 +135,15 @@ public:
 
   void setupDescriptorPool( void )
   {
-    std::array<vk::DescriptorPoolSize, 3> poolSize;
-    // Compute UBO
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    // Graphics image samplers
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    // Storage image for compute image input and output
-    poolSize[ 2 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 2 );
+    std::array<vk::DescriptorPoolSize, 3> poolSize =
+    {
+      // Compute UBO
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 ),
+      // Graphics image samplers
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 ),
+      // Storage image for compute image input and output
+      vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 2 )
+    };
 
     descriptorPool = _device->createDescriptorPool( { }, 2, poolSize );
   }
@@ -148,14 +169,14 @@ public:
     graphics.descriptorSet = _device->allocateDescriptorSet(
       descriptorPool, graphics.descriptorSetLayout );
 
-    std::vector<lava::WriteDescriptorSet> wdss =
+    std::vector<WriteDescriptorSet> wdss =
     {
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         graphics.descriptorSet, 0, 0, vk::DescriptorType::eCombinedImageSampler,
         1, textureComputeTarget->descriptor, nullptr
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
   }
 
   void preparePipelines( void )
@@ -169,11 +190,11 @@ public:
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
-    PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {},
+    PipelineVertexInputStateCreateInfo vertexInput( { }, { } );
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, false, false,
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, false, false,
       vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample(
@@ -181,7 +202,7 @@ public:
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
       0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
       stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false,
@@ -195,8 +216,8 @@ public:
       vk::DynamicState::eScissor } );
 
 
-    graphics.pipeline = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    graphics.pipeline = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       graphics.pipelineLayout, _renderPass );
   }
@@ -234,12 +255,12 @@ public:
     std::vector<WriteDescriptorSet> wdss =
     {
       // Binding 0: Storage image (read)
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 0, 0, vk::DescriptorType::eStorageImage,
         1, tex->descriptor, nullptr
       ),
       // Binding 1: Storage image (write)
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 1, 0, vk::DescriptorType::eStorageImage,
         1, textureComputeTarget->descriptor, nullptr
       )
@@ -260,13 +281,13 @@ public:
     std::cout << "CREATE PIPELINE" << std::endl;
 
     compute.pipeline = _device->createComputePipeline(
-      pipelineCache, {}, computeStage, compute.pipelineLayout );
+      pipelineCache, { }, computeStage, compute.pipelineLayout );
 
     // Fence for compute CB sync
     compute.fence = _device->createFence( true );
 
     // Separate command pool as queue family for compute may be different than graphics
-    compute.commandPool = _device->createCommandPool( {}, compute.queue->getQueueFamilyIndex( ) );
+    compute.commandPool = _device->createCommandPool( { }, compute.queue->getQueueFamilyIndex( ) );
 
     // Create a command buffer for compute operations
     compute.commandBuffer = compute.commandPool->allocateCommandBuffer( );
@@ -320,7 +341,7 @@ public:
     );
 
     commandBuffer->pipelineBarrier( vk::PipelineStageFlagBits::eComputeShader, 
-      vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, imb
+      vk::PipelineStageFlagBits::eFragmentShader, { }, { }, { }, imb
     );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
@@ -356,7 +377,7 @@ public:
     graphics.pipelineLayout = _device->createPipelineLayout( graphics.descriptorSetLayout );
   }
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  ComputeEffectApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     commandPool = _device->createCommandPool(
@@ -434,7 +455,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Compute Raytracing", 736, 512 );
+    VulkanApp* app = new ComputeEffectApp( "Compute Raytracing", 736, 512 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

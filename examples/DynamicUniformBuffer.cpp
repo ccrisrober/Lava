@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -85,14 +104,14 @@ public:
           vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); 
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 ); 
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -100,14 +119,16 @@ public:
 
 
     pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, 
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, 
       rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _renderPass );
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBufferDynamic, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    std::array<vk::DescriptorPoolSize, 2> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBufferDynamic, 1 )
+    };
+    auto descriptorPool = _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -122,7 +143,7 @@ public:
         DescriptorBufferInfo( uniformDynamic, 0, sizeof( uboDataDynamic ) )
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
   }
   void updateUniformBuffers( void )
@@ -152,7 +173,7 @@ public:
   {
     updateUniformBuffers( );
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 

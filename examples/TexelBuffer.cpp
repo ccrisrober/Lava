@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -13,7 +32,7 @@ public:
 
   std::shared_ptr<CommandPool> commandPool;
   std::shared_ptr<Buffer> texelBuffer;
-  std::shared_ptr<lava::BufferView> texelView;
+  std::shared_ptr<BufferView> texelView;
 
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
@@ -73,7 +92,7 @@ public:
       vk::DescriptorPoolSize( vk::DescriptorType::eUniformTexelBuffer, 1 )
     };
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, poolSize );
+      _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -87,7 +106,7 @@ public:
         ), texelView
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
 
     commandPool = _device->createCommandPool(
@@ -106,7 +125,7 @@ public:
     vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( { { } }, { { } } );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f
     );
@@ -135,14 +154,14 @@ public:
     } );
 
     pipeline = _device->createGraphicsPipeline( pipelineCache, { },
-    { vertexStage, fragmentStage },
+      { vertexStage, fragmentStage },
       vertexInput, assembly, nullptr, viewport, rasterization, multisample,
       depthStencil, colorBlend, dynamic, pipelineLayout, _renderPass );
   }
 
   void doPaint( void ) override
   {
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 

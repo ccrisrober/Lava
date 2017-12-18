@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -60,10 +79,10 @@ class MyApp : public VulkanApp
 {
 public:
   std::shared_ptr<Pipeline> _pipeline;
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<vk::ImageView> _textureImageView;
   std::shared_ptr<Sampler> _textureSampler;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<DescriptorSet> descriptorSet;
   std::shared_ptr<Texture2D> tex1;
   std::shared_ptr<Texture2D> tex2;
 
@@ -78,7 +97,7 @@ public:
   {
     std::vector<WriteDescriptorSet> descriptorWrites =
     {
-      WriteDescriptorSet( _descriptorSet, 0, 0,
+      WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         tex->descriptor, nullptr
       )
@@ -124,7 +143,7 @@ public:
 
         writes.push_back( std::move( write ) );
       }
-      //cmd->pushDescriptorSetKHR( vk::PipelineBindPoint::eGraphics, _pipelineLayout, 0, wdss );
+      //cmd->pushDescriptorSetKHR( vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, wdss );
       vk::CommandBuffer command = static_cast< vk::CommandBuffer >( *cmd );
       VkCommandBuffer m_commandBuffer = static_cast< VkCommandBuffer > ( command );
 
@@ -133,7 +152,7 @@ public:
       assert( pn_vkCmdPushDescriptorSetKHR != nullptr );
 
       pn_vkCmdPushDescriptorSetKHR( m_commandBuffer, static_cast<VkPipelineBindPoint>( vk::PipelineBindPoint::eGraphics ),
-        static_cast<VkPipelineLayout>( static_cast<vk::PipelineLayout>(*_pipelineLayout )),
+        static_cast<VkPipelineLayout>( static_cast<vk::PipelineLayout>(*pipelineLayout )),
           0, writes.size( ), reinterpret_cast<const VkWriteDescriptorSet*>( writes.data( ) ) );
     }
   }
@@ -165,14 +184,14 @@ public:
       _device->createDescriptorSetLayout( dslbs, 
         vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
 
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
+      _device->createDescriptorPool( { }, 1, { { vk::DescriptorType::eCombinedImageSampler, 1 } } );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
 
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = 
@@ -187,11 +206,11 @@ public:
       vk::ShaderStageFlagBits::eFragment
     );
 
-    PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
+    PipelineVertexInputStateCreateInfo vertexInput( { }, { } );
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, false, false, 
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, false, false, 
       vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, 
       vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( 
@@ -199,7 +218,7 @@ public:
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, 
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 
       0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, 
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
       stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
@@ -212,15 +231,15 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, 
       vk::DynamicState::eScissor } );
 
-    _pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+    _pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      _pipelineLayout, _renderPass );
+      pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
     static int i = 0;
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
     if ( i == 0 )
     {
       i = 50;
@@ -239,7 +258,7 @@ public:
       vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, vk::SubpassContents::eInline );
     commandBuffer->bindGraphicsPipeline( _pipeline );
     //commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-    //  _pipelineLayout, 0, { _descriptorSet }, nullptr );
+    //  pipelineLayout, 0, { descriptorSet }, nullptr );
 
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
 

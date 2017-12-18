@@ -18,12 +18,14 @@ namespace lava
   class RenderPass;
   class Framebuffer;
   class CommandBuffer;
-  class CommandPool : public VulkanResource, public std::enable_shared_from_this<CommandPool>
+
+  class CommandPool : 
+    public VulkanResource, 
+    public std::enable_shared_from_this<CommandPool>
   {
   public:
     LAVA_API
-    CommandPool( const DeviceRef& device,
-      vk::CommandPoolCreateFlags flags = vk::CommandPoolCreateFlags( ),
+    CommandPool( const DeviceRef& device, vk::CommandPoolCreateFlags flags = { },
       uint32_t familyIndex = 0 );
     LAVA_API
     virtual ~CommandPool( void );
@@ -102,7 +104,8 @@ namespace lava
     void reset( void );
 
     LAVA_API
-    void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ), vk::CommandBufferInheritanceInfo* inheritInfo = nullptr );
+    void beginSimple( vk::CommandBufferUsageFlags flags = { }, 
+      vk::CommandBufferInheritanceInfo* inheritInfo = nullptr );
 
     LAVA_API
     void clearAttachments( vk::ArrayProxy< const vk::ClearAttachment> attachments,
@@ -125,8 +128,7 @@ namespace lava
 
     LAVA_API
     void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
-      const std::shared_ptr<PipelineLayout>& pipelineLayout, 
-      uint32_t firstSet, 
+      const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet, 
       vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
       vk::ArrayProxy<const uint32_t> dynamicOffsets );
 
@@ -149,17 +151,20 @@ namespace lava
       vk::Filter filter );
 
     LAVA_API
-    void setStencilCompareMask( vk::StencilFaceFlags faceMask, uint32_t stencilCompareMask );
+    void setStencilCompareMask( vk::StencilFaceFlags faceMask, 
+      uint32_t stencilCompareMask );
     LAVA_API
-    void setStencilReference( vk::StencilFaceFlags faceMask, uint32_t stencilReference );
+    void setStencilReference( vk::StencilFaceFlags faceMask, 
+      uint32_t stencilReference );
     LAVA_API
-    void setStencilWriteMask( vk::StencilFaceFlags faceMask, uint32_t stencilWriteMask );
+    void setStencilWriteMask( vk::StencilFaceFlags faceMask, 
+      uint32_t stencilWriteMask );
     LAVA_API
     void setBlendConstants( const float blendConst[ 4 ] );
 
     LAVA_API
     void beginOcclusionQuery( vk::QueryPool queryPool, uint32_t query, 
-      vk::QueryControlFlags flags = {} );
+      vk::QueryControlFlags flags = { } );
     LAVA_API
     void endOcclusionQuery( vk::QueryPool queryPool, uint32_t query );
 

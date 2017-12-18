@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -88,12 +107,12 @@ public:
   };
   const std::vector<uint16_t> indices =
   {
-    0,1,2,      1,3,2,
-    4,6,5,      5,6,7,
-    8,10,9,     9,10,11,
-    12,13,14,   13,15,14,
-    16,17,18,   17,19,18,
-    20,22,21,   21,22,23,
+     0,  1,  2,     1,  3,  2,
+     4,  6,  5,     5,  6,  7,
+     8, 10,  9,     9, 10, 11,
+    12, 13, 14,    13, 15, 14,
+    16, 17, 18,    17, 19, 18,
+    20, 22, 21,    21, 22, 23,
   };
   std::shared_ptr<DescriptorPool> descriptorPool;
 
@@ -211,12 +230,12 @@ public:
     std::vector<WriteDescriptorSet> wdss =
     {
       // Binding 0: Storage image (raytracer output)
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 0, 0, vk::DescriptorType::eStorageImage,
         1, textureComputeTarget->descriptor, nullptr
       ),
       // Binding 1: Uniform buffer block
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 1, 0, vk::DescriptorType::eUniformBuffer,
         1, nullptr, DescriptorBufferInfo( compute.uniformBuffer, 0,
           sizeof( compute.ubo ) )
@@ -238,13 +257,13 @@ public:
     std::cout << "CREATE PIPELINE" << std::endl;
 
     compute.pipeline = _device->createComputePipeline(
-      pipelineCache, {}, computeStage, compute.pipelineLayout );
+      pipelineCache, { }, computeStage, compute.pipelineLayout );
 
     // Fence for compute CB sync
     compute.fence = _device->createFence( true );
 
     // Separate command pool as queue family for compute may be different than graphics
-    compute.commandPool = _device->createCommandPool( {}, compute.queue->getQueueFamilyIndex( ) );
+    compute.commandPool = _device->createCommandPool( { }, compute.queue->getQueueFamilyIndex( ) );
 
     // Create a command buffer for compute operations
     compute.commandBuffer = compute.commandPool->allocateCommandBuffer( );
@@ -310,7 +329,7 @@ public:
     );
 
     commandBuffer->pipelineBarrier( vk::PipelineStageFlagBits::eComputeShader, 
-      vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, imb
+      vk::PipelineStageFlagBits::eFragmentShader, { }, { }, { }, imb
     );
 
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
@@ -404,17 +423,17 @@ public:
         vk::Format::eR32G32Sfloat, offsetof( Vertex, texCoord )
       )
     }  );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, 
       false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, 
       vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, 
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState,
       0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
@@ -428,27 +447,29 @@ public:
       vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
-    graphics.pipeline = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    graphics.pipeline = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       graphics.pipelineLayout, _renderPass );
 
     // Setup descriptor pool
-    std::array<vk::DescriptorPoolSize, 3> poolSize;
-    // Compute UBO and MVP
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 );
-    // Graphics image samplers
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    // Storage image for ray traced image output
-    poolSize[ 2 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 1 );
+    std::array<vk::DescriptorPoolSize, 3> poolSize =
+    {
+      // Compute UBO and MVP
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 ),
+      // Graphics image samplers
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 ),
+      // Storage image for ray traced image output
+      vk::DescriptorPoolSize( vk::DescriptorType::eStorageImage, 1 )
+    };
 
-    descriptorPool = _device->createDescriptorPool( {}, 2, poolSize );
+    descriptorPool = _device->createDescriptorPool( { }, 2, poolSize );
 
     // Setup descriptor set
     graphics.descriptorSet = _device->allocateDescriptorSet(
       descriptorPool, graphics.descriptorSetLayout );
 
-    std::vector<lava::WriteDescriptorSet> wdss =
+    std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet(
         graphics.descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
@@ -457,12 +478,12 @@ public:
           graphics.uniformBuffer, 0, sizeof( graphics.ubo )
         )
       ),
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         graphics.descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler,
         1, textureComputeTarget->descriptor, nullptr
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
     prepareCompute( );
     buildCommandBuffers( );

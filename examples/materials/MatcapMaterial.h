@@ -26,14 +26,15 @@ namespace material
           vk::ShaderStageFlagBits::eVertex
         );
       };
-      std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
-        dev->createDescriptorSetLayout( dslbs );
+      auto descriptorSetLayout = dev->createDescriptorSetLayout( dslbs );
 
       pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
-      std::array<vk::DescriptorPoolSize, 1> poolSize;
-      poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-      std::shared_ptr<DescriptorPool> descriptorPool = dev->createDescriptorPool( {}, 1, poolSize );
+      std::array<vk::DescriptorPoolSize, 1> poolSize = 
+      {
+        vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 )
+      };
+      auto descriptorPool = dev->createDescriptorPool( { }, 1, poolSize );
 
       // Init descriptor set
       descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -41,12 +42,10 @@ namespace material
       {
         WriteDescriptorSet( descriptorSet, 0, 0, 
           vk::DescriptorType::eUniformBuffer, 1, nullptr, 
-          DescriptorBufferInfo( 
-            uniformBufferMVP, 0, sizeof( glm::mat4 )
-          )
+          DescriptorBufferInfo( uniformMVP, 0, sizeof( glm::mat4 ) )
         )
       };
-      dev->updateDescriptorSets( wdss, {} );
+      dev->updateDescriptorSets( wdss, { } );
 
       // init shaders
       std::shared_ptr<ShaderModule> vertexShaderModule = dev->createShaderModule( 
@@ -69,16 +68,16 @@ namespace material
             offsetof(lava::extras::Vertex, normal ) )
         }
       );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, 
+      vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+      PipelineViewportStateCreateInfo viewport( 1, 1 );
+      vk::PipelineRasterizationStateCreateInfo rasterization( { }, true, 
         false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, 
         vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
       PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, 
         false, 0.0f, nullptr, false, false );
       vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, 
         vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
+      vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, 
         vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
       vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
         vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
@@ -91,7 +90,7 @@ namespace material
         vk::DynamicState::eScissor } );
 
 
-      pipeline = dev->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipeline = dev->createGraphicsPipeline( pipelineCache, { }, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         pipelineLayout, _renderPass );
       }
     private:

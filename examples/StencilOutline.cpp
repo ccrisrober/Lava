@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -18,7 +37,7 @@ struct
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<lava::UniformBuffer> uniformBufferMVP;
+  std::shared_ptr<lava::UniformBuffer> uniformMVP;
   std::shared_ptr<lava::UniformBuffer> uniformBufferOutline;
 
   struct
@@ -59,7 +78,7 @@ public:
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    uniformBufferMVP = std::make_shared<lava::UniformBuffer>( 
+    uniformMVP = std::make_shared<lava::UniformBuffer>( 
       _device, sizeof( uboVS )
     );
     uniformBufferOutline = std::make_shared<lava::UniformBuffer>( 
@@ -121,14 +140,14 @@ public:
           )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencilState( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineDepthStencilStateCreateInfo depthStencilState( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -154,8 +173,8 @@ public:
     //depthStencilState.back.passOp = vk::StencilOp::eReplace;
     depthStencilState.front = depthStencilState.back;
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {}, 
-      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { }, 
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencilState, colorBlend, 
       dynamic, pipelineLayouts.solid, _renderPass
     );
@@ -182,26 +201,29 @@ public:
       vk::ShaderStageFlagBits::eFragment
     );
 
-    pipelines.outline = _device->createGraphicsPipeline( pipelineCache, {},
-      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    pipelines.outline = _device->createGraphicsPipeline( pipelineCache, { },
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencilState, colorBlend,
       dynamic, pipelineLayouts.outline, _renderPass
     );
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 3 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = 
-      _device->createDescriptorPool( {}, 2, poolSize );
+    std::array<vk::DescriptorPoolSize, 2> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 3 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 )
+    };
+    auto descriptorPool = _device->createDescriptorPool( { }, 2, poolSize );
 
     // Init descriptor set
-    descriptorSets.solid = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayouts.solid );
+    descriptorSets.solid = _device->allocateDescriptorSet( 
+      descriptorPool, descriptorSetLayouts.solid
+    );
     std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet( descriptorSets.solid, 0, 0,
       vk::DescriptorType::eUniformBuffer, 1, nullptr,
       DescriptorBufferInfo(
-        uniformBufferMVP, 0, sizeof( uboVS )
+        uniformMVP, 0, sizeof( uboVS )
       )
       ),
       WriteDescriptorSet( descriptorSets.solid, 1, 0,
@@ -209,15 +231,17 @@ public:
         tex->descriptor, nullptr
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
-    descriptorSets.outline = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayouts.outline );
+    descriptorSets.outline = _device->allocateDescriptorSet( 
+      descriptorPool, descriptorSetLayouts.outline
+    );
     wdss =
     {
       WriteDescriptorSet( descriptorSets.outline, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr,
         DescriptorBufferInfo(
-          uniformBufferMVP, 0, sizeof( uboVS )
+          uniformMVP, 0, sizeof( uboVS )
         )
       ),
       WriteDescriptorSet( descriptorSets.outline, 1, 0,
@@ -227,7 +251,7 @@ public:
         )
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
   }
   void updateUniformBuffers( void )
   {
@@ -252,7 +276,7 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
 
     uniformBufferOutline->writeData( 0, sizeof( uboVS2 ), &uboVS2 );
   }
@@ -261,7 +285,7 @@ public:
   {
     updateUniformBuffers( );
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->beginSimple( );
 

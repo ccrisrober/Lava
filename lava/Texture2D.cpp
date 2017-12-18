@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Texture2D.h"
 
 #include "Device.h"
@@ -14,11 +33,11 @@ namespace lava
     bool forceLinear )
     : Texture( device_ )
   {
-    unsigned int numChannels;
+    unsigned int channels;
     unsigned char* pixels = lava::utils::loadImageTexture( 
-      filename, width, height, numChannels );
+      filename, width, height, channels );
 
-    numChannels = 4; // TODO: hardcoded
+    channels = 4; // TODO: hardcoded
 
     vk::FormatProperties formatProps = 
       _device->_physicalDevice->getFormatProperties( format );
@@ -30,7 +49,7 @@ namespace lava
     // limited amount of formats and features (mip maps, cubemaps, arrays, etc.)
     VkBool32 useStaging = !forceLinear;
 
-    VkDeviceSize texSize = width * height * numChannels;
+    VkDeviceSize texSize = width * height * channels;
 
     vk::Device device = static_cast< vk::Device >( *_device );
 

@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -10,12 +29,12 @@ struct
   glm::mat4 proj;
 } uboVS;
 
-class MyApp : public VulkanApp
+class ScreenshotApp : public VulkanApp
 {
 public:
   std::shared_ptr<Pipeline> pipeline;
 
-  std::shared_ptr<Buffer> uniformBufferMVP;
+  std::shared_ptr<Buffer> uniformMVP;
   std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<DescriptorSet> descriptorSet;
 
@@ -34,14 +53,16 @@ public:
     formatProps = _device->_physicalDevice->getFormatProperties( _colorFormat );
     if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
-      std::cerr << "Device does not support blitting from optimal tiled images, using copy instead of blit!" << std::endl;
+      std::cerr << "Device does not support blitting from optimal tiled images, "
+        << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
 
     // Check if the device supports blitting to linear images
     formatProps = _device->_physicalDevice->getFormatProperties( vk::Format::eR8G8B8A8Unorm );
     if ( !( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) ) {
-      std::cerr << "Device does not support blitting to linear tiled images, using copy instead of blit!" << std::endl;
+      std::cerr << "Device does not support blitting to linear tiled images, "
+        << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
 
@@ -49,11 +70,11 @@ public:
     auto srcImage = _defaultFramebuffer->getLastImage( );
 
     // Create the linear tiled destination image to copy to and to read the memory from
-    std::shared_ptr<lava::Image> dstImage = _device->createImage( {},
+    std::shared_ptr<lava::Image> dstImage = _device->createImage( { },
       vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
       vk::Extent3D( width, height, 1 ), 1, 1, vk::SampleCountFlagBits::e1,
       vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst, 
-      vk::SharingMode::eExclusive, {}, vk::ImageLayout::eUndefined, 
+      vk::SharingMode::eExclusive, { }, vk::ImageLayout::eUndefined, 
       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
     );
 
@@ -94,7 +115,7 @@ public:
       blitSize.x = width;
       blitSize.y = height;
       blitSize.z = 1;
-      vk::ImageBlit imageBlitRegion{};
+      vk::ImageBlit imageBlitRegion{ };
       imageBlitRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
       imageBlitRegion.srcSubresource.layerCount = 1;
       imageBlitRegion.srcOffsets[ 1 ] = blitSize;
@@ -112,7 +133,7 @@ public:
     else
     {
       // Otherwise use image copy (requires us to manually flip components)
-      vk::ImageCopy imageCopyRegion{};
+      vk::ImageCopy imageCopyRegion{ };
       imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
       imageCopyRegion.srcSubresource.layerCount = 1;
       imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
@@ -174,7 +195,7 @@ public:
     );
 
     // Map image memory so we can start copying from it
-    const char* data = ( const char* ) device.mapMemory( dstImage->imageMemory, 0, VK_WHOLE_SIZE, {} );
+    const char* data = ( const char* ) device.mapMemory( dstImage->imageMemory, 0, VK_WHOLE_SIZE, { } );
     data += subResourceLayout.offset;
 
     std::ofstream file( filename, std::ios::out | std::ios::binary );
@@ -188,14 +209,18 @@ public:
     // Note: Not complete, only contains most common and basic BGR surface formats for demonstation purposes
     if ( !supportsBlit )
     {
-      std::vector<vk::Format> formatsBGR = { vk::Format::eB8G8R8A8Srgb, vk::Format::eB8G8R8A8Unorm, vk::Format::eB8G8R8A8Snorm };
-      colorSwizzle = ( std::find( formatsBGR.begin( ), formatsBGR.end( ), _colorFormat ) != formatsBGR.end( ) );
+      std::vector< vk::Format > formatsBGR = { 
+        vk::Format::eB8G8R8A8Srgb, vk::Format::eB8G8R8A8Unorm, 
+        vk::Format::eB8G8R8A8Snorm
+      };
+      colorSwizzle = ( std::find( formatsBGR.begin( ), formatsBGR.end( ), 
+        _colorFormat ) != formatsBGR.end( ) );
     }
 
     // ppm binary pixel data
     for ( uint32_t y = 0; y < height; ++y )
     {
-      unsigned int *row = ( unsigned int* ) data;
+      unsigned int* row = ( unsigned int* ) data;
       for ( uint32_t x = 0; x < width; ++x )
       {
         if ( colorSwizzle )
@@ -217,7 +242,7 @@ public:
     std::cout << "Screenshot saved to disk" << std::endl;
   }
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  ScreenshotApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     // create a command pool for command buffer allocation
@@ -229,7 +254,7 @@ public:
     // MVP buffer
     {
       uint32_t mvpBufferSize = sizeof( uboVS );
-      uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
+      uniformMVP = _device->createBuffer( mvpBufferSize, 
         vk::BufferUsageFlagBits::eUniformBuffer, 
         vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible | 
@@ -243,47 +268,73 @@ public:
         vk::ShaderStageFlagBits::eVertex
       )
     };
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    auto descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
-    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    auto vertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_vert.spv" ), 
+      vk::ShaderStageFlagBits::eVertex
+    );
+    auto fragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_frag.spv" ), 
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
-          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position ) ),
-          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) ),
-          vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord ) )
+          vk::VertexInputAttributeDescription( 
+            0, 0, vk::Format::eR32G32B32Sfloat, 
+            offsetof( lava::extras::Vertex, position )
+          ),
+          vk::VertexInputAttributeDescription( 
+            1, 0, vk::Format::eR32G32B32Sfloat, 
+            offsetof( lava::extras::Vertex, normal )
+          ),
+          vk::VertexInputAttributeDescription( 
+            2, 0, vk::Format::eR32G32Sfloat, 
+            offsetof( lava::extras::Vertex, texCoord )
+          )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); 
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
+      vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 ); 
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
-
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, 
+      false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, 
+      vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 
+      0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, 
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
+      stencilOpState, 0.0f, 0.0f );
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
+      colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
+    PipelineDynamicStateCreateInfo dynamic( {
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    } );
 
     pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, 
+        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, 
       rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _renderPass );
 
-    std::array<vk::DescriptorPoolSize, 1> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    std::array<vk::DescriptorPoolSize, 1> poolSize = 
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 )
+    };
+    auto descriptorPool = _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -291,10 +342,10 @@ public:
     {
       WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr,
-        DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS ) )
+        DescriptorBufferInfo( uniformMVP, 0, sizeof( uboVS ) )
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
   }
   void updateUniformBuffers( void )
@@ -318,14 +369,14 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 
@@ -391,7 +442,7 @@ int main( int argc, char** argv )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Perfect Toon", 800, 600 );
+    VulkanApp* app = new ScreenshotApp( "Perfect Toon", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 
