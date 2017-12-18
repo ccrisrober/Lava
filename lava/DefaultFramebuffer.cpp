@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "DefaultFramebuffer.h"
 
 #include "PhysicalDevice.h"
@@ -11,7 +30,7 @@ namespace lava
     : _swapchainIndex( 0 )
   {
     vk::SurfaceCapabilitiesKHR surfaceCaps = 
-      device->_physicalDevice->getSurfaceCapabilities( surface );
+      device->getPhysicalDevice( )->getSurfaceCapabilities( surface );
 
     // If width/height is 0xFFFFFFFF, we can manually specify width, height
     if ( surfaceCaps.currentExtent.width != std::numeric_limits<uint32_t>::max( ) )
@@ -32,7 +51,7 @@ namespace lava
 
     // Find present mode
     auto presentModes = vk::PhysicalDevice(
-      *device->_physicalDevice ).getSurfacePresentModesKHR( *surface );
+      *device->getPhysicalDevice( ) ).getSurfacePresentModesKHR( *surface );
     vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
 
     bool vsync = true;
@@ -135,7 +154,7 @@ namespace lava
     // depth/stencil buffer
     // assert that a depth and/or stencil format is requested
     vk::FormatProperties formatProps = 
-      device->_physicalDevice->getFormatProperties( depthFormat );
+      device->getPhysicalDevice( )->getFormatProperties( depthFormat );
     assert( ( formatProps.linearTilingFeatures & 
       vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
       ( formatProps.optimalTilingFeatures & 

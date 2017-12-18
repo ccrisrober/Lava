@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -17,7 +36,7 @@ struct
   VkBool32 TronEffect = false;
 } uboPP;
 
-class MyApp : public VulkanApp
+class FresnelApp : public VulkanApp
 {
 public:
   struct
@@ -38,8 +57,8 @@ public:
     std::shared_ptr<DescriptorSet> postprocess;
   } descriptorSets;
 
-  std::shared_ptr<Buffer> uniformBufferMVP;
-  std::shared_ptr<Buffer> uniformBufferPP;
+  std::shared_ptr<Buffer> uniformMVP;
+  std::shared_ptr<Buffer> uniformPP;
 
   struct
   {
@@ -53,7 +72,7 @@ public:
 
   std::shared_ptr<CommandPool> commandPool;
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  FresnelApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     commandPool = _device->createCommandPool(
@@ -70,22 +89,14 @@ public:
     fbo->build( );
 
     // MVP buffer
-    {
-      uint32_t bufferSize = sizeof( uboVS );
-      uniformBufferMVP = _device->createBuffer( bufferSize,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
+    uniformMVP = _device->createUniformBuffer( sizeof( uboVS ) );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
       // Binding 0 : Vertex shader uniform buffer
       DescriptorSetLayoutBinding(
-        0,
-        vk::DescriptorType::eUniformBuffer,
+        0, vk::DescriptorType::eUniformBuffer,
         vk::ShaderStageFlagBits::eVertex
       )
     };
@@ -95,13 +106,11 @@ public:
     dslbs =
     {
       DescriptorSetLayoutBinding(
-        0,
-        vk::DescriptorType::eCombinedImageSampler,
+        0, vk::DescriptorType::eCombinedImageSampler,
         vk::ShaderStageFlagBits::eFragment
       ),
       DescriptorSetLayoutBinding(
-        1,
-        vk::DescriptorType::eUniformBuffer,
+        1, vk::DescriptorType::eUniformBuffer,
         vk::ShaderStageFlagBits::eFragment
       )
     };
@@ -111,9 +120,9 @@ public:
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0 );
 
-    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+    auto vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "depthShader_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+    auto fragmentStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "depthShader_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
 
     PipelineVertexInputStateCreateInfo vertexInput(
@@ -126,17 +135,17 @@ public:
           vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal ) )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {},
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
       vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
       false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, false, true,
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, false, true,
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
       stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( true,
@@ -146,12 +155,12 @@ public:
       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp,
       colorBlendAttachment, { 0.0f, 0.0f, 0.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport,
-      vk::DynamicState::eScissor } );
+    PipelineDynamicStateCreateInfo dynamic( { 
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor 
+    } );
 
-
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayouts.solid, fbo->renderPass );
 
@@ -161,39 +170,32 @@ public:
       vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 )
     };
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 2, poolSize );
+      _device->createDescriptorPool( { }, 2, poolSize );
 
     // Init descriptor set
     descriptorSets.solid = _device->allocateDescriptorSet(
       descriptorPool, descriptorSetLayouts.solid );
 
-    std::vector<lava::WriteDescriptorSet> wdss =
+    std::vector<WriteDescriptorSet> wdss =
     {
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         descriptorSets.solid, 0, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( uniformBufferMVP, 0,
-          sizeof( uboVS ) )
+        1, nullptr, DescriptorBufferInfo( uniformMVP, 0, sizeof( uboVS ) )
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
 
     // POSTPROCESS PIPELINE
-    {
-      uint32_t bufferSize = sizeof( uboPP );
-      uniformBufferPP = _device->createBuffer( bufferSize,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
+    uniformPP = _device->createUniformBuffer( sizeof( uboPP ) );
+
     // Init descriptor set
     descriptorSets.postprocess = _device->allocateDescriptorSet(
       descriptorPool, descriptorSetLayouts.postprocess );
 
     wdss =
     {
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         descriptorSets.postprocess, 0, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         DescriptorImageInfo(
@@ -202,22 +204,26 @@ public:
           std::make_shared<vk::Sampler>( fbo->colorSampler )
         ), nullptr
       ),
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         descriptorSets.postprocess, 1, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( uniformBufferPP, 0,
+        1, nullptr, DescriptorBufferInfo( uniformPP, 0,
           sizeof( uboPP ) )
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
-    PipelineVertexInputStateCreateInfo emptyInputState( {}, {} );
-    vk::PipelineInputAssemblyStateCreateInfo assemblyPP( {},
+    PipelineVertexInputStateCreateInfo emptyInputState( { }, { } );
+    vk::PipelineInputAssemblyStateCreateInfo assemblyPP( { },
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
 
-    PipelineShaderStageCreateInfo ppVertexStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    PipelineShaderStageCreateInfo ppFragmentStage = _device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "absorptionShader_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    auto ppVertexStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ), 
+      vk::ShaderStageFlagBits::eVertex
+    );
+    auto ppFragmentStage = _device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "absorptionShader_frag.spv" ), 
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     colorBlendAttachment = vk::PipelineColorBlendAttachmentState( false,
       vk::BlendFactor::eOne, vk::BlendFactor::eOne, vk::BlendOp::eAdd,
@@ -227,8 +233,8 @@ public:
     colorBlend = PipelineColorBlendStateCreateInfo( false, vk::LogicOp::eNoOp,
       colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-    pipelines.postprocess = _device->createGraphicsPipeline( pipelineCache, {},
-    { ppVertexStage, ppFragmentStage }, emptyInputState, assemblyPP, nullptr,
+    pipelines.postprocess = _device->createGraphicsPipeline( pipelineCache, { },
+      { ppVertexStage, ppFragmentStage }, emptyInputState, assemblyPP, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayouts.postprocess, _renderPass );
     buildCmdBuffers( );
@@ -255,8 +261,8 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
-    uniformBufferPP->writeData( 0, sizeof( uboPP ), &uboPP );
+    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformPP->writeData( 0, sizeof( uboPP ), &uboPP );
   }
 
   std::shared_ptr<CommandBuffer> cmdSolidBuffer;
@@ -336,6 +342,24 @@ public:
   {
     switch ( key )
     {
+    case GLFW_KEY_1:
+      uboPP.Kd = glm::vec3( 1.0f, 0.0f, 0.0f );
+      break;
+    case GLFW_KEY_2:
+      uboPP.Kd = glm::vec3( 0.0f, 1.0f, 0.0f );
+      break;
+    case GLFW_KEY_3:
+      uboPP.Kd = glm::vec3( 0.0f, 0.0f, 1.0f );
+      break;
+    case GLFW_KEY_4:
+      uboPP.Kd = glm::vec3( 1.0f, 1.0f, 0.0f );
+      break;
+    case GLFW_KEY_5:
+      uboPP.Kd = glm::vec3( 1.0f, 0.0f, 1.0f );
+      break;
+    case GLFW_KEY_6:
+      uboPP.Kd = glm::vec3( 0.0f, 1.0f, 1.0f );
+      break;
     case GLFW_KEY_Z:
       uboPP.TronEffect = false;
       break;
@@ -344,8 +368,6 @@ public:
       break;
     case GLFW_KEY_ESCAPE:
       getWindow( )->close( );
-      break;
-    default:
       break;
     }
   }
@@ -360,7 +382,7 @@ int main( int argc, char** argv )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Fresnel", 800, 600 );
+    VulkanApp* app = new FresnelApp( "Fresnel", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

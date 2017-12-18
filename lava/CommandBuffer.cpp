@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "CommandBuffer.h"
 
 #include "Device.h"
@@ -8,8 +27,8 @@
 
 namespace lava
 {
-  CommandPool::CommandPool( const DeviceRef& device, vk::CommandPoolCreateFlags flags,
-    uint32_t familyIndex )
+  CommandPool::CommandPool( const DeviceRef& device, 
+    vk::CommandPoolCreateFlags flags, uint32_t familyIndex )
     : VulkanResource( device )
     , _familyIndex( familyIndex )
   {
@@ -31,19 +50,22 @@ namespace lava
 
   bool CommandPool::supportsCompute( void ) const
   {
-    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+    return !!( _device->getPhysicalDevice( )
+      ->getQueueFamilyProperties()[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eCompute);
   }
 
   bool CommandPool::supportsGraphics( void ) const
   {
-    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+    return !!( _device->getPhysicalDevice( )->
+      getQueueFamilyProperties()[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eGraphics);
   }
 
   bool CommandPool::supportsTransfer( void ) const
   {
-    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+    return !!( _device->getPhysicalDevice( )->
+      getQueueFamilyProperties()[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eTransfer);
   }
 
@@ -65,7 +87,8 @@ namespace lava
 
   ImageMemoryBarrier::ImageMemoryBarrier( ImageMemoryBarrier const& rhs )
     : ImageMemoryBarrier( rhs.srcAccessMask, rhs.dstAccessMask, 
-      rhs.oldLayout, rhs.newLayout, rhs.srcQueueFamilyIndex, rhs.dstQueueFamilyIndex, 
+      rhs.oldLayout, rhs.newLayout, 
+      rhs.srcQueueFamilyIndex, rhs.dstQueueFamilyIndex, 
       rhs.image, rhs.subresourceRange )
   {}
 
@@ -168,7 +191,9 @@ namespace lava
       diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>(
         w.imageInfo ? new vk::DescriptorImageInfo( 
           w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
-          w.imageInfo->imageView ? static_cast<vk::ImageView>( *w.imageInfo->imageView ) : nullptr,
+          w.imageInfo->imageView ? 
+            static_cast<vk::ImageView>( *w.imageInfo->imageView ) : 
+            nullptr,
           w.imageInfo->imageLayout )
         : nullptr ) );
       dbis.push_back( std::unique_ptr<vk::DescriptorBufferInfo>(

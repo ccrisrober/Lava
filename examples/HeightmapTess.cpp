@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -40,9 +59,10 @@ std::vector<uint32_t> indices;
 class MyApp : public VulkanApp
 {
 public:
-  std::shared_ptr<VertexBuffer> _vertexBuffer;
-  std::shared_ptr<IndexBuffer> _indexBuffer;
-  std::shared_ptr<Buffer> _uniformBufferMVP;
+  std::shared_ptr<VertexBuffer> vertexBuffer;
+  std::shared_ptr<IndexBuffer> indexBuffer;
+  std::shared_ptr<Buffer> uniformMVP;
+  std::shared_ptr<CommandPool> commandPool;
 
   struct Pipelines
   {
@@ -50,8 +70,8 @@ public:
     std::shared_ptr<Pipeline> wireframe;
   } pipelines;
 
-  std::shared_ptr<PipelineLayout> _pipelineLayout;
-  std::shared_ptr<DescriptorSet> _descriptorSet;
+  std::shared_ptr<PipelineLayout> pipelineLayout;
+  std::shared_ptr<DescriptorSet> descriptorSet;
   std::shared_ptr<Texture2D> texAlbedo;
   std::shared_ptr<Texture2D> texHeightmap;
 
@@ -104,35 +124,28 @@ public:
   MyApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+
     generatePlane( 2.5f, 2.5f, 25, 25 );
 
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      _vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      _vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
+      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      _indexBuffer = std::make_shared<IndexBuffer>( _device,
+      indexBuffer = std::make_shared<IndexBuffer>( _device,
         vk::IndexType::eUint32, indices.size( ) );
-      _indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
     }
 
     // MVP buffer
-    {
-      uint32_t mvpBufferSize = sizeof( uboVS );
-      _uniformBufferMVP = _device->createBuffer( mvpBufferSize,
-        vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
-
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+    uniformMVP = _device->createUniformBuffer( sizeof( uboVS ) ); 
 
     texHeightmap = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "DisplacementMapEarth.png" ), commandPool, _graphicsQueue,
@@ -161,7 +174,7 @@ public:
     };
     std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
-    _pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
+    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
 
 
@@ -187,14 +200,14 @@ public:
       vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, pos ) ),
       vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32Sfloat, offsetof( Vertex, texCoord ) ) }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::ePatchList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::ePatchList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -202,48 +215,50 @@ public:
 
     vk::PipelineTessellationStateCreateInfo tessState( { }, 3 );
 
-    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage, ctrlStage, evalStage },
+    pipelines.solid = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage, ctrlStage, evalStage },
       vertexInput, assembly, tessState, viewport, rasterization, multisample,
-      depthStencil, colorBlend, dynamic, _pipelineLayout, _renderPass );
+      depthStencil, colorBlend, dynamic, pipelineLayout, _renderPass );
 
     // Wireframe rendering pipeline
-    if ( _physicalDevice->getDeviceFeatures( ).fillModeNonSolid )
+    if ( getPhysicalDevice( )->getDeviceFeatures( ).fillModeNonSolid )
     {
       rasterization.polygonMode = vk::PolygonMode::eLine;
       rasterization.lineWidth = 1.0f;
 
       rasterization.cullMode = vk::CullModeFlagBits::eNone;
 
-      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, {},
-      { vertexStage, fragmentStage, ctrlStage, evalStage },
+      pipelines.wireframe = _device->createGraphicsPipeline( pipelineCache, { },
+        { vertexStage, fragmentStage, ctrlStage, evalStage },
         vertexInput, assembly, tessState, viewport, rasterization, multisample,
-        depthStencil, colorBlend, dynamic, _pipelineLayout, _renderPass );
+        depthStencil, colorBlend, dynamic, pipelineLayout, _renderPass );
     }
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    std::array<vk::DescriptorPoolSize, 2> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 )
+    };
+    auto descriptorPool = _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
-    _descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
     std::vector<WriteDescriptorSet> wdss =
     {
-      WriteDescriptorSet( _descriptorSet, 0, 0, 
+      WriteDescriptorSet( descriptorSet, 0, 0, 
         vk::DescriptorType::eUniformBuffer, 1, nullptr,
-        DescriptorBufferInfo( _uniformBufferMVP, 0, sizeof( uboVS ) )
+        DescriptorBufferInfo( uniformMVP, 0, sizeof( uboVS ) )
       ),
-      WriteDescriptorSet( _descriptorSet, 1, 0,
+      WriteDescriptorSet( descriptorSet, 1, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         texHeightmap->descriptor, nullptr
       ),
-      WriteDescriptorSet( _descriptorSet, 2, 0,
+      WriteDescriptorSet( descriptorSet, 2, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
         texAlbedo->descriptor, nullptr
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
   }
   void updateUniformBuffers( void )
   {
@@ -266,18 +281,14 @@ public:
     uboVS.proj = glm::perspective( glm::radians( camera.Zoom ), ( float ) width / ( float ) height, 0.1f, 100.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    _uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    // create a command pool for command buffer allocation
-    std::shared_ptr<CommandPool> commandPool =
-      _device->createCommandPool(
-        vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 
@@ -304,9 +315,9 @@ public:
 
 
     commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      _pipelineLayout, 0, { _descriptorSet }, nullptr );
-    _vertexBuffer->bind( commandBuffer );
-    _indexBuffer->bind( commandBuffer );
+      pipelineLayout, 0, { descriptorSet }, nullptr );
+    vertexBuffer->bind( commandBuffer );
+    indexBuffer->bind( commandBuffer );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     

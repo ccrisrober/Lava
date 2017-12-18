@@ -1,9 +1,28 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
 #include <routes.h>
 
-class MyApp : public VulkanApp
+class ArraySumApp : public VulkanApp
 {
 public:
   struct
@@ -28,10 +47,14 @@ public:
   } compute;
 
   std::shared_ptr<DescriptorPool> descriptorPool;
+  std::shared_ptr<CommandPool> commandPool;
 
-  MyApp(char const* title, uint32_t width, uint32_t height)
+  ArraySumApp(char const* title, uint32_t width, uint32_t height)
     : VulkanApp( title, width, height )
   {
+    commandPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
+
     const int arraySize = 10;
     std::vector<float> computeOutput( arraySize );
 
@@ -71,18 +94,20 @@ public:
       vk::MemoryPropertyFlagBits::eHostCoherent );
 
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    // Compute UBO
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    // Storage buffers
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 3 );
+    std::array<vk::DescriptorPoolSize, 2> poolSize = 
+    {
+      // Compute UBO
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 ),
+      // Storage buffers
+      vk::DescriptorPoolSize( vk::DescriptorType::eStorageBuffer, 3 )
+    };
 
-    descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    descriptorPool = _device->createDescriptorPool( { }, 1, poolSize );
 
     // Search for a compute queue in the array of 
     //    queue families, try to find one that support
     std::vector<uint32_t> queueFamilyIndices =
-      _physicalDevice->getComputeQueueFamilyIndices( _surface );
+      getPhysicalDevice( )->getComputeQueueFamilyIndices( _surface );
     assert( !queueFamilyIndices.empty( ) );
     uint32_t _queueComputeFamilyIndex = queueFamilyIndices[ 0 ];
 
@@ -117,32 +142,32 @@ public:
     std::vector<WriteDescriptorSet> wdss =
     {
       // Binding 0: Storage buffer (InputBufferA)
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 0, 0, vk::DescriptorType::eStorageBuffer,
         1, nullptr, DescriptorBufferInfo( compute.storageBufferA, 0,
           sizeof( compute.ubo ) )
       ),
       // Binding 3: Storage buffer (InputBufferB)
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 1, 0, vk::DescriptorType::eStorageBuffer,
         1, nullptr, DescriptorBufferInfo( compute.storageBufferB, 0,
           sizeof( compute.ubo ) )
       ),
       // Binding 3: Storage buffer (OutputBuffer)
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 2, 0, vk::DescriptorType::eStorageBuffer,
         1, nullptr, DescriptorBufferInfo( compute.storageBufferOutput, 0,
           sizeof( compute.ubo ) )
       ),
       // Binding 3: Uniform buffer block
-      lava::WriteDescriptorSet(
+      WriteDescriptorSet(
         compute.descriptorSet, 3, 0, vk::DescriptorType::eUniformBuffer,
         1, nullptr, DescriptorBufferInfo( compute.uniformBuffer, 0,
           sizeof( compute.ubo ) )
       )
     };
 
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
     // Create compute shader pipelines
     std::shared_ptr<ShaderModule> computeShaderModule =
@@ -157,13 +182,13 @@ public:
     std::cout << "CREATE PIPELINE" << std::endl;
 
     compute.pipeline = _device->createComputePipeline(
-      pipelineCache, {}, computeStage, compute.pipelineLayout );
+      pipelineCache, { }, computeStage, compute.pipelineLayout );
 
     // Fence for compute CB sync
     compute.fence = _device->createFence( true );
 
     // Separate command pool as queue family for compute may be different than graphics
-    compute.commandPool = _device->createCommandPool( {}, compute.queue->getQueueFamilyIndex( ) );
+    compute.commandPool = _device->createCommandPool( { }, compute.queue->getQueueFamilyIndex( ) );
 
     // Create a command buffer for compute operations
     compute.commandBuffer = compute.commandPool->allocateCommandBuffer( );
@@ -180,7 +205,7 @@ public:
     compute.commandBuffer->beginSimple( );
     compute.commandBuffer->pipelineBarrier( 
       vk::PipelineStageFlagBits::eHost, 
-      vk::PipelineStageFlagBits::eComputeShader, {}, {}, { bmb }, {} );
+      vk::PipelineStageFlagBits::eComputeShader, { }, { }, { bmb }, { } );
 
     compute.commandBuffer->bindComputePipeline( compute.pipeline );
     compute.commandBuffer->bindDescriptorSets( 
@@ -198,7 +223,7 @@ public:
     bmb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     compute.commandBuffer->pipelineBarrier(
       vk::PipelineStageFlagBits::eComputeShader,
-      vk::PipelineStageFlagBits::eTransfer, {}, {}, { bmb }, {} );
+      vk::PipelineStageFlagBits::eTransfer, { }, { }, { bmb }, { } );
 
     // Read back to host visible buffer
     vk::BufferCopy copyRegion;
@@ -221,7 +246,7 @@ public:
     bmb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     compute.commandBuffer->pipelineBarrier(
       vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eHost, {}, {}, { bmb }, {} );
+      vk::PipelineStageFlagBits::eHost, { }, { }, { bmb }, { } );
 
     compute.commandBuffer->end( );
 
@@ -255,9 +280,7 @@ public:
   virtual void doPaint( void ) override
   {
     std::cout << "INIT RENDER" << std::endl;
-    std::shared_ptr<CommandPool> commandPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     float timeValue = glfwGetTime( );
     float greenValue = sin( timeValue ) / 2.0f + 0.5f;
@@ -312,7 +335,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "ArraySum", 800, 600 );
+    VulkanApp* app = new ArraySumApp( "ArraySum", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

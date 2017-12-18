@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -44,7 +63,7 @@ public:
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, { 
+      _device->createDescriptorPool( { }, 1, { 
         { vk::DescriptorType::eCombinedImageSampler, 2 }
       } );
 
@@ -74,7 +93,7 @@ public:
       )
     };
 
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
     // init pipeline
     PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
@@ -85,11 +104,11 @@ public:
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquadTwoTexture_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
-    PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
+    PipelineVertexInputStateCreateInfo vertexInput( { }, { } );
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, false, false, 
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, false, false, 
       vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, 
       vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( 
@@ -97,7 +116,7 @@ public:
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, 
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 
       0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, 
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
       stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, 
@@ -110,15 +129,14 @@ public:
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, 
       vk::DynamicState::eScissor } );
 
-
-    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->beginSimple( );
 

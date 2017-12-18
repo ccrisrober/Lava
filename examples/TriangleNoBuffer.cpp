@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -25,22 +44,22 @@ public:
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    // init shaders
-
     // init pipeline
     std::shared_ptr<PipelineCache> pipelineCache = _device->createPipelineCache( 0, nullptr );
-    PipelineShaderStageCreateInfo vertexStage =
-      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE +
-        std::string( "triangleNoBuffer_vert.spv" ), vk::ShaderStageFlagBits::eVertex );
-    PipelineShaderStageCreateInfo fragmentStage =
-      _device->createShaderPipelineShaderStage( LAVA_EXAMPLES_SPV_ROUTE +
-        std::string( "triangleNoBuffer_frag.spv" ), vk::ShaderStageFlagBits::eFragment );
+    auto vertexStage = _device->createShaderPipelineShaderStage( 
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangleNoBuffer_vert.spv" ), 
+      vk::ShaderStageFlagBits::eVertex
+    );
+    auto fragmentStage = _device->createShaderPipelineShaderStage( 
+        LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangleNoBuffer_frag.spv" ), 
+      vk::ShaderStageFlagBits::eFragment
+    );
 
     PipelineVertexInputStateCreateInfo vertexInput( { }, { } );
     vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { { } }, { { } } );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f
     );
@@ -69,22 +88,14 @@ public:
     } );
 
     pipeline = _device->createGraphicsPipeline( pipelineCache, { },
-    { vertexStage, fragmentStage },
+      { vertexStage, fragmentStage },
       vertexInput, assembly, nullptr, viewport, rasterization, multisample,
       depthStencil, colorBlend, dynamic, pipelineLayout, _renderPass );
-
-    /*std::array<vk::DescriptorPoolSize, 1> poolSize;
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
-
-    // Init descriptor set
-    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-
-    _device->updateDescriptorSets( { }, { } );*/
   }
 
   void doPaint( void ) override
   {
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 
@@ -98,9 +109,6 @@ public:
         }, vk::SubpassContents::eInline );
 
     commandBuffer->bindGraphicsPipeline( pipeline );
-
-    //commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-    //  pipelineLayout, 0, { descriptorSet }, nullptr );
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     
@@ -121,16 +129,7 @@ public:
     switch ( key )
     {
     case GLFW_KEY_ESCAPE:
-      switch ( action )
-      {
-      case GLFW_PRESS:
-        getWindow( )->close( );
-        break;
-      default:
-        break;
-      }
-      break;
-    default:
+      getWindow( )->close( );
       break;
     }
   }

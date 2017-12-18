@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -36,7 +55,7 @@ namespace material
     {
       // MVP buffer
       {
-        uniformBufferMVP = dev->createBuffer( sizeof( uboVS ),
+        uniformMVP = dev->createBuffer( sizeof( uboVS ),
           vk::BufferUsageFlagBits::eUniformBuffer,
           vk::SharingMode::eExclusive, nullptr,
           vk::MemoryPropertyFlagBits::eHostVisible |
@@ -80,7 +99,7 @@ namespace material
         vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 )
       };
       std::shared_ptr<DescriptorPool> descriptorPool = 
-        dev->createDescriptorPool( {}, 1, poolSize );
+        dev->createDescriptorPool( { }, 1, poolSize );
 
 
       // Init descriptor set
@@ -91,7 +110,7 @@ namespace material
           descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo( 
-            uniformBufferMVP, 0, sizeof( uboVS )
+            uniformMVP, 0, sizeof( uboVS )
           )
         ),
         WriteDescriptorSet( 
@@ -102,47 +121,61 @@ namespace material
         WriteDescriptorSet( 
           descriptorSet, 2, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
-          DescriptorBufferInfo( 
-            uniformBufferFS, 0, sizeof( uboFS )
-          )
+          DescriptorBufferInfo( uniformBufferFS, 0, sizeof( uboFS ) )
         )
       };
-      dev->updateDescriptorSets( wdss, {} );
+      dev->updateDescriptorSets( wdss, { } );
 
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+      auto vertexStage = dev->createShaderPipelineShaderStage(
         LAVA_EXAMPLES_SPV_ROUTE + std::string( "volumeRenderFW_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
-      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+      auto fragmentStage = dev->createShaderPipelineShaderStage(
         LAVA_EXAMPLES_SPV_ROUTE + std::string( "volumeRenderFW_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
-      vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
+      vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), 
+        vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
-        vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, pos ) ) }
+          vk::VertexInputAttributeDescription( 
+            0, 0, vk::Format::eR32G32B32Sfloat,
+            offsetof( Vertex, pos )
+          )
+        }
       );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+      vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
+        vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+      PipelineViewportStateCreateInfo viewport( 1, 1 );
+      vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
         false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
         vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-      PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-      vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+      PipelineMultisampleStateCreateInfo multisample( 
+        vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
+      vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, 
+        vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 
+        0, 0, 0 );
+      vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, 
+        vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
+        stencilOpState, 0.0f, 0.0f );
 
-      vk::PipelineColorBlendAttachmentState colorBlendAttachment( true, vk::BlendFactor::eSrcAlpha, vk::BlendFactor::eZero, 
-        vk::BlendOp::eAdd, vk::BlendFactor::eOneMinusSrcAlpha, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
+      vk::PipelineColorBlendAttachmentState colorBlendAttachment( true, 
+        vk::BlendFactor::eSrcAlpha, vk::BlendFactor::eZero, 
+        vk::BlendOp::eAdd, vk::BlendFactor::eOneMinusSrcAlpha, 
+        vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
 
-      PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-      PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
+      PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
+        colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
+      PipelineDynamicStateCreateInfo dynamic( { 
+        vk::DynamicState::eViewport, vk::DynamicState::eScissor 
+      } );
 
-
-      _pipeline = dev->createGraphicsPipeline( pipelineCache, {}, 
-      { vertexStage, fragmentStage }, vertexInput, assembly, 
+      _pipeline = dev->createGraphicsPipeline( pipelineCache, { }, 
+        { vertexStage, fragmentStage }, vertexInput, assembly, 
         nullptr, viewport, rasterization, multisample, 
         depthStencil, colorBlend, dynamic,
         _pipelineLayout, renderPass );
@@ -157,7 +190,7 @@ namespace material
       }
     }
     std::shared_ptr<Texture3D> tex;
-    std::shared_ptr<Buffer> uniformBufferMVP;
+    std::shared_ptr<Buffer> uniformMVP;
     std::shared_ptr<Buffer> uniformBufferFS;
   protected:
     std::shared_ptr<DescriptorSet> descriptorSet;
@@ -201,10 +234,11 @@ public:
     if(inFile.good())
     {
       unsigned char* pData = new unsigned char[ XDIM * YDIM * ZDIM ];
-      inFile.read(reinterpret_cast<char*>(pData), XDIM * YDIM * ZDIM * sizeof( unsigned char ));
+      inFile.read(reinterpret_cast<char*>(pData),
+        XDIM * YDIM * ZDIM * sizeof( unsigned char ));
       inFile.close();
-      material->tex = std::make_shared<Texture3D>( _device, XDIM, YDIM, ZDIM, pData, commandPool, _graphicsQueue, 
-        vk::Format::eR8Unorm );
+      material->tex = std::make_shared<Texture3D>( _device, XDIM, YDIM, ZDIM, 
+        pData, commandPool, _graphicsQueue,  vk::Format::eR8Unorm );
       return;
     }
     throw;
@@ -249,12 +283,18 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
 
-    material->uboVS.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    material->uboVS.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    material->uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
+    material->uboVS.model = glm::rotate(
+      glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    material->uboVS.view = glm::lookAt(
+      glm::vec3(2.0f, 2.0f, 2.0f), 
+      glm::vec3(0.0f, 0.0f, 0.0f), 
+      glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    material->uboVS.proj = glm::perspective(glm::radians(45.0f), 
+      width / (float) height, 0.1f, 10.0f);
     material->uboVS.proj[1][1] *= -1;
 
-    material->uniformBufferMVP->writeData( 0, sizeof( material->uboVS ), &material->uboVS );
+    material->uniformMVP->writeData( 0, sizeof( material->uboVS ), &material->uboVS );
 
     material->uboFS.camPos = glm::vec3( 2.0f, 2.0f, 2.0f );
     material->uboFS.stepSize = glm::vec3( 1.0f / XDIM, 1.0f / YDIM, 1.0f / ZDIM );
@@ -266,7 +306,7 @@ public:
   {
     updateUniformBuffers( );
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->beginSimple( );
 

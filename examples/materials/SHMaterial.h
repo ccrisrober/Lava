@@ -29,7 +29,7 @@ namespace material
       // MVP buffer
       {
         uint32_t mvpBufferSize = sizeof( uboVS );
-        uniformBufferMVP = dev->createBuffer( mvpBufferSize,
+        uniformMVP = dev->createBuffer( mvpBufferSize,
           vk::BufferUsageFlagBits::eUniformBuffer,
           vk::SharingMode::eExclusive, nullptr,
           vk::MemoryPropertyFlagBits::eHostVisible |
@@ -55,7 +55,7 @@ namespace material
         vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 )
       };
       std::shared_ptr<DescriptorPool> descriptorPool =
-        dev->createDescriptorPool( {}, 1, poolSize );
+        dev->createDescriptorPool( { }, 1, poolSize );
 
 
       // Init descriptor set
@@ -66,11 +66,11 @@ namespace material
           descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo(
-            uniformBufferMVP, 0, sizeof( uboVS )
+            uniformMVP, 0, sizeof( uboVS )
           )
         )
       };
-      dev->updateDescriptorSets( wdss, {} );
+      dev->updateDescriptorSets( wdss, { } );
 
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
@@ -93,16 +93,16 @@ namespace material
             offsetof( lava::extras::Vertex, normal ) )
           }
       );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+      vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+      PipelineViewportStateCreateInfo viewport( 1, 1 );
+      vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
         false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
         vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
       PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
         false, 0.0f, nullptr, false, false );
       vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep,
         vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+      vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
         vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
       vk::PipelineColorBlendAttachmentState colorBlendAttachment( false,
         vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
@@ -116,8 +116,8 @@ namespace material
         vk::DynamicState::eScissor
       } );
 
-      pipeline = dev->createGraphicsPipeline( pipelineCache, {},
-      { vertexStage, fragmentStage }, vertexInput, assembly,
+      pipeline = dev->createGraphicsPipeline( pipelineCache, { },
+        { vertexStage, fragmentStage }, vertexInput, assembly,
         nullptr, viewport, rasterization, multisample,
         depthStencil, colorBlend, dynamic,
         pipelineLayout, renderPass );
@@ -131,7 +131,7 @@ namespace material
           pipelineLayout, 0, { descriptorSet }, nullptr );
       }
     }
-    std::shared_ptr<Buffer> uniformBufferMVP;
+    std::shared_ptr<Buffer> uniformMVP;
   protected:
     std::shared_ptr<DescriptorSet> descriptorSet;
   };

@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -108,8 +127,8 @@ public:
   void createShadowPipelineDescriptor( void )
   {
     // ShadowMapping buffer
-    shadowPass.lightSpaceMatrixBuffer = std::make_shared<UniformBuffer>( _device,
-      sizeof( shadowPass.uboLightSpaceMatrix ) );
+    shadowPass.lightSpaceMatrixBuffer = _device->createUniformBuffer( 
+      sizeof( shadowPass.uboLightSpaceMatrix ) ); 
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -146,11 +165,11 @@ public:
           )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {},
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
       vk::PrimitiveTopology::eTriangleList, VK_FALSE
     );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample(
@@ -160,7 +179,7 @@ public:
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
       0, 0, 0
     );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
       stencilOpState, 0.0f, 0.0f
     );
@@ -180,15 +199,15 @@ public:
 
     rasterization.polygonMode = vk::PolygonMode::eLine;
 
-    shadowPass.pipeline = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    shadowPass.pipeline = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       shadowPass.pipelineLayout, _renderPass );
 
     std::array<vk::DescriptorPoolSize, 1> poolSize;
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, poolSize );
+      _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     shadowPass.descriptorSet = _device->allocateDescriptorSet(
@@ -204,16 +223,14 @@ public:
       )
     };
 
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
   }
 
   void createPipelineDescriptor( void )
   {
-    basicPass.vsBuffer = std::make_shared<UniformBuffer>( _device,
-      sizeof( basicPass.uboVS ) );
+    basicPass.vsBuffer = _device->createUniformBuffer( sizeof( basicPass.uboVS ) ); 
 
-    basicPass.fsBuffer = std::make_shared<UniformBuffer>( _device,
-      sizeof( basicPass.uboFS ) );
+    basicPass.fsBuffer = _device->createUniformBuffer( sizeof( basicPass.uboFS ) ); 
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -267,11 +284,11 @@ public:
           )
         }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {},
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
       vk::PrimitiveTopology::eTriangleList, VK_FALSE
     );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample(
@@ -281,7 +298,7 @@ public:
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
       0, 0, 0
     );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
       stencilOpState, 0.0f, 0.0f
     );
@@ -299,8 +316,8 @@ public:
       vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
-    basicPass.pipeline = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    basicPass.pipeline = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       basicPass.pipelineLayout, _renderPass );
 
@@ -308,7 +325,7 @@ public:
     poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 );
     poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 );
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, poolSize );
+      _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     basicPass.descriptorSet = _device->allocateDescriptorSet(
@@ -342,7 +359,7 @@ public:
       )
     };
 
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
   }
 
   MyApp(char const* title, uint32_t width, uint32_t height)

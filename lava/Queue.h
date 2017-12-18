@@ -22,10 +22,12 @@ namespace lava
   struct SubmitInfo
   {
     LAVA_API
-    SubmitInfo( vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores,
+    SubmitInfo( 
+      vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores,
       vk::ArrayProxy<const vk::PipelineStageFlags> waitDstStageMasks,
       vk::ArrayProxy<const std::shared_ptr<CommandBuffer>> const& commandBuffers,
-      vk::ArrayProxy<const std::shared_ptr<Semaphore>> signalSemaphores );
+      vk::ArrayProxy<const std::shared_ptr<Semaphore>> signalSemaphores
+    );
     LAVA_API
     SubmitInfo( SubmitInfo const& rhs );
     LAVA_API
@@ -35,22 +37,6 @@ namespace lava
     std::vector<vk::PipelineStageFlags> waitDstStageMasks;
     std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
     std::vector<std::shared_ptr<Semaphore>> signalSemaphores;
-  };
-
-  struct SparseMemoryBind
-  {
-    LAVA_API
-    SparseMemoryBind( vk::DeviceMemory mem, vk::DeviceSize memOffset, 
-      vk::DeviceSize size, vk::DeviceSize resourceOffset = 0 );
-    LAVA_API
-    SparseMemoryBind( const SparseMemoryBind& other );
-    LAVA_API
-    SparseMemoryBind& operator=( const SparseMemoryBind& other );
-
-    vk::DeviceMemory memory;
-    vk::DeviceSize memoryOffset;
-    vk::DeviceSize size;
-    vk::DeviceSize resourceOffset;
   };
 
   class Fence : public VulkanResource, private NonCopyable<Fence>
@@ -74,18 +60,16 @@ namespace lava
     }
 
     LAVA_API
-    static void waitForFences(  vk::ArrayProxy<const std::shared_ptr<Fence>> fences,
-      bool all, uint32_t timeout);
+    static void waitForFences( 
+      vk::ArrayProxy<const std::shared_ptr<Fence>> fences,
+      bool all, uint32_t timeout
+    );
     LAVA_API
-    static void resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences);
+    static void resetFences( vk::ArrayProxy<const std::shared_ptr<Fence>> fences );
   
   private:
     vk::Fence _fence;
   };
-
-  
-
-
 
   class Queue : public VulkanResource, private NonCopyable<Queue>
   {

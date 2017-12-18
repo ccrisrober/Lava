@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Image.h"
 #include "Device.h"
 #include "PhysicalDevice.h"
@@ -32,7 +51,7 @@ namespace lava
     _image = static_cast< vk::Device >( *_device ).createImage( createInfo );
 
     vk::MemoryRequirements memReqs = static_cast< vk::Device >( *_device ).getImageMemoryRequirements( _image );
-    uint32_t memoryTypeIndex = findMemoryType( _device->_physicalDevice->getMemoryProperties( ), memReqs.memoryTypeBits, _memoryPropertyFlags );
+    uint32_t memoryTypeIndex = findMemoryType( _device->getPhysicalDevice( )->getMemoryProperties( ), memReqs.memoryTypeBits, _memoryPropertyFlags );
     assert( memoryTypeIndex != -1 );
     imageMemory = _device->allocateMemReqMemory( memReqs, _memoryPropertyFlags );
     vk::Device( *_device ).bindImageMemory( _image, imageMemory, 0 );
