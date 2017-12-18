@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 #include <lava/lava.h>
 using namespace lava;
@@ -26,10 +45,10 @@ struct
   glm::mat4 proj[2];
 } uboGS;
 
-class MyApp : public VulkanApp
+class MultiViewportApp : public VulkanApp
 {
 public:
-  std::shared_ptr<lava::UniformBuffer> uniformBufferMVP;
+  std::shared_ptr<lava::UniformBuffer> uniformMVP;
   std::shared_ptr<PipelineLayout> pipelineLayout;
   std::shared_ptr<DescriptorSet> descriptorSet;
 
@@ -42,14 +61,14 @@ public:
 
   std::shared_ptr<lava::engine::Node> node;
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  MultiViewportApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     node = std::make_shared<lava::engine::Node>( "GeometryNode" );
     geometry = std::make_shared<lava::extras::Geometry>( _device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    uniformBufferMVP = std::make_shared<lava::UniformBuffer>( _device, sizeof( uboGS ) );
+    uniformMVP = _device->createUniformBuffer( sizeof( uboGS ) );
 
     commandPool = _device->createCommandPool(
       vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
@@ -67,7 +86,7 @@ public:
         vk::ShaderStageFlagBits::eFragment
       )
     };
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
+    auto descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
@@ -85,9 +104,9 @@ public:
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState( 
-      {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE
+      { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE
     );
-    vk::PipelineRasterizationStateCreateInfo rasterizationState( {}, true,
+    vk::PipelineRasterizationStateCreateInfo rasterizationState( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f
     );
@@ -112,12 +131,11 @@ public:
       vk::CompareOp::eAlways, 0, 0, 0
     );
     vk::PipelineDepthStencilStateCreateInfo depthStencilState( 
-      {}, true, true, vk::CompareOp::eLessOrEqual, false, false, 
+      { }, true, true, vk::CompareOp::eLessOrEqual, false, false, 
       stencilOpState, stencilOpState, 0.0f, 0.0f
     );
     PipelineDynamicStateCreateInfo dynamicStateEnables( { 
-      vk::DynamicState::eViewport,
-      vk::DynamicState::eScissor
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
     std::array<PipelineShaderStageCreateInfo, 3> shaderStages =
@@ -136,16 +154,18 @@ public:
       )
     };
 
-    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, shaderStages, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, { }, shaderStages, 
       vertexInputBindings, inputAssemblyState, nullptr, viewportState, 
       rasterizationState, multisampleState,  depthStencilState, colorBlendState,
       dynamicStateEnables, pipelineLayout, _renderPass
     );
 
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
+    std::array<vk::DescriptorPoolSize, 2> poolSize =
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 )
+    };
+    auto descriptorPool = _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -153,16 +173,14 @@ public:
     {
       WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eUniformBuffer, 1, nullptr, 
-        DescriptorBufferInfo( 
-          uniformBufferMVP, 0, sizeof( uboGS )
-        )
+        DescriptorBufferInfo( uniformMVP, 0, sizeof( uboGS ) )
       ),
       WriteDescriptorSet( descriptorSet, 1, 0, 
         vk::DescriptorType::eCombinedImageSampler, 1,
         tex->descriptor, nullptr
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
   }
   void updateUniformBuffers( void )
   {
@@ -193,14 +211,14 @@ public:
     uboGS.view[ 1 ] = camera.GetViewMatrix( );
     camera.ProcessKeyboard( RIGHT, -0.5f );
 
-    uniformBufferMVP->writeData( 0, sizeof( uboGS ), &uboGS );
+    uniformMVP->writeData( 0, sizeof( uboGS ), &uboGS );
   }
 
   void doPaint( void ) override
   {
     updateUniformBuffers( );
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->beginSimple( );
 
@@ -294,7 +312,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "MultiViewport", 800, 600 );
+    VulkanApp* app = new MultiViewportApp( "MultiViewport", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

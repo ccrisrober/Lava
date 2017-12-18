@@ -28,7 +28,7 @@ namespace material
       // MVP buffer
       {
         uint32_t mvpBufferSize = sizeof( uboVS );
-        uniformBufferMVP = dev->createBuffer( mvpBufferSize,
+        uniformMVP = dev->createBuffer( mvpBufferSize,
           vk::BufferUsageFlagBits::eUniformBuffer,
           vk::SharingMode::eExclusive, nullptr,
           vk::MemoryPropertyFlagBits::eHostVisible |
@@ -43,8 +43,7 @@ namespace material
           vk::ShaderStageFlagBits::eVertex
         )
       };
-      std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
-        dev->createDescriptorSetLayout( dslbs );
+      auto descriptorSetLayout = dev->createDescriptorSetLayout( dslbs );
 
       _pipelineLayout = dev->createPipelineLayout( descriptorSetLayout, nullptr );
 
@@ -54,26 +53,24 @@ namespace material
         vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 )
       };
       std::shared_ptr<DescriptorPool> descriptorPool = 
-        dev->createDescriptorPool( {}, 1, poolSize );
-
+        dev->createDescriptorPool( { }, 1, poolSize );
 
       // Init descriptor set
       descriptorSet = dev->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
       std::vector<WriteDescriptorSet> wdss =
       {
         WriteDescriptorSet( descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( uniformBufferMVP, 0, sizeof( uboVS ) ) )
+        1, nullptr, DescriptorBufferInfo( uniformMVP, 0, sizeof( uboVS ) ) )
       };
-      dev->updateDescriptorSets( wdss, {} );
+      dev->updateDescriptorSets( wdss, { } );
 
       // init pipeline
-      std::shared_ptr<PipelineCache> pipelineCache = 
-        dev->createPipelineCache( 0, nullptr );
-      PipelineShaderStageCreateInfo vertexStage = dev->createShaderPipelineShaderStage(
+      auto pipelineCache = dev->createPipelineCache( 0, nullptr );
+      auto vertexStage = dev->createShaderPipelineShaderStage(
         dir + std::string( "cube_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
-      PipelineShaderStageCreateInfo fragmentStage = dev->createShaderPipelineShaderStage(
+      auto fragmentStage = dev->createShaderPipelineShaderStage(
         dir + std::string( "cube_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
@@ -91,15 +88,15 @@ namespace material
           )
         }
       );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, 
+      vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
         vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+      PipelineViewportStateCreateInfo viewport( 1, 1 );
+      vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
         false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
         vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
       PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
       vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+      vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
       vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
         vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
       PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -107,7 +104,7 @@ namespace material
 
 
       _pipeline = dev->createGraphicsPipeline( pipelineCache, { }, 
-        { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
+          { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
         viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
         _pipelineLayout, renderPass );
     }
@@ -120,7 +117,7 @@ namespace material
           _pipelineLayout, 0, { descriptorSet }, nullptr );
       }
     }
-    std::shared_ptr<Buffer> uniformBufferMVP;
+    std::shared_ptr<Buffer> uniformMVP;
   protected:
     std::shared_ptr<DescriptorSet> descriptorSet;
   };

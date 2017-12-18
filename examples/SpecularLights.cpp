@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -52,7 +71,7 @@ namespace material
       // MVP buffer
       {
         uint32_t bufferSize = sizeof( uboVS );
-        uniformBufferMVP = dev->createBuffer( bufferSize,
+        uniformMVP = dev->createBuffer( bufferSize,
           vk::BufferUsageFlagBits::eUniformBuffer,
           vk::SharingMode::eExclusive, nullptr,
           vk::MemoryPropertyFlagBits::eHostVisible |
@@ -107,7 +126,7 @@ namespace material
         vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 2 )
       };
       std::shared_ptr<DescriptorPool> descriptorPool =
-        dev->createDescriptorPool( {}, 1, poolSize );
+        dev->createDescriptorPool( { }, 1, poolSize );
 
 
       // Init descriptor set
@@ -118,7 +137,7 @@ namespace material
           descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
           1, nullptr,
           DescriptorBufferInfo(
-            uniformBufferMVP, 0, sizeof( uboVS )
+            uniformMVP, 0, sizeof( uboVS )
           )
         ),
         WriteDescriptorSet(
@@ -139,7 +158,7 @@ namespace material
           )
         )
       };
-      dev->updateDescriptorSets( wdss, {} );
+      dev->updateDescriptorSets( wdss, { } );
 
       // init pipeline
       std::shared_ptr<PipelineCache> pipelineCache = dev->createPipelineCache( 0, nullptr );
@@ -166,22 +185,22 @@ namespace material
         )
       }
       );
-      vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-      PipelineViewportStateCreateInfo viewport( { {} }, { {} } );
-      vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+      vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+      PipelineViewportStateCreateInfo viewport( 1, 1 );
+      vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
         false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
         vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
       PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
       vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-      vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+      vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
       vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
         vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
       PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
       PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-      _pipeline = dev->createGraphicsPipeline( pipelineCache, {},
-      { vertexStage, fragmentStage }, vertexInput, assembly,
+      _pipeline = dev->createGraphicsPipeline( pipelineCache, { },
+        { vertexStage, fragmentStage }, vertexInput, assembly,
         nullptr, viewport, rasterization, multisample,
         depthStencil, colorBlend, dynamic,
         _pipelineLayout, renderPass );
@@ -199,7 +218,7 @@ namespace material
     }
     std::shared_ptr<Texture2D> texAlbedo;
     std::shared_ptr<Texture2D> texSpec;
-    std::shared_ptr<Buffer> uniformBufferMVP;
+    std::shared_ptr<Buffer> uniformMVP;
     std::shared_ptr<Buffer> uniformBufferFS;
 
     std::array<VkBool32, 1> pushConstants;
@@ -277,7 +296,7 @@ public:
     material->uboVS.proj = glm::perspective( glm::radians( camera.Zoom ), ( float ) width / ( float ) height, 0.1f, 100.0f );
     material->uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    material->uniformBufferMVP->writeData( 0, sizeof( material->uboVS ), &material->uboVS );
+    material->uniformMVP->writeData( 0, sizeof( material->uboVS ), &material->uboVS );
 
     material->uboFS.viewPos = camera.Position;
 

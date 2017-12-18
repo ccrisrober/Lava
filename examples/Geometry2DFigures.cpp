@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -39,22 +58,20 @@ public:
     vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
     // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = 
-      _device->createDescriptorSetLayout( dslbs );
+    auto descriptorSetLayout = _device->createDescriptorSetLayout( { } );
 
     pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     // init pipeline
-    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+    auto vertexStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "geometryFigures_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
-    PipelineShaderStageCreateInfo geomStage = _device->createShaderPipelineShaderStage(
+    auto geomStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "geometryFigures_geom.spv" ),
       vk::ShaderStageFlagBits::eGeometry
     );
-    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+    auto fragmentStage = _device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "geometryFigures_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
@@ -77,8 +94,8 @@ public:
     vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::ePointList, VK_FALSE
     );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } ); // Dynamic viewport and scissors
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, false,
+    PipelineViewportStateCreateInfo viewport( 1, 1 ); // Dynamic viewport and scissors
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true, false,
       vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f
     );
@@ -89,7 +106,7 @@ public:
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
       0, 0, 0
     );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
       stencilOpState, 0.0f, 0.0f
     );
@@ -106,14 +123,14 @@ public:
       vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
-    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, 
-      { vertexStage, geomStage, fragmentStage }, 
+    pipeline = _device->createGraphicsPipeline( pipelineCache, { }, 
+        { vertexStage, geomStage, fragmentStage }, 
       vertexInput, assembly, nullptr, viewport, rasterization, multisample, 
       depthStencil, colorBlend, dynamic, pipelineLayout, _renderPass );
   }
   void doPaint( void ) override
   {
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->begin( );
 

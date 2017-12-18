@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -10,20 +29,20 @@ struct Vertex
 
 const std::vector<Vertex> vertices =
 {
-  { { 0.75f,  0.75f, 0.0f, 1.0f } },
-  { { -0.75f,  0.75f, 0.0f, 1.0f } },
-  { { 0.0f, -0.750f, 0.0f, 1.0f } }
+  { {  0.75f,  0.75f,  0.0f,  1.0f } },
+  { { -0.75f,  0.75f,  0.0f,  1.0f } },
+  { {   0.0f, -0.75f,  0.0f,  1.0f } }
 };
 const std::vector<uint32_t> indices = { 0, 1, 2 };
 
-class MyApp : public VulkanApp
+class TriangleTesselationApp : public VulkanApp
 {
 public:
   std::shared_ptr<VertexBuffer> vertexBuffer;
   std::shared_ptr<IndexBuffer> indexBuffer;
   std::shared_ptr<lava::engine::Material> material;
   std::shared_ptr<CommandPool> commandPool;
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  TriangleTesselationApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     // Vertex buffer
@@ -50,7 +69,7 @@ public:
 	}
   void doPaint( void ) override
   {
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->beginSimple( );
 
@@ -61,9 +80,9 @@ public:
       { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, 
       vk::SubpassContents::eInline
     );
-    material->bind( commandBuffer ); //commandBuffer->bindGraphicsPipeline( pipeline );
-    vertexBuffer->bind( commandBuffer ); //commandBuffer->bindVertexBuffer( 0, vertexBuffer, 0 );
-    indexBuffer->bind( commandBuffer );  //commandBuffer->bindIndexBuffer( indexBuffer, 0 );
+    material->bind( commandBuffer );
+    vertexBuffer->bind( commandBuffer );
+    indexBuffer->bind( commandBuffer ); 
     
     commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
     
@@ -108,7 +127,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Tesselated Triangle", 800, 600 );
+    VulkanApp* app = new TriangleTesselationApp( "Tesselated Triangle", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

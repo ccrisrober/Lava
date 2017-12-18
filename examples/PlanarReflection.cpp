@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
@@ -73,12 +92,11 @@ const std::vector<Vertex> vertices =
   { { -1.0f, -1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } }
 };
 
-class MyApp : public VulkanApp
+class PlanarReflectionApp : public VulkanApp
 {
 public:
   std::shared_ptr<VertexBuffer> vertexBuffer;
-  std::shared_ptr<lava::UniformBuffer> uniformBufferMVP;
-  std::shared_ptr<lava::UniformBuffer> uniformBufferOutline;
+  std::shared_ptr<lava::UniformBuffer> uniformMVP;
 
   struct
   {
@@ -92,7 +110,7 @@ public:
   std::shared_ptr<CommandPool> commandPool;
   std::shared_ptr<Texture2D> tex;
 
-  MyApp( char const* title, uint32_t width, uint32_t height )
+  PlanarReflectionApp( char const* title, uint32_t width, uint32_t height )
     : VulkanApp( title, width, height )
   {
     commandPool = _device->createCommandPool(
@@ -109,10 +127,8 @@ public:
       std::string( "glass.png" ), commandPool, _graphicsQueue,
       vk::Format::eR8G8B8A8Unorm );
 
-    uniformBufferMVP = std::make_shared<lava::UniformBuffer>(
-      _device, sizeof( uboVS )
-    );
-
+    uniformMVP = _device->createUniformBuffer( sizeof( uboVS ) ); 
+    
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -140,7 +156,7 @@ public:
       vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 )
     };
     std::shared_ptr<DescriptorPool> descriptorPool =
-      _device->createDescriptorPool( {}, 1, poolSize );
+      _device->createDescriptorPool( { }, 1, poolSize );
 
     // Init descriptor set
     descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
@@ -150,7 +166,7 @@ public:
         descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
         1, nullptr,
         DescriptorBufferInfo(
-          uniformBufferMVP, 0, sizeof( uboVS )
+          uniformMVP, 0, sizeof( uboVS )
         )
       ),
       WriteDescriptorSet(
@@ -159,7 +175,7 @@ public:
         tex->descriptor, nullptr
       )
     };
-    _device->updateDescriptorSets( wdss, {} );
+    _device->updateDescriptorSets( wdss, { } );
 
 
     // init pipeline
@@ -188,22 +204,22 @@ public:
         }
     );
 
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( 1, 1 );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencilState( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
+    vk::PipelineDepthStencilStateCreateInfo depthStencilState( { }, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
       vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
     PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
 
 
-    pipelines.cube = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    pipelines.cube = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencilState, colorBlend, 
       dynamic, pipelineLayout, _renderPass
     );
@@ -226,8 +242,8 @@ public:
 
     depthStencilState.front = depthStencilState.back;
 
-    pipelines.plane = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    pipelines.plane = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencilState, colorBlend, 
       dynamic, pipelineLayout, _renderPass
     );
@@ -241,8 +257,8 @@ public:
 
     depthStencilState.front = depthStencilState.back;
 
-    pipelines.reflection = _device->createGraphicsPipeline( pipelineCache, {},
-    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+    pipelines.reflection = _device->createGraphicsPipeline( pipelineCache, { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencilState, colorBlend, 
       dynamic, pipelineLayout, _renderPass
     );
@@ -255,7 +271,7 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
   void doPaint( void ) override
@@ -265,7 +281,7 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    auto commandBuffer = commandPool->allocateCommandBuffer( );
 
     commandBuffer->beginSimple( );
 
@@ -361,7 +377,7 @@ int main( void )
 {
   try
   {
-    VulkanApp* app = new MyApp( "Planar Reflection", 800, 600 );
+    VulkanApp* app = new PlanarReflectionApp( "Planar Reflection", 800, 600 );
 
     app->getWindow( )->setErrorCallback( glfwErrorCallback );
 

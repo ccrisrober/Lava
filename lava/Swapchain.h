@@ -14,14 +14,14 @@ namespace lava
   class Swapchain : public VulkanResource
   {
   public:
-    Swapchain( const DeviceRef& device, const std::shared_ptr<Surface>& surface,
+    Swapchain( const DeviceRef& device, const std::shared_ptr< Surface >& surface,
       uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
       const vk::Extent2D& imageExtent, uint32_t imageArrayLayers,
       vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
-      const std::vector<uint32_t>& queueFamilyIndices,
+      const std::vector< uint32_t >& queueFamilyIndices,
       vk::SurfaceTransformFlagBitsKHR preTransform,
-      vk::CompositeAlphaFlagBitsKHR compositeAlpha, vk::PresentModeKHR presentMode,
-      bool clipped, const std::shared_ptr<Swapchain>& oldSwapchain );
+      vk::CompositeAlphaFlagBitsKHR compAlpha, vk::PresentModeKHR presentMode,
+      bool clipped, const std::shared_ptr< Swapchain >& oldSwapchain );
     virtual ~Swapchain( void );
 
     const std::vector<std::shared_ptr<Image>>& getImages( void ) const;
@@ -36,7 +36,7 @@ namespace lava
     }
 
     uint32_t acquireNextImage( uint64_t timeout = UINT64_MAX,
-      const std::shared_ptr<Fence>& fence = {} );
+      const std::shared_ptr< Fence >& fence = { } );
 
   protected:
     std::vector<std::shared_ptr<Image>> _images;

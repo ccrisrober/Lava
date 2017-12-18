@@ -18,10 +18,12 @@ namespace lava
     LAVA_API
     Image( const DeviceRef& device, const vk::Image& image );
     LAVA_API
-    Image( const DeviceRef& device, vk::ImageCreateFlags createFlags, vk::ImageType type, vk::Format format,
-      vk::Extent3D extent, uint32_t mipLevels, uint32_t arrayLayers, vk::SampleCountFlagBits samples, vk::ImageTiling tiling,
-      vk::ImageUsageFlags usageFlags, vk::SharingMode sharingMode, const std::vector<uint32_t>& queueFamilyIndices,
-      vk::ImageLayout initialLayout, vk::MemoryPropertyFlags memoryPropertyFlags );
+    Image( const DeviceRef& device, vk::ImageCreateFlags createFlags, 
+      vk::ImageType type, vk::Format format, vk::Extent3D extent, 
+      uint32_t mipLevels, uint32_t arrayLayers, vk::SampleCountFlagBits samples, 
+      vk::ImageTiling tiling, vk::ImageUsageFlags usageFlags, 
+      vk::SharingMode sharingMode, const std::vector<uint32_t>& qFamilyIndices,
+      vk::ImageLayout initialLayout, vk::MemoryPropertyFlags memPropertyFlags );
     LAVA_API
     virtual ~Image( void );
 
@@ -31,9 +33,14 @@ namespace lava
       return _image;
     }
     LAVA_API
-    std::shared_ptr<ImageView> createImageView( vk::ImageViewType viewType, vk::Format format,
-      vk::ComponentMapping components = { vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA },
-      vk::ImageSubresourceRange subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } );
+    std::shared_ptr<ImageView> createImageView( vk::ImageViewType viewType, 
+      vk::Format format, vk::ComponentMapping components = { 
+        vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, 
+        vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA 
+      }, vk::ImageSubresourceRange subresourceRange = { 
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+      }
+    );
   private:
     friend class ImageView;
     const DeviceRef& getDevice( void )
@@ -60,10 +67,13 @@ namespace lava
   class ImageView : private NonCopyable<ImageView>
   {
   public:
+    LAVA_API
     ImageView( const std::shared_ptr<Image>& image, vk::ImageViewCreateFlags flags, vk::ImageViewType viewType,
       vk::Format format, vk::ComponentMapping components, vk::ImageSubresourceRange subresourceRange );
-    virtual ~ImageView( );
-    inline operator vk::ImageView( )
+    LAVA_API
+    virtual ~ImageView( void );
+    LAVA_API
+    inline operator vk::ImageView( void )
     {
       return _imageView;
     }
