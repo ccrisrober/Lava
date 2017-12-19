@@ -53,6 +53,11 @@ namespace lava
       //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
       //std::cout << str << std::endl;
     }
+    LAVA_API
+    int imagesCount( void ) const
+    {
+      return _framebuffers.size( );
+    }
   private:
     void clear( vk::SwapchainKHR swapChain );
 

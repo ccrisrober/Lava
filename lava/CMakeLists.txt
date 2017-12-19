@@ -52,9 +52,16 @@ set( LAVA_PUBLIC_HEADERS
   Log.h
   MemoryUtils.h
   StringUtils.hpp
+
+
+  VulkanRenderer.h
 )
 
 set( LAVA_SOURCES
+
+  VulkanRenderer.cpp
+
+
   Instance.cpp
   Event.cpp
   PhysicalDevice.cpp

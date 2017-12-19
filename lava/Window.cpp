@@ -56,7 +56,7 @@ namespace lava
 
   bool Window::isRunning( void ) const
   {
-    glfwPollEvents( );
+    //glfwPollEvents( );
     return !glfwWindowShouldClose( _window );
   }
 

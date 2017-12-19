@@ -122,7 +122,7 @@ namespace lava
 
 
 
-  void Queue::submit( vk::ArrayProxy<const SubmitInfo> submitInfos, 
+  vk::Result Queue::submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
     const std::shared_ptr<Fence>& fenceIn )
   {
     // create a new fence if none has been passed to track completion of the submit.
@@ -183,7 +183,9 @@ namespace lava
       );
     }
 
-    _queue.submit( to_submit, *fence );
+    //_queue.submit( to_submit, *fence );
+
+    return _queue.submit( to_submit.size( ), to_submit.data( ), *fence );
   }
 
   void Queue::submit( const std::shared_ptr<CommandBuffer>& commandBuffer, 
