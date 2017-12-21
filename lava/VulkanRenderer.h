@@ -67,10 +67,7 @@ namespace lava
     bool checkDeviceLost( vk::Result res );
 
     LAVA_API
-    std::shared_ptr< CommandBuffer > currentCommandBuffer( void ) const
-    {
-      return nullptr;
-    }
+    CommandBufferPtr currentCommandBuffer( void ) const;
 
     LAVA_API
     RenderAPICapabilities caps( void ) const;
@@ -188,6 +185,11 @@ namespace lava
     std::shared_ptr< Queue > _presQueue;
 
     std::shared_ptr< Semaphore > _renderComplete;
+
+    struct ImageResources
+    {
+      CommandBufferPtr commandBuffer;
+    } imageRes[ 2 ];
 
     std::shared_ptr< CommandPool > _cmdPool;
 

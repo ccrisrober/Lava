@@ -44,6 +44,11 @@ namespace lava
     {
       return _colorImages[ _swapchainIndex ];
     }
+    
+    uint32_t index( void ) const
+    {
+      return _swapchainIndex;
+    }
 
     LAVA_API // TODO: Remove API
     void present( const std::shared_ptr<Queue>& queue,

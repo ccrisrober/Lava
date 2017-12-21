@@ -94,7 +94,7 @@ int main( void )
 
   CustomVkWindow w;
   w.setVulkanInstance( instance );
-  w.resize( 752, 400 );
+  w.resize( 800, 800 );
 
   w.show( );
 

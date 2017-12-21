@@ -19,11 +19,11 @@ namespace lava
 			_initialized = true;
 		}
 		// TODO: SHOW WINDOW
-    /*while ( _window->isRunning( ) )
+    while ( _window->isRunning( ) )
     {
       beginFrame( );
-      endFrame( );
-    }*/
+      //endFrame( );
+    }
 	}
 
 	void VulkanWindow::setVulkanInstance( const std::shared_ptr< Instance > instance )
@@ -466,13 +466,15 @@ namespace lava
     }
 
     _cmdPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _gfxQueueFamilyIdx );
+      {}, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
+      _gfxQueueFamilyIdx );
 
     if( !createDefaultRenderPass( ) )
     {
       return;
     }
 
+    _renderComplete = _device->createSemaphore( );
     pipelineCache = _device->createPipelineCache( 0, nullptr );
 
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
@@ -519,6 +521,10 @@ namespace lava
   {
     _defaultFramebuffer->acquireNextFrame( );
 
+    imageRes[ _defaultFramebuffer->index( ) ].commandBuffer = _cmdPool->allocateCommandBuffer( );
+
+    imageRes[ _defaultFramebuffer->index( ) ].commandBuffer->beginSimple( );
+
     if ( renderer )
     {
       renderer->nextFrame( );
@@ -550,11 +556,10 @@ namespace lava
   void VulkanWindow::endFrame( void )
   {
     currentCommandBuffer( )->end( );
-
-    vk::Result err = _gfxQueue->submit( SubmitInfo{
+    vk::Result err = _gfxQueue->submit( SubmitInfo {
       { _defaultFramebuffer->getPresentSemaphore( ) },
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      currentFramebuffer(),
+      currentCommandBuffer(),
       _renderComplete
     } );
 
@@ -592,6 +597,11 @@ namespace lava
       return true;
     }
     return false;
+  }
+
+  CommandBufferPtr VulkanWindow::currentCommandBuffer( void ) const
+  {
+    return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
   }
 
   bool VulkanWindow::createDefaultRenderPass( void )
