@@ -73,6 +73,12 @@ namespace lava
     RenderAPICapabilities caps( void ) const;
 
     LAVA_API
+    vk::Extent2D getExtent( void ) const
+    {
+      return _defaultFramebuffer->getExtent( );
+    }
+
+    LAVA_API
     std::shared_ptr< PhysicalDevice > physicalDevice( void ) const;
     LAVA_API
     const vk::PhysicalDeviceProperties physicalDeviceProperties( void ) const;
