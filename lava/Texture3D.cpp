@@ -38,7 +38,7 @@ namespace lava
 
     // Format support check
     // 3D texture support in Vulkan is mandatory (in contrast to OpenGL) so no need to check if it's supported
-    vk::FormatProperties formatProps = device_->_physicalDevice->getFormatProperties( format );
+    vk::FormatProperties formatProps = device_->getPhysicalDevice( )->getFormatProperties( format );
     // Check if format supports transfer
     if ( !formatProps.optimalTilingFeatures && VK_IMAGE_USAGE_TRANSFER_DST_BIT )
     {

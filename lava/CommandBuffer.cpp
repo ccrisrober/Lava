@@ -50,19 +50,22 @@ namespace lava
 
   bool CommandPool::supportsCompute( void ) const
   {
-    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+    return !!( _device->getPhysicalDevice( )
+      ->getQueueFamilyProperties()[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eCompute);
   }
 
   bool CommandPool::supportsGraphics( void ) const
   {
-    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+    return !!( _device->getPhysicalDevice( )->
+      getQueueFamilyProperties()[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eGraphics);
   }
 
   bool CommandPool::supportsTransfer( void ) const
   {
-    return !!( _device->_physicalDevice->getQueueFamilyProperties()[ _familyIndex ]
+    return !!( _device->getPhysicalDevice( )->
+      getQueueFamilyProperties()[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eTransfer);
   }
 

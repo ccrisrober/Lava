@@ -30,7 +30,7 @@ namespace lava
     : _swapchainIndex( 0 )
   {
     vk::SurfaceCapabilitiesKHR surfaceCaps = 
-      device->_physicalDevice->getSurfaceCapabilities( surface );
+      device->getPhysicalDevice( )->getSurfaceCapabilities( surface );
 
     // If width/height is 0xFFFFFFFF, we can manually specify width, height
     if ( surfaceCaps.currentExtent.width != std::numeric_limits<uint32_t>::max( ) )
@@ -51,7 +51,7 @@ namespace lava
 
     // Find present mode
     auto presentModes = vk::PhysicalDevice(
-      *device->_physicalDevice ).getSurfacePresentModesKHR( *surface );
+      *device->getPhysicalDevice( ) ).getSurfacePresentModesKHR( *surface );
     vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
 
     bool vsync = true;
@@ -154,7 +154,7 @@ namespace lava
     // depth/stencil buffer
     // assert that a depth and/or stencil format is requested
     vk::FormatProperties formatProps = 
-      device->_physicalDevice->getFormatProperties( depthFormat );
+      device->getPhysicalDevice( )->getFormatProperties( depthFormat );
     assert( ( formatProps.linearTilingFeatures & 
       vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
       ( formatProps.optimalTilingFeatures & 

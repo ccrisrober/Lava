@@ -411,6 +411,11 @@ namespace lava
     _device.freeMemory( memory );
   }
 
+  std::shared_ptr<UniformBuffer> Device::createUniformBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<lava::UniformBuffer>( shared_from_this( ), size );
+  }
+
   std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
     const std::shared_ptr<PipelineCache>& pipelineCache, 
     vk::PipelineCreateFlags flags,

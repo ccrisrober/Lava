@@ -81,7 +81,7 @@ namespace lava
     height = textureHeight;
 
     vk::FormatProperties formatProps =
-      _device->_physicalDevice->getFormatProperties( format );
+      _device->getPhysicalDevice( )->getFormatProperties( format );
 
     // Only use linear tiling if requested (and supported by the device)
     // Support for linear tiling is mostly limited, so prefer to use

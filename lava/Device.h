@@ -97,8 +97,6 @@ namespace lava
     LAVA_API
     std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIdx );
 
-    std::shared_ptr<PhysicalDevice> _physicalDevice;
-
     LAVA_API
     std::shared_ptr<Swapchain> createSwapchain( const std::shared_ptr<Surface>& surface,
       uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
@@ -148,6 +146,12 @@ namespace lava
     std::shared_ptr<DescriptorPool> createDescriptorPool(
       vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
       vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes );
+
+    LAVA_API
+    std::shared_ptr<PhysicalDevice> getPhysicalDevice( void ) const
+    {
+      return _physicalDevice;
+    }
 
     LAVA_API
     std::shared_ptr<PipelineCache> createPipelineCache( size_t initialSize, 
@@ -212,6 +216,9 @@ namespace lava
     LAVA_API
     void freeMemory( vk::DeviceMemory memory );
 
+    LAVA_API
+    std::shared_ptr<UniformBuffer> createUniformBuffer( vk::DeviceSize size );
+
   protected:
     void init(
       const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
@@ -242,6 +249,7 @@ namespace lava
     std::array< QueueInfo, GPUT_COUNT> _queueInfos;*/
 
     vk::Device _device;
+    std::shared_ptr<PhysicalDevice> _physicalDevice;
 
     std::map<uint32_t, std::vector<std::unique_ptr<Queue>>> _queues; // key is queueFamilyIndex
   };

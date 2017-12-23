@@ -26,6 +26,12 @@ namespace lava
     }
 
     LAVA_API
+      std::shared_ptr<PhysicalDevice> getPhysicalDevice( void ) const
+    {
+      return _physicalDevice;
+    }
+
+    LAVA_API
     void waitEvents( void )
     {
       glfwWaitEvents( );

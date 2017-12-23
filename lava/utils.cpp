@@ -37,14 +37,14 @@ namespace lava
   {
     bool supportBlit = true;
 
-    vk::FormatProperties formatProps = dev->_physicalDevice->getFormatProperties( colorFormat );
+    vk::FormatProperties formatProps = dev->getPhysicalDevice( )->getFormatProperties( colorFormat );
     // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
     if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
       supportBlit = false;
     }
     // Check if the device supports blitting to linear images 
-    formatProps = dev->_physicalDevice->getFormatProperties( vk::Format::eR8G8B8A8Snorm );
+    formatProps = dev->getPhysicalDevice( )->getFormatProperties( vk::Format::eR8G8B8A8Snorm );
     if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) )
     {
       supportBlit = false;
