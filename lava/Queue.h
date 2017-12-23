@@ -75,7 +75,7 @@ namespace lava
   {
   public:
     LAVA_API
-    void submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
+    vk::Result submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
       const std::shared_ptr<Fence>& fence = std::shared_ptr<Fence>( ) );
 
     LAVA_API

@@ -13,4 +13,6 @@
 
 #include <iostream>
 
+#define LAVA_RUNTIME_ERROR(s) throw std::runtime_error( s );
+
 #endif /* __LAVA_INCLUDES__ */

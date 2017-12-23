@@ -314,6 +314,8 @@ namespace lava
   {
     _commandBuffer.updateBuffer<T>( *destBuffer, destOffset, data );
   }
+
+  typedef std::shared_ptr< CommandBuffer > CommandBufferPtr;
 }
 
 #endif /* __LAVA_COMMANDBUFFER__ */

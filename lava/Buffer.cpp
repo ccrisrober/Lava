@@ -216,6 +216,22 @@ namespace lava
       vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
+  StorageBuffer::StorageBuffer( const DeviceRef& device, vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eStorageBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
+  UniformTexelBuffer::UniformTexelBuffer( const DeviceRef& device, vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eUniformTexelBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
 
   BufferView::BufferView(const std::shared_ptr<lava::Buffer>& buffer, 
     vk::Format format, vk::DeviceSize offset, vk::DeviceSize range )

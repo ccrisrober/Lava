@@ -28,10 +28,17 @@ set( LAVA_DESCRIPTION "LAVA" )
 include(Common)
 
 # Allow warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
+
+option( LAVA_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
 option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
+
+if ( LAVA_WITH_DEVICE_BUILDERS )
+  list(APPEND COMMON_FIND_PACKAGE_DEFINES LAVA_DEVICE_BUILDERS )
+endif( )
+
 
 set(STBI_INCLUDE_DIR ../stbi)
 
