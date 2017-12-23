@@ -3,6 +3,10 @@ source_group(\\ FILES CMakeLists.txt)
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
 
+  io/Keyboard.hpp
+  io/Mouse.hpp
+  io/Input.hpp
+
   RenderAPICapabilites.h
   noncopyable.hpp
 
@@ -58,6 +62,10 @@ set( LAVA_PUBLIC_HEADERS
 )
 
 set( LAVA_SOURCES
+
+  io/Keyboard.cpp
+  io/Mouse.cpp
+  io/Input.cpp
 
   VulkanRenderer.cpp
 

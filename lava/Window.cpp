@@ -19,6 +19,8 @@
 
 #include "Window.h"
 
+#include "io/Input.hpp"
+
 namespace lava
 {
   Window::Window( const char* title, uint32_t width, uint32_t height )
@@ -27,12 +29,54 @@ namespace lava
     glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
     _window = glfwCreateWindow( width, height, title, nullptr, nullptr );
 
-    glfwSetInputMode( _window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+    glfwSetKeyCallback( _window, []( GLFWwindow*, int key, int, int act, int )
+    {
+      if ( act == GLFW_PRESS )
+      {
+        static_cast<GLFWKeyboard*>( Input::Keyboard( ) )->onKeyDown( key );
+      }
+      else if ( act == GLFW_RELEASE )
+      {
+        static_cast<GLFWKeyboard*>( Input::Keyboard( ) )->onKeyUp( key );
+      }
+    } );
+
+    glfwSetCursorPosCallback( _window, []( GLFWwindow*, double xpos, double ypos )
+    {
+      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseMove( static_cast<int>( xpos ), static_cast<int>( ypos ) );
+    } );
+
+    glfwSetMouseButtonCallback( _window, []( GLFWwindow*, int btn, int act, int )
+    {
+      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseButtonEvent( btn, act );
+    } );
+
+    glfwSetScrollCallback( _window, []( GLFWwindow*, double xoffset, double yoffset )
+    {
+      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseWheelEvent( static_cast<int>( xoffset ), static_cast<int>( yoffset ) );
+    } );
+
+    glfwSetWindowSizeCallback( _window, ( []( GLFWwindow* /*window*/, int width, int height )
+    {
+      // glViewport( 0, 0, width, height );
+      // TODO: Send event and set width and height from _params
+    } ) );
+
+    glfwSetInputMode( _window, GLFW_STICKY_KEYS, GLFW_CURSOR_DISABLED );
+    
+    glfwMakeContextCurrent( _window );
+
+    Input::initialize( );
   }
 
   GLFWwindow * Window::getWindow( void )
   {
     return _window;
+  }
+
+  void Window::pollEvents( void )
+  {
+    glfwPollEvents( );
   }
 
   void Window::setErrorCallback( GLFWerrorfun fn )
@@ -69,5 +113,10 @@ namespace lava
   {
     glfwDestroyWindow( _window );
     glfwTerminate( );
+  }
+
+  void Window::setWindowTitle( const std::string& title )
+  {
+    glfwSetWindowTitle( _window, title.c_str( ) );
   }
 }

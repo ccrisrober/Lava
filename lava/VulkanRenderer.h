@@ -73,6 +73,11 @@ namespace lava
     RenderAPICapabilities caps( void ) const;
 
     LAVA_API
+    void setWindowTitle( const char*& name );
+    LAVA_API
+    void setWindowTitle( const std::string& name );
+
+    LAVA_API
     vk::Extent2D getExtent( void ) const
     {
       return _defaultFramebuffer->getExtent( );
@@ -172,7 +177,6 @@ namespace lava
     std::vector<std::string > _requestedDeviceExts;
 
   protected:
-    std::shared_ptr< Window > _window;
     std::shared_ptr< Instance > _instance;
     std::shared_ptr< PhysicalDevice > _physicalDevice;
     std::shared_ptr< Device > _device;
@@ -196,9 +200,10 @@ namespace lava
     {
       CommandBufferPtr commandBuffer;
     } imageRes[ 2 ];
-
+  public:
     std::shared_ptr< CommandPool > _cmdPool;
-
+    std::shared_ptr< Window > _window;
+  protected:
     glm::ivec2 _swapChainImageSize;
 
     vk::Format _colorFormat;

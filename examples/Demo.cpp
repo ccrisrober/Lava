@@ -4,19 +4,6 @@ using namespace lava;
 
 #define VK_USE_PLATFORM_WIN32_KHR
 
-struct Vertex
-{
-  glm::vec4 position;
-  glm::vec4 color;
-};
-
-const std::vector<Vertex> vertexData =
-{
-  { { -0.5f, -0.5f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f }, },
-  { { 0.5f, -0.5f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f }, },
-  { { 0.0f, 0.5f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f }, },
-};
-
 class CustomRenderer : public VulkanWindowRenderer
 {
 public:
@@ -30,39 +17,35 @@ public:
   {
     auto device = _window->device( );
 
-    uint32_t vertexBufferSize = vertexData.size( ) *  sizeof( Vertex );
-    vertexBuffer = std::make_shared<VertexBuffer>( device, vertexBufferSize );
-    vertexBuffer->writeData( 0, vertexBufferSize, vertexData.data( ) );
+    tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "uv_checker.png" ), _window->graphicsCommandPool(), 
+      _window->graphicQueue(), vk::Format::eR8G8B8A8Unorm );
 
-    descSetLayout = device->createDescriptorSetLayout( { } );
+    std::vector<DescriptorSetLayoutBinding> dslbs =
+    {
+      DescriptorSetLayoutBinding(
+        0, vk::DescriptorType::eCombinedImageSampler,
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
+
+    descSetLayout = device->createDescriptorSetLayout( dslbs );
 
     pipelineLayout = device->createPipelineLayout( descSetLayout, nullptr );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangle_vert.spv" ),
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangle_frag.spv" ),
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
-    vk::VertexInputBindingDescription binding( 0,
-      7 * sizeof( float ), vk::VertexInputRate::eVertex );
-
-    PipelineVertexInputStateCreateInfo vertexInput( binding,
-      {
-        vk::VertexInputAttributeDescription(
-          0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, position )
-        ),
-        vk::VertexInputAttributeDescription(
-          1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, color )
-        )
-      }
-    );
+    PipelineVertexInputStateCreateInfo vertexInput( {}, {} );
 
     vk::PipelineInputAssemblyStateCreateInfo assembly( { },
-      vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+      vk::PrimitiveTopology::eTriangleStrip, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
     vk::PipelineRasterizationStateCreateInfo rasterization( { }, true, false,
       vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
@@ -92,18 +75,65 @@ public:
       vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
-
-
     pipeline = device->createGraphicsPipeline( _window->pipelineCache, { },
     { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _window->defaultRenderPass( )
     );
 
+    std::shared_ptr<DescriptorPool> descriptorPool =
+      device->createDescriptorPool( 1, {
+        { vk::DescriptorType::eCombinedImageSampler, 1 }
+      } );
+
+    // Init descriptor set
+    descSet = device->allocateDescriptorSet( descriptorPool, descSetLayout );
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      WriteDescriptorSet( descSet, 0, 0, 
+        vk::DescriptorType::eCombinedImageSampler, 1, tex->descriptor, nullptr
+      )
+    };
+
+    device->updateDescriptorSets( wdss, {} );
+  }
+
+  void releaseResources( void ) override
+  {
+    if ( descSetLayout )
+    {
+      descSetLayout.reset( );
+    }
+    if ( descSet )
+    {
+      descSet.reset( );
+    }
+    if ( pipelineLayout )
+    {
+      pipelineLayout.reset( );
+    }
+    if ( pipeline )
+    {
+      pipeline.reset( );
+    }
+    if ( tex )
+    {
+      tex.reset( );
+    }
   }
 
   void nextFrame( void ) override
   {
+    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    {
+      _window->_window->close( );
+    }
+    static int i = 0;
+
+    _window->setWindowTitle( std::string( "Step: " ) + std::to_string( i ) );
+
+    ++i;
+
     static auto startTime = std::chrono::high_resolution_clock::now( );
 
     auto currentTime = std::chrono::high_resolution_clock::now( );
@@ -117,6 +147,23 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil  = vk::ClearDepthStencilValue(  1.0f, 0 );
 
+    secondaryCmd = _window->_cmdPool->allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
+
+    vk::CommandBufferInheritanceInfo inheritInfo;
+    inheritInfo.renderPass = *_window->defaultRenderPass( );
+    inheritInfo.framebuffer = *_window->currentFramebuffer( );
+
+    secondaryCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit | vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
+    secondaryCmd->bindGraphicsPipeline( pipeline );
+
+    secondaryCmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      pipelineLayout, 0, { descSet }, nullptr );
+
+    secondaryCmd->setViewportScissors( _window->getExtent( ) );
+    secondaryCmd->draw( 4, 1, 0, 0 );
+
+    secondaryCmd->end( );
+
     const glm::ivec2 size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
@@ -125,19 +172,18 @@ public:
     cmd->beginRenderPass( 
       _window->defaultRenderPass( ), 
       _window->currentFramebuffer( ), 
-      rect, clearValues, vk::SubpassContents::eInline
+      rect, clearValues, vk::SubpassContents::eSecondaryCommandBuffers
     );
 
-    cmd->bindGraphicsPipeline( pipeline );
-    /*cmd->bindDescriptorSets( 
-      vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, { descSet }, nullptr 
-    );*/
+    /*cmd->bindGraphicsPipeline( pipeline );
+
+    cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      pipelineLayout, 0, { descSet }, nullptr );
 
     cmd->setViewportScissors( _window->getExtent( ) );
+    cmd->draw( 4, 1, 0, 0 );*/
 
-    cmd->bindVertexBuffer( 0, vertexBuffer, 0 );
-
-    cmd->draw( uint32_t( vertexData.size( ) ), 1, 0, 0 );
+    cmd->executeCommands( { secondaryCmd } );
 
     cmd->endRenderPass( );
 
@@ -150,10 +196,12 @@ private:
   float _green = 0;
 
   std::shared_ptr< DescriptorSetLayout > descSetLayout;
-  //std::shared_ptr< DescriptorSet > descSet;
+  std::shared_ptr< DescriptorSet > descSet;
   std::shared_ptr< PipelineLayout > pipelineLayout;
   std::shared_ptr< Pipeline > pipeline;
-  std::shared_ptr< Buffer > vertexBuffer;
+  std::shared_ptr<Texture2D> tex;
+
+  CommandBufferPtr secondaryCmd;
 };
 
 class CustomVkWindow : public VulkanWindow
@@ -200,7 +248,7 @@ int main( void )
 
   CustomVkWindow w;
   w.setVulkanInstance( instance );
-  w.resize( 800, 800 );
+  w.resize( 500, 500 );
 
   w.show( );
 

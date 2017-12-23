@@ -144,7 +144,7 @@ namespace lava
       vk::DescriptorSetLayoutCreateFlags flags = { } );
     LAVA_API
     std::shared_ptr<DescriptorPool> createDescriptorPool(
-      vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
+      /*vk::DescriptorPoolCreateFlags flags, */uint32_t maxSets,
       vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes );
 
     LAVA_API
@@ -216,8 +216,19 @@ namespace lava
     LAVA_API
     void freeMemory( vk::DeviceMemory memory );
 
+#ifdef LAVA_DEVICE_BUILDERS
     LAVA_API
     std::shared_ptr<UniformBuffer> createUniformBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<StorageBuffer> createStorageBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<UniformTexelBuffer> createUniformTexelBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<VertexBuffer> createVertexBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<IndexBuffer> createIndexBuffer( vk::IndexType type, 
+      vk::DeviceSize size );
+#endif
 
   protected:
     void init(

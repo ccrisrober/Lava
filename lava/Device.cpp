@@ -364,10 +364,11 @@ namespace lava
     return std::make_shared<DescriptorSetLayout>( shared_from_this( ), bindings, flags );
   }
   std::shared_ptr<DescriptorPool> Device::createDescriptorPool(
-    vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
+    /*vk::DescriptorPoolCreateFlags flags, */uint32_t maxSets,
     vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes )
   {
-    return std::make_shared<DescriptorPool>( shared_from_this( ), flags, maxSets, poolSizes );
+    return std::make_shared<DescriptorPool>( shared_from_this( ), 
+      vk::DescriptorPoolCreateFlags( ), maxSets, poolSizes );
   }
   std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, 
     void const * initialData )
@@ -411,10 +412,29 @@ namespace lava
     _device.freeMemory( memory );
   }
 
+#ifdef LAVA_DEVICE_BUILDERS
   std::shared_ptr<UniformBuffer> Device::createUniformBuffer( vk::DeviceSize size )
   {
     return std::make_shared<lava::UniformBuffer>( shared_from_this( ), size );
   }
+  std::shared_ptr<StorageBuffer> Device::createStorageBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<StorageBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<UniformTexelBuffer> Device::Device::createUniformTexelBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<UniformTexelBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<VertexBuffer> Device::Device::createVertexBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<VertexBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<IndexBuffer> Device::Device::createIndexBuffer( vk::IndexType type, 
+    vk::DeviceSize size )
+  {
+    return std::make_shared<IndexBuffer>( shared_from_this( ), type, size );
+  }
+#endif
 
   std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
     const std::shared_ptr<PipelineCache>& pipelineCache, 

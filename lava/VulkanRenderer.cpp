@@ -21,6 +21,7 @@ namespace lava
 		// TODO: SHOW WINDOW
     while ( _window->isRunning( ) )
     {
+      _window->pollEvents( );
       beginFrame( );
       //endFrame( );
     }
@@ -231,6 +232,16 @@ namespace lava
 
     _caps.addShaderProfile( "glsl" );
 	}
+
+
+  void VulkanWindow::setWindowTitle( const char*& name )
+  {
+    setWindowTitle( std::string( name ) );
+  }
+  void VulkanWindow::setWindowTitle( const std::string& name )
+  {
+    _window->setWindowTitle( name );
+  }
 
 	void VulkanWindow::init( void )
 	{
