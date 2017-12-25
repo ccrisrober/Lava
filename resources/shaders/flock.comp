@@ -1,0 +1,249 @@
+#version 450
+
+//Particle buffer
+layout( std140, binding = 0 ) buffer Part
+{
+  Particle particles[];
+};
+
+layout(binding = 1) uniform UBO
+{
+//Steering radii
+  float uSeparationRadius;
+  float uCohesionRadius;
+  float uAlignRadius;
+
+//Steering strengths
+  float uSeparationStrength;
+  float uCohesionStrength;
+  float uAlignStrength;
+
+//Misc. Uniforms
+  float uTimeStep;
+  float uBoidSpeed;
+  vec2  uWindowCenter;
+  float uColorRadius;
+};
+
+struct Particle
+{
+  vec3  pos;
+  vec3  ppos;
+  vec3  home;
+  vec4  color;
+  float damping;
+};
+
+layout( local_size_x = 128, local_size_y = 1, local_size_z = 1 ) in;
+
+vec3 limit(vec3 v, float m)
+{
+  float lengthSquared = v.x * v.x + v.y * v.y + v.z * v.z;
+  
+  if(lengthSquared > m*m && lengthSquared > 0.0)
+  {
+    float ls = sqrt(lengthSquared);
+    float ratio = m / ls;
+    v *= ratio;
+  }
+  return v;
+}
+
+vec3 seek(vec3 position, vec3 velocity, vec3 target)
+{
+  vec3 desired = target;
+  desired -= position;
+  
+  desired = normalize(desired);
+  desired *= uBoidSpeed;
+  
+  vec3 steer = desired;
+  desired -= velocity;
+  desired = limit(steer, uBoidSpeed);
+  return steer;
+}
+
+vec3 separate(vec3 position, vec3 velocity)
+{
+  uint local_ID = gl_LocalInvocationID.x;
+  
+  vec3 steering = vec3(0.0,0.0,0.0);
+  float count = 0.0;
+  for(uint i = 0; i < gl_NumWorkGroups.x; i++)
+  {
+    vec3 other_position = particles[i * gl_WorkGroupSize.x + local_ID].pos;
+    float d = abs(distance(position, other_position));
+    
+    if((d < uSeparationRadius) && (d > 0.0))
+    {
+      vec3 diff = position;
+      diff -= other_position;
+      diff = normalize(diff);
+      diff *= d;
+      steering += diff;
+      count += 1.0;
+    }
+  }
+  
+  if(count > 0.0)
+  {
+    steering /= count;
+  }
+  
+  if(length(steering) > 0.0)
+  {
+    steering = normalize(steering);
+    steering *= 5.0;
+    steering /= velocity;
+    steering = limit(steering, 1.0);
+  }
+
+  return steering;
+}
+
+vec3 align(vec3 position, vec3 velocity)
+{
+  uint local_ID = gl_LocalInvocationID.x;
+  
+  vec3 sum = vec3(0.0, 0.0,0.0);
+  float count = 0.0;
+  for(uint i = 0; i < gl_NumWorkGroups.x; i++)
+  {
+    vec3 other_position = particles[i * gl_WorkGroupSize.x + local_ID].pos;
+    vec3 other_previous_position = particles[i * gl_WorkGroupSize.x + local_ID].ppos;
+    float other_damping = particles[i * gl_WorkGroupSize.x + local_ID].damping;
+    vec3 other_vel = (other_position - other_previous_position) * other_damping;
+    
+    float d = abs(distance(position, other_position));
+    
+    if((d < uAlignRadius) && (d > 0.0))
+    {
+      sum.x += other_vel.x;
+      sum.y += other_vel.y;
+      sum.z += other_vel.z;
+      count += 1.0;
+    }
+  }
+  
+  if(count > 0.0)
+  {
+    sum /= count;
+    sum = normalize(sum);
+    sum *= uBoidSpeed;
+    
+    vec3 steering = sum - velocity;
+    steering = limit(steering, uBoidSpeed);
+    return steering;
+  }
+  else
+  {
+    return vec3(0.0,0.0,0.0);
+  }
+}
+
+vec3 cohesion(vec3 position, vec3 velocity)
+{
+  uint local_ID = gl_LocalInvocationID.x;
+  
+  vec3 steering = vec3(0.0, 0.0, 0.0);
+  float count = 0.0;
+  for(uint i = 0; i < gl_NumWorkGroups.x; i++)
+  {
+    vec3 other_position = particles[i * gl_WorkGroupSize.x + local_ID].pos;
+    float d = abs(distance(position, other_position));
+    
+    if(d < uCohesionRadius)
+    { 
+      steering += other_position;
+      count += 1.0;
+    }
+  }
+  
+  if(count > 0.0)
+  {
+    steering /= count;
+    return seek(position, velocity, steering);
+  }
+  else
+  {
+    return vec3(0.0,0.0,0.0);
+  }
+}
+
+vec3 applyForce(vec3 velocity, vec3 force)
+{
+  return velocity + force;
+}
+
+vec3 flock(vec3 position, vec3 velocity)
+{
+  //Obtain separate, align, and cohesion vectors
+  vec3 sep = separate(position, velocity);
+  vec3 ali = align(position, velocity);
+  vec3 coh = cohesion(position, velocity);
+  
+  //Multiply them by their weights
+  sep *= uSeparationStrength;
+  ali *= uAlignStrength;
+  coh *= uCohesionStrength;
+  
+  //Apply their force
+  velocity = applyForce(velocity, sep);
+  velocity = applyForce(velocity, ali);
+  velocity = applyForce(velocity, coh);
+  
+  //Add new velocity to position
+  position += velocity * uTimeStep;
+  
+  //Make sure particle does not stray from window center.
+  vec3 vect_to_center = position - vec3(uWindowCenter, 0.0);
+  float dist_to_center = length(vect_to_center);
+  if(dist_to_center > 200.0)
+  {
+    vect_to_center = normalize(vect_to_center);
+    position -= vect_to_center * ((dist_to_center - 200.0) * 0.00025);
+  }
+  
+  //Return the new position!
+  return position;
+}
+
+float GetNumNeighbors(vec3 position, int lid)
+{
+  float count = 0;
+  
+  for(uint i = 0; i < gl_NumWorkGroups.x; i++)
+  {
+    Particle other = particles[i * gl_WorkGroupSize.x + lid];
+    
+    float d = abs(distance(position, other.pos));
+    
+    if(d < uColorRadius)
+    {
+      count = count + 1.0;
+    }
+  }
+  
+  return min(count / 10.0, 1.0);
+}
+
+//As of right now this is a very inefficent method for flocking, but due to time constraints it works well enough.
+void main( )
+{
+  uint gid = gl_GlobalInvocationID.x; //Obtain the global ID for current particle.
+  uint lid = gl_LocalInvocationID.x;  //Obtain local ID for particle on its work group.
+  Particle this_particle = particles[gid]; //Obtain particle data.
+  
+  //Calculate velocity based on current and previous positions.
+  vec3 velocity = (this_particle.pos - this_particle.ppos) * this_particle.damping;
+  
+  //Flock
+  vec3 new_pos = flock(this_particle.pos, velocity);
+  
+  //Again, very inefficient- but having a visual representation of particle proximity is nice.
+  float neighbors = GetNumNeighbors(this_particle.pos, int(lid));
+  
+  particles[gid].ppos = this_particle.pos; //Assign previous position to current position.
+  particles[gid].pos = new_pos;            //Assign position to new position.
+  particles[gid].color = vec4(1.0 + neighbors, 1.0 - (neighbors / 2), 1.0 - neighbors, 1.0); //Calculate and assign a color based on number of particle neighbors.
+}

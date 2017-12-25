@@ -59,16 +59,20 @@ namespace lava
     	return *this;
     }
 
-    void Clock::reset( void )
+    double Clock::reset( void )
     {
       auto now = std::chrono::high_resolution_clock::now( )
         .time_since_epoch( );
+
+      double old = _lastTime;
 
       _currentTime = 0.001 * std::chrono::duration_cast<
         std::chrono::milliseconds >( now ).count( );
       _lastTime = _currentTime;
       _deltaTime = 0.0;
       _accumTime = 0.0;
+
+      return _currentTime - old;
     }
 
     void Clock::tick( void )

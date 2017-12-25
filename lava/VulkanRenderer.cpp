@@ -1,4 +1,6 @@
 #include "VulkanRenderer.h"
+#include "engine/Clock.h"
+#include "Log.h"
 
 namespace lava
 {
@@ -18,12 +20,26 @@ namespace lava
 			init( );
 			_initialized = true;
 		}
+    float elapsed = 0.0f;
+    uint32_t frames = 0;
+    engine::Clock clock;
 		// TODO: SHOW WINDOW
     while ( _window->isRunning( ) )
     {
+      const auto elapsedTime = clock.reset( );
       _window->pollEvents( );
       beginFrame( );
       //endFrame( );
+
+      elapsed += elapsedTime;
+      ++frames;
+
+      if ( elapsed >= 1.0f )
+      {
+        Log::info( "FPS: ", std::to_string( ( frames / elapsed ) * 0.1f ) );
+        frames = 0;
+        elapsed = 0.0f;
+      }
     }
 	}
 
@@ -374,9 +390,9 @@ namespace lava
     {
       VkBool32 presentSupport = phyDev.getSurfaceSupportKHR( i, *_surface );
 
-      printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n", 
+      /*printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n", 
         queueFamilyIndices[ i ].queueFlags, queueFamilyIndices[ i ].queueCount,
-        presentSupport == VK_TRUE ? 1 : 0 );
+        presentSupport == VK_TRUE ? 1 : 0 );*/
 
       if ( _gfxQueueFamilyIdx == uint32_t( -1 ) && 
         ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) 
@@ -773,4 +789,64 @@ namespace lava
 		}
 		return _clipCorrect;
 	}
+  VulkanWindow::~VulkanWindow( void )
+  {
+    _device->waitIdle( );
+    if ( _window )
+    {
+      _window.reset( );
+    }
+    if ( _device )
+    {
+      if ( imageRes[ 0 ].commandBuffer )
+      {
+        imageRes[ 0 ].commandBuffer.reset( );
+      }
+      if ( imageRes[ 1 ].commandBuffer )
+      {
+        imageRes[ 1 ].commandBuffer.reset( );
+      }
+      if ( _cmdPool )
+      {
+        _cmdPool.reset( );
+      }
+      if ( _renderComplete )
+      {
+        _renderComplete.reset( );
+      }
+      if ( _presQueue )
+      {
+        _presQueue.reset( );
+      }
+      if ( _gfxQueue )
+      {
+        _gfxQueue.reset( );
+      }
+      if ( _defaultFramebuffer )
+      {
+        _defaultFramebuffer.reset( );
+      }
+      if ( _renderPass )
+      {
+        _renderPass.reset( );
+      }
+      if ( _surface )
+      {
+        _surface.reset( );
+      }
+      if ( _device )
+      {
+        _device.reset( );
+      }
+    }
+
+    if ( _physicalDevice )
+    {
+      _physicalDevice.reset( );
+    }
+    /*if ( _instance )
+    {
+      _instance.reset( );
+    }*/
+  }
 }

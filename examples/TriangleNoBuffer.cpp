@@ -148,12 +148,14 @@ int main( void )
 
   std::vector<const char*> layers =
   {
-    "VK_LAYER_LUNARG_standard_validation",
+#ifndef NDEBUG
+    VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+#endif
   };
   std::vector<const char*> extensions =
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    "VK_KHR_win32_surface", // OS specific surface extension
+    LAVA_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 

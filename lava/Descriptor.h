@@ -137,8 +137,8 @@ namespace lava
     WriteDescriptorSet( const std::shared_ptr<DescriptorSet>& dstSet,
       uint32_t dstBinding, uint32_t dstArrayElement,
       vk::DescriptorType descriptorType, uint32_t descriptorCount,
-      vk::Optional<const DescriptorImageInfo> imageInfo,
-      vk::Optional<const DescriptorBufferInfo> bufferInfo,
+      vk::Optional<const DescriptorImageInfo> imageInfo = nullptr,
+      vk::Optional<const DescriptorBufferInfo> bufferInfo = nullptr,
       const std::shared_ptr<lava::BufferView>& bufferView = { }
     );
     LAVA_API

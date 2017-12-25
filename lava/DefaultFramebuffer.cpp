@@ -54,7 +54,7 @@ namespace lava
       *device->getPhysicalDevice( ) ).getSurfacePresentModesKHR( *surface );
     vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
 
-    bool vsync = true;
+    /*bool vsync = true;
 
     if ( !vsync )
     {
@@ -81,10 +81,9 @@ namespace lava
     }
     else
     {
-      /* Mailbox comes with lower input latency than FIFO, but can waste GPU
-      * power by rendering frames that are never displayed, especially if the
-      * app runs much faster than the refresh rate. This is a concern for mobiles.
-      */
+      // Mailbox comes with lower input latency than FIFO, but can waste GPU
+      // power by rendering frames that are never displayed, especially if the
+      // app runs much faster than the refresh rate. This is a concern for mobiles.
       for ( const auto& pr : presentModes )
       {
         if ( pr == vk::PresentModeKHR::eMailbox )
@@ -93,7 +92,7 @@ namespace lava
           break;
         }
       }
-    }
+    }*/
     presentModes.clear( );
 
     uint32_t numImages = surfaceCaps.minImageCount;

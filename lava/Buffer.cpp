@@ -103,6 +103,15 @@ namespace lava
     return usageFlags;
   }
 
+  void Buffer::map( vk::DeviceSize offset, vk::DeviceSize length, void * data )
+  {
+    vk::Result result = static_cast< vk::Device >( *_device ).mapMemory(
+      _memory, offset, length, {}, &data
+    );
+    // lava::utils::translateVulkanResult( result );
+    assert( result == vk::Result::eSuccess );
+  }
+
   void * Buffer::map( vk::DeviceSize offset, vk::DeviceSize length ) const
   {
     void* data;
@@ -153,6 +162,15 @@ namespace lava
     mappedRange.offset = offset;
     mappedRange.size = size;
     static_cast< vk::Device >( *_device ).flushMappedMemoryRanges( { mappedRange } );
+  }
+
+  void Buffer::invalidate( vk::DeviceSize size, vk::DeviceSize offset )
+  {
+    vk::MappedMemoryRange mappedRange;
+    mappedRange.memory = _memory;
+    mappedRange.offset = offset;
+    mappedRange.size = size;
+    static_cast< vk::Device >( *_device ).invalidateMappedMemoryRanges( { mappedRange } );
   }
 
   void Buffer::readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst )

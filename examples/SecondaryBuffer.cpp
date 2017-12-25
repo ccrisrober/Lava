@@ -94,6 +94,26 @@ public:
     };
 
     device->updateDescriptorSets( wdss, {} );
+
+
+    secondaryCmd = _window->_cmdPool->allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
+
+    vk::CommandBufferInheritanceInfo inheritInfo;
+    inheritInfo.renderPass = *_window->defaultRenderPass( );
+    //inheritInfo.framebuffer = *_window->currentFramebuffer( );
+
+    secondaryCmd->beginSimple( //vk::CommandBufferUsageFlagBits::eOneTimeSubmit |
+      vk::CommandBufferUsageFlagBits::eSimultaneousUse |
+      vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
+    secondaryCmd->bindGraphicsPipeline( pipeline );
+
+    secondaryCmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+      pipelineLayout, 0, { descSet }, nullptr );
+
+    secondaryCmd->setViewportScissors( _window->getExtent( ) );
+    secondaryCmd->draw( 4, 1, 0, 0 );
+
+    secondaryCmd->end( );
   }
 
   void releaseResources( void ) override
@@ -126,41 +146,17 @@ public:
     {
       _window->_window->close( );
     }
-    static int i = 0;
 
-    _window->setWindowTitle( std::string( "Step: " ) + std::to_string( i ) );
+    /*static int i = 0;
 
     ++i;
 
-    static auto startTime = std::chrono::high_resolution_clock::now( );
-
-    auto currentTime = std::chrono::high_resolution_clock::now( );
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(
-      currentTime - startTime ).count( ) / 1000.0f;
-
-    _green = sin( time ) / 2.0f + 0.5f;
+    Log::info( std::to_string( i ) );*/
 
     std::array<vk::ClearValue, 2 > clearValues;
-    std::array<float, 4> ccv = { 0.0f, _green, 0.0f, 1.0f };
+    std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil  = vk::ClearDepthStencilValue(  1.0f, 0 );
-
-    secondaryCmd = _window->_cmdPool->allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
-
-    vk::CommandBufferInheritanceInfo inheritInfo;
-    inheritInfo.renderPass = *_window->defaultRenderPass( );
-    inheritInfo.framebuffer = *_window->currentFramebuffer( );
-
-    secondaryCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit | vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
-    secondaryCmd->bindGraphicsPipeline( pipeline );
-
-    secondaryCmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      pipelineLayout, 0, { descSet }, nullptr );
-
-    secondaryCmd->setViewportScissors( _window->getExtent( ) );
-    secondaryCmd->draw( 4, 1, 0, 0 );
-
-    secondaryCmd->end( );
 
     const glm::ivec2 size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
@@ -173,14 +169,6 @@ public:
       rect, clearValues, vk::SubpassContents::eSecondaryCommandBuffers
     );
 
-    /*cmd->bindGraphicsPipeline( pipeline );
-
-    cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      pipelineLayout, 0, { descSet }, nullptr );
-
-    cmd->setViewportScissors( _window->getExtent( ) );
-    cmd->draw( 4, 1, 0, 0 );*/
-
     cmd->executeCommands( { secondaryCmd } );
 
     cmd->endRenderPass( );
@@ -191,7 +179,6 @@ public:
 
 private:
   VulkanWindow *_window;
-  float _green = 0;
 
   std::shared_ptr< DescriptorSetLayout > descSetLayout;
   std::shared_ptr< DescriptorSet > descSet;

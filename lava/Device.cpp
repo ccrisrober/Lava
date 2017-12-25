@@ -114,7 +114,7 @@ namespace lava
   }
 
   void Device::updateDescriptorSets( 
-    std::vector<WriteDescriptorSet> descriptorWrites, 
+    std::vector<WriteDescriptorSet> descriptorWrites,
     std::vector<CopyDescriptorSet> descriptorCopies )
   {
     std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;

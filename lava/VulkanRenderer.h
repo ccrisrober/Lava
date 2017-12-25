@@ -45,6 +45,8 @@ namespace lava
       _initialized = false;
       _swapChainImageSize = glm::ivec2( 500, 500 );
     }
+    LAVA_API
+    virtual ~VulkanWindow( void );
 
     LAVA_API
     VulkanWindow( const VulkanWindow& ) = delete;

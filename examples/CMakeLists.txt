@@ -27,9 +27,29 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLENOBUFFER_LINK_LIBRARIES lava )
   common_application( lavaTriangleNoBuffer )
 
+  set( LAVASECONDARYBUFFER_HEADERS )
+  set( LAVASECONDARYBUFFER_SOURCES SecondaryBuffer.cpp )
+  set( LAVASECONDARYBUFFER_LINK_LIBRARIES lava )
+  common_application( lavaSecondaryBuffer )
+
   set( LAVADEMO_HEADERS )
   set( LAVADEMO_SOURCES Demo.cpp )
   set( LAVADEMO_LINK_LIBRARIES lava )
   common_application( lavaDemo )
+
+  set( LAVACOMPUTECOPY_HEADERS )
+  set( LAVACOMPUTECOPY_SOURCES ComputeCopy.cpp )
+  set( LAVACOMPUTECOPY_LINK_LIBRARIES lava )
+  common_application( lavaComputeCopy )
+
+  set( LAVACOMPUTESUM_HEADERS )
+  set( LAVACOMPUTESUM_SOURCES ComputeSum.cpp )
+  set( LAVACOMPUTESUM_LINK_LIBRARIES lava )
+  common_application( lavaComputeSum )
+
+  set( LAVACOMPUTEFLOCK_HEADERS )
+  set( LAVACOMPUTEFLOCK_SOURCES ComputeFlock.cpp )
+  set( LAVACOMPUTEFLOCK_LINK_LIBRARIES lava )
+  common_application( lavaComputeFlock )
 
 endif( )

@@ -66,6 +66,8 @@ namespace lava
     static vk::BufferUsageFlags getBufferUsage( const BufferType& type );
 
     LAVA_API
+    void map( vk::DeviceSize offset, vk::DeviceSize length, void* data );
+    LAVA_API
     void* map( vk::DeviceSize offset, vk::DeviceSize length ) const;
     LAVA_API
     void unmap( void );
@@ -88,7 +90,9 @@ namespace lava
       const vk::ImageSubresourceLayers& range, vk::ImageLayout layout );
 
     LAVA_API
-    void flush( vk::DeviceSize size, vk::DeviceSize offset );
+    void flush( vk::DeviceSize size, vk::DeviceSize offset = 0 );
+    LAVA_API
+    void invalidate( vk::DeviceSize size, vk::DeviceSize offset = 0 );
 
     LAVA_API
     void readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst );
