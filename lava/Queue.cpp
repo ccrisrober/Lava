@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Queue.h"
 
 #include "Device.h"
@@ -34,58 +53,6 @@ namespace lava
     signalSemaphores = rhs.signalSemaphores;
     return *this;
   }
-
-
-  SparseMemoryBind::SparseMemoryBind( vk::DeviceMemory mem, 
-    vk::DeviceSize memOffset, vk::DeviceSize size_, 
-    vk::DeviceSize resourceOffset_ )
-    : memory( mem )
-    , memoryOffset( memOffset )
-    , size( size_ )
-    , resourceOffset( resourceOffset_ )
-  {
-    /*if (DEBUG_MODE)
-    {
-        System.out.println("Creating sparse buffer");
-    }
-    
-    VkSparseMemoryBind.Buffer memoryBinds = VkSparseMemoryBind.calloc(1)
-                                                              .memory(buffer.getMemoryBlock().getMemory())
-                                                              .memoryOffset(buffer.getMemoryBlock().getOffset())
-                                                              .size(buffer.getMemoryBlock().getSize())
-                                                              .resourceOffset(0);
-    
-    VkSparseBufferMemoryBindInfo.Buffer bindInfo = VkSparseBufferMemoryBindInfo.calloc(1)
-                                                                               .buffer(buffer.getBufferHandle())
-                                                                               .pBinds(memoryBinds);
-    
-    VkBindSparseInfo sparseInfo = VkBindSparseInfo.calloc()
-                                                  .sType(VK_STRUCTURE_TYPE_BIND_SPARSE_INFO)
-                                                  .pBufferBinds(bindInfo);
-    
-    vkQueueBindSparse(deviceQueue, sparseInfo, VK_NULL_HANDLE);
-    
-    memoryBinds.free();
-    sparseInfo.free();
-    bindInfo.free();*/
-  }
-  SparseMemoryBind::SparseMemoryBind( const SparseMemoryBind& other )
-    : memory( other.memory )
-    , memoryOffset( other.memoryOffset )
-    , size( other.size )
-    , resourceOffset( other.resourceOffset )
-  {
-  }
-  SparseMemoryBind& SparseMemoryBind::operator=( const SparseMemoryBind& other )
-  {
-    memory = other.memory;
-    memoryOffset = other.memoryOffset;
-    size = other.size;
-    resourceOffset = other.resourceOffset;
-    return *this;
-  }
-
-
 
   Fence::Fence( const DeviceRef& device, bool signaled )
     : VulkanResource( device )
@@ -155,7 +122,7 @@ namespace lava
 
 
 
-  void Queue::submit( vk::ArrayProxy<const SubmitInfo> submitInfos, 
+  vk::Result Queue::submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
     const std::shared_ptr<Fence>& fenceIn )
   {
     // create a new fence if none has been passed to track completion of the submit.
@@ -216,7 +183,9 @@ namespace lava
       );
     }
 
-    _queue.submit( to_submit, *fence );
+    //_queue.submit( to_submit, *fence );
+
+    return _queue.submit( to_submit.size( ), to_submit.data( ), *fence );
   }
 
   void Queue::submit( const std::shared_ptr<CommandBuffer>& commandBuffer, 

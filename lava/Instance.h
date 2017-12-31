@@ -12,24 +12,27 @@
 
 namespace lava
 {
-  VkBool32 VKAPI_CALL debugMsgCallback( VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
-    uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix,
-    const char* pMessage, void* pUserData );
+  VkBool32 VKAPI_CALL debugMsgCallback( VkDebugReportFlagsEXT flags, 
+    VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, 
+    int32_t messageCode, const char* pLayerPrefix, const char* pMessage, 
+    void* pUserData
+  );
+
   class Instance : public std::enable_shared_from_this<Instance>,
     private NonCopyable<Instance>
   {
   public:
     LAVA_API
-      static std::shared_ptr<Instance> create( const std::string& appName );
+    static std::shared_ptr<Instance> create( const std::string& appName );
     LAVA_API
-      static std::shared_ptr<Instance> create( const vk::InstanceCreateInfo& ci );
+    static std::shared_ptr<Instance> create( const vk::InstanceCreateInfo& ci );
     LAVA_API
-      Instance( const vk::InstanceCreateInfo& ci );
+    Instance( const vk::InstanceCreateInfo& ci );
     LAVA_API
-      virtual ~Instance( void );
+    virtual ~Instance( void );
 
     LAVA_API
-      inline operator vk::Instance( void )
+    inline operator vk::Instance( void )
     {
       return _instance;
     }
@@ -37,11 +40,11 @@ namespace lava
     void destroy( void );
 
     LAVA_API
-      void createDebugReportCallback(
-        const vk::DebugReportCallbackCreateInfoEXT& debugInfo );
+    void createDebugReportCallback(
+      const vk::DebugReportCallbackCreateInfoEXT& debugInfo );
 
     LAVA_API
-      std::shared_ptr<Surface> createSurfaceKHR( GLFWwindow* window )
+    std::shared_ptr<Surface> createSurfaceKHR( GLFWwindow* window )
     {
       // Surface KHR
       VkSurfaceKHR surface;
@@ -53,9 +56,9 @@ namespace lava
       return std::make_shared<Surface>( shared_from_this( ), vk::SurfaceKHR( surface ) );
     }
     LAVA_API
-      uint32_t getPhysicalDeviceCount( void ) const;
+    uint32_t getPhysicalDeviceCount( void ) const;
     LAVA_API
-      std::shared_ptr<PhysicalDevice> getPhysicalDevice( uint32_t index );
+    std::shared_ptr<PhysicalDevice> getPhysicalDevice( uint32_t index );
   private:
     std::vector<vk::PhysicalDevice> _physicalDevices;
     std::vector<std::weak_ptr<PhysicalDevice>> _physicalDevicesCache;

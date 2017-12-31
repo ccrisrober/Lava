@@ -48,6 +48,7 @@ namespace lava
         static_cast< vk::SurfaceKHR >( *surface ) );
     }
 
+    LAVA_API
     DeviceRef createDevice(
       const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
       const std::vector<std::string>& enabledLayerNames,
@@ -76,6 +77,11 @@ namespace lava
       return ( std::find( supportedExtensions.begin( ), 
         supportedExtensions.end( ), extension ) != supportedExtensions.end( ) );
     }
+    
+    std::vector<vk::QueueFamilyProperties> getQueueFamilyProperties( void ) const
+    {
+      return _physicalDevice.getQueueFamilyProperties( );
+    }
 
     std::vector<uint32_t> getGraphicsPresentQueueFamilyIndices(
       const std::shared_ptr<Surface>& surface )
@@ -96,8 +102,7 @@ namespace lava
       return indices;
     }
 
-    std::vector<uint32_t> getComputeQueueFamilyIndices(
-      const std::shared_ptr<Surface>& surface )
+    std::vector<uint32_t> getComputeQueueFamilyIndices( void  )
     {
       std::vector<vk::QueueFamilyProperties> props =
         _physicalDevice.getQueueFamilyProperties( );
@@ -106,8 +111,7 @@ namespace lava
       std::vector<uint32_t> indices;
       for ( size_t i = 0; i < props.size( ); ++i )
       {
-        if ( ( props[ i ].queueFlags & vk::QueueFlagBits::eCompute ) &&
-          this->getSurfaceSupport( i, surface ) )
+        if ( props[ i ].queueFlags & vk::QueueFlagBits::eCompute )
         {
           indices.push_back( i );
         }

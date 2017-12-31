@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Pipeline.h"
 
 #include "Device.h"
@@ -224,6 +243,55 @@ namespace lava
     return *this;
   }
 
+  PipelineCache::PipelineCache( const DeviceRef& device, const char* filename )
+    : VulkanResource( device )
+  {
+    // Check disk for existing cache data
+    size_t startCacheSize = 0;
+    void *startCacheData = nullptr;
+
+    FILE *pReadFile = fopen(filename, "rb");
+    if (pReadFile)
+    {
+      // Determine cache size
+      fseek(pReadFile, 0, SEEK_END);
+      startCacheSize = ftell(pReadFile);
+      rewind(pReadFile);
+
+      // Allocate memory to hold the initial cache data
+      startCacheData = (char *)malloc(sizeof(char) * startCacheSize);
+      if (startCacheData == nullptr)
+      {
+        fputs("Memory error", stderr);
+        throw;
+      }
+
+      // Read the data into our buffer
+      size_t result = fread(startCacheData, 1, startCacheSize, pReadFile);
+      if (result != startCacheSize)
+      {
+        fputs("Reading error", stderr);
+        free(startCacheData);
+        throw;
+      }
+
+      // Clean up and print results
+      fclose(pReadFile);
+      printf( "  Pipeline cache HIT!\n" );
+      printf("  cacheData loaded from %s\n", filename );
+
+    } else {
+      // No cache found on disk
+      printf("  Pipeline cache miss!\n");
+    }
+
+    // https://github.com/LunarG/VulkanSamples/blob/master/API-Samples/pipeline_cache/pipeline_cache.cpp 
+    // TODO: NOT COMPLETE 
+
+    vk::PipelineCacheCreateInfo createInfo{ {}, startCacheSize, startCacheData };
+    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+  }
+
   PipelineCache::PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
     size_t initialSize, void const* initialData )
     : VulkanResource( device )
@@ -232,7 +300,7 @@ namespace lava
     _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
   }
 
-  PipelineCache::~PipelineCache( )
+  PipelineCache::~PipelineCache( void )
   {
     static_cast< vk::Device >( *_device ).destroyPipelineCache( _pipelineCache );
   }
@@ -253,6 +321,11 @@ namespace lava
     static_cast< vk::Device >( *_device ).mergePipelineCaches( _pipelineCache, caches );
   }
 
+  void PipelineCache::saveToFile( const std::string& filename )
+  {
+    saveToFile( filename.c_str( ) );
+  }
+
   void PipelineCache::saveToFile( const char* filename )
   {
     size_t size = 0;
@@ -261,7 +334,7 @@ namespace lava
     if ( result == vk::Result::eSuccess && size != 0 )
     {
       auto myfile = std::fstream( filename, std::ios::out | std::ios::binary );
-      void* data = nullptr;
+      void* data = ( char * ) malloc( sizeof( char ) * size );
       result = static_cast<vk::Device>(*_device)
         .getPipelineCacheData( _pipelineCache, &size, data );
       if ( result == vk::Result::eSuccess )
@@ -351,8 +424,8 @@ namespace lava
         specializationInfos.push_back( vk::SpecializationInfo( 
           s.specializationInfo->mapEntries.size( ),
           s.specializationInfo->mapEntries.data( ),
-          s.specializationInfo->data.size( ),
-          s.specializationInfo->data.data( ) )
+          sizeof( s.specializationInfo->data ),
+          s.specializationInfo->data )
         );
       }
       vStages.push_back( vk::PipelineShaderStageCreateInfo( { }, s.stage, 
@@ -467,9 +540,9 @@ namespace lava
 
   SpecializationInfo::SpecializationInfo( 
     vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries_, 
-    vk::ArrayProxy<const uint8_t> data_ )
+    const void* data_ )
     : mapEntries( mapEntries_.begin( ), mapEntries_.end( ) )
-    , data( data_.begin( ), data_.end( ) )
+    , data( data_ )
   {
   }
 
@@ -492,13 +565,16 @@ namespace lava
     , name( name_ )
     , specializationInfo( specializationInfo_ ? 
       new SpecializationInfo( *specializationInfo_ ) : nullptr )
-  {}
+  {
+  }
 
-  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( const PipelineShaderStageCreateInfo& rhs )
+  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( 
+    const PipelineShaderStageCreateInfo& rhs )
     : PipelineShaderStageCreateInfo( rhs.stage, rhs.module, rhs.name, 
       rhs.specializationInfo ? vk::Optional<const SpecializationInfo>( 
         *rhs.specializationInfo.get( ) ) : nullptr )
-  {}
+  {
+  }
 
   PipelineShaderStageCreateInfo & PipelineShaderStageCreateInfo::operator=( 
     const PipelineShaderStageCreateInfo& rhs )

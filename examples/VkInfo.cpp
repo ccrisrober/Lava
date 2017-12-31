@@ -1,36 +1,60 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 
-int main( )
+int main( void )
 {
   try
   {
-    std::vector<vk::LayerProperties> layerProps = vk::enumerateInstanceLayerProperties( );
+    auto layerProps = vk::enumerateInstanceLayerProperties( );
     std::cout << "Layers: " << layerProps.size( ) << std::endl;
     uint32_t i = 0;
     for ( const auto& prop : layerProps )
     {
       std::cout << "Layer " << i << ":" << std::endl;
-      std::cout << "\tlayerName             : " << prop.layerName << std::endl;
-      std::cout << "\tspecVersion           : " << prop.specVersion << std::endl;
-      std::cout << "\timplementationVersion : " << prop.implementationVersion << std::endl;
-      std::cout << "\tdescription           : " << prop.description << std::endl;
+      std::cout << "\tlayerName             : " 
+        << prop.layerName << std::endl;
+      std::cout << "\tspecVersion           : " 
+        << prop.specVersion << std::endl;
+      std::cout << "\timplementationVersion : " 
+        << prop.implementationVersion << std::endl;
+      std::cout << "\tdescription           : " 
+        << prop.description << std::endl;
       ++i;
     }
 
-    std::vector<vk::ExtensionProperties> instanceExts = vk::enumerateInstanceExtensionProperties( );
+    auto instanceExts = vk::enumerateInstanceExtensionProperties( );
     std::cout << "InstanceExtensions : " << instanceExts.size( ) << std::endl;
     for ( const auto& ext : instanceExts )
     {
-      std::cout << "\t" << ext.extensionName << " (Version " << ext.specVersion << ")" << std::endl;
+      std::cout << "\t" << ext.extensionName << " (Version " 
+        << ext.specVersion << ")" << std::endl;
     }
 
-    std::shared_ptr<lava::Instance> instance = lava::Instance::create( "INSTANCE" );
+    std::shared_ptr<lava::Instance> instance = lava::Instance::create( "" );
 
     uint32_t phy_dev_count = instance->getPhysicalDeviceCount( );
     std::cout << "PhysicalDeviceCount : " << phy_dev_count << std::endl;
     for ( uint32_t i = 0; i < phy_dev_count; ++i )
     {
-      std::shared_ptr<lava::PhysicalDevice> pd = instance->getPhysicalDevice( i );
+      auto pd = instance->getPhysicalDevice( i );
       vk::PhysicalDeviceProperties props = pd->getDeviceProperties( );
 
       std::cout << "Device " << i << ":" << std::endl;
@@ -38,7 +62,8 @@ int main( )
       std::cout << "\tDriver Version : " << props.driverVersion << std::endl;
       std::cout << "\tVendor ID      : " << props.vendorID << std::endl;
       std::cout << "\tDevice ID      : " << props.deviceID << std::endl;
-      std::cout << "\tDevice Type    : " << vk::to_string( props.deviceType ) << std::endl;
+      std::cout << "\tDevice Type    : " << vk::to_string( props.deviceType ) 
+        << std::endl;
       std::cout << "\tDevice Name    : " << props.deviceName << std::endl;
 
       std::cout << "\tlimits: " << std::endl;
@@ -69,26 +94,36 @@ int main( )
         << props.limits.maxComputeWorkGroupSize[ 1 ] << ", "
         << props.limits.maxComputeWorkGroupSize[ 2 ] << std::endl;
 
-      std::vector<vk::QueueFamilyProperties> qProps = static_cast< vk::PhysicalDevice >( *pd ).getQueueFamilyProperties( );
-      std::cout << "\tQueue Family Property Count : " << qProps.size( ) << std::endl;
+      auto qProps = static_cast< vk::PhysicalDevice >( *pd )
+        .getQueueFamilyProperties( );
+      std::cout << "\tQueue Family Property Count : " 
+        << qProps.size( ) << std::endl;
       uint32_t q = 0;
       for ( const auto& prop : qProps )
       {
         std::cout << "\t\tFamily " << q << ":" << std::endl;
-        std::cout << "\t\t\tQueue Flags                    : " << vk::to_string( prop.queueFlags ) << std::endl;
-        std::cout << "\t\t\tQueue Count                    : " << prop.queueCount << std::endl;
-        std::cout << "\t\t\tTimestampe Valid Bits          : " << prop.timestampValidBits << std::endl;
-        std::cout << "\t\t\tMin Image Transfer Granularity : " << prop.minImageTransferGranularity.width << ", " <<
-          prop.minImageTransferGranularity.height << ", " << prop.minImageTransferGranularity.depth << std::endl;
+        std::cout << "\t\t\tQueue Flags                    : " 
+          << vk::to_string( prop.queueFlags ) << std::endl;
+        std::cout << "\t\t\tQueue Count                    : " 
+          << prop.queueCount << std::endl;
+        std::cout << "\t\t\tTimestampe Valid Bits          : " 
+          << prop.timestampValidBits << std::endl;
+        std::cout << "\t\t\tMin Image Transfer Granularity : " 
+          << prop.minImageTransferGranularity.width << ", " <<
+          prop.minImageTransferGranularity.height << ", " 
+            << prop.minImageTransferGranularity.depth << std::endl;
         ++q;
       }
 
 
-      std::vector<vk::ExtensionProperties> devExts = static_cast< vk::PhysicalDevice >( *pd ).enumerateDeviceExtensionProperties( );
+      auto devExts = static_cast< vk::PhysicalDevice >( *pd )
+        .enumerateDeviceExtensionProperties( );
+
       std::cout << "\tDeviceExtensions : " << devExts.size( ) << std::endl;
       for ( const auto& ext : devExts )
       {
-        std::cout << "\t\t" << ext.extensionName << " (Version " << ext.specVersion << ")" << std::endl;
+        std::cout << "\t\t" << ext.extensionName << " (Version " 
+          << ext.specVersion << ")" << std::endl;
       }
     }
   }

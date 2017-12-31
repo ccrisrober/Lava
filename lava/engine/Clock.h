@@ -23,7 +23,7 @@ namespace lava
       Clock &operator=( const Clock &other );
 
       LAVA_API
-      void reset( void );
+      double reset( void );
       LAVA_API
       void tick( void );
 

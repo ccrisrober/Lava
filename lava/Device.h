@@ -11,6 +11,7 @@
 #include "Sampler.h"
 #include "Descriptor.h"
 #include "Buffer.h"
+#include "Event.h"
 
 #include <vector>
 #include <map>
@@ -79,6 +80,9 @@ namespace lava
       std::vector<CopyDescriptorSet> descriptorCopies );
 
     LAVA_API
+    std::shared_ptr<Event> createEvent( void );
+
+    LAVA_API
     void waitIdle( void );
 
     LAVA_API
@@ -92,8 +96,6 @@ namespace lava
 
     LAVA_API
     std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIdx );
-
-    std::shared_ptr<PhysicalDevice> _physicalDevice;
 
     LAVA_API
     std::shared_ptr<Swapchain> createSwapchain( const std::shared_ptr<Surface>& surface,
@@ -130,7 +132,7 @@ namespace lava
     LAVA_API
     const PipelineShaderStageCreateInfo createShaderPipelineShaderStage(
       const std::string& spvFile, vk::ShaderStageFlagBits stage, 
-      const std::string& name = "main" );
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
 
     LAVA_API
     std::shared_ptr<Fence> createFence( bool signaled );
@@ -138,11 +140,18 @@ namespace lava
     std::shared_ptr<Sampler> createSampler( const SamplerStateDesc & desc );
     LAVA_API
     std::shared_ptr<DescriptorSetLayout> createDescriptorSetLayout(
-      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings );
+      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings, 
+      vk::DescriptorSetLayoutCreateFlags flags = { } );
     LAVA_API
     std::shared_ptr<DescriptorPool> createDescriptorPool(
-      vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
+      /*vk::DescriptorPoolCreateFlags flags, */uint32_t maxSets,
       vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes );
+
+    LAVA_API
+    std::shared_ptr<PhysicalDevice> getPhysicalDevice( void ) const
+    {
+      return _physicalDevice;
+    }
 
     LAVA_API
     std::shared_ptr<PipelineCache> createPipelineCache( size_t initialSize, 
@@ -207,6 +216,20 @@ namespace lava
     LAVA_API
     void freeMemory( vk::DeviceMemory memory );
 
+#ifdef LAVA_DEVICE_BUILDERS
+    LAVA_API
+    std::shared_ptr<UniformBuffer> createUniformBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<StorageBuffer> createStorageBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<UniformTexelBuffer> createUniformTexelBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<VertexBuffer> createVertexBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<IndexBuffer> createIndexBuffer( vk::IndexType type, 
+      vk::DeviceSize size );
+#endif
+
   protected:
     void init(
       const std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos,
@@ -237,6 +260,7 @@ namespace lava
     std::array< QueueInfo, GPUT_COUNT> _queueInfos;*/
 
     vk::Device _device;
+    std::shared_ptr<PhysicalDevice> _physicalDevice;
 
     std::map<uint32_t, std::vector<std::unique_ptr<Queue>>> _queues; // key is queueFamilyIndex
   };

@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Descriptor.h"
 
 #include "Device.h"
@@ -6,17 +25,21 @@ namespace lava
 {
   DescriptorSetLayoutBinding::DescriptorSetLayoutBinding(
     uint32_t binding_, vk::DescriptorType descriptorType_,
-    vk::ShaderStageFlags stageFlags_ )
+    vk::ShaderStageFlags stageFlags_,
+    vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> iss )
     : binding( binding_ )
     , descriptorType( descriptorType_ )
     , stageFlags( stageFlags_ )
-    , immutableSamplers( { } )
-  {}
+    , immutableSamplers( iss.begin( ), iss.end( ) )
+  {
+  }
 
   DescriptorSetLayoutBinding::DescriptorSetLayoutBinding( 
     DescriptorSetLayoutBinding const& rhs )
-    : DescriptorSetLayoutBinding( rhs.binding, rhs.descriptorType, rhs.stageFlags )
-  {}
+    : DescriptorSetLayoutBinding( rhs.binding, rhs.descriptorType, 
+      rhs.stageFlags, rhs.immutableSamplers)
+  {
+  }
 
   DescriptorSetLayoutBinding& 
   DescriptorSetLayoutBinding::operator=( DescriptorSetLayoutBinding const& rhs )
@@ -24,9 +47,9 @@ namespace lava
     binding = rhs.binding;
     descriptorType = rhs.descriptorType;
     stageFlags = rhs.stageFlags;
+    immutableSamplers = rhs.immutableSamplers;
     return *this;
   }
-
 
   DescriptorBufferInfo::DescriptorBufferInfo( const std::shared_ptr<Buffer>& buffer_, 
     vk::DeviceSize offset_, vk::DeviceSize range_ )
@@ -34,7 +57,6 @@ namespace lava
     , offset( offset_ )
     , range( range_ )
   {
-
   }
   DescriptorBufferInfo::DescriptorBufferInfo( const DescriptorBufferInfo& rhs )
     : DescriptorBufferInfo( rhs.buffer, rhs.offset, rhs.range )
@@ -51,19 +73,45 @@ namespace lava
 
 
   DescriptorSetLayout::DescriptorSetLayout( const DeviceRef& device,
-    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings )
+    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings,
+    vk::DescriptorSetLayoutCreateFlags flags )
     : VulkanResource( device )
     , _bindings( bindings.begin( ), bindings.end( ) )
   {
+    std::vector< std::vector< vk::Sampler > > samplers;
+    samplers.reserve( _bindings.size( ) );
+
     std::vector<vk::DescriptorSetLayoutBinding> dslb;
     dslb.reserve( _bindings.size( ) );
 
-    for ( auto b : _bindings )
+    for ( const auto& bind : _bindings )
     {
-      dslb.push_back( vk::DescriptorSetLayoutBinding( b.binding, b.descriptorType, 1, b.stageFlags, nullptr ) );
+      samplers.push_back(std::vector< vk::Sampler> ( ) );
+      samplers.back( ).reserve( bind.immutableSamplers.size( ) );
+
+      for( const auto& samp: bind.immutableSamplers )
+      {
+        samplers.back( ).push_back( static_cast< vk::Sampler > ( *samp ) );
+      }
+
+      uint32_t dscptCount = 1;
+      if (!samplers.back( ).empty( ) && bind.descriptorType == vk::DescriptorType::eSampler )
+      {
+        dscptCount = samplers.back( ).size( );
+      }
+
+      dslb.push_back( 
+        vk::DescriptorSetLayoutBinding( 
+          bind.binding, 
+          bind.descriptorType, 
+          dscptCount, 
+          bind.stageFlags, 
+          samplers.back( ).data( )
+        )
+      );
     }
     vk::DescriptorSetLayoutCreateInfo dci(
-      {},
+      flags,
       dslb.size( ),
       dslb.data( )
     );
@@ -149,7 +197,8 @@ namespace lava
     uint32_t dstBinding_, uint32_t dstArrayElement_, vk::DescriptorType descriptorType_, 
     uint32_t descriptorCount_, 
     vk::Optional<const DescriptorImageInfo> imageInfo_, 
-    vk::Optional<const DescriptorBufferInfo> bufferInfo_ )
+    vk::Optional<const DescriptorBufferInfo> bufferInfo_, 
+    const std::shared_ptr<lava::BufferView>& bufferView_ )
     : dstSet( dstSet_ )
     , dstBinding( dstBinding_ )
     , dstArrayElement( dstArrayElement_ )
@@ -157,6 +206,7 @@ namespace lava
     , descriptorCount( descriptorCount_ )
     , imageInfo( imageInfo_ ? new DescriptorImageInfo( *imageInfo_ ) : nullptr )
     , bufferInfo( bufferInfo_ ? new DescriptorBufferInfo( *bufferInfo_ ) : nullptr )
+    , texelBufferView( bufferView_ )
   {
   }
   WriteDescriptorSet::WriteDescriptorSet( const WriteDescriptorSet & rhs )
@@ -165,7 +215,7 @@ namespace lava
       rhs.imageInfo.get( ) ? vk::Optional<const DescriptorImageInfo>( *rhs.imageInfo )
         : vk::Optional<const DescriptorImageInfo>( nullptr ),
       rhs.bufferInfo.get( ) ? vk::Optional<const DescriptorBufferInfo>( *rhs.bufferInfo ) 
-      : vk::Optional<const DescriptorBufferInfo>( nullptr ) )
+      : vk::Optional<const DescriptorBufferInfo>( nullptr ), rhs.texelBufferView )
   {
   }
   WriteDescriptorSet & WriteDescriptorSet::operator=( const WriteDescriptorSet & rhs )
@@ -177,6 +227,7 @@ namespace lava
     descriptorCount = rhs.descriptorCount;
     imageInfo.reset( rhs.imageInfo ? new DescriptorImageInfo( *rhs.imageInfo ) : nullptr );
     bufferInfo.reset( rhs.bufferInfo ? new DescriptorBufferInfo( *rhs.bufferInfo ) : nullptr );
+    texelBufferView = rhs.texelBufferView;
     return *this;
   }
   CopyDescriptorSet::CopyDescriptorSet( 

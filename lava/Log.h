@@ -74,24 +74,31 @@ namespace lava
       class OutputHandler
       {
         public:
+          LAVA_API
           virtual ~OutputHandler(void) { }
           virtual void print( const std::string& src ) = 0;
       };
       class ConsoleOutputHandler : public OutputHandler
       {
       public:
+        LAVA_API
         ConsoleOutputHandler(void) { }
+        LAVA_API
         virtual ~ConsoleOutputHandler(void) { }
 
+        LAVA_API
         virtual void print( const std::string& src ) override;
       };
       class FileOutputHandler : public OutputHandler
       {
       public:
+        LAVA_API
         FileOutputHandler(std::string const &path) 
           : _out(path, std::ios::out) { }
+        LAVA_API
         virtual ~FileOutputHandler(void) { }
 
+        LAVA_API
         virtual void print( const std::string& src ) override;
       private:
         std::ofstream _out;
@@ -99,11 +106,15 @@ namespace lava
       class NullOutputHandler : public OutputHandler
       {
       public:
+        LAVA_API
         NullOutputHandler(void) { }
+        LAVA_API
         virtual ~NullOutputHandler(void) { }
 
+        LAVA_API
         virtual void print( const std::string& ) override;
       };
+     
       template< class T, typename ... Args >
       static void setOutputHandler(Args &&... args)
       {

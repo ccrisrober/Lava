@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "utils.hpp"
 
 #include <sstream>
@@ -18,14 +37,14 @@ namespace lava
   {
     bool supportBlit = true;
 
-    vk::FormatProperties formatProps = dev->_physicalDevice->getFormatProperties( colorFormat );
+    vk::FormatProperties formatProps = dev->getPhysicalDevice( )->getFormatProperties( colorFormat );
     // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
     if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
       supportBlit = false;
     }
     // Check if the device supports blitting to linear images 
-    formatProps = dev->_physicalDevice->getFormatProperties( vk::Format::eR8G8B8A8Snorm );
+    formatProps = dev->getPhysicalDevice( )->getFormatProperties( vk::Format::eR8G8B8A8Snorm );
     if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) )
     {
       supportBlit = false;
@@ -307,6 +326,22 @@ namespace lava
     setImageLayout( cmd, image, oldImageLayout, newImageLayout, 
       subresourceRange, srcStageMask, dstStageMask );
   }
+  void utils::insertImageMemoryBarrier( 
+    const std::shared_ptr<CommandBuffer> cmdbuffer, 
+    std::shared_ptr<Image> image, 
+    vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
+    vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout, 
+    vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
+    vk::ImageSubresourceRange subresourceRange )
+  {
+    lava::ImageMemoryBarrier imr( 
+      srcAccessMask, dstAccessMask, 
+      oldImageLayout, newImageLayout, 
+      0, 0, image, subresourceRange
+    );
+    cmdbuffer->pipelineBarrier( srcStageMask, dstStageMask, {}, {}, {}, imr );
+  }
+
   void utils::setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
     vk::Image image,
     vk::ImageLayout oldImageLayout,

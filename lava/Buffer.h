@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_BUFFER__
 #define __LAVA_BUFFER__
 
@@ -7,6 +26,7 @@
 #include "noncopyable.hpp"
 
 #include "CommandBuffer.h"
+#include "Queue.h"
 
 namespace lava
 {
@@ -47,6 +67,8 @@ namespace lava
     static vk::BufferUsageFlags getBufferUsage( const BufferType& type );
 
     LAVA_API
+    void map( vk::DeviceSize offset, vk::DeviceSize length, void* data );
+    LAVA_API
     void* map( vk::DeviceSize offset, vk::DeviceSize length ) const;
     LAVA_API
     void unmap( void );
@@ -69,7 +91,15 @@ namespace lava
       const vk::ImageSubresourceLayers& range, vk::ImageLayout layout );
 
     LAVA_API
-    void flush( vk::DeviceSize size, vk::DeviceSize offset );
+    void CreateStaged( const std::shared_ptr<Queue>& q,
+      std::shared_ptr<CommandBuffer>& cmd,
+      vk::DeviceSize size, vk::BufferUsageFlags usageFlags, void* data,
+      vk::MemoryPropertyFlags props );
+
+    LAVA_API
+    void flush( vk::DeviceSize size, vk::DeviceSize offset = 0 );
+    LAVA_API
+    void invalidate( vk::DeviceSize size, vk::DeviceSize offset = 0 );
 
     LAVA_API
     void readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst );
@@ -123,6 +153,44 @@ namespace lava
   public:
     LAVA_API
     UniformBuffer( const DeviceRef&, vk::DeviceSize size );
+  };
+
+  class StorageBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    StorageBuffer( const DeviceRef&, vk::DeviceSize size );
+  };
+
+  class UniformTexelBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    UniformTexelBuffer( const DeviceRef&, vk::DeviceSize size );
+  };
+
+  class BufferView
+  {
+    public:
+    LAVA_API
+    BufferView(const std::shared_ptr<lava::Buffer>& buffer, 
+      vk::Format format, vk::DeviceSize offset, 
+      vk::DeviceSize range );
+    LAVA_API
+    virtual ~BufferView( void );
+
+    LAVA_API
+    inline operator vk::BufferView( void ) const
+    {
+      return _bufferView;
+    }
+
+    BufferView(BufferView const& rhs) = delete;
+    BufferView & operator=(BufferView const& rhs) = delete;
+
+  private:
+    vk::BufferView  _bufferView;
+    std::shared_ptr<lava::Buffer> _buffer;
   };
 }
 

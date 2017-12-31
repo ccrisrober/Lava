@@ -1,19 +1,41 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "CommandBuffer.h"
 
 #include "Device.h"
+#include "PhysicalDevice.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "Event.h"
 
 namespace lava
 {
-  CommandPool::CommandPool( const DeviceRef& device, vk::CommandPoolCreateFlags flags,
-    uint32_t familyIndex )
+  CommandPool::CommandPool( const DeviceRef& device, 
+    vk::CommandPoolCreateFlags flags, uint32_t familyIndex )
     : VulkanResource( device )
+    , _familyIndex( familyIndex )
   {
     vk::CommandPoolCreateInfo cci( flags, familyIndex );
     _commandPool = static_cast< vk::Device >( *_device ).createCommandPool( cci );
   }
-  CommandPool::~CommandPool( )
+  CommandPool::~CommandPool( void )
   {
     static_cast< vk::Device >( *_device ).destroyCommandPool( _commandPool );
   }
@@ -26,6 +48,26 @@ namespace lava
     return( commandBuffer );
   }
 
+  bool CommandPool::supportsCompute( void ) const
+  {
+    return !!( _device->getPhysicalDevice( )
+      ->getQueueFamilyProperties()[ _familyIndex ]
+      .queueFlags & vk::QueueFlagBits::eCompute);
+  }
+
+  bool CommandPool::supportsGraphics( void ) const
+  {
+    return !!( _device->getPhysicalDevice( )->
+      getQueueFamilyProperties()[ _familyIndex ]
+      .queueFlags & vk::QueueFlagBits::eGraphics);
+  }
+
+  bool CommandPool::supportsTransfer( void ) const
+  {
+    return !!( _device->getPhysicalDevice( )->
+      getQueueFamilyProperties()[ _familyIndex ]
+      .queueFlags & vk::QueueFlagBits::eTransfer);
+  }
 
   ImageMemoryBarrier::ImageMemoryBarrier( 
     vk::AccessFlags srcAccessMask_, vk::AccessFlags dstAccessMask_, 
@@ -45,7 +87,8 @@ namespace lava
 
   ImageMemoryBarrier::ImageMemoryBarrier( ImageMemoryBarrier const& rhs )
     : ImageMemoryBarrier( rhs.srcAccessMask, rhs.dstAccessMask, 
-      rhs.oldLayout, rhs.newLayout, rhs.srcQueueFamilyIndex, rhs.dstQueueFamilyIndex, 
+      rhs.oldLayout, rhs.newLayout, 
+      rhs.srcQueueFamilyIndex, rhs.dstQueueFamilyIndex, 
       rhs.image, rhs.subresourceRange )
   {}
 
@@ -129,6 +172,57 @@ namespace lava
     _commandBuffer.endRenderPass( );
   }
 
+//#ifdef VK_HEADER_VERSION >= 46
+  void CommandBuffer::pushDescriptorSetKHR(
+    vk::PipelineBindPoint pipelineBindPoint,
+    const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
+    vk::ArrayProxy<WriteDescriptorSet> descriptorWrites )
+  {
+    std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
+    diis.reserve( descriptorWrites.size( ) );
+
+    std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> dbis;
+    dbis.reserve( descriptorWrites.size( ) );
+
+    std::vector<vk::WriteDescriptorSet> writes;
+    writes.reserve( descriptorWrites.size( ) );
+    for ( const auto& w : descriptorWrites )
+    {
+      diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>(
+        w.imageInfo ? new vk::DescriptorImageInfo( 
+          w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
+          w.imageInfo->imageView ? 
+            static_cast<vk::ImageView>( *w.imageInfo->imageView ) : 
+            nullptr,
+          w.imageInfo->imageLayout )
+        : nullptr ) );
+      dbis.push_back( std::unique_ptr<vk::DescriptorBufferInfo>(
+        w.bufferInfo ? new vk::DescriptorBufferInfo( w.bufferInfo->buffer ?
+          static_cast<vk::Buffer>( *w.bufferInfo->buffer ) : nullptr,
+          w.bufferInfo->offset, w.bufferInfo->range )
+        : nullptr ) );
+      vk::WriteDescriptorSet write(
+        w.dstSet ? static_cast<vk::DescriptorSet>( *w.dstSet ) : nullptr,
+        w.dstBinding,
+        w.dstArrayElement,
+        w.descriptorCount,
+        w.descriptorType,
+        diis.back( ).get( ),
+        dbis.back( ).get( )
+      );
+
+      if ( w.texelBufferView )
+      {
+        vk::BufferView bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        write.setPTexelBufferView( &bufferView );
+      }
+
+      writes.push_back( std::move( write ) );
+    }
+    //_commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, firstSet, writes );
+  }
+//#endif
+
   void CommandBuffer::blitImage( const std::shared_ptr<Image>& srcImage, 
     vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
     vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 
@@ -173,6 +267,29 @@ namespace lava
   {
     _commandBuffer.setBlendConstants( blendConst );
   }
+  void CommandBuffer::beginOcclusionQuery( vk::QueryPool queryPool,
+    uint32_t query, vk::QueryControlFlags flags )
+  {
+    _commandBuffer.beginQuery( queryPool, query, flags );
+  }
+  void CommandBuffer::endOcclusionQuery( vk::QueryPool queryPool,
+    uint32_t query )
+  {
+    _commandBuffer.endQuery( queryPool, query );
+  }
+
+  void CommandBuffer::executeCommands( 
+    const std::vector<std::shared_ptr<lava::CommandBuffer>>& secondaryCmds )
+  {
+    std::vector< vk::CommandBuffer > v;
+    std::transform( secondaryCmds.begin( ), secondaryCmds.end( ),
+      std::back_inserter( v ), []( std::shared_ptr<lava::CommandBuffer> c )
+    {
+      return static_cast< vk::CommandBuffer >( *c );
+    } );
+    _commandBuffer.executeCommands( v );
+  }
+
   void CommandBuffer::setLineWidth( float lineWidth )
   {
     _commandBuffer.setLineWidth( lineWidth );
@@ -319,10 +436,10 @@ namespace lava
   {
     _commandBuffer.reset( { } );
   }
-  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags )
+  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags, vk::CommandBufferInheritanceInfo* inheritInfo )
   {
     assert( !_isRecording );
-    vk::CommandBufferBeginInfo cbbi( flags );
+    vk::CommandBufferBeginInfo cbbi( flags, inheritInfo );
 
     _commandBuffer.begin( cbbi );
     _isRecording = true;
@@ -375,5 +492,38 @@ namespace lava
 
     _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
       barriers, bufferMemoryBarriers, imbs );
+  }
+
+
+  
+  void CommandBuffer::resetEvent( const std::shared_ptr<Event>& e, 
+    vk::PipelineStageFlags stageMask)
+  {
+    _commandBuffer.resetEvent( *e, stageMask );
+  }
+  
+  void CommandBuffer::setEvent( const std::shared_ptr<Event>& e, 
+    vk::PipelineStageFlags stageMask)
+  {
+    _commandBuffer.setEvent( *e, stageMask );
+  }
+  
+  void CommandBuffer::waitEvents(vk::ArrayProxy<const std::shared_ptr<Event>> events, 
+    vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
+    vk::ArrayProxy<const vk::MemoryBarrier> memoryBarriers, 
+    vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
+    vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
+  )
+  {
+    std::vector<vk::Event> evts;
+    for( const auto& e : events )
+    {
+      evts.push_back( *e );
+    }
+
+    _commandBuffer.waitEvents(
+      evts, srcStageMask, dstStageMask, memoryBarriers, 
+      bufferMemoryBarriers, imageMemoryBarriers
+    );
   }
 }

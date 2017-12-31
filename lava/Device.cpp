@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Device.h"
 #include "PhysicalDevice.h"
 
@@ -95,7 +114,7 @@ namespace lava
   }
 
   void Device::updateDescriptorSets( 
-    std::vector<WriteDescriptorSet> descriptorWrites, 
+    std::vector<WriteDescriptorSet> descriptorWrites,
     std::vector<CopyDescriptorSet> descriptorCopies )
   {
     std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
@@ -106,7 +125,7 @@ namespace lava
 
     std::vector<vk::WriteDescriptorSet> writes;
     writes.reserve( descriptorWrites.size( ) );
-    for ( auto const& w : descriptorWrites )
+    for ( const auto& w : descriptorWrites )
     {
       diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>( 
         w.imageInfo ? new vk::DescriptorImageInfo( w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
@@ -127,6 +146,12 @@ namespace lava
         diis.back( ).get( ), 
         dbis.back( ).get( )
       );
+
+      if ( w.texelBufferView )
+      {
+        vk::BufferView bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        write.setPTexelBufferView( &bufferView );
+      }
       
       writes.push_back( std::move( write ) );
     }
@@ -183,6 +208,11 @@ namespace lava
     }
 
     _device.updateDescriptorSets( writes, copies );
+  }
+
+  std::shared_ptr<Event> Device::createEvent( void )
+  {
+    return std::make_shared< Event >( shared_from_this( ) );
   }
 
   void Device::init(
@@ -313,10 +343,10 @@ namespace lava
   }
   const PipelineShaderStageCreateInfo Device::createShaderPipelineShaderStage( 
     const std::string& spvFile, vk::ShaderStageFlagBits stage, 
-    const std::string& name )
+    vk::Optional<const SpecializationInfo> specInfo )
   {
     auto shaderModule = createShaderModule( spvFile, stage );
-    return PipelineShaderStageCreateInfo( stage, shaderModule, name );
+    return PipelineShaderStageCreateInfo( stage, shaderModule, "main", specInfo );
   }
 
   std::shared_ptr<Fence> Device::createFence( bool signaled )
@@ -328,15 +358,17 @@ namespace lava
     return std::make_shared<Sampler>( shared_from_this( ), desc );
   }
   std::shared_ptr<DescriptorSetLayout> Device::createDescriptorSetLayout(
-    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings )
+    vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings, 
+    vk::DescriptorSetLayoutCreateFlags flags )
   {
-    return std::make_shared<DescriptorSetLayout>( shared_from_this( ), bindings );
+    return std::make_shared<DescriptorSetLayout>( shared_from_this( ), bindings, flags );
   }
   std::shared_ptr<DescriptorPool> Device::createDescriptorPool(
-    vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
+    /*vk::DescriptorPoolCreateFlags flags, */uint32_t maxSets,
     vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes )
   {
-    return std::make_shared<DescriptorPool>( shared_from_this( ), flags, maxSets, poolSizes );
+    return std::make_shared<DescriptorPool>( shared_from_this( ), 
+      vk::DescriptorPoolCreateFlags( ), maxSets, poolSizes );
   }
   std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, 
     void const * initialData )
@@ -379,6 +411,30 @@ namespace lava
   {
     _device.freeMemory( memory );
   }
+
+#ifdef LAVA_DEVICE_BUILDERS
+  std::shared_ptr<UniformBuffer> Device::createUniformBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<lava::UniformBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<StorageBuffer> Device::createStorageBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<StorageBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<UniformTexelBuffer> Device::Device::createUniformTexelBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<UniformTexelBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<VertexBuffer> Device::Device::createVertexBuffer( vk::DeviceSize size )
+  {
+    return std::make_shared<VertexBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<IndexBuffer> Device::Device::createIndexBuffer( vk::IndexType type, 
+    vk::DeviceSize size )
+  {
+    return std::make_shared<IndexBuffer>( shared_from_this( ), type, size );
+  }
+#endif
 
   std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
     const std::shared_ptr<PipelineCache>& pipelineCache, 

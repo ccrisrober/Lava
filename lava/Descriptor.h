@@ -12,13 +12,16 @@ namespace lava
 {
   class Device;
   class Buffer;
+  class BufferView;
   class Sampler;
   struct DescriptorSetLayoutBinding
   {
     LAVA_API
     DescriptorSetLayoutBinding( uint32_t binding,
       vk::DescriptorType descriptorType,
-      vk::ShaderStageFlags stageFlags );
+      vk::ShaderStageFlags stageFlags, 
+      vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> immutableSamplers = { }
+    );
     LAVA_API
     DescriptorSetLayoutBinding( DescriptorSetLayoutBinding const& rhs );
     LAVA_API
@@ -27,7 +30,8 @@ namespace lava
     uint32_t binding;
     vk::DescriptorType descriptorType;
     vk::ShaderStageFlags stageFlags;
-    std::vector<std::shared_ptr<Sampler>> immutableSamplers;
+    // TODO: Use lava::Sampler?
+    std::vector<std::shared_ptr<vk::Sampler>> immutableSamplers;
   };
 
   class DescriptorSetLayout : public VulkanResource,
@@ -36,7 +40,8 @@ namespace lava
   public:
     LAVA_API
     DescriptorSetLayout( const DeviceRef& device,
-      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings );
+      vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings,
+      vk::DescriptorSetLayoutCreateFlags flags = { } );
     LAVA_API
     ~DescriptorSetLayout( void );
 
@@ -132,8 +137,10 @@ namespace lava
     WriteDescriptorSet( const std::shared_ptr<DescriptorSet>& dstSet,
       uint32_t dstBinding, uint32_t dstArrayElement,
       vk::DescriptorType descriptorType, uint32_t descriptorCount,
-      vk::Optional<const DescriptorImageInfo> imageInfo,
-      vk::Optional<const DescriptorBufferInfo> bufferInfo );
+      vk::Optional<const DescriptorImageInfo> imageInfo = nullptr,
+      vk::Optional<const DescriptorBufferInfo> bufferInfo = nullptr,
+      const std::shared_ptr<lava::BufferView>& bufferView = { }
+    );
     LAVA_API
     WriteDescriptorSet( const WriteDescriptorSet& rhs );
     LAVA_API
@@ -146,7 +153,7 @@ namespace lava
     uint32_t descriptorCount;
     std::unique_ptr<DescriptorImageInfo> imageInfo;
     std::unique_ptr<DescriptorBufferInfo> bufferInfo;
-    // todo: pTexelBufferView
+    std::shared_ptr<BufferView> texelBufferView;
   };
 
   struct CopyDescriptorSet

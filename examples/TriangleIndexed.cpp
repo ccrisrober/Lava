@@ -1,129 +1,214 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <lava/lava.h>
 using namespace lava;
 
 #include <routes.h>
 
-struct Vertex
-{
-  glm::vec4 position;
-  glm::vec4 color;
-};
+//#define TESS_MODE // Comment for not indexing mode
+#define INDEXING_MODE // Comment for not indexing mode
 
-const std::vector<Vertex> vertices =
-{
-  { { 0.75f,  0.75f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f } },
-  { { -0.75f,  0.75f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f } },
-  { { 0.0f, -0.750f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f } }
-};
-const std::vector<uint32_t> indices = { 0, 1, 2 };
-
-class MyApp : public VulkanApp
+class CustomRenderer : public VulkanWindowRenderer
 {
 public:
-  std::shared_ptr<VertexBuffer> vertexBuffer;
-  std::shared_ptr<IndexBuffer> indexBuffer;
-  std::shared_ptr<lava::engine::Material> material;
-  std::shared_ptr<CommandPool> commandPool;
-  MyApp( char const* title, uint32_t width, uint32_t height )
-    : VulkanApp( title, width, height )
+  CustomRenderer( lava::VulkanWindow *w )
+    : VulkanWindowRenderer( )
+    , _window( w )
   {
+  }
+
+  struct Vertex
+  {
+    glm::vec4 position;
+    glm::vec4 color;
+  };
+
+  const std::vector<Vertex> vertices =
+  {
+    { {  0.75f,  0.75f, 0.0f, 1.0f },{ 1.0f, 0.0f, 0.0f, 1.0f } },
+    { { -0.75f,  0.75f, 0.0f, 1.0f },{ 0.0f, 1.0f, 0.0f, 1.0f } },
+    { {   0.0f, -0.75f, 0.0f, 1.0f },{ 0.0f, 0.0f, 1.0f, 1.0f } }
+  };
+#ifdef INDEXING_MODE
+  const std::vector<uint32_t> indices = { 0, 1, 2 };
+#endif
+
+  void initResources( void ) override
+  {
+    auto device = _window->device( );
+
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      auto stagingBuffer = device->createBuffer( vertexBufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 
+        nullptr, vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+
+      vertexBuffer = device->createBuffer( vertexBufferSize,
+        vk::BufferUsageFlagBits::eVertexBuffer | 
+        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
+        stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
+      cmd->end( );
+
+      _window->graphicQueue( )->submitAndWait( cmd );
+
     }
 
+#ifdef INDEXING_MODE
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      indexBuffer = std::make_shared<IndexBuffer>( _device, 
-        vk::IndexType::eUint32, indices.size( ) );
-      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+
+      auto stagingBuffer = device->createBuffer( indexBufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+
+      indexBuffer = device->createBuffer( indexBufferSize,
+        vk::BufferUsageFlagBits::eIndexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
+        stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
+      cmd->end( );
+
+      _window->graphicQueue( )->submitAndWait( cmd );
     }
-
+#endif
+#ifdef TESS_MODE
+    material = std::make_shared<lava::engine::BasicTessTriangle>( );
+#else
     material = std::make_shared<lava::engine::BasicTriangle>( );
-    material->configure( LAVA_EXAMPLES_SPV_ROUTE, _device, _renderPass );
-
-    // create a command pool for command buffer allocation
-    commandPool = _device->createCommandPool( 
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-	}
-  void doPaint( void ) override
-  {
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
-
-    commandBuffer->beginSimple( );
-
-    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass, 
-      _defaultFramebuffer->getFramebuffer( ), vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ),
-      { vk::ClearValue( ccv ), vk::ClearValue( vk::ClearDepthStencilValue( 1.0f, 0 ) ) }, 
-      vk::SubpassContents::eInline
-    );
-    material->bind( commandBuffer ); //commandBuffer->bindGraphicsPipeline( pipeline );
-    vertexBuffer->bind( commandBuffer ); //commandBuffer->bindVertexBuffer( 0, vertexBuffer, 0 );
-    indexBuffer->bind( commandBuffer );  //commandBuffer->bindIndexBuffer( indexBuffer, 0 );
-    
-    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
-    
-    commandBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
-    commandBuffer->endRenderPass( );
-
-    commandBuffer->end( );
-
-    _graphicsQueue->submit( SubmitInfo{
-      { _defaultFramebuffer->getPresentSemaphore( ) },
-      { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      commandBuffer,
-      _renderComplete
-    } );
+#endif
+    material->configure( LAVA_EXAMPLES_SPV_ROUTE, device, _window->defaultRenderPass( ) );
   }
-	void keyEvent(int key, int scancode, int action, int mods)
-	{
-		switch (key)
-		{
-		case GLFW_KEY_ESCAPE:
-			switch (action)
-			{
-			case GLFW_PRESS:
-				getWindow( )->close( );
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-	}
+
+  void nextFrame( void ) override
+  {
+    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    {
+      _window->_window->close( );
+    }
+    
+    std::array<vk::ClearValue, 2 > clearValues;
+    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
+    clearValues[ 0 ].color = vk::ClearColorValue( ccv );
+    clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
+
+    const glm::ivec2 size = _window->swapChainImageSize( );
+    auto cmd = _window->currentCommandBuffer( );
+    vk::Rect2D rect;
+    rect.extent.width = size.x;
+    rect.extent.height = size.y;
+    cmd->beginRenderPass(
+      _window->defaultRenderPass( ),
+      _window->currentFramebuffer( ),
+      rect, clearValues, vk::SubpassContents::eInline
+    );
+
+    material->bind( cmd );
+    cmd->bindVertexBuffer( 0, vertexBuffer, 0 );
+#ifdef INDEXING_MODE
+    cmd->bindIndexBuffer( indexBuffer, 0, vk::IndexType::eUint32 );
+#endif
+
+    cmd->setViewportScissors( _window->getExtent( ) );
+#ifdef INDEXING_MODE
+    cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
+#else
+    cmd->draw( uint32_t( vertices.size( ) ), 1, 0, 0 );
+#endif
+
+    cmd->endRenderPass( );
+
+    _window->frameReady( );
+  }
+private:
+  VulkanWindow *_window;
+  std::shared_ptr<lava::engine::Material> material;
+  std::shared_ptr<Buffer> vertexBuffer;
+#ifdef INDEXING_MODE
+  std::shared_ptr<Buffer> indexBuffer;
+#endif
 };
 
-void glfwErrorCallback(int error, const char* description)
+class CustomVkWindow : public VulkanWindow
 {
-	fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
+public:
+  VulkanWindowRenderer* createRenderer( void ) override
+  {
+    return new CustomRenderer( this );
+  }
+};
 
 int main( void )
 {
-  try
+  std::shared_ptr<Instance> instance;
+
+  // Create instance
+  vk::ApplicationInfo appInfo(
+    "App Name",
+    VK_MAKE_VERSION( 1, 0, 0 ),
+    "FooEngine",
+    VK_MAKE_VERSION( 1, 0, 0 ),
+    VK_API_VERSION_1_0
+  );
+
+
+  std::vector<const char*> layers =
   {
-    VulkanApp* app = new MyApp( "Triangle Indexed", 800, 600 );
-
-    app->getWindow( )->setErrorCallback( glfwErrorCallback );
-
-    while ( app->isRunning( ) )
-    {
-      app->waitEvents( );
-      app->paint( );
-    }
-
-    delete app;
-  }
-  catch ( std::system_error err )
+#ifndef NDEBUG
+    "VK_LAYER_LUNARG_standard_validation",
+#endif
+  };
+  std::vector<const char*> extensions =
   {
-    std::cout << "System Error: " << err.what( ) << std::endl;
-  }
+    VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
+    LAVA_KHR_EXT, // OS specific surface extension
+    VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+  };
+
+
+  instance = Instance::create( vk::InstanceCreateInfo(
+    { },
+    &appInfo,
+    layers.size( ),
+    layers.data( ),
+    extensions.size( ),
+    extensions.data( )
+  ) );
+
+  CustomVkWindow w;
+  w.setVulkanInstance( instance );
+  w.resize( 500, 500 );
+
+  w.show( );
+
   return 0;
 }

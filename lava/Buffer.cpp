@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Buffer.h"
 
 #include "Device.h"
@@ -84,6 +103,15 @@ namespace lava
     return usageFlags;
   }
 
+  void Buffer::map( vk::DeviceSize offset, vk::DeviceSize length, void * data )
+  {
+    vk::Result result = static_cast< vk::Device >( *_device ).mapMemory(
+      _memory, offset, length, {}, &data
+    );
+    // lava::utils::translateVulkanResult( result );
+    assert( result == vk::Result::eSuccess );
+  }
+
   void * Buffer::map( vk::DeviceSize offset, vk::DeviceSize length ) const
   {
     void* data;
@@ -126,6 +154,20 @@ namespace lava
     cmd->copyBufferToImage( shared_from_this( ), dst, layout, region );
   }
 
+  void Buffer::CreateStaged( const std::shared_ptr<Queue>& q, 
+    std::shared_ptr<CommandBuffer>& cmd,
+    vk::DeviceSize size, vk::BufferUsageFlags usage, void* data, 
+    vk::MemoryPropertyFlags props )
+  {
+    cmd->beginSimple( );
+    std::shared_ptr<Buffer> buffer = _device->createBuffer( 
+      { }, size, usage, vk::SharingMode::eExclusive, nullptr, props );
+    copy( cmd, buffer, 0, 0, size );
+    // TODO: queue->submit( ) waitForFences( ... );
+    cmd->end( );
+    q->submitAndWait( cmd );
+  }
+
 
   void Buffer::flush( vk::DeviceSize size, vk::DeviceSize offset )
   {
@@ -134,6 +176,15 @@ namespace lava
     mappedRange.offset = offset;
     mappedRange.size = size;
     static_cast< vk::Device >( *_device ).flushMappedMemoryRanges( { mappedRange } );
+  }
+
+  void Buffer::invalidate( vk::DeviceSize size, vk::DeviceSize offset )
+  {
+    vk::MappedMemoryRange mappedRange;
+    mappedRange.memory = _memory;
+    mappedRange.offset = offset;
+    mappedRange.size = size;
+    static_cast< vk::Device >( *_device ).invalidateMappedMemoryRanges( { mappedRange } );
   }
 
   void Buffer::readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst )
@@ -158,7 +209,8 @@ namespace lava
         | vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
-  void VertexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index )
+  void VertexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, 
+    unsigned int index )
   {
     cmd->bindVertexBuffer( index, shared_from_this( ), 0 );
   }
@@ -183,7 +235,8 @@ namespace lava
       return sizeof( unsigned int ) * numIndices;
     }
   }
-  void IndexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index )
+  void IndexBuffer::bind( std::shared_ptr<CommandBuffer>& cmd, 
+    unsigned int index )
   {
     cmd->bindIndexBuffer( shared_from_this( ), index, _type );
   }
@@ -195,4 +248,44 @@ namespace lava
       vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
+  StorageBuffer::StorageBuffer( const DeviceRef& device, vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eStorageBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
+  UniformTexelBuffer::UniformTexelBuffer( const DeviceRef& device, vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eUniformTexelBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
+
+  BufferView::BufferView(const std::shared_ptr<lava::Buffer>& buffer, 
+    vk::Format format, vk::DeviceSize offset, vk::DeviceSize range )
+    : _buffer( buffer )
+  {
+    if ( range == ~0 )
+    {
+      range = buffer->_size - offset;
+    }
+    assert( offset + range <= buffer->_size );
+
+    vk::BufferViewCreateInfo bvci(
+      vk::BufferViewCreateFlags(), *buffer, format, offset, range
+    );
+    vk::Device dev = static_cast< vk::Device >( *_buffer->getDevice( ) );
+    _bufferView = dev.createBufferView( bvci );
+  }
+
+  BufferView::~BufferView( void )
+  {
+    vk::Device dev = static_cast< vk::Device >( *_buffer->getDevice( ) );
+    dev.destroyBufferView(_bufferView );
+  }
+
 }

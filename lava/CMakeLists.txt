@@ -2,13 +2,16 @@ source_group(\\ FILES CMakeLists.txt)
 
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
-  #../Vulkan-Hpp/vulkan/vulkan.hpp
-  vulkan.hpp
+
+  io/Keyboard.hpp
+  io/Mouse.hpp
+  io/Input.hpp
 
   RenderAPICapabilites.h
   noncopyable.hpp
 
   Instance.h
+  Event.h
   PhysicalDevice.h
   Surface.h
   VulkanApp.h
@@ -53,10 +56,22 @@ set( LAVA_PUBLIC_HEADERS
   Log.h
   MemoryUtils.h
   StringUtils.hpp
+
+
+  VulkanRenderer.h
 )
 
 set( LAVA_SOURCES
+
+  io/Keyboard.cpp
+  io/Mouse.cpp
+  io/Input.cpp
+
+  VulkanRenderer.cpp
+
+
   Instance.cpp
+  Event.cpp
   PhysicalDevice.cpp
   Surface.cpp
   VulkanApp.cpp

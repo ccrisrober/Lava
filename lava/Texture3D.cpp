@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include "Texture3D.h"
 
 #include "Device.h"
@@ -19,7 +38,7 @@ namespace lava
 
     // Format support check
     // 3D texture support in Vulkan is mandatory (in contrast to OpenGL) so no need to check if it's supported
-    vk::FormatProperties formatProps = device_->_physicalDevice->getFormatProperties( format );
+    vk::FormatProperties formatProps = device_->getPhysicalDevice( )->getFormatProperties( format );
     // Check if format supports transfer
     if ( !formatProps.optimalTilingFeatures && VK_IMAGE_USAGE_TRANSFER_DST_BIT )
     {
@@ -72,7 +91,7 @@ namespace lava
     sci.setMinLod( 0.0f );
     sci.setMaxLod( 0.0f );
     sci.setMaxAnisotropy( 1.0f );
-    sci.setAnisotropyEnable( VK_TRUE );
+    sci.setAnisotropyEnable( VK_FALSE );
     sci.setBorderColor( vk::BorderColor::eFloatOpaqueWhite );
 
     sampler = device.createSampler( sci );

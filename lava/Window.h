@@ -4,6 +4,7 @@
 #include "includes.hpp"
 
 #include <lava/api.h>
+#include <functional>
 
 namespace lava
 {
@@ -16,13 +17,22 @@ namespace lava
     ~Window( void );
 
     LAVA_API
+    void setWindowTitle( const std::string& title );
+
+    LAVA_API
     GLFWwindow *getWindow( void );
+
+    LAVA_API
+    void pollEvents( void );
 
     LAVA_API
     inline operator GLFWwindow*( void )
     {
       return _window;
     }
+
+    LAVA_API
+    void setChangeSizeCallback( std::function<void( int, int )> cb );
 
     LAVA_API
     void setErrorCallback( GLFWerrorfun fn );
@@ -39,6 +49,8 @@ namespace lava
     void close( void );
   protected:
     GLFWwindow* _window;
+  public:
+    std::function<void( int, int )> _callbackResize = nullptr;
   };
 }
 

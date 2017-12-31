@@ -13,19 +13,31 @@ namespace lava
   class Device;
   class Buffer;
   class IndexBuffer;
+  class Event;
   class Image;
   class RenderPass;
   class Framebuffer;
   class CommandBuffer;
-  class CommandPool : public VulkanResource, public std::enable_shared_from_this<CommandPool>
+
+  class CommandPool : 
+    public VulkanResource, 
+    public std::enable_shared_from_this<CommandPool>
   {
   public:
     LAVA_API
-    CommandPool( const DeviceRef& device,
-      vk::CommandPoolCreateFlags flags = vk::CommandPoolCreateFlags( ),
+    CommandPool( const DeviceRef& device, vk::CommandPoolCreateFlags flags = { },
       uint32_t familyIndex = 0 );
     LAVA_API
     virtual ~CommandPool( void );
+
+    LAVA_API
+    bool supportsCompute( void ) const;
+
+    LAVA_API
+    bool supportsGraphics( void ) const;
+
+    LAVA_API
+    bool supportsTransfer( void ) const;
 
     inline operator vk::CommandPool( void ) const
     {
@@ -41,6 +53,7 @@ namespace lava
   protected:
     vk::CommandPool _commandPool;
     std::vector<CommandBuffer*> _commandBuffers;
+    uint32_t _familyIndex;
   };
 
 
@@ -91,7 +104,8 @@ namespace lava
     void reset( void );
 
     LAVA_API
-    void beginSimple( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ) );
+    void beginSimple( vk::CommandBufferUsageFlags flags = { }, 
+      vk::CommandBufferInheritanceInfo* inheritInfo = nullptr );
 
     LAVA_API
     void clearAttachments( vk::ArrayProxy< const vk::ClearAttachment> attachments,
@@ -114,13 +128,21 @@ namespace lava
 
     LAVA_API
     void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
-      const std::shared_ptr<PipelineLayout>& pipelineLayout, 
-      uint32_t firstSet, 
+      const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet, 
       vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
       vk::ArrayProxy<const uint32_t> dynamicOffsets );
 
     LAVA_API
     void endRenderPass( void );
+
+//#ifdef VK_HEADER_VERSION >= 46
+    LAVA_API
+    void pushDescriptorSetKHR(
+      vk::PipelineBindPoint pipelineBindPoint,
+      const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
+      vk::ArrayProxy< WriteDescriptorSet > descriptorSets
+    );
+//#endif
 
     LAVA_API
     void blitImage( const std::shared_ptr<Image>& srcImage, 
@@ -129,13 +151,26 @@ namespace lava
       vk::Filter filter );
 
     LAVA_API
-    void setStencilCompareMask( vk::StencilFaceFlags faceMask, uint32_t stencilCompareMask );
+    void setStencilCompareMask( vk::StencilFaceFlags faceMask, 
+      uint32_t stencilCompareMask );
     LAVA_API
-    void setStencilReference( vk::StencilFaceFlags faceMask, uint32_t stencilReference );
+    void setStencilReference( vk::StencilFaceFlags faceMask, 
+      uint32_t stencilReference );
     LAVA_API
-    void setStencilWriteMask( vk::StencilFaceFlags faceMask, uint32_t stencilWriteMask );
+    void setStencilWriteMask( vk::StencilFaceFlags faceMask, 
+      uint32_t stencilWriteMask );
     LAVA_API
     void setBlendConstants( const float blendConst[ 4 ] );
+
+    LAVA_API
+    void beginOcclusionQuery( vk::QueryPool queryPool, uint32_t query, 
+      vk::QueryControlFlags flags = { } );
+    LAVA_API
+    void endOcclusionQuery( vk::QueryPool queryPool, uint32_t query );
+
+    LAVA_API
+    void executeCommands( const std::vector< std::shared_ptr<lava::CommandBuffer> >& secondaryCmds );
+
 
     LAVA_API
     void begin( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ),
@@ -241,7 +276,22 @@ namespace lava
       vk::DependencyFlags dependencyFlags, 
       vk::ArrayProxy<const vk::MemoryBarrier> barriers, 
       vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
-      vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers );
+      vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers
+    );
+
+    
+    LAVA_API
+    void resetEvent( const std::shared_ptr<Event>& event, vk::PipelineStageFlags stageMask);
+    LAVA_API
+    void setEvent( const std::shared_ptr<Event>& event, vk::PipelineStageFlags stageMask);
+    LAVA_API
+    void waitEvents(vk::ArrayProxy<const std::shared_ptr<Event>> events, 
+      vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
+      vk::ArrayProxy<const vk::MemoryBarrier> memoryBarriers, 
+      vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
+      vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
+    );
+
 
   protected:
     std::shared_ptr<CommandPool> _commandPool;
@@ -264,6 +314,8 @@ namespace lava
   {
     _commandBuffer.updateBuffer<T>( *destBuffer, destOffset, data );
   }
+
+  typedef std::shared_ptr< CommandBuffer > CommandBufferPtr;
 }
 
 #endif /* __LAVA_COMMANDBUFFER__ */

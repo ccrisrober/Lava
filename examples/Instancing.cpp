@@ -1,5 +1,21 @@
-#define _USE_MATH_DEFINES
-#include <cmath>
+/**
+* Copyright (c) 2017, Lava
+* All rights reserved.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+**/
 
 #include <lava/lava.h>
 using namespace lava;
@@ -8,333 +24,413 @@ using namespace lava;
 
 #include <random>
 
-struct
-{
-  glm::mat4 model;
-  glm::mat4 view;
-  glm::mat4 proj;
-} uboVS;
-
-struct Vertex
-{
-  glm::vec3 pos;
-  glm::vec2 texCoord;
-};
-
-const float side = 1.0f;
-const float side2 = side / 2.0f;
-const std::vector<Vertex> vertices =
-{
-  { { -side2, -side2,  side2 }, { 0.0f, 0.0f } },
-  { {  side2, -side2,  side2 }, { 1.0f, 0.0f } },
-  { { -side2,  side2,  side2 }, { 0.0f, 1.0f } },
-  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
-
-  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
-  { {  side2, -side2, -side2 }, { 1.0f, 0.0f } },
-  { { -side2,  side2, -side2 }, { 0.0f, 1.0f } },
-  { {  side2,  side2, -side2 }, { 1.0f, 1.0f } },
-
-  { {  side2, -side2, -side2 }, { 0.0f, 0.0f } },
-  { {  side2, -side2,  side2 }, { 1.0f, 0.0f } },
-  { {  side2,  side2, -side2 }, { 0.0f, 1.0f } },
-  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
-
-  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
-  { { -side2, -side2,  side2 }, { 1.0f, 0.0f } },
-  { { -side2,  side2, -side2 }, { 0.0f, 1.0f } },
-  { { -side2,  side2,  side2 }, { 1.0f, 1.0f } },
-
-  { { -side2,  side2, -side2 }, { 0.0f, 0.0f } },
-  { { -side2,  side2,  side2 }, { 1.0f, 0.0f } },
-  { {  side2,  side2, -side2 }, { 0.0f, 1.0f } },
-  { {  side2,  side2,  side2 }, { 1.0f, 1.0f } },
-
-  { { -side2, -side2, -side2 }, { 0.0f, 0.0f } },
-  { { -side2, -side2,  side2 }, { 1.0f, 0.0f } },
-  { {  side2, -side2, -side2 }, { 0.0f, 1.0f } },
-  { {  side2, -side2,  side2 }, { 1.0f, 1.0f } } 
-};
-const std::vector<uint16_t> indices =
-{
-  0,1,2,      1,3,2,
-  4,6,5,      5,6,7,
-  8,10,9,     9,10,11,
-  12,13,14,   13,15,14,
-  16,17,18,   17,19,18,
-  20,22,21,   21,22,23,
-};
-
 #define VERTEX_BUFFER_BIND_ID 0
 #define INSTANCE_BUFFER_BIND_ID 1
-#define INSTANCE_COUNT 8192
 
-struct InstanceData
-{
-  glm::vec3 pos;
-};
-
-class MyApp : public VulkanApp
+class CustomRenderer : public VulkanWindowRenderer
 {
 public:
-  std::shared_ptr<VertexBuffer> vertexBuffer;
-  std::shared_ptr<IndexBuffer> indexBuffer;
-  std::shared_ptr<Buffer> uniformBufferMVP;
-  std::shared_ptr<Pipeline> pipeline;
-  std::shared_ptr<PipelineLayout> pipelineLayout;
-  std::shared_ptr<DescriptorSet> descriptorSet;
-  std::shared_ptr<Texture2D> tex;
-
-  std::shared_ptr<VertexBuffer> _instanceBuffer;
-    std::shared_ptr<CommandPool> commandPool;
-
-  MyApp( char const* title, uint32_t width, uint32_t height )
-    : VulkanApp( title, width, height )
+  CustomRenderer( lava::VulkanWindow *w )
+    : VulkanWindowRenderer( )
+    , _window( w )
   {
-    // create a command pool for command buffer allocation
-    commandPool = _device->createCommandPool( 
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, _queueFamilyIndex );
-    
+  }
+
+  struct Vertex
+  {
+    glm::vec3 position;
+  };
+
+  struct InstanceData
+  {
+    glm::vec3 offset;
+    glm::vec4 color;
+    glm::vec4 orientationStart;
+    glm::vec4 orientationEnd;
+  };
+
+  struct
+  {
+    glm::mat4 modelViewMatrix;
+    glm::mat4 projectionMatrix;
+    float sineTime;
+  } uboVS;
+  
+  struct
+  {
+    float time;
+  } uboFS;
+
+  std::shared_ptr< Buffer > vertexBuffer;
+  std::shared_ptr< Buffer > indexBuffer;
+  std::shared_ptr< Buffer > instanceBuffer;
+
+  std::shared_ptr< Texture2D > tex;
+  std::shared_ptr< DescriptorSetLayout > descriptorSetLayout;
+  std::shared_ptr< DescriptorSet > descriptorSet;
+  std::shared_ptr< PipelineLayout > pipelineLayout;
+  std::shared_ptr< Pipeline > pipeline;
+  std::shared_ptr< Buffer> vsBuffer;
+  std::shared_ptr< Buffer> fsBuffer;
+
+  const int INSTANCE_COUNT = 50000;
+  std::vector<Vertex> vertices;
+  std::vector<uint16_t> indices;
+
+  void initResources( void ) override
+  {
+    auto device = _window->device( );
+
+    vsBuffer = device->createUniformBuffer( sizeof( uboVS ) );
+    fsBuffer = device->createUniformBuffer( sizeof( uboFS ) );
+
+    vertices = {
+      { { 0.025f,  0.025f, 0.0f } },  // top right
+      { { 0.025f, -0.025f, 0.0f } },  // bottom right
+      { { -0.025f, -0.025f, 0.0f } },  // bottom left
+      { { -0.025f,  0.025f, 0.0f } }   // top left 
+    };
+
+    indices = { 0, 1, 3, 1, 2, 3 };
+
+    std::vector<InstanceData> instanceData;
+    instanceData.resize( INSTANCE_COUNT );
+
+    std::mt19937 rndGenerator( time( nullptr ) );
+    std::uniform_real_distribution<float> uniformDist( 0.0f, 1.0f );
+    std::uniform_real_distribution<float> uniformDist2( 0.25f, 1.0f );
+    for ( int i = 0; i < INSTANCE_COUNT; ++i )
+    {
+      InstanceData data;
+      // offsets
+      data.offset = glm::vec3( 
+        uniformDist( rndGenerator ) - 0.5f, 
+        uniformDist( rndGenerator ) - 0.5f, 
+        uniformDist( rndGenerator ) - 0.5f
+      );
+      // colors
+
+      data.color = glm::vec4( 
+        uniformDist( rndGenerator ), uniformDist( rndGenerator ), 
+        uniformDist( rndGenerator ), uniformDist2( rndGenerator ) // [0.25,1] alpha
+      );
+
+      // orientation start
+      glm::vec4 vector( 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f, 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f, 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f, 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f
+      );
+      glm::normalize( vector );
+
+      data.orientationStart = glm::vec4( vector.x, vector.y, vector.z, vector.w );
+
+      // orientation end
+
+      vector = glm::vec4( 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f, 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f, 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f, 
+        uniformDist( rndGenerator ) * 2.0f - 1.0f
+      );
+      glm::normalize( vector );
+
+      data.orientationEnd = glm::vec4( vector.x, vector.y, vector.z, vector.w );
+      
+      instanceData[ i ] = data;
+    }
+
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      vertexBuffer = std::make_shared<VertexBuffer>( _device, vertexBufferSize );
-      vertexBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      auto stagingBuffer = device->createBuffer( vertexBufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+
+      vertexBuffer = device->createBuffer( vertexBufferSize,
+        vk::BufferUsageFlagBits::eVertexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
+      stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
+      cmd->end( );
+
+      _window->graphicQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      indexBuffer = std::make_shared<IndexBuffer>( _device, 
-        vk::IndexType::eUint16, indices.size( ) );
-      indexBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+
+      auto stagingBuffer = device->createBuffer( indexBufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+
+      indexBuffer = device->createBuffer( indexBufferSize,
+        vk::BufferUsageFlagBits::eIndexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
+        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
+      stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
+      cmd->end( );
+
+      _window->graphicQueue( )->submitAndWait( cmd );
     }
 
-    // MVP buffer
+    // Instance buffer
     {
-      uint32_t mvpBufferSize = sizeof(uboVS);
-      uniformBufferMVP = _device->createBuffer( mvpBufferSize, 
-        vk::BufferUsageFlagBits::eUniformBuffer, 
-        vk::SharingMode::eExclusive, nullptr,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-          vk::MemoryPropertyFlagBits::eHostCoherent );
-    }
-
-    tex = std::make_shared<Texture2D>( _device, LAVA_EXAMPLES_IMAGES_ROUTE + 
-      std::string( "random.png" ), commandPool, _graphicsQueue, 
-      vk::Format::eR8G8B8A8Unorm );
-
-    // Instancing buffer
-    {
-      std::vector<InstanceData> instanceData;
-      instanceData.resize( INSTANCE_COUNT );
-
-      std::mt19937 rndGenerator( time( nullptr ) );
-      std::uniform_real_distribution<float> uniformDist( 0.0, 1.0 );
-      for ( uint32_t i = 0, l = INSTANCE_COUNT / 2; i < l; ++i )
-      {
-        glm::vec2 ring0{ 7.0f, 11.0f };
-        glm::vec2 ring1{ 18.0f, 25.0f };
-
-        float rho, theta;
-
-        // Inner ring
-        rho = sqrt( ( pow( ring0[ 1 ], 2.0f ) - pow( ring0[ 0 ], 2.0f ) ) * uniformDist( rndGenerator ) + pow( ring0[ 0 ], 2.0f ) );
-        theta = 2.0 * M_PI * uniformDist( rndGenerator );
-        instanceData[ i ].pos = glm::vec3( rho*cos( theta ), uniformDist( rndGenerator ) * 0.5f - 0.25f, rho*sin( theta ) );
-
-        // Outer ring
-        rho = sqrt( ( pow( ring1[ 1 ], 2.0f ) - pow( ring1[ 0 ], 2.0f ) ) * uniformDist( rndGenerator ) + pow( ring1[ 0 ], 2.0f ) );
-        theta = 2.0 * M_PI * uniformDist( rndGenerator );
-        instanceData[ i + INSTANCE_COUNT / 2 ].pos = glm::vec3( rho*cos( theta ), uniformDist( rndGenerator ) * 0.5f - 0.25f, rho*sin( theta ) );
-      }
-
       uint32_t instancingBufferSize = instanceData.size( ) * sizeof( InstanceData );
-      _instanceBuffer = std::make_shared<VertexBuffer>( _device, instancingBufferSize );
-      _instanceBuffer->writeData( 0, instancingBufferSize, instanceData.data( ) );
+      instanceBuffer = device->createVertexBuffer( instancingBufferSize );
+      instanceBuffer->writeData( 0, instancingBufferSize, instanceData.data( ) );
     }
 
-
-
-    // Init descriptor and pipeline layouts
-    std::vector<DescriptorSetLayoutBinding> dslbs;
-    DescriptorSetLayoutBinding mvpDescriptor( 0, vk::DescriptorType::eUniformBuffer, 
-      vk::ShaderStageFlagBits::eVertex );
-    dslbs.push_back( mvpDescriptor );
-    DescriptorSetLayoutBinding mvpDescriptor2( 1, vk::DescriptorType::eCombinedImageSampler, 
-      vk::ShaderStageFlagBits::eFragment );
-    dslbs.push_back( mvpDescriptor2 );
-    std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = _device->createDescriptorSetLayout( dslbs );
-
-    pipelineLayout = _device->createPipelineLayout( descriptorSetLayout, nullptr );
-
-    std::array<vk::DescriptorPoolSize, 2> poolSize;
-    poolSize[ 0 ] = vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 1 );
-    poolSize[ 1 ] = vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 );
-    std::shared_ptr<DescriptorPool> descriptorPool = _device->createDescriptorPool( {}, 1, poolSize );
-
-    // Init descriptor set
-    descriptorSet = _device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
-    std::vector<WriteDescriptorSet> wdss =
+    std::vector<DescriptorSetLayoutBinding> dslbs =
     {
-      WriteDescriptorSet( descriptorSet, 0, 0, 
-        vk::DescriptorType::eUniformBuffer, 1, nullptr,
-        DescriptorBufferInfo( 
-          uniformBufferMVP, 0, sizeof( glm::mat4 )
-        )
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
+      vk::ShaderStageFlagBits::eVertex
       ),
-      WriteDescriptorSet( descriptorSet, 1, 0,
-        vk::DescriptorType::eCombinedImageSampler, 1,
-        tex->descriptor, nullptr
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eFragment
       )
     };
 
-    _device->updateDescriptorSets( wdss, {} );
+    descriptorSetLayout = device->createDescriptorSetLayout( dslbs );
 
-    // init pipeline
-    PipelineShaderStageCreateInfo vertexStage = _device->createShaderPipelineShaderStage(
+    pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
+
+    auto descriptorPool = device->createDescriptorPool( 1, {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 )
+    } );
+
+    descriptorSet = device->allocateDescriptorSet( descriptorPool, descriptorSetLayout );
+
+    std::vector<WriteDescriptorSet> wdss = 
+    {
+      WriteDescriptorSet( descriptorSet, 0, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo(
+          vsBuffer, 0, sizeof( uboVS )
+      )
+      ),WriteDescriptorSet( descriptorSet, 1, 0,
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo(
+          fsBuffer, 0, sizeof( uboFS )
+        )
+      )
+    };
+
+    device->updateDescriptorSets( wdss, { } );
+
+    auto vertexStage = device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
-    PipelineShaderStageCreateInfo fragmentStage = _device->createShaderPipelineShaderStage(
+    auto fragmentStage = device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
-    
-    
+
     PipelineVertexInputStateCreateInfo vertexInput( {
       // Binding point 0: Mesh vertex layout description at per-vertex rate
-      vk::VertexInputBindingDescription( VERTEX_BUFFER_BIND_ID, 
-        sizeof( Vertex ), vk::VertexInputRate::eVertex ),
+      vk::VertexInputBindingDescription( VERTEX_BUFFER_BIND_ID,
+        sizeof( Vertex ), vk::VertexInputRate::eVertex
+      ),
       // Binding point 1: Instanced data at per-instance rate
-      vk::VertexInputBindingDescription( INSTANCE_BUFFER_BIND_ID, 
-        sizeof( InstanceData ), vk::VertexInputRate::eInstance )
+      vk::VertexInputBindingDescription( INSTANCE_BUFFER_BIND_ID,
+        sizeof( InstanceData ), vk::VertexInputRate::eInstance
+      )
     }, {
-      vk::VertexInputAttributeDescription( 0, VERTEX_BUFFER_BIND_ID, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos) ),
-      vk::VertexInputAttributeDescription( 1, VERTEX_BUFFER_BIND_ID, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord) ),
-      vk::VertexInputAttributeDescription( 2, INSTANCE_BUFFER_BIND_ID, vk::Format::eR32G32B32Sfloat, offsetof(InstanceData, pos) )
-    });
+      // Postion attribute
+      vk::VertexInputAttributeDescription( 0, VERTEX_BUFFER_BIND_ID, 
+        vk::Format::eR32G32B32Sfloat, 0
+      ),
+      // Offset instancing attribute
+      vk::VertexInputAttributeDescription( 1, INSTANCE_BUFFER_BIND_ID, 
+        vk::Format::eR32G32B32Sfloat, offsetof( InstanceData, offset )
+      ),
+      // Color instancing attribute
+      vk::VertexInputAttributeDescription( 2, INSTANCE_BUFFER_BIND_ID, 
+        vk::Format::eR32G32B32A32Sfloat, offsetof( InstanceData, color )
+      ),
+      // Orientation start instancing attribute
+      vk::VertexInputAttributeDescription( 3, INSTANCE_BUFFER_BIND_ID, 
+        vk::Format::eR32G32B32A32Sfloat, offsetof( InstanceData, orientationStart )
+      ),
+      // Orientation end instancing attribute
+      vk::VertexInputAttributeDescription( 4, INSTANCE_BUFFER_BIND_ID, 
+        vk::Format::eR32G32B32A32Sfloat, offsetof( InstanceData, orientationEnd )
+      ),
+    } );
 
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
-    PipelineViewportStateCreateInfo viewport( { {} }, { {} } );   // one dummy viewport and scissor, as dynamic state sets them
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true, 
-      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, 
+    vk::PipelineInputAssemblyStateCreateInfo assembly( {},
+      vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
-    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1, false, 0.0f, nullptr, false, false );
-    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState, 0.0f, 0.0f );
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment( false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA );
-    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f } );
-    PipelineDynamicStateCreateInfo dynamic( { vk::DynamicState::eViewport, vk::DynamicState::eScissor } );
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
+      false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
+      vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
+      0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
+      stencilOpState, 0.0f, 0.0f );
+    ;
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment( true, 
+      vk::BlendFactor::eSrcAlpha, vk::BlendFactor::eOneMinusSrcAlpha, vk::BlendOp::eAdd, 
+      vk::BlendFactor::eOne, vk::BlendFactor::eOneMinusSrcAlpha, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+    );
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
+      colorBlendAttachment, { 1.0f, 1.0f, 1.0f, 1.0f }
+    );
+    PipelineDynamicStateCreateInfo dynamic( {
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    } );
 
-
-    pipeline = _device->createGraphicsPipeline( pipelineCache, {}, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
-      pipelineLayout, _renderPass );
+    pipeline = device->createGraphicsPipeline( _window->pipelineCache, {},
+    { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+      viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelineLayout, _window->defaultRenderPass( )
+    );
   }
-  void updateUniformBuffers( void )
+
+  void updateBuffers( void )
   {
-    uint32_t width = _window->getWidth( );
-    uint32_t height = _window->getHeight( );
+    auto size = _window->getExtent( );
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    uint32_t width = size.width, height = size.height;
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+    static auto startTime = std::chrono::high_resolution_clock::now( );
 
-    uboVS.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    uboVS.view = glm::lookAt(glm::vec3(2.0f, 75.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    uboVS.proj = glm::perspective(glm::radians(45.0f), width / (float) height, 0.1f, 10.0f);
-    uboVS.proj[1][1] *= -1;
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
-    uniformBufferMVP->writeData( 0, sizeof( uboVS), &uboVS );
+    uboVS.modelViewMatrix = glm::lookAt( 
+      glm::vec3( 2.0f, 2.0f, 0.0f ), 
+      glm::vec3( 0.0f, 0.0f, 0.0f ), 
+      glm::vec3( 0.0f, 0.0f, 1.0f )
+    );
+
+    uboVS.projectionMatrix = glm::perspective( glm::radians( 50.0f ), width / ( float ) height, 0.1f, 10.0f );
+    uboVS.projectionMatrix[ 1 ][ 1 ] *= -1;
+
+    uboFS.time = time;// *0.025f;
+
+    uboVS.sineTime = std::sin( uboFS.time * 0.5f );
+
+    vsBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
+    vsBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
   }
 
-  void doPaint( void ) override
+
+  void nextFrame( void ) override
   {
-    updateUniformBuffers( );
+    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    {
+      _window->_window->close( );
+    }
+    updateBuffers( );
 
-    std::shared_ptr<CommandBuffer> commandBuffer = commandPool->allocateCommandBuffer( );
+    std::array<vk::ClearValue, 2 > clearValues;
+    std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };
+    clearValues[ 0 ].color = vk::ClearColorValue( ccv );
+    clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    commandBuffer->beginSimple( );
+    const glm::ivec2 size = _window->swapChainImageSize( );
+    auto cmd = _window->currentCommandBuffer( );
+    vk::Rect2D rect;
+    rect.extent.width = size.x;
+    rect.extent.height = size.y;
+    cmd->beginRenderPass(
+      _window->defaultRenderPass( ),
+      _window->currentFramebuffer( ),
+      rect, clearValues, vk::SubpassContents::eInline
+    );
 
-    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
-    commandBuffer->beginRenderPass( _renderPass, 
-      _defaultFramebuffer->getFramebuffer( ), 
-      vk::Rect2D( { 0, 0 }, 
-      _defaultFramebuffer->getExtent( ) ),
-      { vk::ClearValue( ccv ), vk::ClearValue( 
-        vk::ClearDepthStencilValue( 1.0f, 0 ) )
-      }, vk::SubpassContents::eInline );
-    commandBuffer->bindGraphicsPipeline( pipeline );
-    commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-      pipelineLayout, 0, { descriptorSet }, nullptr );
+    cmd->bindGraphicsPipeline( pipeline );
+    cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics, pipelineLayout, 
+      0, { descriptorSet }, {} );
 
     // Binding point 0 : Mesh vertex buffer
-    commandBuffer->bindVertexBuffer( VERTEX_BUFFER_BIND_ID, vertexBuffer, 0 );
+    cmd->bindVertexBuffer( VERTEX_BUFFER_BIND_ID, vertexBuffer, 0 );
+    cmd->bindIndexBuffer( indexBuffer, 0, vk::IndexType::eUint16 );
     // Binding point 1 : Instance data buffer
-    commandBuffer->bindVertexBuffer( INSTANCE_BUFFER_BIND_ID, _instanceBuffer, 0 );
+    cmd->bindVertexBuffer( INSTANCE_BUFFER_BIND_ID, instanceBuffer, 0 );
 
-    indexBuffer->bind( commandBuffer );
-    
-    commandBuffer->setViewportScissors( _defaultFramebuffer->getExtent( ) );
-    
-    commandBuffer->drawIndexed( indices.size( ), INSTANCE_COUNT, 0, 0, 0 );
-    commandBuffer->endRenderPass( );
+    cmd->setViewportScissors( _window->getExtent( ) );
+    cmd->drawIndexed( indices.size( ), INSTANCE_COUNT, 0, 0, 1 );
 
-    commandBuffer->end( );
+    cmd->endRenderPass( );
 
-    _graphicsQueue->submit( SubmitInfo{
-      { _defaultFramebuffer->getPresentSemaphore( ) },
-      { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      commandBuffer,
-      _renderComplete
-    } );
+    _window->frameReady( );
   }
-  void keyEvent( int key, int scancode, int action, int mods )
+private:
+  VulkanWindow *_window;
+};
+
+class CustomVkWindow : public VulkanWindow
+{
+public:
+  VulkanWindowRenderer* createRenderer( void ) override
   {
-    switch ( key )
-    {
-    case GLFW_KEY_ESCAPE:
-      switch ( action )
-      {
-      case GLFW_PRESS:
-        getWindow( )->close( );
-        break;
-      default:
-        break;
-      }
-      break;
-    default:
-      break;
-    }
+    return new CustomRenderer( this );
   }
 };
 
-void glfwErrorCallback( int error, const char* description )
-{
-  fprintf( stderr, "GLFW Error %d: %s\n", error, description );
-}
-
 int main( void )
 {
-  try
+  std::shared_ptr<Instance> instance;
+
+  // Create instance
+  vk::ApplicationInfo appInfo(
+    "App Name",
+    VK_MAKE_VERSION( 1, 0, 0 ),
+    "FooEngine",
+    VK_MAKE_VERSION( 1, 0, 0 ),
+    VK_API_VERSION_1_0
+  );
+
+
+  std::vector<const char*> layers =
   {
-    VulkanApp* app = new MyApp( "Instancing", 800, 600 );
-
-    app->getWindow( )->setErrorCallback( glfwErrorCallback );
-
-    while ( app->isRunning( ) )
-    {
-      //app->waitEvents( );
-      app->paint( );
-    }
-
-    delete app;
-  }
-  catch ( std::system_error err )
+#ifndef NDEBUG
+    "VK_LAYER_LUNARG_standard_validation",
+#endif
+  };
+  std::vector<const char*> extensions =
   {
-    std::cout << "System Error: " << err.what( ) << std::endl;
-  }
+    VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
+    LAVA_KHR_EXT, // OS specific surface extension
+    VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+  };
+
+
+  instance = Instance::create( vk::InstanceCreateInfo(
+  {},
+    &appInfo,
+    layers.size( ),
+    layers.data( ),
+    extensions.size( ),
+    extensions.data( )
+  ) );
+
+  CustomVkWindow w;
+  w.setVulkanInstance( instance );
+  w.resize( 500, 500 );
+
+  w.show( );
+
   return 0;
 }
