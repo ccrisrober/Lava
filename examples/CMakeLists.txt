@@ -37,25 +37,30 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASECONDARYBUFFER_LINK_LIBRARIES lava )
   common_application( lavaSecondaryBuffer )
 
-  set( LAVADEMO_HEADERS )
-  set( LAVADEMO_SOURCES Demo.cpp )
-  set( LAVADEMO_LINK_LIBRARIES lava )
-  common_application( lavaDemo )
+  set( LAVACOMPUTEPARTICLES_HEADERS )
+  set( LAVACOMPUTEPARTICLES_SOURCES ComputeParticles.cpp )
+  set( LAVACOMPUTEPARTICLES_LINK_LIBRARIES lava )
+  common_application( lavaComputeParticles )
+
+  set( LAVAFRACTALCOMPUTE_HEADERS )
+  set( LAVAFRACTALCOMPUTE_SOURCES FractalCompute.cpp )
+  set( LAVAFRACTALCOMPUTE_LINK_LIBRARIES lava )
+  common_application( lavaFractalCompute )
 
   set( LAVACOMPUTECOPY_HEADERS )
   set( LAVACOMPUTECOPY_SOURCES ComputeCopy.cpp )
   set( LAVACOMPUTECOPY_LINK_LIBRARIES lava )
   common_application( lavaComputeCopy )
 
+  set( LAVAEARTH_HEADERS )
+  set( LAVAEARTH_SOURCES Earth.cpp )
+  set( LAVAEARTH_LINK_LIBRARIES lava )
+  common_application( lavaEarth )
+
   set( LAVACOMPUTESUM_HEADERS )
   set( LAVACOMPUTESUM_SOURCES ComputeSum.cpp )
   set( LAVACOMPUTESUM_LINK_LIBRARIES lava )
   common_application( lavaComputeSum )
-
-  set( LAVACOMPUTEFLOCK_HEADERS )
-  set( LAVACOMPUTEFLOCK_SOURCES ComputeFlock.cpp )
-  set( LAVACOMPUTEFLOCK_LINK_LIBRARIES lava )
-  common_application( lavaComputeFlock )
 
   ##set( LAVAPOSTPROCESS_HEADERS )
   ##set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
@@ -82,24 +87,66 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
   common_application( lavaPlanarReflection )
 
+  set( LAVASAMPLERUNIFORMQUAD_HEADERS )
+  set( LAVASAMPLERUNIFORMQUAD_SOURCES SamplerUniformQuad.cpp )
+  set( LAVASAMPLERUNIFORMQUAD_LINK_LIBRARIES lava )
+  common_application( lavaSamplerUniformQuad )
+
   set( LAVAMATCAP2DARRAY_HEADERS )
   set( LAVAMATCAP2DARRAY_SOURCES Matcap2DArray.cpp )
   set( LAVAMATCAP2DARRAY_LINK_LIBRARIES lava )
   common_application( lavaMatcap2DArray )
 
-  set( LAVACOMPUTERAYTRACING_HEADERS )
-  set( LAVACOMPUTERAYTRACING_SOURCES ComputeRayTracing.cpp )
-  set( LAVACOMPUTERAYTRACING_LINK_LIBRARIES lava )
-  common_application( lavaComputeRayTracing )
+  set( LAVAINSTANCING_HEADERS )
+  set( LAVAINSTANCING_SOURCES Instancing.cpp )
+  set( LAVAINSTANCING_LINK_LIBRARIES lava )
+  common_application( lavaInstancing )
 
-  set( LAVAINPUTCORRECTION_HEADERS )
-  set( LAVAINPUTCORRECTION_SOURCES InputCorrection.cpp )
-  set( LAVAINPUTCORRECTION_LINK_LIBRARIES lava )
-  common_application( lavaInputCorrection )
+  set( LAVAMULTIVIEWPORTTOON_HEADERS )
+  set( LAVAMULTIVIEWPORTTOON_SOURCES MultiViewportToon.cpp )
+  set( LAVAMULTIVIEWPORTTOON_LINK_LIBRARIES lava )
+  common_application( lavaMultiViewportToon )
 
   set( LAVASKYBOX_HEADERS utils/Camera.h )
   set( LAVASKYBOX_SOURCES Skybox.cpp )
   set( LAVASKYBOX_LINK_LIBRARIES lava )
   common_application( lavaSkybox )
+
+  ## Geometry examples
+  set( LAVAGEOMETRYFIGURES_HEADERS )
+  set( LAVAGEOMETRYFIGURES_SOURCES GeometryFigures.cpp )
+  set( LAVAGEOMETRYFIGURES_LINK_LIBRARIES lava )
+  common_application( lavaGeometryFigures )
+
+  set( LAVAMESHEXPLOSION_HEADERS )
+  set( LAVAMESHEXPLOSION_SOURCES MeshExplosion.cpp )
+  set( LAVAMESHEXPLOSION_LINK_LIBRARIES lava )
+  common_application( lavaMeshExplosion )
+
+  set( LAVABILLBOARDGEOMETRY_HEADERS utils/Camera.h )
+  set( LAVABILLBOARDGEOMETRY_SOURCES BillboardGeometry.cpp )
+  set( LAVABILLBOARDGEOMETRY_LINK_LIBRARIES lava )
+  common_application( lavaBillboardGeometry )
+
+  set( LAVABUTTERFLIESGRASSLAND_HEADERS utils/Camera.h )
+  set( LAVABUTTERFLIESGRASSLAND_SOURCES ButterfliesGrassland.cpp )
+  set( LAVABUTTERFLIESGRASSLAND_LINK_LIBRARIES lava )
+  common_application( lavaButterfliesGrassland )
+
+  ## Tesselation examples
+  set( LAVAHEIGHTMAPTESSELATION_HEADERS utils/Camera.h )
+  set( LAVAHEIGHTMAPTESSELATION_SOURCES HeightmapTesselation.cpp )
+  set( LAVAHEIGHTMAPTESSELATION_LINK_LIBRARIES lava )
+  common_application( lavaHeightmapTesselation )
+
+  set( LAVATEAPOTDEPTH_HEADERS 
+    utils/Camera.h
+    utils/teapotdata.h
+    utils/TeapotQuad.h
+  )
+  set( LAVATEAPOTDEPTH_SOURCES TeapotDepth.cpp )
+  set( LAVATEAPOTDEPTH_LINK_LIBRARIES lava )
+  common_application( lavaTeapotDepth )
+
 
 endif( )

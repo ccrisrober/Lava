@@ -29,6 +29,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Planar reflection" );
   }
 
   struct

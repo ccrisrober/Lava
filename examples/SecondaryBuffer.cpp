@@ -9,6 +9,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Secondary Buffer Quad" );
   }
   
   void initResources( void ) override
@@ -146,12 +147,6 @@ public:
     {
       _window->_window->close( );
     }
-
-    /*static int i = 0;
-
-    ++i;
-
-    Log::info( std::to_string( i ) );*/
 
     std::array<vk::ClearValue, 2 > clearValues;
     std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };

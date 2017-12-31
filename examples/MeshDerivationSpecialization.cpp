@@ -29,6 +29,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Pipeline Derivation with SpecializationInfo" );
   }
 
   struct
@@ -46,7 +47,7 @@ public:
   };
 
   const float side = 1.0f;
-  const float side2 = side / 2.0f;
+  const float side2 = side * 0.5f;
 
   const std::vector<Vertex> vertices =
   {
@@ -308,13 +309,13 @@ public:
     cmd->setScissor( 0, vk::Rect2D( { 0, 0 }, _window->getExtent( ) ) );
 
     // Left
-    viewport.width = width / 2.0f;
+    viewport.width = width * 0.5f;
     cmd->setViewport( 0, viewport );
     cmd->bindGraphicsPipeline( pipelines.left );
     geometry->render( cmd );
 
     // Right
-    viewport.x = width / 2.0f;
+    viewport.x = width * 0.5f;
     cmd->setViewport( 0, viewport );
     cmd->bindGraphicsPipeline( pipelines.right );
     geometry->render( cmd );
@@ -388,7 +389,7 @@ int main( void )
 
   CustomVkWindow w;
   w.setVulkanInstance( instance );
-  w.resize( 750, 750 );
+  w.resize( 500, 500 );
 
   w.show( );
 

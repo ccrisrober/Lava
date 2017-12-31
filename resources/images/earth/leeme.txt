@@ -1,0 +1,25 @@
+float rotationSpeed = 0.02;
+float radius = ???;
+
+EarthMaterial = {
+	diffuseMap: earth_diffuse.jpg
+	specularMap: earth_specular.jpg
+	normalMap: earth_normal.jpg
+	normalScale: [ 1.5, 1.5 ]
+}
+
+CloudsMaterial = {
+	diffuseMap: earth_clouds.jpg
+	transparent: true
+}
+
+Earth = new Sphere( radius )
+Clouds = new Sphere( radius )
+Clouds.scale( 1.005 ); // cloudScale
+
+
+update( )
+{
+	Earth.rotation.y += rotationSpeed * delta;
+	Clouds.rotation.y += 1.25 * rotationSpeed * delta;
+}

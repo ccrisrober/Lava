@@ -3,12 +3,12 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(triangles, fractional_even_spacing, cw) in;
+layout( triangles, fractional_even_spacing, cw ) in;
 
-layout(location = 0) in vec2 uv[ ];
-layout(location = 0) out vec2 outUV;
+layout( location = 0 ) in vec2 uv[ ];
+layout( location = 0 ) out vec2 outUV;
 
-layout(binding = 0) uniform UniformBufferObject
+layout( binding = 0 ) uniform UniformBufferObject
 {
     mat4 model;
     mat4 view;
@@ -16,9 +16,9 @@ layout(binding = 0) uniform UniformBufferObject
     float amount;
     float tess_level;
 } ubo;
-layout(binding = 1) uniform sampler2D texSampler;
+layout( binding = 1 ) uniform sampler2D texSampler;
 
-void main( void )
+void main( )
 {
     vec4 pos = (gl_TessCoord.x * gl_in[ 0 ].gl_Position) +
         (gl_TessCoord.y * gl_in[ 1 ].gl_Position) +

@@ -29,6 +29,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Cube textured" );
   }
 
   struct
@@ -45,7 +46,7 @@ public:
   };
 
   const float side = 1.0f;
-  const float side2 = side / 2.0f;
+  const float side2 = side * 0.5f;
 
   const std::vector<Vertex> vertices =
   {

@@ -23,6 +23,9 @@ using namespace lava;
 #include <routes.h>
 #include "utils/Camera.h"
 
+const unsigned int SCR_WIDTH = 500;
+const unsigned int SCR_HEIGHT = 500;
+
 class CustomRenderer : public VulkanWindowRenderer
 {
 public:
@@ -30,11 +33,9 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Skybox with refract/reflect" );
     camera = Camera( glm::vec3( 0.0f, 2.0f, 8.0f ) );
   }
-
-  const unsigned int SCR_WIDTH = 800;
-  const unsigned int SCR_HEIGHT = 600;
 
   // camera
   Camera camera;
@@ -42,8 +43,8 @@ public:
   float deltaTime = 0.0f; // time between current frame and last frame
   float lastFrame = 0.0f;
 
-  float lastX = SCR_WIDTH / 2.0f;
-  float lastY = SCR_HEIGHT / 2.0f;
+  float lastX = SCR_WIDTH * 0.5f;
+  float lastY = SCR_HEIGHT * 0.5f;
   bool firstMouse = true;
 
   struct
@@ -64,7 +65,7 @@ public:
   };
 
   const float side = 5.0f;
-  const float side2 = side / 2.0f;
+  const float side2 = side * 0.5f;
   const std::vector<Vertex> vertices =
   {
     { { -side2, -side2,  side2 } },
@@ -166,12 +167,12 @@ public:
 
     std::array< std::string, 6 > cubeImages =
     {
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/right.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/left.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/top.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/bottom.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/back.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/front.jpg" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/right.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/left.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/top.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/bottom.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/back.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/front.png" ),
     };
     tex = std::make_shared<TextureCubemap>( device, cubeImages,
       _window->graphicsCommandPool( ), _window->graphicQueue( ),
@@ -389,7 +390,7 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( 
       currentTime - startTime ).count( ) / 1000.0f;
-
+    
     float currentFrame = time;
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -784,7 +785,7 @@ int main( void )
 
   CustomVkWindow w;
   w.setVulkanInstance( instance );
-  w.resize( 500, 500 );
+  w.resize( SCR_WIDTH, SCR_HEIGHT );
 
   w.show( );
 

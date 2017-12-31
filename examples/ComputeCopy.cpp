@@ -193,5 +193,7 @@ int main( void )
   std::cout << "..., " << result[ bufferElements - 1 ] << std::endl;
   std::cout << std::endl;
 
+  system( "PAUSE" );
+
   return 0;
 }

@@ -22,7 +22,7 @@ using namespace lava;
 
 #include <routes.h>
 
-//#define TESS_MODE // Comment for not indexing mode
+#define TESS_MODE // Comment for not indexing mode
 #define INDEXING_MODE // Comment for not indexing mode
 
 class CustomRenderer : public VulkanWindowRenderer
@@ -32,6 +32,14 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    std::string title = "Triangle";
+#ifdef INDEXING_MODE
+    title += std::string( " indexed" );
+#endif // INDEXING_MODE
+#ifdef TESS_MODE
+    title += std::string( " tesselated" );
+#endif // TESS_MODE
+    _window->setWindowTitle( title );
   }
 
   struct Vertex
