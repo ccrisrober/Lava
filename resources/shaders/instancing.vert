@@ -1,27 +1,30 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
 
-layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo;
+layout(binding = 0) uniform ubo0
+{
+    mat4 modelViewMatrix;
+    mat4 projectionMatrix;
+    float sineTime;
+};
 
-// Vertex attributes
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec2 inUV;
+layout( location = 0 ) in vec3 position;
+layout( location = 1 ) in vec3 offset;
+layout( location = 2 ) in vec4 color;
+layout( location = 3 ) in vec4 orientationStart;
+layout( location = 4 ) in vec4 orientationEnd;
 
-// Instance attributes
-layout(location = 2) in vec3 instancePos;
+layout( location = 0 ) out vec3 vPosition;
+layout( location = 1 ) out vec4 vColor;
 
-layout(location = 0) out vec2 outUV;
+void main( )
+{
 
-/*out gl_PerVertex {
-    vec4 gl_Position;
-};*/
+	vPosition = offset * max( abs( sineTime * 2.0 + 1.0 ), 0.5 ) + position;
+	vec4 orientation = normalize( mix( orientationStart, orientationEnd, sineTime ) );
+	vec3 vcV = cross( orientation.xyz, vPosition );
+	vPosition = vcV * ( 2.0 * orientation.w ) + ( cross( orientation.xyz, vcV ) * 2.0 + vPosition );
 
-void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition + instancePos, 1.0);
-    outUV = inUV;
+	vColor = color;
+
+	gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
 }

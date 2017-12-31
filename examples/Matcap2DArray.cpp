@@ -81,7 +81,8 @@ public:
         vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment
       ),
       DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
-        vk::ShaderStageFlagBits::eFragment
+        vk::ShaderStageFlagBits::eFragment,
+        std::make_shared<vk::Sampler>( tex->sampler ) // Inmutable sampler
       )
     };
 
@@ -146,6 +147,12 @@ public:
     // Init descriptor set
     descriptorSet = device->allocateDescriptorSet( dspPool, descriptorSetLayout );
 
+    // Null sampler for inmutable sampler mode
+    DescriptorImageInfo descriptor;
+    descriptor.imageLayout = tex->imageLayout;
+    descriptor.imageView = std::make_shared< vk::ImageView>( tex->view );
+    descriptor.sampler = VK_NULL_HANDLE;
+
     std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet( 
@@ -154,7 +161,7 @@ public:
       ),
       WriteDescriptorSet(
         descriptorSet, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1, 
-        tex->descriptor, nullptr
+        descriptor, nullptr
       )
     };
     device->updateDescriptorSets( wdss, { } );
