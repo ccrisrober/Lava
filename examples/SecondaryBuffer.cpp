@@ -16,8 +16,8 @@ public:
     auto device = _window->device( );
 
     tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "uv_checker.png" ), _window->graphicsCommandPool(), 
-      _window->graphicQueue(), vk::Format::eR8G8B8A8Unorm );
+      std::string( "uv_checker.png" ), _window->graphicsCommandPool( ), 
+      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -214,7 +214,7 @@ int main( void )
   std::vector<const char*> layers =
   {
 #ifndef NDEBUG
-    VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+    "VK_LAYER_LUNARG_standard_validation",
 #endif
   };
   std::vector<const char*> extensions =

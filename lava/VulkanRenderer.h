@@ -120,12 +120,13 @@ namespace lava
     LAVA_API
     std::shared_ptr< ImageView > depthStencilImageView( void ) const;
 
+    LAVA_API
     glm::mat4 clipCorrectionMatrix( void );
 
     LAVA_API
     virtual void resize( uint32_t width, uint32_t height ) final
     {
-      assert( ( 0 <= width ) && ( 0 <= height ) );
+      //assert( ( 0 <= width ) && ( 0 <= height ) );
 
       _swapChainImageSize.x = width;
       _swapChainImageSize.y = height;
@@ -140,6 +141,12 @@ namespace lava
     void show( void );
 
     std::shared_ptr< PipelineCache > pipelineCache;
+
+    LAVA_API
+    /*std::unique_ptr< */DefaultFramebuffer* /*>*/ defaultFramebuffer( void ) const // TODO: SO UGLY ...
+    {
+      return _defaultFramebuffer.get( );
+    }
 
     LAVA_API
     std::shared_ptr< Framebuffer > currentFramebuffer( void ) const

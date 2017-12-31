@@ -26,6 +26,7 @@
 #include "noncopyable.hpp"
 
 #include "CommandBuffer.h"
+#include "Queue.h"
 
 namespace lava
 {
@@ -88,6 +89,12 @@ namespace lava
     void copy( const std::shared_ptr<CommandBuffer>& cmd, 
       std::shared_ptr< Image > dst, const vk::Extent3D& extent, 
       const vk::ImageSubresourceLayers& range, vk::ImageLayout layout );
+
+    LAVA_API
+    void CreateStaged( const std::shared_ptr<Queue>& q,
+      std::shared_ptr<CommandBuffer>& cmd,
+      vk::DeviceSize size, vk::BufferUsageFlags usageFlags, void* data,
+      vk::MemoryPropertyFlags props );
 
     LAVA_API
     void flush( vk::DeviceSize size, vk::DeviceSize offset = 0 );

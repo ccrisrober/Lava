@@ -11,6 +11,12 @@ namespace lava
 
   void VulkanWindow::resizeEvent( uint32_t w, uint32_t h )
   {
+    if ( _defaultFramebuffer )
+    {
+      _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
+      _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
+        _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
+    }
   }
 
   void VulkanWindow::show( void )
@@ -20,26 +26,26 @@ namespace lava
 			init( );
 			_initialized = true;
 		}
-    float elapsed = 0.0f;
-    uint32_t frames = 0;
-    engine::Clock clock;
+    //float elapsed = 0.0f;
+    //uint32_t frames = 0;
+    //engine::Clock clock;
 		// TODO: SHOW WINDOW
     while ( _window->isRunning( ) )
     {
-      const auto elapsedTime = clock.reset( );
+      //const auto elapsedTime = clock.reset( );
       _window->pollEvents( );
       beginFrame( );
       //endFrame( );
 
-      elapsed += elapsedTime;
-      ++frames;
+      //elapsed += elapsedTime;
+      //++frames;
 
-      if ( elapsed >= 1.0f )
-      {
-        Log::info( "FPS: ", std::to_string( ( frames / elapsed ) * 0.1f ) );
-        frames = 0;
-        elapsed = 0.0f;
-      }
+      //if ( elapsed >= 1.0f )
+      //{
+      //  Log::info( "FPS: ", std::to_string( ( frames / elapsed ) * 0.1f ) );
+      //  frames = 0;
+      //  elapsed = 0.0f;
+      //}
     }
 	}
 
@@ -249,11 +255,11 @@ namespace lava
     _caps.addShaderProfile( "glsl" );
 	}
 
-
   void VulkanWindow::setWindowTitle( const char*& name )
   {
     setWindowTitle( std::string( name ) );
   }
+
   void VulkanWindow::setWindowTitle( const std::string& name )
   {
     _window->setWindowTitle( name );
@@ -508,6 +514,12 @@ namespace lava
     _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
       _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
 
+    _window->_callbackResize = [&]( int w, int h )
+    {
+      device( )->waitIdle( );
+      resize( w, h );
+    };
+
     if ( renderer )
     {
       renderer->initResources( );
@@ -582,6 +594,20 @@ namespace lava
 
   void VulkanWindow::endFrame( void )
   {
+    if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
+    {
+      // Add the swapchain image release to the command buffer that will be submitted to the graphics queue.
+      vk::ImageSubresourceRange issr;
+      issr.aspectMask = vk::ImageAspectFlagBits::eColor;
+      issr.levelCount = issr.layerCount = 1;
+      ImageMemoryBarrier barrier( {}, vk::AccessFlagBits::eColorAttachmentWrite, 
+        vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::ePresentSrcKHR, 
+        _gfxQueueFamilyIdx, _presQueueFamilyIdx, nullptr, issr );
+      
+      currentCommandBuffer( )->pipelineBarrier( 
+        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+        vk::PipelineStageFlagBits::eBottomOfPipe, {}, {}, {}, { barrier } );
+    }
     currentCommandBuffer( )->end( );
     vk::Result err = _gfxQueue->submit( SubmitInfo {
       { _defaultFramebuffer->getPresentSemaphore( ) },

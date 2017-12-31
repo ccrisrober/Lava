@@ -424,8 +424,8 @@ namespace lava
         specializationInfos.push_back( vk::SpecializationInfo( 
           s.specializationInfo->mapEntries.size( ),
           s.specializationInfo->mapEntries.data( ),
-          s.specializationInfo->data.size( ),
-          s.specializationInfo->data.data( ) )
+          sizeof( s.specializationInfo->data ),
+          s.specializationInfo->data )
         );
       }
       vStages.push_back( vk::PipelineShaderStageCreateInfo( { }, s.stage, 
@@ -540,9 +540,9 @@ namespace lava
 
   SpecializationInfo::SpecializationInfo( 
     vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries_, 
-    vk::ArrayProxy<const uint8_t> data_ )
+    const void* data_ )
     : mapEntries( mapEntries_.begin( ), mapEntries_.end( ) )
-    , data( data_.begin( ), data_.end( ) )
+    , data( data_ )
   {
   }
 
@@ -565,13 +565,16 @@ namespace lava
     , name( name_ )
     , specializationInfo( specializationInfo_ ? 
       new SpecializationInfo( *specializationInfo_ ) : nullptr )
-  {}
+  {
+  }
 
-  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( const PipelineShaderStageCreateInfo& rhs )
+  PipelineShaderStageCreateInfo::PipelineShaderStageCreateInfo( 
+    const PipelineShaderStageCreateInfo& rhs )
     : PipelineShaderStageCreateInfo( rhs.stage, rhs.module, rhs.name, 
       rhs.specializationInfo ? vk::Optional<const SpecializationInfo>( 
         *rhs.specializationInfo.get( ) ) : nullptr )
-  {}
+  {
+  }
 
   PipelineShaderStageCreateInfo & PipelineShaderStageCreateInfo::operator=( 
     const PipelineShaderStageCreateInfo& rhs )

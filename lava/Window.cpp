@@ -43,7 +43,8 @@ namespace lava
 
     glfwSetCursorPosCallback( _window, []( GLFWwindow*, double xpos, double ypos )
     {
-      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseMove( static_cast<int>( xpos ), static_cast<int>( ypos ) );
+      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseMove( 
+        static_cast<int>( xpos ), static_cast<int>( ypos ) );
     } );
 
     glfwSetMouseButtonCallback( _window, []( GLFWwindow*, int btn, int act, int )
@@ -53,15 +54,23 @@ namespace lava
 
     glfwSetScrollCallback( _window, []( GLFWwindow*, double xoffset, double yoffset )
     {
-      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseWheelEvent( static_cast<int>( xoffset ), static_cast<int>( yoffset ) );
+      static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseWheelEvent( 
+        static_cast<int>( xoffset ), static_cast<int>( yoffset ) );
     } );
 
-    glfwSetWindowSizeCallback( _window, ( []( GLFWwindow* /*window*/, int width, int height )
+    /*glfwSetWindowSizeCallback*/
+    glfwSetFramebufferSizeCallback( _window, []( GLFWwindow* window, int width, int height )
     {
       // glViewport( 0, 0, width, height );
       // TODO: Send event and set width and height from _params
-    } ) );
+      auto w = reinterpret_cast< Window* >( glfwGetWindowUserPointer( window ) );
+      if ( w->_callbackResize )
+      {
+        w->_callbackResize( width, height );
+      }
+    } );
 
+    glfwSetWindowUserPointer( _window, this );
     glfwSetInputMode( _window, GLFW_STICKY_KEYS, GLFW_CURSOR_DISABLED );
     
     glfwMakeContextCurrent( _window );
@@ -77,6 +86,11 @@ namespace lava
   void Window::pollEvents( void )
   {
     glfwPollEvents( );
+  }
+
+  void Window::setChangeSizeCallback( std::function<void( int, int )> cb )
+  {
+    _callbackResize = cb;
   }
 
   void Window::setErrorCallback( GLFWerrorfun fn )

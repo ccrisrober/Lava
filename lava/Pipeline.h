@@ -186,14 +186,14 @@ namespace lava
   {
     LAVA_API
     SpecializationInfo( vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries, 
-      vk::ArrayProxy<const uint8_t> data );
+      const void* data );
     LAVA_API
     SpecializationInfo( SpecializationInfo const& rhs );
     LAVA_API
     SpecializationInfo & operator=( SpecializationInfo const& rhs );
 
     std::vector<vk::SpecializationMapEntry> mapEntries;
-    std::vector<uint8_t>                    data;
+    const void*                             data;
   };
   struct PipelineShaderStageCreateInfo
   {

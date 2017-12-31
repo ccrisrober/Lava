@@ -6,185 +6,182 @@
 layout (local_size_x = 16, local_size_y = 16) in;
 layout (binding = 0, rgba8) uniform writeonly image2D resultImage;
 
-layout (binding = 1) uniform UBO 
-{
-	float time;
-} ubo;
-
-layout( binding = 2 ) buffer LightBuffer
-{
-  vec3 light_color;
-  vec3 light_direction;
-};
-
-/*struct Sphere
-{
-	vec3 center;
-	float radius;
-};
-
-layout (binding = 2 ) buffer SphereBuffer
-{
-	Sphere sphere;
-};*/
-
-
-struct Ray
-{
-	vec3 origin;
-	vec3 direction;
-};
-
-struct Light
-{
-	vec3 color;
-};
-
-struct Material
-{
-	vec3 color;
-	float diffuse;
-	float specular;
-};
-
-struct Intersect
-{
-	float len;
-	vec3 normal;
-	Material material;
-};
+#define INFINITY 100000.0
+const float epsilon = 1e-3;
 
 struct Sphere
 {
-	float radius;
-	vec3 position;
-	Material material;
+    vec3 center;
+    float radius;
+    vec3 color;
 };
 
-struct Plane
+struct Ray
 {
-	vec3 normal;
-	Material material;
+    vec3 origin;
+    vec3 direction;
+} ray;
+
+struct Light
+{
+    vec3 position;
+    float ambience;
 };
 
-const float epsilon = 1e-3;
-
-const int iterations = 16;
-
-const float exposure = 1e-2;
-const float gamma = 2.2;
-const float intensity = 100.0;
-const vec3 ambient = vec3(0.0, 0.0, 1.0) * intensity / gamma;
-
-Light light;
-
-const Intersect miss = Intersect(0.0, vec3(0.0), Material(vec3(0.0), 0.0, 0.0));
-
-Intersect intersect(Ray ray, Sphere sphere)
+struct RayTracerOutput
 {
-	// Check for a Negative Square Root
-	vec3 oc = sphere.position - ray.origin;
-	float l = dot(ray.direction, oc);
-	float det = pow(l, 2.0) - dot(oc, oc) + pow(sphere.radius, 2.0);
-	if (det < 0.0) return miss;
+    Ray reflectedRay;
+    vec3 color;
+};
 
-	// Find the Closer of Two Solutions
-			 float len = l - sqrt(det);
-	if (len < 0.0) len = l + sqrt(det);
-	if (len < 0.0) return miss;
-	return Intersect(len, (ray.origin + len*ray.direction - sphere.position) / sphere.radius, sphere.material);
+layout (binding = 1) uniform UBO 
+{
+	Light light;
+};
+
+layout( binding = 2 ) buffer SphereBuffer
+{
+	//Sphere spheres[];
+	Sphere sp[];
+};
+
+Sphere spheres[5];
+
+float getIntersection( int i, Ray ray)
+{
+	Sphere sphere = spheres[ i ];
+    vec3 sphereCenter = sphere.center;
+    vec3 colorOfSphere = sphere.color;
+    float radius = sphere.radius;
+    vec3 cameraSource = ray.origin;
+    vec3 cameraDirection = ray.direction;
+
+    vec3 distanceFromCenter = (cameraSource - sphereCenter);
+    float B = 2.0 * dot(cameraDirection, distanceFromCenter);
+    float C = dot(distanceFromCenter, distanceFromCenter) - pow(radius, 2.0);
+    float delta = pow(B, 2.0) - 4.0 * C;
+    float t = 0.0;
+    if (delta > 0.0) {
+        float sqRoot = sqrt(delta);
+        float t1 = (-B + sqRoot) / 2.0;
+        float t2 = (-B - sqRoot) / 2.0;
+        t = min(t1, t2);
+    }
+    if (delta == 0.0) {
+        t = -B / 2.0;
+    }
+    return t;
 }
 
-Intersect intersect(Ray ray, Plane plane)
+RayTracerOutput trace( Ray ray )
 {
-	float len = -dot(ray.origin, plane.normal) / dot(ray.direction, plane.normal);
-	if (len < 0.0) return miss;
-	return Intersect(len, plane.normal, plane.material);
+	RayTracerOutput rayTracer;
+    Ray reflectionRay;
+    Sphere sphereToShow;
+    float minT = INFINITY;
+    vec3 cameraSource = ray.origin;
+    vec3 cameraDirection = ray.direction;
+    vec3 lightSource = light.position;
+    float ambience = light.ambience;
+    vec3 color = vec3(0.0, 0.0, 0.0);
+
+	int numSpheres = 5;//spheres.length();
+    for (int i=0; i < numSpheres; ++i) {
+        float t = getIntersection( i, ray );
+        if (t > 0.0 && t < minT) {
+            minT = t;
+            sphereToShow = spheres[i];
+        }
+    }
+
+    vec3 sphereCenter = sphereToShow.center;
+    vec3 colorOfSphere = sphereToShow.color;
+
+    if (minT > 0.0 && minT != INFINITY) {
+        vec3 surfacePoint = cameraSource + (minT * cameraDirection);
+        vec3 surfaceNormal = normalize(surfacePoint - sphereCenter);
+
+        // Reflection
+        vec3 reflection = 2.0 * dot(-ray.direction, surfaceNormal) * surfaceNormal + ray.direction;
+        reflectionRay.origin = surfaceNormal + epsilon * reflection;
+        reflectionRay.direction = reflection;
+        color = colorOfSphere * (ambience + ((1.0 - ambience) * max(0.0, dot(surfaceNormal, lightSource))));
+        rayTracer.color = color;
+        rayTracer.reflectedRay = reflectionRay;
+    }
+    return rayTracer;
 }
 
-Intersect trace(Ray ray)
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-	const int num_spheres = 3;
-	Sphere spheres[num_spheres];
+	ray.origin = vec3( 0.0, 0.0, 4.0 );
+	ray.direction = normalize(vec3(fragCoord.x, fragCoord.y, -1.0)); 
 
-	spheres[0] = Sphere(2.0, vec3(-4.0, 3.0 + sin(ubo.time), 0), Material(vec3(1.0, 0.0, 0.2), 1.0, 0.001));
-	spheres[1] = Sphere(3.0, vec3( 4.0 + cos(ubo.time), 3.0, 0), Material(vec3(0.0, 0.2, 1.0), 1.0, 0.0));
-	spheres[2] = Sphere(1.0, vec3( 0.5, 1.0, 6.0),                  Material(vec3(1.0, 1.0, 1.0), 0.5, 0.25));
-
-	Intersect intersection = miss;
-	Intersect plane = intersect(ray, Plane(vec3(0, 1, 0), Material(vec3(1.0, 1.0, 1.0), 1.0, 0.0)));
-	if (plane.material.diffuse > 0.0 || plane.material.specular > 0.0) { intersection = plane; }
-	for (int i = 0; i < num_spheres; ++i)
-	{
-		Intersect sphere = intersect(ray, spheres[i]);
-		if (sphere.material.diffuse > 0.0 || sphere.material.specular > 0.0)
-		{
-			intersection = sphere;
-		}
-	}
-	return intersection;
+	RayTracerOutput rayTracer = trace(ray);
+    // Second call to get reflections
+    RayTracerOutput reflection = trace(rayTracer.reflectedRay);
+    fragColor = vec4(rayTracer.color + reflection.color, 1.0);
 }
 
-vec3 radiance(Ray ray)
+const float A = 0.15;
+const float B = 0.50;
+const float C = 0.10;
+const float D = 0.20;
+const float E = 0.02;
+const float F = 0.30;
+const float W = 11.2;
+
+vec3 Uncharted2Tonemap(vec3 x)
 {
-	vec3 color = vec3(0.0), fresnel = vec3(0.0);
-	vec3 mask = vec3(1.0);
-	for (int i = 0; i <= iterations; ++i)
-	{
-		Intersect hit = trace(ray);
-
-		if (hit.material.diffuse > 0.0 || hit.material.specular > 0.0)
-		{
-			vec3 r0 = hit.material.color.rgb * hit.material.specular;
-			float hv = clamp(dot(hit.normal, -ray.direction), 0.0, 1.0);
-			fresnel = r0 + (1.0 - r0) * pow(1.0 - hv, 5.0);
-			mask *= fresnel;
-
-			if (trace(Ray(ray.origin + hit.len * ray.direction + epsilon * light_direction, light_direction)) == miss)
-			{
-				color += clamp(dot(hit.normal, light_direction), 0.0, 1.0) * light.color
-					   * hit.material.color.rgb * hit.material.diffuse
-					   * (1.0 - fresnel) * mask / fresnel;
-			}
-
-			vec3 reflection = reflect(ray.direction, hit.normal);
-			ray = Ray(ray.origin + hit.len * ray.direction + epsilon * reflection, reflection);
-
-		}
-		else
-		{
-			vec3 spotlight = vec3(1e6) * pow(abs(dot(ray.direction, light_direction)), 250.0);
-			color += mask * (ambient + spotlight); break;
-		}
-	}
-	return color;
+   return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord)
+//Based on Filmic Tonemapping Operators http://filmicgames.com/archives/75
+vec3 tonemapUncharted2(vec3 color)
 {
-	Ray ray = Ray(vec3(0.0, 2.5, 12.0), normalize(vec3(fragCoord.x, fragCoord.y, -1.0)));
-	fragColor = vec4(pow(radiance(ray) * exposure, vec3(1.0 / gamma)), 1.0);
+    float ExposureBias = 2.0;
+    vec3 curr = Uncharted2Tonemap(ExposureBias * color);
+
+    vec3 whiteScale = 1.0 / Uncharted2Tonemap(vec3(W));
+    return curr * whiteScale;
 }
 
-void main()
+void main( )
 {
-	light.color = light_color * intensity;
-
-	const float time = ubo.time;
-
-	vec4 pixel = vec4 (0.0, 0.0, 0.0, 1.0);
-	ivec2 pixel_coords = ivec2 (gl_GlobalInvocationID.xy);
-
-	vec4 fragColor;
+	spheres[0] = Sphere( 
+		vec3( 0.25,   1.5, -0.25 ),  
+		0.3, 
+      	vec3( 1.0, 0.0, 0.0 ) 
+  	);
+    spheres[1] = Sphere( 
+    	vec3(  0.5,  0.25,  0.75 ),  
+    	0.2, 
+      	vec3( 0.0, 1.0, 0.0 ) 
+  	);
+    spheres[2] = Sphere( 
+    	vec3( -0.75,  0.0,   0.5 ),  
+    	0.2, 
+      	vec3( 0.0, 0.0, 1.0 ) 
+  	);
+    spheres[3] = Sphere( 
+    	vec3( -0.25,  0.4,   0.1 ),
+    	0.25, 
+      	vec3( 0.0, 1.0, 1.0 ) 
+  	);
+    spheres[4] = Sphere( 
+    	vec3(  -1.5, 0.15,  0.15 ),
+    	0.35, 
+      	vec3( 1.0, 1.0, 0.0 ) 
+  	);
 
 	ivec2 dim = imageSize(resultImage);
 	vec2 uv = vec2(gl_GlobalInvocationID.xy) / dim;
-	
-	vec2 old_uv = uv;
-	old_uv.y = 1.0 - old_uv.y;
-	vec2 new_uv = -1.0 + 2.0 * old_uv;
-	
-	mainImage( fragColor, new_uv );
 
-	imageStore( resultImage, pixel_coords, fragColor );
+	vec4 fragColor;
+
+	mainImage( fragColor, uv );
+
+	//fragColor.rgb = tonemapUncharted2( fragColor.rgb );
+
+	imageStore(resultImage, ivec2(gl_GlobalInvocationID.xy), fragColor);
 }

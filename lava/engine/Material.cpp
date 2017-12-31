@@ -115,6 +115,7 @@ namespace lava
       struct Vertex
       {
         glm::vec4 position;
+        glm::vec4 color;
       };
 
       // init descriptor and pipeline layouts
@@ -149,6 +150,9 @@ namespace lava
         {
           vk::VertexInputAttributeDescription(
             0, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, position )
+          ),
+          vk::VertexInputAttributeDescription(
+            1, 0, vk::Format::eR32G32B32Sfloat, offsetof( Vertex, color )
           )
         }
       );

@@ -154,6 +154,20 @@ namespace lava
     cmd->copyBufferToImage( shared_from_this( ), dst, layout, region );
   }
 
+  void Buffer::CreateStaged( const std::shared_ptr<Queue>& q, 
+    std::shared_ptr<CommandBuffer>& cmd,
+    vk::DeviceSize size, vk::BufferUsageFlags usage, void* data, 
+    vk::MemoryPropertyFlags props )
+  {
+    cmd->beginSimple( );
+    std::shared_ptr<Buffer> buffer = _device->createBuffer( 
+      { }, size, usage, vk::SharingMode::eExclusive, nullptr, props );
+    copy( cmd, buffer, 0, 0, size );
+    // TODO: queue->submit( ) waitForFences( ... );
+    cmd->end( );
+    q->submitAndWait( cmd );
+  }
+
 
   void Buffer::flush( vk::DeviceSize size, vk::DeviceSize offset )
   {

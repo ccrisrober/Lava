@@ -16,7 +16,7 @@ public:
     auto device = _window->device( );
 
     tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "uv_checker.png" ), _window->graphicsCommandPool(), 
+      std::string( "rubymatcap_bug.jpg" ), _window->graphicsCommandPool(), 
       _window->graphicQueue(), vk::Format::eR8G8B8A8Unorm );
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
@@ -94,6 +94,13 @@ public:
     };
 
     device->updateDescriptorSets( wdss, {} );
+
+    auto geometry = std::make_shared<lava::extras::Geometry>( device,
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
+    auto geometry2 = std::make_shared<lava::extras::Geometry>( device,
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.ply" ) );
+
+    std::cout << "OK" << std::endl;
   }
 
   void releaseResources( void ) override
@@ -227,7 +234,7 @@ int main( void )
   std::vector<const char*> layers =
   {
 #ifndef NDEBUG
-    VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+    "VK_LAYER_LUNARG_standard_validation",
 #endif
   };
   std::vector<const char*> extensions =
@@ -248,10 +255,10 @@ int main( void )
 
   CustomVkWindow w;
   w.setVulkanInstance( instance );
-  w.resize( 500, 500 );
+  w.resize( 700, 700 );
+
+  //w.setSampleCountFlagBits( 4 );
 
   w.show( );
-
-  auto res = w.supportedSampleCounts( );
   return 0;
 }

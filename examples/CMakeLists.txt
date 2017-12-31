@@ -22,6 +22,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAVKINFO_LINK_LIBRARIES lava )
   common_application( lavaVkInfo )
 
+  set( LAVACLEARSCREEN_HEADERS )
+  set( LAVACLEARSCREEN_SOURCES ClearScreen.cpp )
+  set( LAVACLEARSCREEN_LINK_LIBRARIES lava )
+  common_application( lavaClearScreen )
+
   set( LAVATRIANGLENOBUFFER_HEADERS )
   set( LAVATRIANGLENOBUFFER_SOURCES TriangleNoBuffer.cpp )
   set( LAVATRIANGLENOBUFFER_LINK_LIBRARIES lava )
@@ -51,5 +56,50 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVACOMPUTEFLOCK_SOURCES ComputeFlock.cpp )
   set( LAVACOMPUTEFLOCK_LINK_LIBRARIES lava )
   common_application( lavaComputeFlock )
+
+  ##set( LAVAPOSTPROCESS_HEADERS )
+  ##set( LAVAPOSTPROCESS_SOURCES PostProcess.cpp )
+  ##set( LAVAPOSTPROCESS_LINK_LIBRARIES lava )
+  ##common_application( lavaPostProcess )
+
+  set( LAVATRIANGLEINDEXED_HEADERS )
+  set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
+  set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava )
+  common_application( lavaTriangleIndexed )
+
+  set( LAVACUBETEXTURED_HEADERS )
+  set( LAVACUBETEXTURED_SOURCES CubeTextured.cpp )
+  set( LAVACUBETEXTURED_LINK_LIBRARIES lava )
+  common_application( lavaCubeTextured )
+
+  set( LAVAMESHDERIVATIONSPECIALIZATION_HEADERS )
+  set( LAVAMESHDERIVATIONSPECIALIZATION_SOURCES MeshDerivationSpecialization.cpp )
+  set( LAVAMESHDERIVATIONSPECIALIZATION_LINK_LIBRARIES lava )
+  common_application( lavaMeshDerivationSpecialization )
+
+  set( LAVAPLANARREFLECTION_HEADERS )
+  set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
+  set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
+  common_application( lavaPlanarReflection )
+
+  set( LAVAMATCAP2DARRAY_HEADERS )
+  set( LAVAMATCAP2DARRAY_SOURCES Matcap2DArray.cpp )
+  set( LAVAMATCAP2DARRAY_LINK_LIBRARIES lava )
+  common_application( lavaMatcap2DArray )
+
+  set( LAVACOMPUTERAYTRACING_HEADERS )
+  set( LAVACOMPUTERAYTRACING_SOURCES ComputeRayTracing.cpp )
+  set( LAVACOMPUTERAYTRACING_LINK_LIBRARIES lava )
+  common_application( lavaComputeRayTracing )
+
+  set( LAVAINPUTCORRECTION_HEADERS )
+  set( LAVAINPUTCORRECTION_SOURCES InputCorrection.cpp )
+  set( LAVAINPUTCORRECTION_LINK_LIBRARIES lava )
+  common_application( lavaInputCorrection )
+
+  set( LAVASKYBOX_HEADERS utils/Camera.h )
+  set( LAVASKYBOX_SOURCES Skybox.cpp )
+  set( LAVASKYBOX_LINK_LIBRARIES lava )
+  common_application( lavaSkybox )
 
 endif( )

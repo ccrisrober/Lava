@@ -29,7 +29,7 @@ namespace lava
     };
     static int getLevel( void ) { return _level; }
     static void setLevel( int level ) { _level = level; }
-  protected:
+  private:
     static int _level;
   public:
     template<typename ... Args>
@@ -121,7 +121,7 @@ namespace lava
         _outputHandler = std::move(
           std::unique_ptr< T >(new T(std::forward< Args >(args)...)));
       }
-  protected:
+  private:
     static std::unique_ptr< OutputHandler > _outputHandler;
   };
 }

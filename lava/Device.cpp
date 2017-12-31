@@ -343,10 +343,10 @@ namespace lava
   }
   const PipelineShaderStageCreateInfo Device::createShaderPipelineShaderStage( 
     const std::string& spvFile, vk::ShaderStageFlagBits stage, 
-    const std::string& name )
+    vk::Optional<const SpecializationInfo> specInfo )
   {
     auto shaderModule = createShaderModule( spvFile, stage );
-    return PipelineShaderStageCreateInfo( stage, shaderModule, name );
+    return PipelineShaderStageCreateInfo( stage, shaderModule, "main", specInfo );
   }
 
   std::shared_ptr<Fence> Device::createFence( bool signaled )

@@ -146,10 +146,11 @@ int main( void )
     VK_API_VERSION_1_0
   );
 
+
   std::vector<const char*> layers =
   {
 #ifndef NDEBUG
-    VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+    "VK_LAYER_LUNARG_standard_validation",
 #endif
   };
   std::vector<const char*> extensions =
@@ -159,8 +160,9 @@ int main( void )
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 
+
   instance = Instance::create( vk::InstanceCreateInfo(
-  {},
+    { },
     &appInfo,
     layers.size( ),
     layers.data( ),

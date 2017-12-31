@@ -1,5 +1,16 @@
 #version 450
 
+layout( local_size_x = 128, local_size_y = 1, local_size_z = 1 ) in;
+
+struct Particle
+{
+  vec3  pos;
+  vec3  ppos;
+  vec3  home;
+  vec4  color;
+  float damping;
+};
+
 //Particle buffer
 layout( std140, binding = 0 ) buffer Part
 {
@@ -24,17 +35,6 @@ layout(binding = 1) uniform UBO
   vec2  uWindowCenter;
   float uColorRadius;
 };
-
-struct Particle
-{
-  vec3  pos;
-  vec3  ppos;
-  vec3  home;
-  vec4  color;
-  float damping;
-};
-
-layout( local_size_x = 128, local_size_y = 1, local_size_z = 1 ) in;
 
 vec3 limit(vec3 v, float m)
 {
