@@ -62,16 +62,37 @@ common_find_package_post( )
 add_subdirectory( lava )
 add_subdirectory( examples )
 
-configure_file(
-  CMake/glsl2spirv.cmake
-  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake
-  COPYONLY
-  )
-install( FILES CMake/glsl2spirv.cmake
-  DESTINATION ${CMAKE_MODULE_INSTALL_PATH} COMPONENT dev )
 
-add_custom_target( spv-gen ${CMAKE_COMMAND} -P 
-  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake )
+file(GLOB_RECURSE GLSL_SOURCE_FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*.vert"
+  "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*.frag"
+  "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*.comp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*.geom"
+  "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*.tesc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*.tese"
+)
+if ( WIN32 )
+  set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin/glslangValidator.exe")
+else( )
+  set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/bin/glslangValidator")
+endif( )
+foreach(GLSL ${GLSL_SOURCE_FILES})
+  get_filename_component(FILE_NAME ${GLSL} NAME_WE)
+  get_filename_component(FILE_EXT_AUX ${GLSL} EXT)
+  STRING(REPLACE "." "" FILE_EXT ${FILE_EXT_AUX})
+  set(SPIRV "${PROJECT_BINARY_DIR}/shaders/${FILE_NAME}_${FILE_EXT}.spv")
+  add_custom_command(
+    OUTPUT ${SPIRV}
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/shaders/"
+    COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+    DEPENDS ${GLSL})
+  list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach(GLSL)
+
+add_custom_target(
+  Shaders 
+  DEPENDS ${SPIRV_BINARY_FILES}
+)
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})

@@ -32,23 +32,23 @@
 #if defined( __MINGW32__ ) || defined( WIN32 ) || defined( __WIN32__ )
   #define LAVA_PLATFORM_WINDOWS
   #define LAVA_KHR_EXT "VK_KHR_win32_surface"
-#elif defined(VK_USE_PLATFORM_ANDROID_KHR)
+/*#elif defined(VK_KHR_android_surface)
   #define LAVA_PLATFORM_ANDROID
-  #define LAVA_KHR_EXT "VK_USE_PLATFORM_ANDROID_KHR"
-#elif defined(_DIRECT2DISPLAY)
+  #define LAVA_KHR_EXT "VK_KHR_android_surface"
+#elif defined(VK_KHR_display)
   #define LAVA_KKHR_EXT "VK_KHR_display"
-#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-  #define LAVA_KKHR_EXT "VK_KHR_wayland_surface"
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
+#elif defined(VK_KHR_wayland_surface)
+  #define LAVA_KHR_EXT "VK_KHR_wayland_surface"*/
+#elif defined(_GLFW_X11)
   #define LAVA_PLATFORM_LINUX
   #define LAVA_KHR_EXT "VK_KHR_xcb_surface"
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+#else //elif defined(VK_KHR_xlib_surface)
   #define LAVA_PLATFORM_LINUX
-  #define LAVA_KHR_EXT "VK_KHR_xlib_surface"
-#elif defined(VK_USE_PLATFORM_IOS_MVK)
+  #define LAVA_KHR_EXT "VK_KHR_xcb_surface"
+/*#elif defined(VK_MVK_ios_surface)
   #define LAVA_KHR_ExT "VK_MVK_ios_surface"
-#elif defined(VK_USE_PLATFORM_MACOS_MVK)
-  #define LAVA_KHR_ExT "VK_MVK_macos_surface"
+#elif defined(VK_MVK_macos_surface)
+  #define LAVA_KHR_ExT "VK_MVK_macos_surface"*/
 #endif
 
 #define GLM_FORCE_RADIANS

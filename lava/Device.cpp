@@ -435,6 +435,21 @@ namespace lava
     return std::make_shared<IndexBuffer>( shared_from_this( ), type, size );
   }
 #endif
+  std::shared_ptr<Buffer> Device::createBuffer( vk::DeviceSize size, 
+    vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags memPropFlags )
+  {
+    return createBuffer( size, usageFlags, vk::SharingMode::eExclusive, 
+      nullptr, memPropFlags );
+  }
+
+  std::shared_ptr<Buffer> Device::createBuffer( vk::DeviceSize size, 
+    vk::BufferUsageFlags usageFlags, 
+    vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+    vk::MemoryPropertyFlags memPropFlags )
+  {
+    return createBuffer( size, usageFlags, vk::SharingMode::eConcurrent, 
+      queueFamilyIndices, memPropFlags );
+  }
 
   std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
     const std::shared_ptr<PipelineCache>& pipelineCache, 

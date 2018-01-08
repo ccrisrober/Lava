@@ -24,7 +24,7 @@
 #include <lava/api.h>
 #include <cstring>
 
-#include "../Includes.hpp"
+#include "../includes.hpp"
 
 namespace lava
 {

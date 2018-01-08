@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <vulkan/vulkan.hpp>
 
 int main( void )
 {

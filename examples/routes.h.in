@@ -8,6 +8,6 @@
   std::string("@PROJECT_SOURCE_DIR@/resources/meshes/")
 
 #define LAVA_EXAMPLES_SPV_ROUTE\
-  std::string("@PROJECT_SOURCE_DIR@/spvs/")
+  std::string("@PROJECT_BINARY_DIR@/shaders/")
 
 #endif /* __LAVA_EXAMPLES_ROUTES__ */

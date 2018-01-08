@@ -229,6 +229,16 @@ namespace lava
     std::shared_ptr<IndexBuffer> createIndexBuffer( vk::IndexType type, 
       vk::DeviceSize size );
 #endif
+    // Sharing Mode: Exclusive
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
+      vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags memPropFlags );
+    // Sharing Mode: Concurrent
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
+      vk::BufferUsageFlags usageFlags, 
+      vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+      vk::MemoryPropertyFlags memoryPropertyFlags );
 
   protected:
     void init(
