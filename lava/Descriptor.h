@@ -99,6 +99,10 @@ namespace lava
   struct DescriptorBufferInfo
   {
     LAVA_API
+    DescriptorBufferInfo( void )
+    {
+    }
+    LAVA_API
     DescriptorBufferInfo( const std::shared_ptr<Buffer>& buffer,
       vk::DeviceSize offset, vk::DeviceSize range );
     LAVA_API

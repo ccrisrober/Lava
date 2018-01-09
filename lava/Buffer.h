@@ -110,6 +110,9 @@ namespace lava
     LAVA_API
     void update( const void* src );
 
+    LAVA_API
+    void updateDescriptor( void );
+    
     // todo: virtual void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 ) = 0;
   //protected:
     vk::Buffer _buffer;
@@ -117,6 +120,7 @@ namespace lava
     vk::DeviceMemory _memory;
 
     vk::DeviceSize _size;
+    DescriptorBufferInfo descriptor;
   };
   /*template<typename T>
   inline void Buffer::update( vk::DeviceSize offset, vk::ArrayProxy<const T> data, 

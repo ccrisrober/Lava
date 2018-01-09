@@ -82,7 +82,6 @@ public:
       cmd->end( );
 
       _window->graphicQueue( )->submitAndWait( cmd );
-
     }
 
 #ifdef INDEXING_MODE

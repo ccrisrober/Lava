@@ -2,6 +2,8 @@
 #include "engine/Clock.h"
 #include "Log.h"
 
+#include <thread>
+
 namespace lava
 {
   RenderAPICapabilities VulkanWindow::caps( void ) const
@@ -25,6 +27,8 @@ namespace lava
 		{
 			init( );
 			_initialized = true;
+
+      savePipelineCache( );
 		}
     //float elapsed = 0.0f;
     //uint32_t frames = 0;
@@ -46,6 +50,9 @@ namespace lava
       //  frames = 0;
       //  elapsed = 0.0f;
       //}
+
+      // Very crude method to prevent your GPU from overheating.
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 	}
 
@@ -508,7 +515,7 @@ namespace lava
     }
 
     _renderComplete = _device->createSemaphore( );
-    pipelineCache = _device->createPipelineCache( 0, nullptr );
+    createPipelineCache( );
 
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
     _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
@@ -650,6 +657,15 @@ namespace lava
       return true;
     }
     return false;
+  }
+
+
+  void VulkanWindow::createPipelineCache( void )
+  {
+    pipelineCache = _device->createPipelineCache( 0, nullptr );
+  }
+  void VulkanWindow::savePipelineCache( void )
+  {
   }
 
   CommandBufferPtr VulkanWindow::currentCommandBuffer( void ) const

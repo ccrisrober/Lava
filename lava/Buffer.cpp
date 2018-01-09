@@ -40,6 +40,8 @@ namespace lava
 
     _buffer = static_cast< vk::Device >( *_device ).createBuffer( bci );
     _memory = _device->allocateBufferMemory( _buffer, memoryPropertyFlags );
+  
+    // updateDescriptor( );
   }
 
   Buffer::Buffer( const DeviceRef& device, vk::BufferCreateFlags createFlags, 
@@ -207,6 +209,13 @@ namespace lava
   void Buffer::update( const void * dst )
   {
     writeData( 0, _size, dst );
+  }
+
+  void Buffer::updateDescriptor( void )
+  {
+    descriptor.buffer = shared_from_this( );
+    descriptor.offset = 0;
+    descriptor.range = _size;
   }
 
 
