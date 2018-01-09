@@ -21,6 +21,7 @@
 using namespace lava;
 
 #include <routes.h>
+#include <iomanip>
 
 class CustomRenderer : public VulkanWindowRenderer
 {
@@ -105,6 +106,10 @@ public:
   void initResources( void ) override
   {
     auto device = _window->device( );
+
+    const std::string pipCacheFile = LAVA_EXAMPLES_ROUTE + std::string( "pipCache.bin" );
+
+    _window->pipelineCache = device->createPipelineCache( pipCacheFile );
 
     // Vertex buffer
     {
@@ -297,6 +302,8 @@ public:
       )
     };
     device->updateDescriptorSets( wdss, { } );
+
+    _window->pipelineCache->saveToFile( pipCacheFile );
   }
 
   void nextFrame( void ) override

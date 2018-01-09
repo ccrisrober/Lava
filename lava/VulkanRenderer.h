@@ -68,9 +68,10 @@ namespace lava
     LAVA_API
     bool checkDeviceLost( vk::Result res );
 
+    /*LAVA_API
+    virtual void createPipelineCache( void ) = 0;
     LAVA_API
-    virtual void createPipelineCache( void );
-    virtual void savePipelineCache( void );
+    virtual void savePipelineCache( void ) = 0;*/
 
     LAVA_API
     CommandBufferPtr currentCommandBuffer( void ) const;

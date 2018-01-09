@@ -10,4 +10,7 @@
 #define LAVA_EXAMPLES_SPV_ROUTE\
   std::string("@PROJECT_BINARY_DIR@/shaders/")
 
+#define LAVA_EXAMPLES_ROUTE\
+  std::string("@PROJECT_BINARY_DIR@/")
+
 #endif /* __LAVA_EXAMPLES_ROUTES__ */

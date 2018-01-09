@@ -28,7 +28,7 @@ namespace lava
 			init( );
 			_initialized = true;
 
-      savePipelineCache( );
+      // TODO: savePipelineCache( );
 		}
     //float elapsed = 0.0f;
     //uint32_t frames = 0;
@@ -515,7 +515,7 @@ namespace lava
     }
 
     _renderComplete = _device->createSemaphore( );
-    createPipelineCache( );
+    //createPipelineCache( );
 
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
     _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
@@ -660,13 +660,13 @@ namespace lava
   }
 
 
-  void VulkanWindow::createPipelineCache( void )
+  /*void VulkanWindow::createPipelineCache( void )
   {
     pipelineCache = _device->createPipelineCache( 0, nullptr );
   }
   void VulkanWindow::savePipelineCache( void )
   {
-  }
+  }*/
 
   CommandBufferPtr VulkanWindow::currentCommandBuffer( void ) const
   {

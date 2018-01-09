@@ -50,4 +50,19 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAMULTISETDESCRIPTOR_LINK_LIBRARIES lava )
   common_application( lavaMultiSetDescriptor )
 
+  set( LAVAPLANARREFLECTION_HEADERS )
+  set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
+  set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
+  common_application( lavaPlanarReflection )
+
+  set( LAVACLIPPLANE_HEADERS )
+  set( LAVACLIPPLANE_SOURCES ClipPlane.cpp )
+  set( LAVACLIPPLANE_LINK_LIBRARIES lava )
+  common_application( lavaClipPlane )
+
+  set( LAVASTENCILOUTLINE_HEADERS )
+  set( LAVASTENCILOUTLINE_SOURCES StencilOutline.cpp )
+  set( LAVASTENCILOUTLINE_LINK_LIBRARIES lava )
+  common_application( lavaStencilOutline )
+
 endif( )

@@ -38,11 +38,6 @@
   set( LAVAMESHDERIVATIONSPECIALIZATION_LINK_LIBRARIES lava )
   common_application( lavaMeshDerivationSpecialization )
 
-  set( LAVAPLANARREFLECTION_HEADERS )
-  set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
-  set( LAVAPLANARREFLECTION_LINK_LIBRARIES lava )
-  common_application( lavaPlanarReflection )
-
   set( LAVASAMPLERUNIFORMQUAD_HEADERS )
   set( LAVASAMPLERUNIFORMQUAD_SOURCES SamplerUniformQuad.cpp )
   set( LAVASAMPLERUNIFORMQUAD_LINK_LIBRARIES lava )

@@ -20,6 +20,7 @@
 #include "Pipeline.h"
 
 #include "Device.h"
+#include "PhysicalDevice.h"
 #include "VulkanResource.h"
 #include "RenderPass.h"
 
@@ -243,50 +244,108 @@ namespace lava
     return *this;
   }
 
-  PipelineCache::PipelineCache( const DeviceRef& device, const char* filename )
+  PipelineCache::PipelineCache( const DeviceRef& device, const std::string& filePath )
     : VulkanResource( device )
   {
-    // Check disk for existing cache data
+    std::ifstream file( filePath, std::ios::ate | std::ios::binary );
+
+    std::shared_ptr<PipelineCache> pipelineCache;
     size_t startCacheSize = 0;
-    void *startCacheData = nullptr;
-
-    FILE *pReadFile = fopen(filename, "rb");
-    if (pReadFile)
+    char* startCacheData = nullptr;
+    if ( !file.is_open( ) )
     {
-      // Determine cache size
-      fseek(pReadFile, 0, SEEK_END);
-      startCacheSize = ftell(pReadFile);
-      rewind(pReadFile);
-
-      // Allocate memory to hold the initial cache data
-      startCacheData = (char *)malloc(sizeof(char) * startCacheSize);
-      if (startCacheData == nullptr)
-      {
-        fputs("Memory error", stderr);
-        throw;
-      }
-
-      // Read the data into our buffer
-      size_t result = fread(startCacheData, 1, startCacheSize, pReadFile);
-      if (result != startCacheSize)
-      {
-        fputs("Reading error", stderr);
-        free(startCacheData);
-        throw;
-      }
-
-      // Clean up and print results
-      fclose(pReadFile);
-      printf( "  Pipeline cache HIT!\n" );
-      printf("  cacheData loaded from %s\n", filename );
-
-    } else {
-      // No cache found on disk
-      printf("  Pipeline cache miss!\n");
+      std::cerr << "File " << filePath << " don't opened. "
+        << "Creating empty pipeline_cache" << std::endl;
     }
+    else
+    {
+      size_t startCacheSize = ( size_t ) file.tellg( );
+      char* startCacheData = new char[ startCacheSize ];
 
-    // https://github.com/LunarG/VulkanSamples/blob/master/API-Samples/pipeline_cache/pipeline_cache.cpp 
-    // TODO: NOT COMPLETE 
+      file.seekg( 0 );
+      file.read( startCacheData, startCacheSize );
+
+      file.close( );
+
+      std::cout << "  Pipeline cache HIT!\n";
+      std::cout << "  cacheData loaded from " << filePath << std::endl;
+
+      // clang-format on
+      uint32_t headerLength = 0;
+      uint32_t cacheHeaderVersion = 0;
+      uint32_t vendorID = 0;
+      uint32_t deviceID = 0;
+      uint8_t pipelineCacheUUID[ VK_UUID_SIZE ] = {};
+
+      memcpy( &headerLength, ( uint8_t * ) startCacheData + 0, 4 );
+      memcpy( &cacheHeaderVersion, ( uint8_t * ) startCacheData + 4, 4 );
+      memcpy( &vendorID, ( uint8_t * ) startCacheData + 8, 4 );
+      memcpy( &deviceID, ( uint8_t * ) startCacheData + 12, 4 );
+      memcpy( pipelineCacheUUID, ( uint8_t * ) startCacheData + 16, VK_UUID_SIZE );
+
+
+      // Check each field and report bad values before freeing existing cache
+      bool badCache = false;
+
+      if ( headerLength <= 0 )
+      {
+        badCache = true;
+        printf( "  Bad header length in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", headerLength );
+      }
+
+      if ( cacheHeaderVersion != VK_PIPELINE_CACHE_HEADER_VERSION_ONE )
+      {
+        badCache = true;
+        printf( "  Unsupported cache header version in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", cacheHeaderVersion );
+      }
+      auto props = device->getPhysicalDevice( )->getDeviceProperties( );
+
+      if ( vendorID != props.vendorID )
+      {
+        badCache = true;
+        printf( "  Vendor ID mismatch in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", vendorID );
+        printf( "    Driver expects: 0x%.8x\n", props.vendorID );
+      }
+
+      if ( deviceID != props.deviceID )
+      {
+        badCache = true;
+        printf( "  Device ID mismatch in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", deviceID );
+        printf( "    Driver expects: 0x%.8x\n", props.deviceID );
+      }
+
+      if ( memcmp( pipelineCacheUUID, props.pipelineCacheUUID,
+        sizeof( pipelineCacheUUID ) ) != 0 )
+      {
+        badCache = true;
+        printf( "  UUID mismatch in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: " );
+        print_UUID( pipelineCacheUUID );
+        printf( "\n" );
+        printf( "    Driver expects: " );
+        print_UUID( props.pipelineCacheUUID );
+        printf( "\n" );
+      }
+
+      if ( badCache )
+      {
+        // Don't submit initial cache data if any version info is incorrect
+        free( startCacheData );
+        startCacheSize = 0;
+        startCacheData = nullptr;
+
+        // And clear out the old cache file for use in next run
+        printf( "  Deleting cache entry %s to repopulate.\n", filePath.c_str( ) );
+        if ( remove( filePath.c_str( ) ) != 0 ) {
+          fputs( "Reading error", stderr );
+          exit( EXIT_FAILURE );
+        }
+      }
+    }
 
     vk::PipelineCacheCreateInfo createInfo{ {}, startCacheSize, startCacheData };
     _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
@@ -411,7 +470,6 @@ namespace lava
     std::shared_ptr<Pipeline> const& basePipelineHandle, uint32_t basePipelineIdx )
     : Pipeline( device )
   {
-    std::cerr << "Pipeline creation ..." << std::endl;
     std::vector<vk::SpecializationInfo> specializationInfos;
     specializationInfos.reserve( stages.size( ) );
 
@@ -501,10 +559,8 @@ namespace lava
       subpass, basePipelineHandle ? *basePipelineHandle : vk::Pipeline( ),
       basePipelineIdx
     );
-    std::cerr << " ... " << std::endl;
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( 
       pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
-    std::cerr << " ... Pipeline created!" << std::endl;
   }
 
 
@@ -526,7 +582,7 @@ namespace lava
     _pipelineLayout = static_cast< vk::Device >( *_device ).createPipelineLayout( pci );
   }
 
-  PipelineLayout::~PipelineLayout( )
+  PipelineLayout::~PipelineLayout( void )
   {
     static_cast< vk::Device >( *_device ).destroyPipelineLayout( _pipelineLayout );
   }

@@ -162,7 +162,9 @@ namespace lava
 
     LAVA_API
     std::shared_ptr<PipelineCache> createPipelineCache( size_t initialSize, 
-      void const* initialData = nullptr );
+      void const* initialData );
+    LAVA_API
+    std::shared_ptr<PipelineCache> createPipelineCache( const std::string& filePath );
 
     LAVA_API
     std::shared_ptr<Pipeline> createGraphicsPipeline( 

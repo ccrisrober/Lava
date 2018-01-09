@@ -373,7 +373,12 @@ namespace lava
   std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, 
     void const * initialData )
   {
-    return std::make_shared<PipelineCache>( shared_from_this( ), vk::PipelineCacheCreateFlags( ), initialSize, initialData );
+    return std::make_shared<PipelineCache>( shared_from_this( ), 
+      vk::PipelineCacheCreateFlags( ), initialSize, initialData );
+  }
+  std::shared_ptr<PipelineCache> Device::createPipelineCache( const std::string& src )
+  {
+    return std::make_shared<PipelineCache>( shared_from_this( ), src );
   }
   vk::DeviceMemory Device::allocateImageMemory( vk::Image image, vk::MemoryPropertyFlags flags )
   {
