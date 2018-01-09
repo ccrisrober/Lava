@@ -1,17 +1,18 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout( set = 0, binding = 0 ) uniform ubo0
+layout(binding = 0) uniform ubo0
 {
     mat4 model;
     mat4 view;
     mat4 proj;
+    float level;
 };
 
-layout( set = 1, binding = 0 ) uniform sampler2D texSampler;
+layout(binding = 1) uniform sampler2DArray texSampler;
 
-layout ( location = 0 ) in vec3 outNormal;
-layout ( location = 0 ) out vec4 fragColor;
+layout (location = 0) in vec3 outNormal;
+layout (location = 0) out vec4 fragColor;
 
 vec2 matcap(vec3 eye, vec3 normal)
 {
@@ -30,5 +31,5 @@ void main( )
 {
 	vec3 viewPos = -view[3].xyz * mat3(view);
     //fragColor = texture(texSampler, vec3(matcap(viewPos, normalize(outNormal)), 0.0));
-    fragColor = texture(texSampler, matcap(viewPos, normalize(outNormal)));
+    fragColor = texture(texSampler, vec3(matcap(viewPos, normalize(outNormal)), level));
 }

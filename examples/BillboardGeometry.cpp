@@ -97,15 +97,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -125,7 +125,7 @@ public:
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/djinn3.png" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/djinn4.png" )
     };
-    tex = std::make_shared<Texture2DArray>( device, djinnImages,
+    tex = device->createTexture2DArray( djinnImages,
       _window->graphicsCommandPool( ), _window->graphicQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
@@ -258,7 +258,7 @@ public:
 
     ubo.viewPos = camera.Position;
 
-    uniformBuffer->writeData( 0, sizeof( ubo ), &ubo );
+    uniformBuffer->update( &ubo );
   }
 
   void nextFrame( void ) override

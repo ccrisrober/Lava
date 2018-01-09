@@ -20,6 +20,8 @@
 #include "Geometry.h"
 #include "ModelImporter.h"
 
+#include "../Device.h"
+
 namespace lava
 {
   namespace extras
@@ -120,19 +122,15 @@ namespace lava
 
       // Vertex buffer
       {
-        uint32_t vertexBufferSize = mesh.numVertices * 
-          sizeof( lava::extras::Vertex );
-        _vbo = std::make_shared<VertexBuffer>( 
-          _device, vertexBufferSize );
-        _vbo->writeData( 0, vertexBufferSize, 
-          mesh.vertices.data( ) );
+        uint32_t vertexBufferSize = mesh.numVertices * sizeof( Vertex );
+        _vbo = _device->createVertexBuffer( vertexBufferSize );
+        _vbo->writeData( 0, vertexBufferSize, mesh.vertices.data( ) );
       }
 
       // Index buffer
       {
         uint32_t indexBufferSize = _numIndices * sizeof( uint32_t );
-        _ibo = std::make_shared<IndexBuffer>( _device, 
-          vk::IndexType::eUint32, _numIndices );
+        _ibo = device->createIndexBuffer( vk::IndexType::eUint32, _numIndices );
         _ibo->writeData( 0, indexBufferSize, mesh.indices.data( ) );
       }
     }

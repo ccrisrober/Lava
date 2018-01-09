@@ -1,5 +1,5 @@
-#ifndef __LAVA_TEXTURE2DARRAY__
-#define __LAVA_TEXTURE2DARRAY__
+#ifndef __LAVA_TEXTURE1D__
+#define __LAVA_TEXTURE1D__
 
 #include "includes.hpp"
 
@@ -14,13 +14,11 @@ namespace lava
   class Sampler;
   class CommandPool;
 
-  class Texture2DArray : public Texture
+  class Texture1D: public Texture
   {
   public:
     LAVA_API
-    // All images on filePaths as same dimensions
-    Texture2DArray( const DeviceRef& device, 
-      std::vector< std::string >& filePaths,
+    Texture1D( const DeviceRef& device, const std::string& filename,
       const std::shared_ptr<CommandPool>& cmdPool, 
       const std::shared_ptr<Queue>& queue,
       vk::Format format,
@@ -30,4 +28,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVA_TEXTURE2DARRAY__ */
+#endif /* __LAVA_TEXTURE1D__ */

@@ -56,22 +56,24 @@ public:
     {
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Copper.png" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/droplet_01.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/GeneticView_LightGreen-Jade1b.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + 
+        std::string( "/matcap/GeneticView_LightGreen-Jade1b.png" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Jade_Purple.png" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/silver.jpg" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Outline.png" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/normals.jpg" )
     };
-    tex = std::make_shared<Texture2DArray>( device, cubeImages, 
+
+    tex = device->createTexture2DArray( cubeImages, 
       _window->graphicsCommandPool( ), _window->graphicQueue( ), 
       vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ),
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap2DArray_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ),
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap2DArray_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -117,7 +119,6 @@ public:
     vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true, 
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState, 
       stencilOpState, 0.0f, 0.0f );
-    ;
     PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp, 
       vk::PipelineColorBlendAttachmentState( 
         false, vk::BlendFactor::eZero, vk::BlendFactor::eZero, 
@@ -187,7 +188,7 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
+    mvpBuffer->update( &uboVS );
   }
 
   void nextFrame( void ) override

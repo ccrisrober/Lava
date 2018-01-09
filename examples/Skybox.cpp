@@ -116,15 +116,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc, 
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       skybox.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -139,15 +139,15 @@ public:
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
       auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
 
       skybox.indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -174,10 +174,10 @@ public:
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/back.png" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/front.png" ),
     };
-    tex = std::make_shared<TextureCubemap>( device, cubeImages,
+
+    tex = device->createTextureCubemap( cubeImages, 
       _window->graphicsCommandPool( ), _window->graphicQueue( ),
       vk::Format::eR8G8B8A8Unorm );
-
 
     std::array<vk::DescriptorPoolSize, 2> poolSize =
     {
@@ -252,13 +252,11 @@ public:
         vk::DynamicState::eViewport, vk::DynamicState::eScissor
       } );
 
-
       model.pipelines.reflect = device->createGraphicsPipeline(
         _window->pipelineCache, {}, { vertexStage, fragmentStage },
         vertexInput, assembly, nullptr, viewport, rasterization, multisample,
         depthStencil, colorBlend, dynamic, model.pipelineLayout,
         _window->defaultRenderPass( ) );
-
 
       vertexStage = device->createShaderPipelineShaderStage(
         LAVA_EXAMPLES_SPV_ROUTE + std::string( "refract_vert.spv" ),
@@ -301,9 +299,9 @@ public:
       std::vector<DescriptorSetLayoutBinding> dslbs =
       {
         DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
-        vk::ShaderStageFlagBits::eVertex ),
+          vk::ShaderStageFlagBits::eVertex ),
         DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
-        vk::ShaderStageFlagBits::eFragment )
+          vk::ShaderStageFlagBits::eFragment )
       };
       auto descriptorSetLayout = device->createDescriptorSetLayout( dslbs );
 
@@ -349,7 +347,6 @@ public:
       PipelineDynamicStateCreateInfo dynamic( { 
         vk::DynamicState::eViewport, vk::DynamicState::eScissor
       } );
-
 
       skybox.pipeline = device->createGraphicsPipeline( _window->pipelineCache, 
         { }, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
@@ -402,10 +399,10 @@ public:
       ( float ) width / ( float ) height, 0.1f, 100.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->update( &uboVS );
 
     uboFS.viewPos = camera.Position;
-    uniformViewPos->writeData( 0, sizeof( uboFS ), &uboFS );
+    uniformViewPos->update( &uboFS );
   }
 
   bool modeReflect = true;

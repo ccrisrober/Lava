@@ -40,57 +40,6 @@ public:
     float time;
   } uboVS;
 
-  struct Vertex
-  {
-    glm::vec3 pos;
-    glm::vec2 texCoord;
-  };
-
-  const float side = 1.0f;
-  const float side2 = side * 0.5f;
-
-  const std::vector<Vertex> vertices =
-  {
-    { { -side2, -side2,  side2 },{ 0.0f, 0.0f } },
-    { { side2, -side2,  side2 },{ 1.0f, 0.0f } },
-    { { -side2,  side2,  side2 },{ 0.0f, 1.0f } },
-    { { side2,  side2,  side2 },{ 1.0f, 1.0f } },
-
-    { { -side2, -side2, -side2 },{ 0.0f, 0.0f } },
-    { { side2, -side2, -side2 },{ 1.0f, 0.0f } },
-    { { -side2,  side2, -side2 },{ 0.0f, 1.0f } },
-    { { side2,  side2, -side2 },{ 1.0f, 1.0f } },
-
-    { { side2, -side2, -side2 },{ 0.0f, 0.0f } },
-    { { side2, -side2,  side2 },{ 1.0f, 0.0f } },
-    { { side2,  side2, -side2 },{ 0.0f, 1.0f } },
-    { { side2,  side2,  side2 },{ 1.0f, 1.0f } },
-
-    { { -side2, -side2, -side2 },{ 0.0f, 0.0f } },
-    { { -side2, -side2,  side2 },{ 1.0f, 0.0f } },
-    { { -side2,  side2, -side2 },{ 0.0f, 1.0f } },
-    { { -side2,  side2,  side2 },{ 1.0f, 1.0f } },
-
-    { { -side2,  side2, -side2 },{ 0.0f, 0.0f } },
-    { { -side2,  side2,  side2 },{ 1.0f, 0.0f } },
-    { { side2,  side2, -side2 },{ 0.0f, 1.0f } },
-    { { side2,  side2,  side2 },{ 1.0f, 1.0f } },
-
-    { { -side2, -side2, -side2 },{ 0.0f, 0.0f } },
-    { { -side2, -side2,  side2 },{ 1.0f, 0.0f } },
-    { { side2, -side2, -side2 },{ 0.0f, 1.0f } },
-    { { side2, -side2,  side2 },{ 1.0f, 1.0f } }
-  };
-  const std::vector<uint16_t> indices =
-  {
-    0,  1,  2,     1,  3,  2,
-    4,  6,  5,     5,  6,  7,
-    8, 10,  9,     9, 10, 11,
-    12, 13, 14,    13, 15, 14,
-    16, 17, 18,    17, 19, 18,
-    20, 22, 21,    21, 22, 23,
-  };
-
   void initResources( void ) override
   {
     auto device = _window->device( );
@@ -106,7 +55,7 @@ public:
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
       DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
-      vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry
+        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry
       )
     };
 
@@ -137,14 +86,14 @@ public:
             0, 0, vk::Format::eR32G32B32Sfloat,
             offsetof( lava::extras::Vertex, position )
           ),
-      vk::VertexInputAttributeDescription(
-        1, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::extras::Vertex, normal )
-      ),
-      vk::VertexInputAttributeDescription(
-        2, 0, vk::Format::eR32G32Sfloat,
-        offsetof( lava::extras::Vertex, texCoord )
-      )
+          vk::VertexInputAttributeDescription(
+            1, 0, vk::Format::eR32G32B32Sfloat,
+            offsetof( lava::extras::Vertex, normal )
+          ),
+          vk::VertexInputAttributeDescription(
+            2, 0, vk::Format::eR32G32Sfloat,
+            offsetof( lava::extras::Vertex, texCoord )
+          )
         }
     );
 
@@ -176,7 +125,7 @@ public:
       vk::DynamicState::eViewport, vk::DynamicState::eScissor
     } );
 
-    pipeline = device->createGraphicsPipeline( _window->pipelineCache, {},
+    pipeline = device->createGraphicsPipeline( _window->pipelineCache, { },
       { vertexStage, geomStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
       pipelineLayout, _window->defaultRenderPass( )
@@ -225,7 +174,7 @@ public:
 
     uboVS.time = time;
 
-    mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
+    mvpBuffer->update( &uboVS );
   }
 
   void nextFrame( void ) override

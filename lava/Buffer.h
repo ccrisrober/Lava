@@ -104,7 +104,11 @@ namespace lava
     LAVA_API
     void readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst );
     LAVA_API
+    void read( void* dst );
+    LAVA_API
     void writeData( vk::DeviceSize offset, vk::DeviceSize length, const void* src );
+    LAVA_API
+    void update( const void* src );
 
     // todo: virtual void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 ) = 0;
   //protected:

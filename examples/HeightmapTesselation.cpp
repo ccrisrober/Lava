@@ -135,15 +135,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer | 
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -159,15 +159,15 @@ public:
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
       auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
 
       indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -180,11 +180,11 @@ public:
     mvpBuffer = device->createUniformBuffer( sizeof( ubo ) );
 
 
-    texHeightmap = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    texHeightmap = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "DisplacementMapEarth.png" ), _window->graphicsCommandPool( ),
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    texAlbedo = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    texAlbedo = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth_diffuse.jpg" ), _window->graphicsCommandPool( ),
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -235,7 +235,8 @@ public:
         vk::Format::eR32G32Sfloat, offsetof( Vertex, texCoord )
       )
     } );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::ePatchList, VK_FALSE );
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
+      vk::PrimitiveTopology::ePatchList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
     vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
@@ -325,7 +326,7 @@ public:
     );
     ubo.proj[ 1 ][ 1 ] *= -1;
 
-    mvpBuffer->writeData( 0, sizeof( ubo ), &ubo );
+    mvpBuffer->update( &ubo );
   }
 
   void nextFrame( void ) override

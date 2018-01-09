@@ -36,7 +36,7 @@ public:
   {
     auto device = _window->device( );
 
-    tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "sample.png" ), _window->graphicsCommandPool( ), 
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 

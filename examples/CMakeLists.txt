@@ -25,5 +25,29 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLENOBUFFER_LINK_LIBRARIES lava )
   common_application( lavaTriangleNoBuffer )
 
+  set( LAVATRIANGLEINDEXED_HEADERS )
+  set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
+  set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava )
+  common_application( lavaTriangleIndexed )
+
+  set( LAVAEARTH_HEADERS )
+  set( LAVAEARTH_SOURCES Earth.cpp )
+  set( LAVAEARTH_LINK_LIBRARIES lava )
+  common_application( lavaEarth )
+
+  set( LAVAMATCAP2DARRAY_HEADERS )
+  set( LAVAMATCAP2DARRAY_SOURCES Matcap2DArray.cpp )
+  set( LAVAMATCAP2DARRAY_LINK_LIBRARIES lava )
+  common_application( lavaMatcap2DArray )
+
+  set( LAVASKYBOX_HEADERS utils/Camera.h )
+  set( LAVASKYBOX_SOURCES Skybox.cpp )
+  set( LAVASKYBOX_LINK_LIBRARIES lava )
+  common_application( lavaSkybox )
+
+  set( LAVAMULTISETDESCRIPTOR_HEADERS )
+  set( LAVAMULTISETDESCRIPTOR_SOURCES MultiSetDescriptor.cpp )
+  set( LAVAMULTISETDESCRIPTOR_LINK_LIBRARIES lava )
+  common_application( lavaMultiSetDescriptor )
 
 endif( )

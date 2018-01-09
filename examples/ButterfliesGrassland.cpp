@@ -144,15 +144,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::BufferUsageFlagBits::eTransferSrc, 
+        vk::MemoryPropertyFlagBits::eHostVisible | 
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       grass.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer | 
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -164,10 +164,9 @@ public:
     grass.numElements = uint32_t( vertices.size( ) );
     vertices.clear( );
 
-    grass.tex = std::make_shared<Texture2D>( device, 
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "grass.png" ), 
-      _window->graphicsCommandPool( ), _window->graphicQueue( ), 
-      vk::Format::eR8G8B8A8Unorm );
+    grass.tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE + 
+      std::string( "grass.png" ), _window->graphicsCommandPool( ), 
+      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs = 
@@ -280,15 +279,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       butterflies.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer | 
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -300,7 +299,7 @@ public:
     butterflies.numElements = uint32_t( vertices.size( ) );
     vertices.clear( );
 
-    butterflies.tex = std::make_shared<Texture2D>( device, 
+    butterflies.tex = device->createTexture2D(
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "butterfly.png" ), 
       _window->graphicsCommandPool( ), _window->graphicQueue( ), 
       vk::Format::eR8G8B8A8Unorm );
@@ -402,15 +401,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       skybox.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -425,15 +424,15 @@ public:
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
       auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc, 
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
 
       skybox.indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -455,7 +454,7 @@ public:
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/back.jpg" ),
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/front.jpg" ),
     };
-    skybox.tex = std::make_shared<TextureCubemap>( device, cubeImages,
+    skybox.tex = device->createTextureCubemap( cubeImages,
       _window->graphicsCommandPool( ), _window->graphicQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
@@ -646,9 +645,9 @@ public:
       grass.ubo.proj[ 1 ][ 1 ] *= -1;
 
       grass.ubo.time = time;
-      grass.uboBuffer->writeData( 0, sizeof( grass.ubo ), &grass.ubo );
+      grass.uboBuffer->update( &grass.ubo );
 
-      grass.uboBuffer2->writeData( 0, sizeof( grass.ubo2 ), &grass.ubo2 );
+      grass.uboBuffer2->update( &grass.ubo2 );
     }
 
     {
@@ -659,8 +658,7 @@ public:
 
       butterflies.ubo.time = time;
 
-      butterflies.uboBuffer->writeData( 0, sizeof( butterflies.ubo ), 
-        &butterflies.ubo );
+      butterflies.uboBuffer->update( &butterflies.ubo );
     }
 
     {
@@ -668,7 +666,7 @@ public:
       skybox.ubo.view = grass.ubo.view;
       skybox.ubo.proj = grass.ubo.proj;
 
-      skybox.uniformMVP->writeData( 0, sizeof( skybox.ubo ), &skybox.ubo );
+      skybox.uniformMVP->update( &skybox.ubo );
     }
   }
 

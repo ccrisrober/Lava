@@ -61,15 +61,15 @@ public:
       atmosphere.mvpBuffer = device->createUniformBuffer( sizeof( atmosphere.uboVS ) );
     }
 
-    tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_diffuse.jpg" ), _window->graphicsCommandPool( ),
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    tex2 = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex2 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_normal.jpg" ), _window->graphicsCommandPool( ),
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    tex3 = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex3 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_clouds.png" ), _window->graphicsCommandPool( ),
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -106,8 +106,7 @@ public:
       diffuse.descriptorSetLayout = device->createDescriptorSetLayout( dslbs );
 
       vk::PushConstantRange pushConstantRange(
-        vk::ShaderStageFlagBits::eVertex,
-        0, sizeof( diffuse.pc )
+        vk::ShaderStageFlagBits::eVertex, 0, sizeof( diffuse.pc )
       );
 
       diffuse.pipelineLayout = device->createPipelineLayout( diffuse.descriptorSetLayout, pushConstantRange );
@@ -146,12 +145,11 @@ public:
         stencilOpState, 0.0f, 0.0f );
       ;
       PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp,
-        vk::PipelineColorBlendAttachmentState(
-          false, vk::BlendFactor::eZero, vk::BlendFactor::eZero,
-          vk::BlendOp::eAdd, vk::BlendFactor::eZero, vk::BlendFactor::eZero,
-          vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR |
-          vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
-          vk::ColorComponentFlagBits::eA
+        vk::PipelineColorBlendAttachmentState( false, 
+          vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
+          vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd, 
+          vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | 
+          vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
         ), { 1.0f, 1.0f, 1.0f, 1.0f }
       );
       PipelineDynamicStateCreateInfo dynamic( {
@@ -165,7 +163,8 @@ public:
       );
 
       // Init descriptor set
-      diffuse.descriptorSet = device->allocateDescriptorSet( dspPool, diffuse.descriptorSetLayout );
+      diffuse.descriptorSet = device->allocateDescriptorSet( dspPool, 
+        diffuse.descriptorSetLayout );
 
       std::vector<WriteDescriptorSet> wdss =
       {
@@ -307,7 +306,7 @@ public:
     diffuse.uboVS.lightPos.y = 5.0 + cos( time ) * 1.0f;
 
 
-    diffuse.mvpBuffer->writeData( 0, sizeof( diffuse.uboVS ), &diffuse.uboVS );
+    diffuse.mvpBuffer->update( &diffuse.uboVS );
 
 
     atmosphere.uboVS.mvp = glm::rotate( glm::mat4( 1.0f ), 0.75f * time * glm::radians( 5.0f ),
@@ -315,7 +314,7 @@ public:
     atmosphere.uboVS.mvp = glm::scale( atmosphere.uboVS.mvp, glm::vec3( 1.015f ) );
     atmosphere.uboVS.mvp = diffuse.uboVS.proj * diffuse.uboVS.view * atmosphere.uboVS.mvp;
 
-    atmosphere.mvpBuffer->writeData( 0, sizeof( atmosphere.uboVS ), &atmosphere.uboVS );
+    atmosphere.mvpBuffer->update( &atmosphere.uboVS );
   }
 
   void nextFrame( void ) override
@@ -366,7 +365,7 @@ public:
     updateMVP( );
 
     std::array<vk::ClearValue, 2 > clearValues;
-    std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
+    std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 

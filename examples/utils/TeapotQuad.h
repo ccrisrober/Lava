@@ -20,15 +20,15 @@ public:
     {
       uint32_t vertexBufferSize = verts * sizeof( float );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, v );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = cmdPool->allocateCommandBuffer( );
       cmd->beginSimple( );

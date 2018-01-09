@@ -90,7 +90,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
 endforeach(GLSL)
 
 add_custom_target(
-  Shaders 
+  Glsl2Spv 
   DEPENDS ${SPIRV_BINARY_FILES}
 )
 

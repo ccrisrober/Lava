@@ -193,12 +193,20 @@ namespace lava
     memcpy( dst, data, length );
     unmap( );
   }
+  void Buffer::read( void * dst )
+  {
+    readData( 0, _size, dst );
+  }
   void Buffer::writeData( vk::DeviceSize offset, vk::DeviceSize length, 
     const void * src )
   {
     void* data = map( offset, length );
     memcpy( data, src, length );
     unmap( );
+  }
+  void Buffer::update( const void * dst )
+  {
+    writeData( 0, _size, dst );
   }
 
 

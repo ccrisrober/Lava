@@ -98,15 +98,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer | 
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -121,15 +121,15 @@ public:
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
       auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
 
       indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -144,7 +144,7 @@ public:
       mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
     }
 
-    tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), _window->graphicsCommandPool( ), 
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 

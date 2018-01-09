@@ -66,15 +66,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -87,12 +87,11 @@ public:
     // Init descriptor and pipeline layouts
     auto descriptorSetLayout = device->createDescriptorSetLayout( { } );
 
-    vk::PushConstantRange pushConstantRange(
-      vk::ShaderStageFlagBits::eVertex,
-      0, sizeof( pc )
+    pipelineLayout = device->createPipelineLayout( descriptorSetLayout, 
+      vk::PushConstantRange( 
+        vk::ShaderStageFlagBits::eVertex, 0, sizeof( pc )
+      )
     );
-
-    pipelineLayout = device->createPipelineLayout( descriptorSetLayout, pushConstantRange );
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
@@ -113,21 +112,21 @@ public:
     );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding,
-      {
-        vk::VertexInputAttributeDescription( 0, 0,
-        vk::Format::eR32G32B32Sfloat, offsetof( Vertex, position )
-        ),
-        vk::VertexInputAttributeDescription( 1, 0,
-          vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, color )
-        ),
-        vk::VertexInputAttributeDescription( 2, 0,
-          vk::Format::eR16Uint, offsetof( Vertex, sides )
-        )
-      } );
+    {
+      vk::VertexInputAttributeDescription( 0, 0,
+      vk::Format::eR32G32B32Sfloat, offsetof( Vertex, position )
+      ),
+      vk::VertexInputAttributeDescription( 1, 0,
+        vk::Format::eR32G32B32A32Sfloat, offsetof( Vertex, color )
+      ),
+      vk::VertexInputAttributeDescription( 2, 0,
+        vk::Format::eR16Uint, offsetof( Vertex, sides )
+      )
+    } );
     vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::ePointList, VK_FALSE
     );
-    PipelineViewportStateCreateInfo viewport( 1, 1 ); // Dynamic viewport and scissors
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
     vk::PipelineRasterizationStateCreateInfo rasterization( { }, true, false,
       vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
       vk::FrontFace::eClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f
