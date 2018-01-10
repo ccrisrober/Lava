@@ -259,8 +259,8 @@ namespace lava
     }
     else
     {
-      size_t startCacheSize = ( size_t ) file.tellg( );
-      char* startCacheData = new char[ startCacheSize ];
+      startCacheSize = ( size_t ) file.tellg( );
+      startCacheData = new char[ startCacheSize ];
 
       file.seekg( 0 );
       file.read( startCacheData, startCacheSize );

@@ -31,24 +31,26 @@ namespace lava
       SetAsIdentity();
     }
 
-    Transform::Transform(const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale) :
-      position(position),
-      rotation(rotation),
-      scale(scale)
+    Transform::Transform( const glm::vec3& position_, const glm::quat& rotation_, 
+      const glm::vec3& scale_ ) 
+    : position(position_)
+      , rotation(rotation_)
+      , scale(scale_)
     {
     }
 
-    Transform::Transform(const glm::vec3& position, const glm::quat& rotation) :
-      position(position),
-      rotation(rotation),
-      scale(glm::vec3(1.0f))
+    Transform::Transform( const glm::vec3& position_, 
+      const glm::quat& rotation_) 
+    : position(position_)
+      , rotation(rotation_)
+      , scale(glm::vec3(1.0f))
     {
     }
 
-    Transform::Transform(const glm::vec3& position) :
-      position(position),
-      rotation(glm::quat(glm::vec3(0.0f))),
-      scale(glm::vec3(1.0f))
+    Transform::Transform(const glm::vec3& position_) 
+    : position(position_)
+      , rotation(glm::quat(glm::vec3(0.0f)))
+      , scale(glm::vec3(1.0f))
     {
     }
 

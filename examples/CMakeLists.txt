@@ -1,5 +1,8 @@
 if( LAVA_WITH_EXAMPLES )
+  include( glsl2spv )
 
+  glsl2spv( )
+  
   include_directories(
     ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}
@@ -64,5 +67,10 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASTENCILOUTLINE_SOURCES StencilOutline.cpp )
   set( LAVASTENCILOUTLINE_LINK_LIBRARIES lava )
   common_application( lavaStencilOutline )
+
+  set( LAVADYNAMICUNIFORMBUFFER_HEADERS )
+  set( LAVADYNAMICUNIFORMBUFFER_SOURCES DynamicUniformBuffer.cpp )
+  set( LAVADYNAMICUNIFORMBUFFER_LINK_LIBRARIES lava )
+  common_application( lavaDynamicUniformBuffer )
 
 endif( )

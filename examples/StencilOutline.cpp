@@ -29,7 +29,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
-    _window->setWindowTitle( "Clear Screen" );
+    _window->setWindowTitle( "(Perfect) Toon Shading with Stencil Outline" );
   }
 
   void initResources( void ) override
@@ -127,9 +127,6 @@ public:
     depthStencilState.back.depthFailOp = vk::StencilOp::eKeep;
     depthStencilState.back.passOp = vk::StencilOp::eReplace;
 
-    //depthStencilState.back.failOp = vk::StencilOp::eReplace;
-    //depthStencilState.back.depthFailOp = vk::StencilOp::eReplace;
-    //depthStencilState.back.passOp = vk::StencilOp::eReplace;
     depthStencilState.front = depthStencilState.back;
 
     pipelines.solid = device->createGraphicsPipeline( _window->pipelineCache, { }, 
@@ -146,9 +143,6 @@ public:
     // glDisable( GL_DEPTH );
     depthStencilState.depthTestEnable = VK_FALSE;
 
-    //depthStencilState.back.failOp = vk::StencilOp::eKeep;
-    //depthStencilState.back.depthFailOp = vk::StencilOp::eKeep;
-    //depthStencilState.back.passOp = vk::StencilOp::eReplace;
     depthStencilState.front = depthStencilState.back;
 
     vertexStage = device->createShaderPipelineShaderStage(

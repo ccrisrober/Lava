@@ -59,14 +59,15 @@ namespace lava
     } );
 
     /*glfwSetWindowSizeCallback*/
-    glfwSetFramebufferSizeCallback( _window, []( GLFWwindow* window, int width, int height )
+    glfwSetFramebufferSizeCallback( _window, []( GLFWwindow* window, 
+      int width_, int height_ )
     {
       // glViewport( 0, 0, width, height );
       // TODO: Send event and set width and height from _params
       auto w = reinterpret_cast< Window* >( glfwGetWindowUserPointer( window ) );
       if ( w->_callbackResize )
       {
-        w->_callbackResize( width, height );
+        w->_callbackResize( width_, height_ );
       }
     } );
 

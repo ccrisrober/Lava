@@ -17,7 +17,6 @@ namespace lava
     public:
       LAVA_API
       Material( const aiMaterial* mtl, const std::string& globalPath );
-
       std::string albedoTexturePath;
       glm::vec3 albedoColor;
       bool useAlbedoTexture;

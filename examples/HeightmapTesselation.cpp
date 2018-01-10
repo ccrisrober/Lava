@@ -49,12 +49,6 @@ public:
   float lastY = SCR_HEIGHT * 0.5f;
   bool firstMouse = true;
 
-  struct Vertex
-  {
-    glm::vec3 pos;
-    glm::vec2 texCoord;
-  };
-
   struct
   {
     glm::mat4 model;
@@ -64,7 +58,8 @@ public:
     float tess_level = 5.0f;
   } ubo;
 
-  std::vector<Vertex> vertices;
+  std::vector<glm::vec3> positions;
+  std::vector<glm::vec2> texCoords;
   std::vector<uint32_t> indices;
 
   void generatePlane( float width = 1.0f, float height = 1.0f,
@@ -89,14 +84,12 @@ public:
       {
         float x = ix * segment_width - width_half;
 
-        vertices.push_back( Vertex
-        {
-          glm::vec3( x, 0.0f, -y ),
-          glm::vec2( 
+        positions.push_back( glm::vec3( x, 0.0f, -y ) ),
+        texCoords.push_back( glm::vec2( 
             ( ( float ) ix ) / gridX, 
             1.0f - ( ( ( float ) iy ) / gridY )
-          )
-        } );
+          ) 
+        );
       }
     }
 
@@ -131,23 +124,46 @@ public:
 
     generatePlane( 2.5f, 2.5f, 5, 5 );
 
-    // Vertex buffer
+    // Vertex positions buffer
     {
-      uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
+      uint32_t vertexBufferPositionsSize = positions.size( ) * sizeof( glm::vec3 );
+      auto stagingBuffer = device->createBuffer( vertexBufferPositionsSize,
         vk::BufferUsageFlagBits::eTransferSrc,
         vk::MemoryPropertyFlagBits::eHostVisible | 
         vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      stagingBuffer->writeData( 0, vertexBufferPositionsSize, positions.data( ) );
 
-      vertexBuffer = device->createBuffer( vertexBufferSize,
+      vertexBufferPositions = device->createBuffer( vertexBufferPositionsSize,
         vk::BufferUsageFlagBits::eVertexBuffer | 
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
-        stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
+        stagingBuffer->copy( cmd, vertexBufferPositions, 0, 0, vertexBufferPositionsSize );
+      cmd->end( );
+
+      _window->graphicQueue( )->submitAndWait( cmd );
+
+    }
+
+    // Vertex texCoords buffer
+    {
+      uint32_t vertexBufferTexCoordsSize = texCoords.size( ) * sizeof( glm::vec2 );
+      auto stagingBuffer = device->createBuffer( vertexBufferTexCoordsSize,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+      stagingBuffer->writeData( 0, vertexBufferTexCoordsSize, texCoords.data( ) );
+
+      vertexBufferTexCoords = device->createBuffer( vertexBufferTexCoordsSize,
+        vk::BufferUsageFlagBits::eVertexBuffer | 
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
+        stagingBuffer->copy( cmd, vertexBufferTexCoords, 0, 0, vertexBufferTexCoordsSize );
       cmd->end( );
 
       _window->graphicQueue( )->submitAndWait( cmd );
@@ -224,17 +240,18 @@ public:
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_frag.spv" ), 
         vk::ShaderStageFlagBits::eFragment
       );
-    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), 
-      vk::VertexInputRate::eVertex );
 
-    PipelineVertexInputStateCreateInfo vertexInput( binding, {
-      vk::VertexInputAttributeDescription( 0, 0, 
-        vk::Format::eR32G32B32Sfloat, offsetof( Vertex, pos )
-      ),
-      vk::VertexInputAttributeDescription( 1, 0, 
-        vk::Format::eR32G32Sfloat, offsetof( Vertex, texCoord )
-      )
-    } );
+    PipelineVertexInputStateCreateInfo vertexInput( {
+        vk::VertexInputBindingDescription( 0, sizeof( glm::vec3 ), 
+          vk::VertexInputRate::eVertex ),
+        vk::VertexInputBindingDescription( 1, sizeof( glm::vec2 ), 
+          vk::VertexInputRate::eVertex )
+      }, {
+        vk::VertexInputAttributeDescription( 0, 0, 
+          vk::Format::eR32G32B32Sfloat, 0 ),
+        vk::VertexInputAttributeDescription( 1, 1, 
+          vk::Format::eR32G32Sfloat, 0 )
+      } );
     vk::PipelineInputAssemblyStateCreateInfo assembly( { }, 
       vk::PrimitiveTopology::ePatchList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
@@ -394,7 +411,10 @@ public:
     cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
       pipelineLayout, 0, { descriptorSet }, nullptr );
 
-    cmd->bindVertexBuffer( 0, vertexBuffer, 0 );
+    // Binding point 0 : Mesh vertex buffer
+    cmd->bindVertexBuffer( 0, vertexBufferPositions, 0 );
+    // Binding point 1 : Instance data buffer
+    cmd->bindVertexBuffer( 1, vertexBufferTexCoords, 0 );
     cmd->bindIndexBuffer( indexBuffer, 0, vk::IndexType::eUint32 );
 
     cmd->setViewportScissors( _window->getExtent( ) );
@@ -406,7 +426,8 @@ public:
   }
 private:
   VulkanWindow *_window;
-  std::shared_ptr<Buffer> vertexBuffer;
+  std::shared_ptr<Buffer> vertexBufferPositions;
+  std::shared_ptr<Buffer> vertexBufferTexCoords;
   std::shared_ptr<Buffer> indexBuffer;
   std::shared_ptr< UniformBuffer > mvpBuffer;
   std::shared_ptr<Texture2D> texAlbedo;

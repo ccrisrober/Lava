@@ -68,7 +68,7 @@ public:
   void CreateTorus( float major, float minor,
     uint32_t slices, uint32_t stacks )
   {
-    uint32_t vertexCount = slices * stacks * 3;
+    //uint32_t vertexCount = slices * stacks * 3;
     //vertices.reserve( vertexCount );
 
     //glm::vec3* position = &vertices;
@@ -89,8 +89,7 @@ public:
       }
     }
 
-    uint32_t indexCount = slices * stacks * 6;
-
+    //uint32_t indexCount = slices * stacks * 6;
     //indices.reserve( indexCount );
 
     //uint32_t* index = &indices[0];

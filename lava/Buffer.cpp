@@ -34,6 +34,7 @@ namespace lava
     , _size( size )
   {
     vk::BufferCreateInfo bci;
+    bci.flags = createFlags;
     bci.size = _size;
     bci.usage = usageFlags;
     bci.sharingMode = sharingMode;
@@ -158,7 +159,7 @@ namespace lava
 
   void Buffer::CreateStaged( const std::shared_ptr<Queue>& q, 
     std::shared_ptr<CommandBuffer>& cmd,
-    vk::DeviceSize size, vk::BufferUsageFlags usage, void* data, 
+    vk::DeviceSize size, vk::BufferUsageFlags usage, void* /*data*/, 
     vk::MemoryPropertyFlags props )
   {
     cmd->beginSimple( );
@@ -286,7 +287,7 @@ namespace lava
     vk::Format format, vk::DeviceSize offset, vk::DeviceSize range )
     : _buffer( buffer )
   {
-    if ( range == ~0 )
+    if ( range == uint32_t( ~0 ) )
     {
       range = buffer->_size - offset;
     }

@@ -174,11 +174,12 @@ namespace lava
 
 //#ifdef VK_HEADER_VERSION >= 46
   void CommandBuffer::pushDescriptorSetKHR(
-    vk::PipelineBindPoint pipelineBindPoint,
-    const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
-    vk::ArrayProxy<WriteDescriptorSet> descriptorWrites )
+    vk::PipelineBindPoint /*pipelineBindPoint*/,
+    const std::shared_ptr<PipelineLayout>& /*pipelineLayout*/, 
+    uint32_t /*firstSet*/,
+    vk::ArrayProxy<WriteDescriptorSet> /*descriptorWrites*/ )
   {
-    std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
+    /*std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
     diis.reserve( descriptorWrites.size( ) );
 
     std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> dbis;
@@ -218,7 +219,7 @@ namespace lava
       }
 
       writes.push_back( std::move( write ) );
-    }
+    }*/
     //_commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, firstSet, writes );
   }
 //#endif

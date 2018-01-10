@@ -146,7 +146,7 @@ namespace lava
       uint32_t numIndices );
     LAVA_API
     void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
-    inline const vk::IndexType getIndexType( void )
+    inline vk::IndexType getIndexType( void ) const
     {
       return _type;
     }

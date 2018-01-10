@@ -26,15 +26,15 @@
 
 namespace lava
 {
-  Texture3D::Texture3D( const DeviceRef& device_, uint32_t width, 
-    uint32_t height, uint32_t depth, const void* src,
+  Texture3D::Texture3D( const DeviceRef& device_, uint32_t width_, 
+    uint32_t height_, uint32_t depth_, const void* src,
     const std::shared_ptr<CommandPool>& cmdPool,
     const std::shared_ptr<Queue>& queue, vk::Format format )
     : Texture( device_ )
   {
-    this->width = width;
-    this->height = height;
-    this->depth = depth;
+    this->width = width_;
+    this->height = height_;
+    this->depth = depth_;
 
     // Format support check
     // 3D texture support in Vulkan is mandatory (in contrast to OpenGL) so no need to check if it's supported
@@ -75,7 +75,7 @@ namespace lava
     deviceMemory = _device->allocateImageMemory( image,
       vk::MemoryPropertyFlagBits::eDeviceLocal );  // Allocate + bind
 
-    updateData( width, height, depth, 1, src, cmdPool, queue, format ); // TODO: 1 is hardcoded
+    updateData( width, height, depth, 1, src, cmdPool, queue ); // TODO: 1 is hardcoded
 
 
     // Create sampler
@@ -117,11 +117,14 @@ namespace lava
 
     updateDescriptor( );
   }
-  void Texture3D::updateData( uint32_t width, uint32_t height, uint32_t depth, 
+  void Texture3D::updateData( uint32_t width_, uint32_t height_, uint32_t depth_, 
     uint32_t numChannels, const void * pixels,
     const std::shared_ptr<CommandPool>& cmdPool,
-    const std::shared_ptr<Queue>& queue, vk::Format format )
+    const std::shared_ptr<Queue>& queue )
   {
+    width = width_;
+    height = height_;
+    depth = depth_;
     const uint32_t texSize = width * height * depth * numChannels;
     vk::Buffer stagingBuffer;
     vk::DeviceMemory stagingMemory;

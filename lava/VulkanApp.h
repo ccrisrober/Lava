@@ -64,7 +64,7 @@ namespace lava
     virtual void mouseButtonEvent( int button, int action, int mods );
 
     LAVA_API
-    inline const vk::Format getColorFormat( void ) const
+    inline vk::Format getColorFormat( void ) const
     {
       return _colorFormat;
     }

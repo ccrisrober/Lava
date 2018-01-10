@@ -191,7 +191,7 @@ namespace lava
       vk::Format format, vk::ImageUsageFlags usage )
     {
       vk::ImageAspectFlags aspectMask;
-      vk::ImageLayout imageLayout;  // TODO: Unused???
+      // TODO vk::ImageLayout imageLayout;  // TODO: Unused???
 
       fatt.format = format;
 
@@ -200,20 +200,20 @@ namespace lava
         ( usage & vk::ImageUsageFlagBits::eInputAttachment ) )
       {
         aspectMask = vk::ImageAspectFlagBits::eColor;
-        imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        // TODO imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
       }
       if ( usage & vk::ImageUsageFlagBits::eDepthStencilAttachment )
       {
         aspectMask = vk::ImageAspectFlagBits::eDepth
           | vk::ImageAspectFlagBits::eStencil;
-        imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        // TODO imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
       }
       // For only depth textures ( shadow mapping )
       if ( usage & (vk::ImageUsageFlagBits::eDepthStencilAttachment | 
         vk::ImageUsageFlagBits::eSampled ) )
       {
         aspectMask = vk::ImageAspectFlagBits::eDepth;
-        imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        // TODO imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
       }
 
       vk::ImageCreateInfo ici;

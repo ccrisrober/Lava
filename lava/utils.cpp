@@ -306,7 +306,7 @@ namespace lava
       return "A validation layer found an error.";
     default:
       std::stringstream ss;
-      ss << "Unknown [" << result << "]";
+      ss << "Unknown [" << uint32_t( result ) << "]";
       return ss.str( );
     }
 	}

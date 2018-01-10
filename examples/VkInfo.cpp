@@ -53,7 +53,7 @@ int main( void )
 
     uint32_t phy_dev_count = instance->getPhysicalDeviceCount( );
     std::cout << "PhysicalDeviceCount : " << phy_dev_count << std::endl;
-    for ( uint32_t i = 0; i < phy_dev_count; ++i )
+    for ( i = 0; i < phy_dev_count; ++i )
     {
       auto pd = instance->getPhysicalDevice( i );
       vk::PhysicalDeviceProperties props = pd->getDeviceProperties( );

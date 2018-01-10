@@ -11,7 +11,7 @@ namespace lava
 		return _caps;
 	}
 
-  void VulkanWindow::resizeEvent( uint32_t w, uint32_t h )
+  void VulkanWindow::resizeEvent( uint32_t /*w*/, uint32_t /*h*/ )
   {
     if ( _defaultFramebuffer )
     {
@@ -790,32 +790,32 @@ namespace lava
 
   int VulkanWindow::swapChainImageCount( void ) const
   {
-    return 0;
+    return 0; // TODO
   }
 
   int VulkanWindow::currentSwapChainImageIndex( void ) const
   {
-    return 0;
+    return 0; // TODO
   }
 
-  std::shared_ptr<Image> VulkanWindow::swapChainImage( int idx ) const
+  std::shared_ptr<Image> VulkanWindow::swapChainImage( int /*idx*/ ) const
   {
-    return std::shared_ptr<Image>( );
+    return std::shared_ptr<Image>( ); // TODO
   }
 
-  std::shared_ptr<ImageView> VulkanWindow::swapChainImageView( int idx ) const
+  std::shared_ptr<ImageView> VulkanWindow::swapChainImageView( int /*idx*/ ) const
   {
-    return std::shared_ptr<ImageView>( );
+    return std::shared_ptr<ImageView>( ); // TODO
   }
 
   std::shared_ptr<Image> VulkanWindow::depthStencilImage( void ) const
   {
-    return std::shared_ptr<Image>( );
+    return std::shared_ptr<Image>( ); // TODO
   }
 
   std::shared_ptr<ImageView> VulkanWindow::depthStencilImageView( void ) const
   {
-    return std::shared_ptr<ImageView>( );
+    return std::shared_ptr<ImageView>( ); // TODO
   }
 
   glm::mat4 VulkanWindow::clipCorrectionMatrix( void )
