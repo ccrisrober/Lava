@@ -54,16 +54,16 @@ public:
   const std::vector<Vertex> vertices =
   {
     { { -0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
-    { { 0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
-    { { 0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
-    { { 0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
     { { -0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
     { { -0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
 
     { { -0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
-    { { 0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
-    { { 0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
-    { { 0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
     { { -0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
     { { -0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
 
@@ -74,31 +74,31 @@ public:
     { { -0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
     { { -0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
 
-    { { 0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
-    { { 0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
-    { { 0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
-    { { 0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
-    { { 0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
-    { { 0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
+    { {  0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
+    { {  0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
+    { {  0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
 
     { { -0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
-    { { 0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
-    { { 0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
-    { { 0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
     { { -0.5f, -0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
     { { -0.5f, -0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
 
     { { -0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
-    { { 0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
-    { { 0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
-    { { 0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 1.0f } },
+    { {  0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
+    { {  0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 1.0f, 0.0f } },
     { { -0.5f,  0.5f,  0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 0.0f } },
     { { -0.5f,  0.5f, -0.5f },{ 1.0f, 1.0f, 1.0f },{ 0.0f, 1.0f } },
 
     { { -1.0f, -1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } },
-    { { 1.0f, -1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 1.0f, 0.0f } },
-    { { 1.0f,  1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 1.0f, 1.0f } },
-    { { 1.0f,  1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 1.0f, 1.0f } },
+    { {  1.0f, -1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 1.0f, 0.0f } },
+    { {  1.0f,  1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 1.0f, 1.0f } },
+    { {  1.0f,  1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 1.0f, 1.0f } },
     { { -1.0f,  1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 0.0f, 1.0f } },
     { { -1.0f, -1.0f, -0.5f },{ 0.0f, 0.0f, 0.0f },{ 0.0f, 0.0f } }
   };
@@ -107,7 +107,8 @@ public:
   {
     auto device = _window->device( );
 
-    const std::string pipCacheFile = LAVA_EXAMPLES_ROUTE + std::string( "pipCache.bin" );
+    const std::string pipCacheFile = LAVA_EXAMPLES_ROUTE + 
+        std::string( "pipCache.bin" );
 
     _window->pipelineCache = device->createPipelineCache( pipCacheFile );
 
@@ -170,19 +171,23 @@ public:
       0, sizeof( pushConstants )
     );
 
-    pipelineLayout = device->createPipelineLayout( descriptorSetLayout, pushConstantRange );
+    pipelineLayout = device->createPipelineLayout( descriptorSetLayout, 
+      pushConstantRange );
 
     PipelineVertexInputStateCreateInfo vertexInput(
       vk::VertexInputBindingDescription( 0, sizeof( Vertex ),
         vk::VertexInputRate::eVertex ),
         {
-          vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
+          vk::VertexInputAttributeDescription( 0, 0, 
+            vk::Format::eR32G32B32Sfloat,
             offsetof( Vertex, pos )
           ),
-          vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
+          vk::VertexInputAttributeDescription( 1, 0, 
+            vk::Format::eR32G32B32Sfloat,
             offsetof( Vertex, color )
           ),
-          vk::VertexInputAttributeDescription( 2, 0, vk::Format::eR32G32Sfloat,
+          vk::VertexInputAttributeDescription( 2, 0, 
+            vk::Format::eR32G32Sfloat,
             offsetof( Vertex, texCoord )
           )
         }
@@ -214,7 +219,8 @@ public:
       ), { 1.0f, 1.0f, 1.0f, 1.0f }
     );
     PipelineDynamicStateCreateInfo dynamic( { 
-      vk::DynamicState::eViewport, vk::DynamicState::eScissor
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor,
+      vk::DynamicState::eStencilWriteMask
     } );
 
     pipelines.cube = device->createGraphicsPipeline( _window->pipelineCache,
@@ -232,7 +238,7 @@ public:
     depthStencilState.back.compareMask = 0xff;
     depthStencilState.back.reference = 1;
     // glStencilMask(0xFF);
-    depthStencilState.back.writeMask = 0xff;
+    //depthStencilState.back.writeMask = 0xff; NOTE: (Dynamic stencil writeMask)
     // glDepthMask(GL_FALSE);
     depthStencilState.depthWriteEnable = VK_FALSE;
 
@@ -248,13 +254,14 @@ public:
       vk::PipelineCreateFlagBits::eDerivative,
       { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencilState, colorBlend, 
-      dynamic, pipelineLayout, _window->defaultRenderPass( ), 0, pipelines.cube, -1
+      dynamic, pipelineLayout, _window->defaultRenderPass( ), 0, 
+      pipelines.cube, -1
     );
 
     // glStencilFunc(GL_EQUAL, 1, 0xFF);
     depthStencilState.back.compareOp = vk::CompareOp::eEqual;
     // glStencilMask(0x00);
-    depthStencilState.back.writeMask = 0x00;
+    //depthStencilState.back.writeMask = 0x00; NOTE: (Dynamic stencil writeMask)
     // glDepthMask( GL_TRUE );
     depthStencilState.depthWriteEnable = VK_TRUE;
 
@@ -265,20 +272,15 @@ public:
       vk::PipelineCreateFlagBits::eDerivative,
       { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
       viewport, rasterization, multisample, depthStencilState, colorBlend, 
-      dynamic, pipelineLayout, _window->defaultRenderPass( ), 0, pipelines.cube, -1
+      dynamic, pipelineLayout, _window->defaultRenderPass( ), 0, 
+      pipelines.cube, -1
     );
-
-    auto sc = _window->getExtent( );
 
     uboVS.view = glm::lookAt(
       glm::vec3( 2.5f, 2.5f, 2.0f ),
       glm::vec3( 0.0f, 0.0f, 0.0f ),
       glm::vec3( 0.0f, 0.0f, 1.0f )
     );
-    uboVS.proj = glm::perspective( glm::radians( 45.0f ), sc.width / ( float ) sc.height, 0.1f, 10.0f );
-    uboVS.proj[ 1 ][ 1 ] *= -1;
-
-    mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
 
     std::array<vk::DescriptorPoolSize, 2> poolSize =
     {
@@ -312,6 +314,13 @@ public:
     {
       _window->_window->close( );
     }
+    
+    auto sc = _window->getExtent( );
+    uboVS.proj = glm::perspective( glm::radians( 45.0f ), sc.width / 
+      ( float ) sc.height, 0.1f, 10.0f );
+    uboVS.proj[ 1 ][ 1 ] *= -1;
+
+    mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
 
     std::array<vk::ClearValue, 2 > clearValues;
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
@@ -348,9 +357,11 @@ public:
       pushConstants.model = glm::rotate( glm::mat4( 1.0f ),
         time * 0.5f * glm::radians( 180.0f ), glm::vec3( 0.0f, 0.0f, 1.0f )
       );
+
+      pushConstants.color = glm::vec3( 1.0f, 1.0f, 1.0f );
       cmd->pushConstants<PushConstants>( pipl,
         vk::ShaderStageFlagBits::eVertex, 0, pushConstants
-      );
+        );
 
       cmd->bindGraphicsPipeline( pipelines.cube );
       cmd->draw( 36, 1, 0, 0 );
@@ -359,6 +370,9 @@ public:
     // Draw floor
     {
       cmd->bindGraphicsPipeline( pipelines.plane );
+
+      cmd->setStencilWriteMask( vk::StencilFaceFlagBits::eVkStencilFrontAndBack, 0xff );
+
       cmd->draw( 6, 1, 36, 0 );
     }
 
@@ -373,8 +387,10 @@ public:
         vk::ShaderStageFlagBits::eVertex, 0, pushConstants
       );
       cmd->bindGraphicsPipeline( pipelines.reflection );
+
+      cmd->setStencilWriteMask( vk::StencilFaceFlagBits::eVkStencilFrontAndBack, 0x00 );
+
       cmd->draw( 36, 1, 0, 0 );
-      pushConstants.color = glm::vec3( 1.0f, 1.0f, 1.0f );
     }
 
     cmd->endRenderPass( );

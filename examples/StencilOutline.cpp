@@ -280,7 +280,7 @@ public:
       cmd->bindGraphicsPipeline( pipelines.solid );
       cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
         pipelineLayouts.solid, 0, { descriptorSets.solid }, nullptr );
-        
+
       geometry->render( cmd );
 
       // Second pass renders scaled object only where stencil was not set by first pass

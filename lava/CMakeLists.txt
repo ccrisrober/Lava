@@ -29,6 +29,7 @@ set( LAVA_PUBLIC_HEADERS
   Descriptor.h
   Sampler.h
   Buffer.h
+  QueryPool.h
 
   Window.h
 
@@ -90,6 +91,7 @@ set( LAVA_SOURCES
   Descriptor.cpp
   Sampler.cpp
   Buffer.cpp
+  QueryPool.cpp
 
   Window.cpp
 

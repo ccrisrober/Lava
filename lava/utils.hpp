@@ -13,6 +13,12 @@ namespace lava
 	class utils
 	{
   public:
+    LAVA_API
+    static void saveScreenshot( std::shared_ptr<Device> device,
+      const char* filename, uint32_t width, uint32_t height, 
+      vk::Format colorFormat, std::shared_ptr<Image> image,
+      std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue );
+
     static VkBool32 getSupportedDepthFormat( std::shared_ptr<PhysicalDevice> physicalDevice, 
       vk::Format& depthFormat )
     {
@@ -41,12 +47,6 @@ namespace lava
 
       return false;
     }
-
-    LAVA_API
-    static void saveToImage( const std::string & filename, vk::Format colorFormat, 
-      std::shared_ptr<Device> dev, std::shared_ptr<Image> currentImage, 
-      uint32_t width, uint32_t height, std::shared_ptr<CommandPool> cmdPool,
-      std::shared_ptr<Queue> queue );
 
     static unsigned char* loadImageTexture( const std::string& fileName,
       uint32_t& width, uint32_t& height, uint32_t& numChannels );

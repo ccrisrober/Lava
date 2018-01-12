@@ -63,10 +63,19 @@ namespace lava
     {
       return _framebuffers.size( );
     }
+
+    LAVA_API
+    bool supportsGrab( void ) const
+    {
+      return _swapChainSupportsReadBack;
+    }
   private:
     void clear( vk::SwapchainKHR swapChain );
 
     vk::Extent2D _extent;
+
+    bool _swapChainSupportsReadBack;
+
     std::shared_ptr<Swapchain> _swapchain;
     uint32_t _swapchainIndex;
     std::vector<std::shared_ptr<Image>> _colorImages;

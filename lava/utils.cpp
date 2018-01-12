@@ -27,74 +27,85 @@
 
 #include "Device.h"
 #include "PhysicalDevice.h"
+#include "CommandBuffer.h"
+#include "Queue.h"
 
 namespace lava
 {
-  void utils::saveToImage( const std::string & filename, vk::Format colorFormat, 
-    std::shared_ptr<Device> dev, std::shared_ptr<Image> currentImage,
-    uint32_t width, uint32_t height, std::shared_ptr<CommandPool> cmdPool,
-    std::shared_ptr<Queue> queue )
+  void utils::saveScreenshot( std::shared_ptr<Device> device,
+    const char * filename, uint32_t width, uint32_t height, 
+    vk::Format colorFormat, std::shared_ptr<Image> srcImage,
+    std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue )
   {
-    bool supportBlit = true;
+    // Get format properties for the swapchain color format
+    vk::FormatProperties formatProps;
+    bool supportsBlit = true;
+    // Check blit support for source and destination
 
-    vk::FormatProperties formatProps = dev->getPhysicalDevice( )->getFormatProperties( colorFormat );
     // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
+    formatProps = device->getPhysicalDevice( )->getFormatProperties( colorFormat );
     if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
-      supportBlit = false;
-    }
-    // Check if the device supports blitting to linear images 
-    formatProps = dev->getPhysicalDevice( )->getFormatProperties( vk::Format::eR8G8B8A8Snorm );
-    if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) )
-    {
-      supportBlit = false;
+      std::cerr << "Device does not support blitting from optimal tiled images, "
+        << "using copy instead of blit!" << std::endl;
+      supportsBlit = false;
     }
 
-    // Source for the copy in the last renderer swapchain image
-    std::shared_ptr<Image> srcImage = currentImage;
+    // Check if the device supports blitting to linear images
+    formatProps = device->getPhysicalDevice( )->getFormatProperties( vk::Format::eR8G8B8A8Unorm );
+    if ( !( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) ) {
+      std::cerr << "Device does not support blitting to linear tiled images, "
+        << "using copy instead of blit!" << std::endl;
+      supportsBlit = false;
+    }
 
-    std::shared_ptr<Image> dstImage = dev->createImage( { },
-      vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm, { width, height, 1 }, 1, 1,
-      vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, 
-      vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive, { }, 
-      vk::ImageLayout::eUndefined, vk::MemoryPropertyFlagBits::eHostVisible | 
-      vk::MemoryPropertyFlagBits::eHostCoherent
-    );  // create, allocate + bind
+    // Create the linear tiled destination image to copy to and to read the memory from
+    std::shared_ptr<lava::Image> dstImage = device->createImage( {},
+      vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
+      vk::Extent3D( width, height, 1 ), 1, 1, vk::SampleCountFlagBits::e1,
+      vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
+      vk::SharingMode::eExclusive, {}, vk::ImageLayout::eUndefined,
+      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+    );
 
-    std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
+    // Do the actual blit from the swapchain image to our host visible destination image
+    auto copyCmd = cmdPool->allocateCommandBuffer( );
 
     copyCmd->beginSimple( );
 
     // Transition destination image to transfer destination layout
-    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
-        lava::ImageMemoryBarrier(
-          ( vk::AccessFlagBits )0, vk::AccessFlagBits::eTransferWrite,
-          vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
-          0, 0, dstImage,
-          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
-        )
-      }
+    lava::utils::insertImageMemoryBarrier( copyCmd, dstImage, {},
+      vk::AccessFlagBits::eTransferWrite,
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eTransferDstOptimal,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::ImageSubresourceRange(
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+      )
     );
-
     // Transition swapchain image from present to transfer source layout
-    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
-        lava::ImageMemoryBarrier(
-          vk::AccessFlagBits::eMemoryRead, vk::AccessFlagBits::eTransferRead,
-          vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eTransferSrcOptimal,
-          0, 0, srcImage,
-          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
-        )
-      }
+    lava::utils::insertImageMemoryBarrier( copyCmd, srcImage,
+      vk::AccessFlagBits::eMemoryRead,
+      vk::AccessFlagBits::eTransferRead,
+      vk::ImageLayout::ePresentSrcKHR,
+      vk::ImageLayout::eTransferSrcOptimal,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::ImageSubresourceRange(
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+      )
     );
 
     // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
-    if ( supportBlit )
+    if ( supportsBlit )
     {
       // Define the region to blit (we will blit the whole swapchain image)
-      vk::Offset3D blitSize( width, height, 1 );
-      vk::ImageBlit imageBlitRegion;
+      vk::Offset3D blitSize;
+      blitSize.x = width;
+      blitSize.y = height;
+      blitSize.z = 1;
+      vk::ImageBlit imageBlitRegion{};
       imageBlitRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
       imageBlitRegion.srcSubresource.layerCount = 1;
       imageBlitRegion.srcOffsets[ 1 ] = blitSize;
@@ -103,16 +114,16 @@ namespace lava
       imageBlitRegion.dstOffsets[ 1 ] = blitSize;
 
       // Issue the blit command
-      copyCmd->blitImage( 
-        srcImage, vk::ImageLayout::eTransferSrcOptimal, 
-        dstImage, vk::ImageLayout::eTransferDstOptimal, 
-        imageBlitRegion, vk::Filter::eNearest
+      copyCmd->blitImage(
+        srcImage, vk::ImageLayout::eTransferSrcOptimal,
+        dstImage, vk::ImageLayout::eTransferDstOptimal,
+        { imageBlitRegion }, vk::Filter::eNearest
       );
     }
     else
     {
       // Otherwise use image copy (requires us to manually flip components)
-      vk::ImageCopy imageCopyRegion;
+      vk::ImageCopy imageCopyRegion{};
       imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
       imageCopyRegion.srcSubresource.layerCount = 1;
       imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
@@ -125,52 +136,60 @@ namespace lava
       copyCmd->copyImage(
         srcImage, vk::ImageLayout::eTransferSrcOptimal,
         dstImage, vk::ImageLayout::eTransferDstOptimal,
-        imageCopyRegion
+        { imageCopyRegion }
       );
     }
 
     // Transition destination image to general layout, which is the required layout for mapping the image memory later on
-    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
-        lava::ImageMemoryBarrier(
-          vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eMemoryRead,
-          vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
-          0, 0, dstImage,
-          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
-        )
-      }
+    insertImageMemoryBarrier(
+      copyCmd,
+      dstImage,
+      vk::AccessFlagBits::eTransferWrite,
+      vk::AccessFlagBits::eMemoryRead,
+      vk::ImageLayout::eTransferDstOptimal,
+      vk::ImageLayout::eGeneral,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::ImageSubresourceRange(
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+      )
     );
 
     // Transition back the swap chain image after the blit is done
-    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {
-        lava::ImageMemoryBarrier(
-          vk::AccessFlagBits::eTransferRead, vk::AccessFlagBits::eMemoryRead,
-          vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::ePresentSrcKHR,
-          0, 0, srcImage,
-          vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
-        )
-      }
+    insertImageMemoryBarrier(
+      copyCmd,
+      srcImage,
+      vk::AccessFlagBits::eTransferRead,
+      vk::AccessFlagBits::eMemoryRead,
+      vk::ImageLayout::eTransferSrcOptimal,
+      vk::ImageLayout::ePresentSrcKHR,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eTransfer,
+      vk::ImageSubresourceRange(
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+      )
     );
-    // Send command buffer
+
     copyCmd->end( );
 
     queue->submitAndWait( copyCmd );
 
     // Get layout of the image (including row pitch)
-    vk::ImageSubresource subResource;
-    subResource.aspectMask = vk::ImageAspectFlagBits::eColor;
-    vk::SubresourceLayout subResourceLayout = {};
+    vk::ImageSubresource isr;
+    isr.aspectMask = vk::ImageAspectFlagBits::eColor;
+    vk::SubresourceLayout subResourceLayout;
 
-    static_cast< vk::Device >( *dev ).getImageSubresourceLayout( 
-      static_cast< vk::Image >( *dstImage ), subResource );
-    const char* data;
-    static_cast< vk::Device >( *dev ).mapMemory( 
-      dstImage->imageMemory, 0, VK_WHOLE_SIZE, { }, ( void** ) &data );
+    vk::Device dev = static_cast< vk::Device > ( *device );
+
+    dev.getImageSubresourceLayout(
+      static_cast< vk::Image >( *dstImage ), &isr, &subResourceLayout
+    );
+
+    // Map image memory so we can start copying from it
+    const char* data = ( const char* ) dev.mapMemory( dstImage->imageMemory, 0, VK_WHOLE_SIZE, {} );
     data += subResourceLayout.offset;
 
     std::ofstream file( filename, std::ios::out | std::ios::binary );
-
 
     // ppm header
     file << "P6\n" << width << "\n" << height << "\n" << 255 << "\n";
@@ -179,16 +198,20 @@ namespace lava
     bool colorSwizzle = false;
     // Check if source is BGR 
     // Note: Not complete, only contains most common and basic BGR surface formats for demonstation purposes
-    if ( !supportBlit )
+    if ( !supportsBlit )
     {
-      std::vector<vk::Format> formatsBGR = { vk::Format::eB8G8R8A8Srgb, vk::Format::eB8G8R8A8Unorm, vk::Format::eB8G8R8A8Snorm };
-      colorSwizzle = ( std::find( formatsBGR.begin( ), formatsBGR.end( ), colorFormat ) != formatsBGR.end( ) );
+      std::vector< vk::Format > formatsBGR = {
+        vk::Format::eB8G8R8A8Srgb, vk::Format::eB8G8R8A8Unorm,
+        vk::Format::eB8G8R8A8Snorm
+      };
+      colorSwizzle = ( std::find( formatsBGR.begin( ), formatsBGR.end( ),
+        colorFormat ) != formatsBGR.end( ) );
     }
 
     // ppm binary pixel data
     for ( uint32_t y = 0; y < height; ++y )
     {
-      unsigned int *row = ( unsigned int* ) data;
+      unsigned int* row = ( unsigned int* ) data;
       for ( uint32_t x = 0; x < width; ++x )
       {
         if ( colorSwizzle )
@@ -208,11 +231,6 @@ namespace lava
     file.close( );
 
     std::cout << "Screenshot saved to disk" << std::endl;
-
-    // Clean up resources
-    // TODO: vkUnmapMemory( device, dstImageMemory );
-    // TODO: vkFreeMemory( device, dstImageMemory, nullptr );
-    // TODO: vkDestroyImage( device, dstImage, nullptr );
   }
   unsigned char* utils::loadImageTexture( const std::string& fileName,
     uint32_t& width, uint32_t& height, uint32_t& numChannels )

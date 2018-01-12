@@ -212,11 +212,9 @@ namespace lava
       subRes.aspectMask = vk::ImageAspectFlagBits::eColor;
       subRes.mipLevel = 0;
 
-      // TODO: vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
-
       // Get sub resources layout 
       // Includes row pitch, size offsets, etc.
-      // TODO: vkGetImageSubresourceLayout(device->logicalDevice, mappableImage, &subRes, &subResLayout);
+      //vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
 
       void* data = device.mapMemory( mappableMemory, 0, texSize );
       memcpy( data, pixels, texSize );
@@ -226,10 +224,11 @@ namespace lava
       // and can be directly used as textures
       image = mappableImage;
       deviceMemory = mappableMemory;
-      imageLayout = imageLayout_;
+      this->imageLayout = imageLayout_;
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      
       // Setup image memory barrier
       utils::setImageLayout(
         copyCmd,

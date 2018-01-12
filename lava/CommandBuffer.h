@@ -125,6 +125,13 @@ namespace lava
     void beginRenderPass( const std::shared_ptr<RenderPass>& renderPass,
       const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
       vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents contents );
+    
+    LAVA_API
+    void fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer, 
+      vk::DeviceSize dstOffset, vk::DeviceSize fillSize, uint32_t data );
+
+    LAVA_API
+    void nextSubpass( vk::SubpassContents contents );
 
     LAVA_API
     void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
@@ -149,18 +156,6 @@ namespace lava
       vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
       vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 
       vk::Filter filter );
-
-    LAVA_API
-    void setStencilCompareMask( vk::StencilFaceFlags faceMask, 
-      uint32_t stencilCompareMask );
-    LAVA_API
-    void setStencilReference( vk::StencilFaceFlags faceMask, 
-      uint32_t stencilReference );
-    LAVA_API
-    void setStencilWriteMask( vk::StencilFaceFlags faceMask, 
-      uint32_t stencilWriteMask );
-    LAVA_API
-    void setBlendConstants( const float blendConst[ 4 ] );
 
     LAVA_API
     void beginOcclusionQuery( vk::QueryPool queryPool, uint32_t query, 
@@ -223,6 +218,18 @@ namespace lava
     void setViewport( uint32_t first, vk::ArrayProxy<const vk::Viewport> viewports );
     LAVA_API
     void setLineWidth( float lineWidth );
+    LAVA_API
+      void setBlendConstants( const float blendConst[ 4 ] );
+    LAVA_API
+    void setStencilCompareMask( vk::StencilFaceFlags faceMask,
+      uint32_t stencilCompareMask );
+    LAVA_API
+    void setStencilReference( vk::StencilFaceFlags faceMask,
+      uint32_t stencilReference );
+    LAVA_API
+    void setStencilWriteMask( vk::StencilFaceFlags faceMask,
+      uint32_t stecilWriteMask );
+
     LAVA_API
     void dispatch( uint32_t x, uint32_t y, uint32_t z );
     LAVA_API
@@ -301,6 +308,7 @@ namespace lava
     bool _isRecording;
     std::vector<::vk::DescriptorSet> _bindDescriptorSets;
     std::vector<::vk::Buffer> _bindVertexBuffers;
+    vk::CommandBufferLevel _level;
   };
   template<typename T>
   inline void CommandBuffer::pushConstants( vk::PipelineLayout layout,

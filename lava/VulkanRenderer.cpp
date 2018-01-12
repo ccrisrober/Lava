@@ -61,6 +61,11 @@ namespace lava
     _instance = instance;
 	}
 
+  bool VulkanWindow::supportsGrab( void ) const
+  {
+    return _defaultFramebuffer->supportsGrab( );
+  }
+
   VulkanWindowRenderer* VulkanWindow::createRenderer( void )
   {
     return nullptr;
@@ -286,6 +291,7 @@ namespace lava
       if ( glfwGetPhysicalDevicePresentationSupport( inst, pd, 0 ) )
       {
         _physicalDevice = _instance->getPhysicalDevice( i );
+        getEnabledFeatures( );  // TODO
         break;
       }
     }
@@ -506,7 +512,7 @@ namespace lava
     }
 
     _cmdPool = _device->createCommandPool(
-      {}, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
+      { }, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
       _gfxQueueFamilyIdx );
 
     if( !createDefaultRenderPass( ) )

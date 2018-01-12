@@ -289,9 +289,9 @@ namespace lava
   {
     if ( range == uint32_t( ~0 ) )
     {
-      range = buffer->_size - offset;
+      range = buffer->getSize( ) - offset;
     }
-    assert( offset + range <= buffer->_size );
+    assert( offset + range <= buffer->getSize( ) );
 
     vk::BufferViewCreateInfo bvci(
       vk::BufferViewCreateFlags(), *buffer, format, offset, range

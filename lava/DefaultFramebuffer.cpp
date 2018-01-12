@@ -123,12 +123,21 @@ namespace lava
       };
     }
 
+    vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+
+    _swapChainSupportsReadBack = !!( surfaceCaps.supportedUsageFlags & 
+                  vk::ImageUsageFlagBits::eTransferSrc );
+
+    if ( _swapChainSupportsReadBack )
+    {
+      usage |= vk::ImageUsageFlagBits::eTransferSrc;
+    }
+
     _swapchain = device->createSwapchain(
-      surface, numImages, surfaceFormat, colorSpace, _extent, 1,
-      vk::ImageUsageFlagBits::eColorAttachment | 
-      vk::ImageUsageFlagBits::eTransferSrc,
-      vk::SharingMode::eExclusive, {}, surfaceTransform,
-      compositeAlpha, presentMode, true, nullptr );
+      surface, numImages, surfaceFormat, colorSpace, _extent, 1, usage,
+      vk::SharingMode::eExclusive, { }, surfaceTransform, compositeAlpha, 
+      presentMode, true, nullptr
+    );
 
     _colorImages = _swapchain->getImages( );
 

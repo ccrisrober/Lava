@@ -112,13 +112,19 @@ namespace lava
 
     LAVA_API
     void updateDescriptor( void );
+
+    LAVA_API
+    inline vk::DeviceSize getSize( void ) const
+    {
+      return _size;
+    }
     
     // todo: virtual void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 ) = 0;
   //protected:
     vk::Buffer _buffer;
     vk::BufferView _view;
     vk::DeviceMemory _memory;
-
+  protected:
     vk::DeviceSize _size;
     DescriptorBufferInfo descriptor;
   };

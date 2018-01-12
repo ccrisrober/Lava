@@ -247,11 +247,9 @@ namespace lava
       subRes.aspectMask = vk::ImageAspectFlagBits::eColor;
       subRes.mipLevel = 0;
 
-      // TODO: vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
-
       // Get sub resources layout 
       // Includes row pitch, size offsets, etc.
-      // TODO: vkGetImageSubresourceLayout(device->logicalDevice, mappableImage, &subRes, &subResLayout);
+      //vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
 
       void* data = device.mapMemory( mappableMemory, 0, totalSize );
       memcpy( data, pixels, totalSize );
@@ -265,6 +263,7 @@ namespace lava
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      
       // Setup image memory barrier
       utils::setImageLayout(
         copyCmd,

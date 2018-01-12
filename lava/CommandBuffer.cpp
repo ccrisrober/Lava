@@ -110,6 +110,7 @@ namespace lava
   CommandBuffer::CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool, 
     vk::CommandBufferLevel level )
     : _commandPool( cmdPool )
+    , _level( level )
   {
     vk::CommandBufferAllocateInfo info( *_commandPool, level, 1 );
     std::vector<vk::CommandBuffer> commandBuffers =
@@ -122,6 +123,8 @@ namespace lava
   }
   CommandBuffer::~CommandBuffer( void )
   {
+    static_cast<vk::Device>( *_commandPool->getDevice( ) )
+          .freeCommandBuffers( *_commandPool, _commandBuffer );
   }
 
   void CommandBuffer::clearAttachments( 
@@ -164,7 +167,20 @@ namespace lava
 
     _commandBuffer.beginRenderPass( renderPassBeginInfo, contents );
   }
-  void CommandBuffer::endRenderPass( )
+
+  void CommandBuffer::fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
+      vk::DeviceSize dstOffset, vk::DeviceSize fillSize, uint32_t data )
+  {
+    _commandBuffer.fillBuffer( *dstBuffer, dstOffset, fillSize, data );
+  }
+
+  void CommandBuffer::nextSubpass( vk::SubpassContents contents )
+  {
+    assert( _level == vk::CommandBufferLevel::ePrimary );
+    _commandBuffer.nextSubpass( contents );
+  }
+
+  void CommandBuffer::endRenderPass( void )
   {
     _renderPass.reset( );
     _framebuffer.reset( );
@@ -248,26 +264,6 @@ namespace lava
     _commandBuffer.bindDescriptorSets(pipelineBindPoint, *pipelineLayout, 
       firstSet, _bindDescriptorSets, dynamicOffsets);
   }
-
-  void CommandBuffer::setStencilCompareMask( vk::StencilFaceFlags faceMask, 
-    uint32_t stencilCompareMask )
-  {
-    _commandBuffer.setStencilCompareMask( faceMask, stencilCompareMask );
-  }
-  void CommandBuffer::setStencilReference( vk::StencilFaceFlags faceMask, 
-    uint32_t stencilReference )
-  {
-    _commandBuffer.setStencilReference( faceMask, stencilReference );
-  }
-  void CommandBuffer::setStencilWriteMask( vk::StencilFaceFlags faceMask, 
-    uint32_t stencilWriteMask )
-  {
-    _commandBuffer.setStencilWriteMask( faceMask, stencilWriteMask );
-  }
-  void CommandBuffer::setBlendConstants( const float blendConst[ 4 ] )
-  {
-    _commandBuffer.setBlendConstants( blendConst );
-  }
   void CommandBuffer::beginOcclusionQuery( vk::QueryPool queryPool,
     uint32_t query, vk::QueryControlFlags flags )
   {
@@ -295,6 +291,30 @@ namespace lava
   {
     _commandBuffer.setLineWidth( lineWidth );
   }
+
+  void CommandBuffer::setBlendConstants( const float blendConst[ 4 ] )
+  {
+    _commandBuffer.setBlendConstants( blendConst );
+  }
+
+  void CommandBuffer::setStencilCompareMask( vk::StencilFaceFlags faceMask,
+    uint32_t stencilCompareMask )
+  {
+    _commandBuffer.setStencilCompareMask( faceMask, stencilCompareMask );
+  }
+
+  void CommandBuffer::setStencilReference( vk::StencilFaceFlags faceMask,
+    uint32_t stencilReference )
+  {
+    _commandBuffer.setStencilReference( faceMask, stencilReference );
+  }
+
+  void CommandBuffer::setStencilWriteMask( vk::StencilFaceFlags faceMask,
+    uint32_t stencilWriteMask )
+  {
+    _commandBuffer.setStencilWriteMask( faceMask, stencilWriteMask );
+  }
+
   void CommandBuffer::bindPipeline( vk::PipelineBindPoint bindingPoint,
     const std::shared_ptr<Pipeline>& pipeline )
   {
@@ -308,19 +328,6 @@ namespace lava
   {
     _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *pipeline );
   }
-  /*void CommandBuffer::bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
-    std::shared_ptr<PipelineLayout> const & pipelineLayout, uint32_t firstSet, 
-    vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
-    vk::ArrayProxy<const uint32_t> dynamicOffsets )
-  {
-    _bindDescriptorSets.clear( );
-    for ( auto & descriptor : descriptorSets )
-    {
-      _bindDescriptorSets.push_back( *descriptor );
-    }
-
-    _commandBuffer.bindDescriptorSets( pipelineBindPoint, *pipelineLayout, firstSet, _bindDescriptorSets, dynamicOffsets );
-  }*/
   void CommandBuffer::setViewportScissors( uint32_t width, uint32_t height )
   {
     setScissor( 0, vk::Rect2D( { 0, 0 }, { width, height } ) );
