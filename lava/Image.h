@@ -68,8 +68,10 @@ namespace lava
   {
   public:
     LAVA_API
-    ImageView( const std::shared_ptr<Image>& image, vk::ImageViewCreateFlags flags, vk::ImageViewType viewType,
-      vk::Format format, vk::ComponentMapping components, vk::ImageSubresourceRange subresourceRange );
+    ImageView( const std::shared_ptr<Image>& image, 
+      vk::ImageViewCreateFlags flags, vk::ImageViewType viewType,
+      vk::Format format, vk::ComponentMapping components, 
+      vk::ImageSubresourceRange subresourceRange );
     LAVA_API
     virtual ~ImageView( void );
     LAVA_API

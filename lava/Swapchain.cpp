@@ -55,8 +55,9 @@ namespace lava
     }
     _freeSemaphore = _device->createSemaphore( );
   }
-  Swapchain::~Swapchain( )
+  Swapchain::~Swapchain( void )
   {
+    _presentCompleteSemaphores.clear( );
     _images.clear( );
     static_cast< vk::Device >( *_device ).destroySwapchainKHR( _swapchain );
   }

@@ -18,6 +18,10 @@ namespace lava
       vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace, 
       vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
 
+    ~DefaultFramebuffer( void )
+    {
+    }
+
     void rebuild( const DeviceRef& device,
       const std::shared_ptr<Surface>& surface,
       vk::Format surfaceFormat, vk::Format depthFormat,

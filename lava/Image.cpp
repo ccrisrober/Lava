@@ -68,6 +68,8 @@ namespace lava
     if ( _managed )
     {
       static_cast< vk::Device >( *_device ).destroyImage( _image );
+      _device->freeMemory( imageMemory );
+      std::cout << "Image destroyed" << std::endl;
     }
   }
 
@@ -95,5 +97,6 @@ namespace lava
   {
     static_cast< vk::Device >( *_image->getDevice( ) )
           .destroyImageView( _imageView );
+    std::cout << "Destroyed ImageView" << std::endl;
   }
 }
