@@ -24,6 +24,7 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "Event.h"
+#include "QueryPool.h"
 
 namespace lava
 {
@@ -33,7 +34,8 @@ namespace lava
     , _familyIndex( familyIndex )
   {
     vk::CommandPoolCreateInfo cci( flags, familyIndex );
-    _commandPool = static_cast< vk::Device >( *_device ).createCommandPool( cci );
+    _commandPool = static_cast< vk::Device >( *_device )
+                          .createCommandPool( cci );
   }
   CommandPool::~CommandPool( void )
   {
@@ -146,26 +148,27 @@ namespace lava
     vk::ArrayProxy<const vk::ImageSubresourceRange> ranges )
   {
     vk::ClearDepthStencilValue depthStencil{ depth, stencil };
-    _commandBuffer.clearDepthStencilImage( *image, imageLayout, depthStencil, ranges );
+    _commandBuffer.clearDepthStencilImage( *image, imageLayout, depthStencil, 
+      ranges );
   }
 
-  void CommandBuffer::beginRenderPass( const std::shared_ptr<RenderPass>& renderPass,
+  void CommandBuffer::beginRenderPass( const std::shared_ptr<RenderPass>& rp,
     const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
-    vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents contents )
+    vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents cnts )
   {
-    _renderPass = renderPass;
+    _renderPass = rp;
     _framebuffer = framebuffer;
 
     vk::RenderPassBeginInfo renderPassBeginInfo;
 
-    renderPassBeginInfo.renderPass = *renderPass;
+    renderPassBeginInfo.renderPass = *rp;
     renderPassBeginInfo.framebuffer = *framebuffer;
     renderPassBeginInfo.renderArea = area;
     renderPassBeginInfo.clearValueCount = clearValues.size( );
     renderPassBeginInfo.pClearValues = 
       reinterpret_cast< vk::ClearValue const* >( clearValues.data( ) );
 
-    _commandBuffer.beginRenderPass( renderPassBeginInfo, contents );
+    _commandBuffer.beginRenderPass( renderPassBeginInfo, cnts );
   }
 
   void CommandBuffer::fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
@@ -230,13 +233,15 @@ namespace lava
 
       if ( w.texelBufferView )
       {
-        vk::BufferView bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        vk::BufferView bufferView = static_cast< vk::BufferView >( 
+                    *w.texelBufferView );
         write.setPTexelBufferView( &bufferView );
       }
 
       writes.push_back( std::move( write ) );
     }*/
-    //_commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, firstSet, writes );
+    //_commandBuffer.pushDescriptorSetKHR( pipelineBindPoint, *pipelineLayout, 
+    //          firstSet, writes );
   }
 //#endif
 
@@ -247,6 +252,42 @@ namespace lava
   {
     _commandBuffer.blitImage( *srcImage, srcImageLayout, *dstImage, 
       dstImageLayout, regions, filter );
+  }
+
+  void CommandBuffer::beginQuery( 
+    const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t slot, 
+    vk::QueryControlFlags flags )
+  {
+    _commandBuffer.beginQuery( *queryPool, slot, flags );
+  }
+
+  void CommandBuffer::copyQueryPoolResults( 
+    const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t startQuery, 
+    uint32_t queryCount, const std::shared_ptr<lava::Buffer>& dstBuffer, 
+    vk::DeviceSize dstOffset, vk::DeviceSize dstStride, 
+    vk::QueryResultFlags flags )
+  {
+    _commandBuffer.copyQueryPoolResults( *queryPool, startQuery, queryCount, 
+      *dstBuffer, dstOffset, dstStride, flags );
+  }
+
+  void CommandBuffer::endQuery( 
+    const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t slot )
+  {
+    _commandBuffer.endQuery( *queryPool, slot );
+  }
+
+  void CommandBuffer::resetQueryPool( 
+    const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t startQuery, 
+    uint32_t queryCount )
+  {
+    _commandBuffer.resetQueryPool( *queryPool, startQuery, queryCount );
+  }
+
+  void CommandBuffer::writeTimestamp( vk::PipelineStageFlagBits pipelineStage, 
+    const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t entry )
+  {
+    _commandBuffer.writeTimestamp( pipelineStage, *queryPool, entry );
   }
 
   void CommandBuffer::bindDescriptorSets(
@@ -263,16 +304,6 @@ namespace lava
 
     _commandBuffer.bindDescriptorSets(pipelineBindPoint, *pipelineLayout, 
       firstSet, _bindDescriptorSets, dynamicOffsets);
-  }
-  void CommandBuffer::beginOcclusionQuery( vk::QueryPool queryPool,
-    uint32_t query, vk::QueryControlFlags flags )
-  {
-    _commandBuffer.beginQuery( queryPool, query, flags );
-  }
-  void CommandBuffer::endOcclusionQuery( vk::QueryPool queryPool,
-    uint32_t query )
-  {
-    _commandBuffer.endQuery( queryPool, query );
   }
 
   void CommandBuffer::executeCommands( 
@@ -320,18 +351,19 @@ namespace lava
   {
     _commandBuffer.bindPipeline( bindingPoint, *pipeline );
   }
-  void CommandBuffer::bindGraphicsPipeline( const std::shared_ptr<Pipeline>& pipeline )
+  void CommandBuffer::bindGraphicsPipeline( const std::shared_ptr<Pipeline>& p )
   {
-    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eGraphics, *pipeline );
+    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eGraphics, *p );
   }
-  void CommandBuffer::bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline )
+  void CommandBuffer::bindComputePipeline( const std::shared_ptr<Pipeline>& p )
   {
-    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *pipeline );
+    _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *p );
   }
   void CommandBuffer::setViewportScissors( uint32_t width, uint32_t height )
   {
     setScissor( 0, vk::Rect2D( { 0, 0 }, { width, height } ) );
-    setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) width, ( float ) height, 0.0f, 1.0f ) );
+    setViewport( 0, vk::Viewport( 0.0f, 0.0f, ( float ) width, ( float ) height, 
+      0.0f, 1.0f ) );
   }
   void CommandBuffer::setViewportScissors( const vk::Extent2D& dimensions )
   {
@@ -347,15 +379,25 @@ namespace lava
   {
     _commandBuffer.setViewport( first, viewports );
   }
+  void CommandBuffer::setDepthBias( float depthBias, float depthBiasClamp, 
+    float slopeScaledDepthBias )
+  {
+    _commandBuffer.setDepthBias( depthBias, depthBiasClamp, 
+      slopeScaledDepthBias );
+  }
+  void CommandBuffer::setDepthBounds( float minDepthBounds, 
+    float maxDepthBounds )
+  {
+    _commandBuffer.setDepthBounds( minDepthBounds, maxDepthBounds );
+  }
   void CommandBuffer::dispatch( uint32_t x, uint32_t y, uint32_t z )
   {
     _commandBuffer.dispatch( x, y, z );
   }
   void CommandBuffer::draw( uint32_t vertexCount, uint32_t instanceCount, 
-    uint32_t firstVertex,
-    uint32_t firstInstance )
+    uint32_t firstVertex, uint32_t firstInst )
   {
-    _commandBuffer.draw( vertexCount, instanceCount, firstVertex, firstInstance );
+    _commandBuffer.draw( vertexCount, instanceCount, firstVertex, firstInst );
   }
 
   void CommandBuffer::drawIndirect( const std::shared_ptr<Buffer>& buffer, 
@@ -389,7 +431,8 @@ namespace lava
     const std::shared_ptr<Image>& dstImage, vk::ImageLayout dstImageLayout,
     vk::ArrayProxy<const vk::BufferImageCopy> regions )
   {
-    _commandBuffer.copyBufferToImage( *srcBuffer, *dstImage, dstImageLayout, regions );
+    _commandBuffer.copyBufferToImage( *srcBuffer, *dstImage, dstImageLayout, 
+      regions );
   }
 
   void CommandBuffer::copyImage( const std::shared_ptr<Image>& srcImage, 
@@ -404,7 +447,8 @@ namespace lava
     vk::ImageLayout srcImageLayout, const std::shared_ptr<Buffer>& dstBuffer, 
     vk::ArrayProxy<const vk::BufferImageCopy> regions )
   {
-    _commandBuffer.copyImageToBuffer( *srcImage, srcImageLayout, *dstBuffer, regions );
+    _commandBuffer.copyImageToBuffer( *srcImage, srcImageLayout, *dstBuffer, 
+      regions );
   }
 
   void CommandBuffer::bindVertexBuffer( uint32_t startBinding, 
@@ -426,7 +470,8 @@ namespace lava
       _bindVertexBuffers.push_back( *buffer );
     }
 
-    _commandBuffer.bindVertexBuffers( startBinding, _bindVertexBuffers, offsets );
+    _commandBuffer.bindVertexBuffers( startBinding, _bindVertexBuffers, 
+      offsets );
   }
 
   void CommandBuffer::bindIndexBuffer( const std::shared_ptr<Buffer>& buffer,
@@ -444,7 +489,8 @@ namespace lava
   {
     _commandBuffer.reset( { } );
   }
-  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags, vk::CommandBufferInheritanceInfo* inheritInfo )
+  void CommandBuffer::beginSimple( vk::CommandBufferUsageFlags flags, 
+    vk::CommandBufferInheritanceInfo* inheritInfo )
   {
     assert( !_isRecording );
     vk::CommandBufferBeginInfo cbbi( flags, inheritInfo );
@@ -454,8 +500,9 @@ namespace lava
   }
   void CommandBuffer::begin( vk::CommandBufferUsageFlags flags,
     const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
-    const std::shared_ptr<Framebuffer>& framebuffer, vk::Bool32 occlusionQueryEnable,
-    vk::QueryControlFlags queryFlags, vk::QueryPipelineStatisticFlags pipelineStatistics )
+    const std::shared_ptr<Framebuffer>& framebuffer, 
+    vk::Bool32 occlusionQueryEnable, vk::QueryControlFlags queryFlags,
+    vk::QueryPipelineStatisticFlags pipelineStatistics )
   {
     assert( !_isRecording );
     _renderPass = renderPass;
@@ -464,9 +511,11 @@ namespace lava
     vk::CommandBufferInheritanceInfo inheritanceInfo;
     vk::CommandBufferBeginInfo beginInfo( flags, &inheritanceInfo );
 
-    inheritanceInfo.renderPass = renderPass ? *renderPass : vk::RenderPass( );
+    inheritanceInfo.renderPass = renderPass ? 
+      *renderPass : vk::RenderPass( );
     inheritanceInfo.subpass = subpass;
-    inheritanceInfo.framebuffer = framebuffer ? *framebuffer : vk::Framebuffer( );
+    inheritanceInfo.framebuffer = framebuffer ? 
+      *framebuffer : vk::Framebuffer( );
     inheritanceInfo.occlusionQueryEnable = occlusionQueryEnable;
     inheritanceInfo.queryFlags = queryFlags;
     inheritanceInfo.pipelineStatistics = pipelineStatistics;
@@ -484,7 +533,7 @@ namespace lava
 
 
   void CommandBuffer::pipelineBarrier( vk::PipelineStageFlags srcStageMask, 
-    vk::PipelineStageFlags destStageMask, vk::DependencyFlags dependencyFlags,
+    vk::PipelineStageFlags destStageMask, vk::DependencyFlags depFlags,
     vk::ArrayProxy<const vk::MemoryBarrier> barriers, 
     vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers,
     vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers )
@@ -493,12 +542,15 @@ namespace lava
     imbs.reserve( imageMemoryBarriers.size( ) );
     for ( auto const& imb : imageMemoryBarriers )
     {
-      imbs.push_back( vk::ImageMemoryBarrier( imb.srcAccessMask, imb.dstAccessMask, 
-        imb.oldLayout, imb.newLayout, imb.srcQueueFamilyIndex, imb.dstQueueFamilyIndex,
-        imb.image ? static_cast<vk::Image>( *imb.image ) : nullptr, imb.subresourceRange ) );
+      imbs.push_back( vk::ImageMemoryBarrier( 
+        imb.srcAccessMask, imb.dstAccessMask, 
+        imb.oldLayout, imb.newLayout, 
+        imb.srcQueueFamilyIndex, imb.dstQueueFamilyIndex,
+        imb.image ? static_cast<vk::Image>( *imb.image ) : nullptr, 
+        imb.subresourceRange ) );
     }
 
-    _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
+    _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, depFlags,
       barriers, bufferMemoryBarriers, imbs );
   }
 
@@ -516,7 +568,8 @@ namespace lava
     _commandBuffer.setEvent( *e, stageMask );
   }
   
-  void CommandBuffer::waitEvents(vk::ArrayProxy<const std::shared_ptr<Event>> events, 
+  void CommandBuffer::waitEvents(
+    vk::ArrayProxy<const std::shared_ptr<Event>> events, 
     vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
     vk::ArrayProxy<const vk::MemoryBarrier> memoryBarriers, 
     vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 

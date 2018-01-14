@@ -36,22 +36,29 @@ namespace lava
     this->height = height_;
     this->depth = depth_;
 
+    auto physicalDevice = device_->getPhysicalDevice( );
+
     // Format support check
-    // 3D texture support in Vulkan is mandatory (in contrast to OpenGL) so no need to check if it's supported
-    vk::FormatProperties formatProps = device_->getPhysicalDevice( )->getFormatProperties( format );
+    // 3D texture support in Vulkan is mandatory (in contrast to OpenGL) 
+    //    so no need to check if it's supported
+    auto formatProps = physicalDevice->getFormatProperties( format );
     // Check if format supports transfer
     if ( !formatProps.optimalTilingFeatures && VK_IMAGE_USAGE_TRANSFER_DST_BIT )
     {
-      std::cout << "Error: Device does not support flag TRANSFER_DST for selected texture format!" << std::endl;
+      std::cout << "Error: Device does not support flag TRANSFER_DST" <<
+        " for selected texture format!" << std::endl;
       throw;
     }
     // Check if GPU supports requested 3D texture dimensions
-    /*uint32_t maxImageDimension3D( vulkanDevice->properties.limits.maxImageDimension3D );
-    if ( width > maxImageDimension3D || height > maxImageDimension3D || depth > maxImageDimension3D )
+    uint32_t maxImageDimension3D = 
+      physicalDevice->getDeviceProperties( ).limits.maxImageDimension3D;
+    if ( width > maxImageDimension3D || height > maxImageDimension3D || 
+      depth > maxImageDimension3D )
     {
-      std::cout << "Error: Requested texture dimensions is greater than supported 3D texture dimension!" << std::endl;
+      std::cout << "Error: Requested texture dimensions is greater than" <<
+        " supported 3D texture dimension!" << std::endl;
       return;
-    }*/
+    }
 
     // Create Image
     vk::ImageCreateInfo ici;
@@ -142,7 +149,7 @@ namespace lava
       vk::MemoryPropertyFlagBits::eHostVisible
       | vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
 
-                                                      // Copy texture data into staging buffer
+    // Copy texture data into staging buffer
     void* data = device.mapMemory( stagingMemory, 0, texSize );
     memcpy( data, pixels, texSize );
     device.unmapMemory( stagingMemory );
@@ -164,7 +171,8 @@ namespace lava
 
     // Image barrier for optimal image (target)
     // Optimal image will be used as destination for the copy
-    // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+    // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED
+    //    to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
     utils::setImageLayout(
       copyCmd,
       image,
@@ -198,7 +206,8 @@ namespace lava
     // Change texture image layout to shader read after all mip levels have been copied
     this->imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-    // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+    //    to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     utils::setImageLayout(
       copyCmd,
       image,

@@ -187,7 +187,8 @@ namespace lava
     mappedRange.memory = _memory;
     mappedRange.offset = offset;
     mappedRange.size = size;
-    static_cast< vk::Device >( *_device ).invalidateMappedMemoryRanges( { mappedRange } );
+    static_cast< vk::Device >( *_device )
+            .invalidateMappedMemoryRanges( { mappedRange } );
   }
 
   void Buffer::readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst )
@@ -274,12 +275,13 @@ namespace lava
       vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
-  UniformTexelBuffer::UniformTexelBuffer( const DeviceRef& device, vk::DeviceSize size )
-    : Buffer( device, vk::BufferCreateFlags( ), size,
-      vk::BufferUsageFlagBits::eUniformTexelBuffer,
-      vk::SharingMode::eExclusive, nullptr,
-      vk::MemoryPropertyFlagBits::eHostVisible |
-      vk::MemoryPropertyFlagBits::eHostCoherent )
+  UniformTexelBuffer::UniformTexelBuffer( const DeviceRef& device, 
+    vk::DeviceSize size )
+  : Buffer( device, vk::BufferCreateFlags( ), size,
+    vk::BufferUsageFlagBits::eUniformTexelBuffer,
+    vk::SharingMode::eExclusive, nullptr,
+    vk::MemoryPropertyFlagBits::eHostVisible |
+    vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
 

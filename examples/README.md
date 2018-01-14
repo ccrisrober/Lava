@@ -12,17 +12,17 @@ Most basic example to demonstrate the functioning of the Vulkan graphic channel.
 
 Extending the example of [Clear Screen](./ClearScreen.cpp), this demo shows you how to create your first Graphic Pipeline in order to draw a triangle, whose vertices are hard-coded in the vertex shader.
 
-### [Cube Textured](./CubeTextured.cpp)
-<img src="../screenshots/cube_textured.png" height="82px" align="right">
-
-Basic application that shows how to create two buffers in GPU memory using staging buffer and a 2D texture in order to draw an indexed cube with texture.
-
 ### [Triangle tesselated](./TriangleIndexed.cpp)
 <img src="../screenshots/triangle_indexed_tesselated.png" height="82px" align="right">
 
 Demo that shows how to paint a triangle using or not indexing (``` #define INDEXING_MODE ```). It also allows you to paint a triangle using the tesselation technique ( ```#define TESS_MODE``` ).
 
 We can change the way to draw the commented triangle or by decomposing the definition of the variables ```INDEXING_MODE``` to draw an indexed triangle and ```TESS_MODE``` which applies the technique of tiling using a wireframe mode to check the new vertices generated.
+
+### [Cube Textured](./CubeTextured.cpp)
+<img src="../screenshots/cube_textured.png" height="82px" align="right">
+
+Basic application that shows how to create two buffers in GPU memory using staging buffer and a 2D texture in order to draw an indexed cube with texture.
 
 
 ## Advanced
@@ -34,7 +34,6 @@ In this example we demonstrate how to paint a full-screen plane in order to demo
 
 ### [Secondary Buffer Quad](./SecondaryBuffer.cpp)
 <img src="../screenshots/secondary_buffer.png" height="82px" align="right">
-
 
 Basic example to demonstrate how to generate secondary CommandBuffer which facilitates the refactoring of CommandBuffer.
 
@@ -92,6 +91,24 @@ Foo
 
 Foo
 
+
+### [MultiSetDescriptor](./MultiSetDescriptor.cpp)
+<img src="../screenshots/multiset_descriptor.png" height="82px" align="right">
+
+Foo
+
+
+### [Stencil Toon Outline](./StencilToonOutline.cpp)
+<img src="../screenshots/stencil_toon_outline.png" height="82px" align="right">
+
+Foo
+
+
+### [Swap Quad Texture](./SwapQuadTexture.cpp)
+<img src="../screenshots/swap_quad_texture.png" height="82px" align="right">
+
+Foo
+
 ## Geometry Shader
 ### [Rotation 2D Figures](./GeometryFigures.cpp)
 <img src="../screenshots/geometry_figures.png" height="82px" align="right">
@@ -104,6 +121,16 @@ Example to demonstrate how to generate convex polygons through a geometry shader
 In this demo we paint a mesh whose triangles "explode" according to the normal of the triangle as if it were an explosion.
 
 Within the geometry shader, to avoid that the triangles are lost in scene, a trigonometric function is executed to animate the different triangles that make up the mesh.
+
+### [Mesh Normals](./MeshNormals.cpp)
+<img src="../screenshots/mesh_normals.png" height="82px" align="right">
+
+TODO
+
+### [Clip Planes](./ClipPlanes.cpp)
+<img src="../screenshots/clip_planes.png" height="82px" align="right">
+
+TODO
 
 ### [Billboard with Geometry Shader](./BillboardGeometry.cpp)
 <img src="../screenshots/geometry_billboards.png" height="82px" align="right">
@@ -133,6 +160,12 @@ Through this example we show how to draw a plane to which the tiling shaders are
 
 ## Compute Pipelines
 *Compute shaders are mandatory in Vulkan and must be supported on all devices*
+
+### [Compute copy](./ComputeCopy.cpp)
+<img src="../screenshots/compute_copy.png" height="82px" align="right">
+
+Example of how to perform a vector copy using compute shaders.
+
 
 ### [Compute sum](./ComputeSum.cpp)
 <img src="../screenshots/compute_sum.png" height="82px" align="right">

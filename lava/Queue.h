@@ -33,40 +33,41 @@ namespace lava
     LAVA_API
     SubmitInfo & operator=( SubmitInfo const& rhs );
 
-    std::vector<std::shared_ptr<Semaphore>> waitSemaphores;
-    std::vector<vk::PipelineStageFlags> waitDstStageMasks;
-    std::vector<std::shared_ptr<CommandBuffer>> commandBuffers;
-    std::vector<std::shared_ptr<Semaphore>> signalSemaphores;
+    std::vector< std::shared_ptr< Semaphore > > waitSemaphores;
+    std::vector< vk::PipelineStageFlags > waitDstStageMasks;
+    std::vector< std::shared_ptr< CommandBuffer > > commandBuffers;
+    std::vector< std::shared_ptr< Semaphore > > signalSemaphores;
   };
 
-  class Fence : public VulkanResource, private NonCopyable<Fence>
+  class Fence
+    : public VulkanResource
+    , private NonCopyable<Fence>
   {
   public:
     LAVA_API
     Fence( const DeviceRef& device, bool signaled );
     LAVA_API
-    virtual ~Fence( );
-
+    virtual ~Fence( void );
     LAVA_API
     bool isSignaled( void ) const;
     LAVA_API
-    void reset(  void);
+    void reset( void );
     LAVA_API
     void wait( uint64_t timeout = UINT64_MAX ) const;
-
-    inline operator vk::Fence( ) const
+    LAVA_API
+    inline operator vk::Fence( void ) const
     {
       return _fence;
     }
-
     LAVA_API
-    static void waitForFences( 
-      vk::ArrayProxy<const std::shared_ptr<Fence>> fences,
+    static void waitForFences(
+      vk::ArrayProxy<const std::shared_ptr< Fence > > fences,
       bool all, uint32_t timeout
     );
     LAVA_API
-    static void resetFences( vk::ArrayProxy<const std::shared_ptr<Fence>> fences );
-  
+    static void resetFences(
+      vk::ArrayProxy< const std::shared_ptr< Fence > > fences );
+
   private:
     vk::Fence _fence;
   };

@@ -19,8 +19,8 @@ namespace lava
       vk::Format colorFormat, std::shared_ptr<Image> image,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue );
 
-    static VkBool32 getSupportedDepthFormat( std::shared_ptr<PhysicalDevice> physicalDevice, 
-      vk::Format& depthFormat )
+    static VkBool32 getSupportedDepthFormat( 
+      std::shared_ptr<PhysicalDevice> physicalDevice,  vk::Format& depthFormat )
     {
       // Since all depth formats may be optional, we need to find a suitable depth format to use
       // Start with the highest precision packed format
@@ -35,7 +35,7 @@ namespace lava
 
       for ( auto& format : depthFormats )
       {
-        vk::FormatProperties formatProps = physicalDevice->getFormatProperties( format );
+        auto formatProps = physicalDevice->getFormatProperties( format );
         // Format must support depth stencil attachment for optimal tiling
         if ( formatProps.optimalTilingFeatures & 
           vk::FormatFeatureFlagBits::eDepthStencilAttachment )
@@ -61,8 +61,10 @@ namespace lava
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,
       vk::ImageSubresourceRange subresourceRange,
-      vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands,
-      vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands
+      vk::PipelineStageFlags srcStageMask = 
+        vk::PipelineStageFlagBits::eAllCommands,
+      vk::PipelineStageFlags dstStageMask = 
+        vk::PipelineStageFlagBits::eAllCommands
     );
     // Uses a fixed sub resource layout with first mip level and layer
     LAVA_API
@@ -71,8 +73,10 @@ namespace lava
       vk::ImageAspectFlags aspectMask,
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,
-      vk::PipelineStageFlags srcStageMask = vk::PipelineStageFlagBits::eAllCommands,
-      vk::PipelineStageFlags dstStageMask = vk::PipelineStageFlagBits::eAllCommands
+      vk::PipelineStageFlags srcStageMask = 
+        vk::PipelineStageFlagBits::eAllCommands,
+      vk::PipelineStageFlags dstStageMask = 
+        vk::PipelineStageFlagBits::eAllCommands
     );
     // Insert an image memory barrier into the command buffer
     LAVA_API

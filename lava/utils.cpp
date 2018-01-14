@@ -42,9 +42,11 @@ namespace lava
     bool supportsBlit = true;
     // Check blit support for source and destination
 
-    // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
+    // Check if the device supports blitting from optimal images 
+    //      (the swapchain images are in optimal format)
     formatProps = device->getPhysicalDevice( )->getFormatProperties( colorFormat );
-    if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
+    if ( !( formatProps.optimalTilingFeatures & 
+      vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
       std::cerr << "Device does not support blitting from optimal tiled images, "
         << "using copy instead of blit!" << std::endl;
@@ -52,29 +54,35 @@ namespace lava
     }
 
     // Check if the device supports blitting to linear images
-    formatProps = device->getPhysicalDevice( )->getFormatProperties( vk::Format::eR8G8B8A8Unorm );
-    if ( !( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) ) {
+    formatProps = device->getPhysicalDevice( )->getFormatProperties( 
+      vk::Format::eR8G8B8A8Unorm );
+    if ( !( formatProps.linearTilingFeatures &
+      vk::FormatFeatureFlagBits::eBlitDst ) )
+    {
       std::cerr << "Device does not support blitting to linear tiled images, "
         << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
 
-    // Create the linear tiled destination image to copy to and to read the memory from
+    // Create the linear tiled destination image to copy to and to read 
+    //    the memory from
     std::shared_ptr<lava::Image> dstImage = device->createImage( {},
       vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
       vk::Extent3D( width, height, 1 ), 1, 1, vk::SampleCountFlagBits::e1,
       vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
       vk::SharingMode::eExclusive, {}, vk::ImageLayout::eUndefined,
-      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+      vk::MemoryPropertyFlagBits::eHostVisible | 
+      vk::MemoryPropertyFlagBits::eHostCoherent
     );
 
-    // Do the actual blit from the swapchain image to our host visible destination image
+    // Do the actual blit from the swapchain image to our host visible 
+    //      destination image
     auto copyCmd = cmdPool->allocateCommandBuffer( );
 
     copyCmd->beginSimple( );
 
     // Transition destination image to transfer destination layout
-    lava::utils::insertImageMemoryBarrier( copyCmd, dstImage, {},
+    lava::utils::insertImageMemoryBarrier( copyCmd, dstImage, { },
       vk::AccessFlagBits::eTransferWrite,
       vk::ImageLayout::eUndefined,
       vk::ImageLayout::eTransferDstOptimal,
@@ -97,7 +105,8 @@ namespace lava
       )
     );
 
-    // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
+    // If source and destination support blit we'll blit as this also does 
+    //    automatic format conversion (e.g. from BGR to RGB)
     if ( supportsBlit )
     {
       // Define the region to blit (we will blit the whole swapchain image)
@@ -106,10 +115,12 @@ namespace lava
       blitSize.y = height;
       blitSize.z = 1;
       vk::ImageBlit imageBlitRegion{};
-      imageBlitRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageBlitRegion.srcSubresource.aspectMask = 
+        vk::ImageAspectFlagBits::eColor;
       imageBlitRegion.srcSubresource.layerCount = 1;
       imageBlitRegion.srcOffsets[ 1 ] = blitSize;
-      imageBlitRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageBlitRegion.dstSubresource.aspectMask = 
+        vk::ImageAspectFlagBits::eColor;
       imageBlitRegion.dstSubresource.layerCount = 1;
       imageBlitRegion.dstOffsets[ 1 ] = blitSize;
 
@@ -124,9 +135,11 @@ namespace lava
     {
       // Otherwise use image copy (requires us to manually flip components)
       vk::ImageCopy imageCopyRegion{};
-      imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageCopyRegion.srcSubresource.aspectMask = 
+        vk::ImageAspectFlagBits::eColor;
       imageCopyRegion.srcSubresource.layerCount = 1;
-      imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+      imageCopyRegion.dstSubresource.aspectMask = 
+        vk::ImageAspectFlagBits::eColor;
       imageCopyRegion.dstSubresource.layerCount = 1;
       imageCopyRegion.extent.width = width;
       imageCopyRegion.extent.height = height;
@@ -140,7 +153,8 @@ namespace lava
       );
     }
 
-    // Transition destination image to general layout, which is the required layout for mapping the image memory later on
+    // Transition destination image to general layout, which is the required 
+    //    layout for mapping the image memory later on
     insertImageMemoryBarrier(
       copyCmd,
       dstImage,
@@ -186,7 +200,8 @@ namespace lava
     );
 
     // Map image memory so we can start copying from it
-    const char* data = ( const char* ) dev.mapMemory( dstImage->imageMemory, 0, VK_WHOLE_SIZE, {} );
+    const char* data = ( const char* ) dev.mapMemory( dstImage->imageMemory, 0, 
+      VK_WHOLE_SIZE, {} );
     data += subResourceLayout.offset;
 
     std::ofstream file( filename, std::ios::out | std::ios::binary );
@@ -194,10 +209,13 @@ namespace lava
     // ppm header
     file << "P6\n" << width << "\n" << height << "\n" << 255 << "\n";
 
-    // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
+    // If source is BGR (destination is always RGB) and we can't use blit 
+    //    (which does automatic conversion), we'll have to manually swizzle 
+    //    color components
     bool colorSwizzle = false;
     // Check if source is BGR 
-    // Note: Not complete, only contains most common and basic BGR surface formats for demonstation purposes
+    // Note: Not complete, only contains most common and basic BGR surface 
+    //    formats for demonstation purposes
     if ( !supportsBlit )
     {
       std::vector< vk::Format > formatsBGR = {
@@ -275,53 +293,69 @@ namespace lava
     switch ( result ) {
       // Success codes
     case VK_SUCCESS:
-      return "Command successfully completed.";
+      return std::string( "Command successfully completed." );
     case VK_NOT_READY:
-      return "A fence or query has not yet completed.";
+      return std::string( "A fence or query has not yet completed." );
     case VK_TIMEOUT:
-      return "A wait operation has not completed in the specified time.";
+      return std::string( "A wait operation has not completed in the" ) + 
+        std::string( " specified time." );
     case VK_EVENT_SET:
-      return "An event is signaled.";
+      return std::string( "An event is signaled." );
     case VK_EVENT_RESET:
-      return "An event is unsignaled.";
+      return std::string( "An event is unsignaled." );
     case VK_INCOMPLETE:
-      return "A return array was too small for the result.";
+      return std::string( "A return array was too small for the result." );
     case VK_SUBOPTIMAL_KHR:
-      return "A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully.";
+      return std::string( "A swapchain no longer matches the surface" ) + 
+        std::string( "properties exactly, but can still be used to present" ) +
+        std::string( " to the surface successfully." );
 
       // Error codes
     case VK_ERROR_OUT_OF_HOST_MEMORY:
-      return "A host memory allocation has failed.";
+      return std::string( "A host memory allocation has failed." );
     case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-      return "A device memory allocation has failed.";
+      return std::string( "A device memory allocation has failed." );
     case VK_ERROR_INITIALIZATION_FAILED:
-      return "Initialization of an object could not be completed for implementation-specific reasons.";
+      return std::string( "Initialization of an object could not be" ) +
+        std::string( " completed for implementation-specific reasons." );
     case VK_ERROR_DEVICE_LOST:
-      return "The logical or physical device has been lost.";
+      return std::string( "The logical or physical device has been lost." );
     case VK_ERROR_MEMORY_MAP_FAILED:
-      return "Mapping of a memory object has failed.";
+      return std::string( "Mapping of a memory object has failed." );
     case VK_ERROR_LAYER_NOT_PRESENT:
-      return "A requested layer is not present or could not be loaded.";
+      return std::string( "A requested layer is not present or could not be" ) +
+        std::string( " loaded." );
     case VK_ERROR_EXTENSION_NOT_PRESENT:
-      return "A requested extension is not supported.";
+      return std::string( "A requested extension is not supported." );
     case VK_ERROR_FEATURE_NOT_PRESENT:
-      return "A requested feature is not supported.";
+      return std::string( "A requested feature is not supported." );
     case VK_ERROR_INCOMPATIBLE_DRIVER:
-      return "The requested version of Vulkan is not supported by the driver or is otherwise incompatible for implementation-specific reasons.";
+      return std::string( "The requested version of Vulkan is not supported" ) +
+        std::string( " by the driver or is otherwise incompatible for" ) +
+        std::string( " implementation-specific reasons." );
     case VK_ERROR_TOO_MANY_OBJECTS:
-      return "Too many objects of the type have already been created.";
+      return std::string( "Too many objects of the type have already been" ) +
+        std::string( " created." );
     case VK_ERROR_FORMAT_NOT_SUPPORTED:
-      return "A requested format is not supported on this device.";
+      return std::string( "A requested format is not supported on this device." );
     case VK_ERROR_SURFACE_LOST_KHR:
-      return "A surface is no longer available.";
+      return std::string( "A surface is no longer available." );
     case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
-      return "The requested window is already connected to a VkSurfaceKHR, or to some other non-Vulkan API.";
+      return std::string( "The requested window is already connected to a" ) +
+        std::string( " VkSurfaceKHR, or to some other non-Vulkan API." );
     case VK_ERROR_OUT_OF_DATE_KHR:
-      return "A surface has changed in such a way that it is no longer compatible with the swapchain, and further presentation requests using the swapchain will fail. Applications must query the new surface properties and recreate their swapchain if they wish to continue presenting to the surface.";
+      return std::string( "A surface has changed in such a way that it is" ) +
+        std::string( " no longer compatible with the swapchain, and further" ) +
+        std::string( " presentation requests using the swapchain will fail." ) +
+        std::string( " Applications must query the new surface properties" ) +
+        std::string( " and recreate their swapchain if they wish to" ) +
+        std::string( " continue presenting to the surface." );
     case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
-      return "The display used by a swapchain does not use the same presentable image layout, or is incompatible in a way that prevents sharing an image.";
+      return std::string( "The display used by a swapchain does not use" ) +
+        std::string( " the same presentable image layout, or is" ) +
+        std::string( " incompatible in a way that prevents sharing an image." );
     case VK_ERROR_VALIDATION_FAILED_EXT:
-      return "A validation layer found an error.";
+      return std::string( "A validation layer found an error." );
     default:
       std::stringstream ss;
       ss << "Unknown [" << uint32_t( result ) << "]";
@@ -376,8 +410,8 @@ namespace lava
     imageMemoryBarrier.subresourceRange = subresourceRange;
 
     // Source layouts (old)
-    // Source access mask controls actions that have to be finished on the old layout
-    // before it will be transitioned to the new layout
+    // Source access mask controls actions that have to be finished
+    //  on the old layout before it will be transitioned to the new layout
     switch ( oldImageLayout )
     {
       case vk::ImageLayout::eUndefined:
@@ -397,13 +431,15 @@ namespace lava
       case vk::ImageLayout::eColorAttachmentOptimal:
         // Image is a color attachment
         // Make sure any writes to the color buffer have been finished
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        imageMemoryBarrier.srcAccessMask = 
+          vk::AccessFlagBits::eColorAttachmentWrite;
         break;
 
       case vk::ImageLayout::eDepthStencilAttachmentOptimal:
         // Image is a depth/stencil attachment
         // Make sure any writes to the depth/stencil buffer have been finished
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+        imageMemoryBarrier.srcAccessMask = 
+          vk::AccessFlagBits::eDepthStencilAttachmentWrite;
         break;
 
       case vk::ImageLayout::eTransferSrcOptimal:
@@ -447,7 +483,8 @@ namespace lava
       case vk::ImageLayout::eColorAttachmentOptimal:
         // Image will be used as a color attachment
         // Make sure any writes to the color buffer have been finished
-        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        imageMemoryBarrier.dstAccessMask = 
+          vk::AccessFlagBits::eColorAttachmentWrite;
         break;
 
       case vk::ImageLayout::eDepthStencilAttachmentOptimal:
@@ -474,9 +511,9 @@ namespace lava
     static_cast< vk::CommandBuffer >( *cmd ).pipelineBarrier(
       srcStageMask,
       dstStageMask,
-      {},
-      {},
-      {},
+      { },
+      { },
+      { },
       imageMemoryBarrier
     );
   }

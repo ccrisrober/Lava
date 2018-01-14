@@ -41,10 +41,10 @@ namespace lava
       }
     } );
 
-    glfwSetCursorPosCallback( _window, []( GLFWwindow*, double xpos, double ypos )
+    glfwSetCursorPosCallback( _window, []( GLFWwindow*, double xp, double yp )
     {
       static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseMove( 
-        static_cast<int>( xpos ), static_cast<int>( ypos ) );
+        static_cast<int>( xp ), static_cast<int>( yp ) );
     } );
 
     glfwSetMouseButtonCallback( _window, []( GLFWwindow*, int btn, int act, int )
@@ -52,10 +52,10 @@ namespace lava
       static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseButtonEvent( btn, act );
     } );
 
-    glfwSetScrollCallback( _window, []( GLFWwindow*, double xoffset, double yoffset )
+    glfwSetScrollCallback( _window, []( GLFWwindow*, double xoff, double yoff )
     {
       static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseWheelEvent( 
-        static_cast<int>( xoffset ), static_cast<int>( yoffset ) );
+        static_cast<int>( xoff ), static_cast<int>( yoff ) );
     } );
 
     /*glfwSetWindowSizeCallback*/
