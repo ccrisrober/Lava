@@ -9,6 +9,8 @@
 
 #include <lava/api.h>
 
+#include <iomanip>
+
 namespace lava
 {
   class Device;
@@ -119,7 +121,7 @@ namespace lava
   {
   public:
     LAVA_API
-    PipelineCache( const DeviceRef& device, const char* filename );
+    PipelineCache( const DeviceRef& device, const std::string& filename );
     LAVA_API
     PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
       size_t initialSize, void const* initialData );
@@ -133,7 +135,6 @@ namespace lava
 
     LAVA_API
     void saveToFile( const char* filename );
-
     LAVA_API
     void saveToFile( const std::string& filename );
 
@@ -143,6 +144,18 @@ namespace lava
     }
   private:
     vk::PipelineCache _pipelineCache;
+
+    void print_UUID( uint8_t *pipelineCacheUUID )
+    {
+      for ( int j = 0; j < VK_UUID_SIZE; ++j )
+      {
+        std::cout << std::setw( 2 ) << ( uint32_t ) pipelineCacheUUID[ j ];
+        if ( j == 3 || j == 5 || j == 7 || j == 9 )
+        {
+          std::cout << '-';
+        }
+      }
+    }
   };
 
   class PipelineLayout : public VulkanResource, private NonCopyable<PipelineLayout>

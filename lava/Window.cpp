@@ -41,10 +41,10 @@ namespace lava
       }
     } );
 
-    glfwSetCursorPosCallback( _window, []( GLFWwindow*, double xpos, double ypos )
+    glfwSetCursorPosCallback( _window, []( GLFWwindow*, double xp, double yp )
     {
       static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseMove( 
-        static_cast<int>( xpos ), static_cast<int>( ypos ) );
+        static_cast<int>( xp ), static_cast<int>( yp ) );
     } );
 
     glfwSetMouseButtonCallback( _window, []( GLFWwindow*, int btn, int act, int )
@@ -52,21 +52,22 @@ namespace lava
       static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseButtonEvent( btn, act );
     } );
 
-    glfwSetScrollCallback( _window, []( GLFWwindow*, double xoffset, double yoffset )
+    glfwSetScrollCallback( _window, []( GLFWwindow*, double xoff, double yoff )
     {
       static_cast<GLFWMouse*>( Input::Mouse( ) )->onMouseWheelEvent( 
-        static_cast<int>( xoffset ), static_cast<int>( yoffset ) );
+        static_cast<int>( xoff ), static_cast<int>( yoff ) );
     } );
 
     /*glfwSetWindowSizeCallback*/
-    glfwSetFramebufferSizeCallback( _window, []( GLFWwindow* window, int width, int height )
+    glfwSetFramebufferSizeCallback( _window, []( GLFWwindow* window, 
+      int width_, int height_ )
     {
       // glViewport( 0, 0, width, height );
       // TODO: Send event and set width and height from _params
       auto w = reinterpret_cast< Window* >( glfwGetWindowUserPointer( window ) );
       if ( w->_callbackResize )
       {
-        w->_callbackResize( width, height );
+        w->_callbackResize( width_, height_ );
       }
     } );
 

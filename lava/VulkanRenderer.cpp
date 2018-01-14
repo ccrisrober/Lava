@@ -2,6 +2,8 @@
 #include "engine/Clock.h"
 #include "Log.h"
 
+#include <thread>
+
 namespace lava
 {
   RenderAPICapabilities VulkanWindow::caps( void ) const
@@ -9,7 +11,7 @@ namespace lava
 		return _caps;
 	}
 
-  void VulkanWindow::resizeEvent( uint32_t w, uint32_t h )
+  void VulkanWindow::resizeEvent( uint32_t /*w*/, uint32_t /*h*/ )
   {
     if ( _defaultFramebuffer )
     {
@@ -25,6 +27,8 @@ namespace lava
 		{
 			init( );
 			_initialized = true;
+
+      // TODO: savePipelineCache( );
 		}
     //float elapsed = 0.0f;
     //uint32_t frames = 0;
@@ -46,6 +50,9 @@ namespace lava
       //  frames = 0;
       //  elapsed = 0.0f;
       //}
+
+      // Very crude method to prevent your GPU from overheating.
+      std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 	}
 
@@ -53,6 +60,11 @@ namespace lava
 	{
     _instance = instance;
 	}
+
+  bool VulkanWindow::supportsGrab( void ) const
+  {
+    return _defaultFramebuffer->supportsGrab( );
+  }
 
   VulkanWindowRenderer* VulkanWindow::createRenderer( void )
   {
@@ -279,6 +291,7 @@ namespace lava
       if ( glfwGetPhysicalDevicePresentationSupport( inst, pd, 0 ) )
       {
         _physicalDevice = _instance->getPhysicalDevice( i );
+        getEnabledFeatures( );  // TODO
         break;
       }
     }
@@ -499,7 +512,7 @@ namespace lava
     }
 
     _cmdPool = _device->createCommandPool(
-      {}, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
+      { }, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
       _gfxQueueFamilyIdx );
 
     if( !createDefaultRenderPass( ) )
@@ -508,7 +521,7 @@ namespace lava
     }
 
     _renderComplete = _device->createSemaphore( );
-    pipelineCache = _device->createPipelineCache( 0, nullptr );
+    //createPipelineCache( );
 
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
     _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
@@ -652,6 +665,15 @@ namespace lava
     return false;
   }
 
+
+  /*void VulkanWindow::createPipelineCache( void )
+  {
+    pipelineCache = _device->createPipelineCache( 0, nullptr );
+  }
+  void VulkanWindow::savePipelineCache( void )
+  {
+  }*/
+
   CommandBufferPtr VulkanWindow::currentCommandBuffer( void ) const
   {
     return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
@@ -774,32 +796,32 @@ namespace lava
 
   int VulkanWindow::swapChainImageCount( void ) const
   {
-    return 0;
+    return 0; // TODO
   }
 
   int VulkanWindow::currentSwapChainImageIndex( void ) const
   {
-    return 0;
+    return 0; // TODO
   }
 
-  std::shared_ptr<Image> VulkanWindow::swapChainImage( int idx ) const
+  std::shared_ptr<Image> VulkanWindow::swapChainImage( int /*idx*/ ) const
   {
-    return std::shared_ptr<Image>( );
+    return std::shared_ptr<Image>( ); // TODO
   }
 
-  std::shared_ptr<ImageView> VulkanWindow::swapChainImageView( int idx ) const
+  std::shared_ptr<ImageView> VulkanWindow::swapChainImageView( int /*idx*/ ) const
   {
-    return std::shared_ptr<ImageView>( );
+    return std::shared_ptr<ImageView>( ); // TODO
   }
 
   std::shared_ptr<Image> VulkanWindow::depthStencilImage( void ) const
   {
-    return std::shared_ptr<Image>( );
+    return std::shared_ptr<Image>( ); // TODO
   }
 
   std::shared_ptr<ImageView> VulkanWindow::depthStencilImageView( void ) const
   {
-    return std::shared_ptr<ImageView>( );
+    return std::shared_ptr<ImageView>( ); // TODO
   }
 
   glm::mat4 VulkanWindow::clipCorrectionMatrix( void )

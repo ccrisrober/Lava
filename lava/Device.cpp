@@ -373,7 +373,12 @@ namespace lava
   std::shared_ptr<PipelineCache> Device::createPipelineCache( size_t initialSize, 
     void const * initialData )
   {
-    return std::make_shared<PipelineCache>( shared_from_this( ), vk::PipelineCacheCreateFlags( ), initialSize, initialData );
+    return std::make_shared<PipelineCache>( shared_from_this( ), 
+      vk::PipelineCacheCreateFlags( ), initialSize, initialData );
+  }
+  std::shared_ptr<PipelineCache> Device::createPipelineCache( const std::string& src )
+  {
+    return std::make_shared<PipelineCache>( shared_from_this( ), src );
   }
   vk::DeviceMemory Device::allocateImageMemory( vk::Image image, vk::MemoryPropertyFlags flags )
   {
@@ -434,7 +439,44 @@ namespace lava
   {
     return std::make_shared<IndexBuffer>( shared_from_this( ), type, size );
   }
+  std::shared_ptr<Texture2D> Device::createTexture2D( 
+    const std::string& textureSrc, std::shared_ptr<CommandPool> cmdPool,
+    std::shared_ptr<Queue> queue, vk::Format format )
+  {
+    return std::make_shared<Texture2D>( shared_from_this( ), textureSrc, 
+      cmdPool, queue, format );
+  }
+  std::shared_ptr<Texture2DArray> Device::createTexture2DArray( 
+    std::vector<std::string>& textureSrcs,
+    std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue, 
+    vk::Format format )
+  {
+    return std::make_shared<Texture2DArray>( shared_from_this( ), textureSrcs,
+      cmdPool, queue, format );
+  }
+  std::shared_ptr<TextureCubemap> Device::createTextureCubemap( 
+    std::array<std::string, 6>& cubeImages, std::shared_ptr<CommandPool> cmdPool, 
+    std::shared_ptr<Queue> queue, vk::Format format )
+  {
+    return std::make_shared<TextureCubemap>( shared_from_this( ), cubeImages,
+      cmdPool, queue, format );
+  }
 #endif
+  std::shared_ptr<Buffer> Device::createBuffer( vk::DeviceSize size, 
+    vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags memPropFlags )
+  {
+    return createBuffer( size, usageFlags, vk::SharingMode::eExclusive, 
+      nullptr, memPropFlags );
+  }
+
+  std::shared_ptr<Buffer> Device::createBuffer( vk::DeviceSize size, 
+    vk::BufferUsageFlags usageFlags, 
+    vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+    vk::MemoryPropertyFlags memPropFlags )
+  {
+    return createBuffer( size, usageFlags, vk::SharingMode::eConcurrent, 
+      queueFamilyIndices, memPropFlags );
+  }
 
   std::shared_ptr<Pipeline> Device::createGraphicsPipeline( 
     const std::shared_ptr<PipelineCache>& pipelineCache, 

@@ -30,14 +30,6 @@ namespace lava
   }
   Semaphore::~Semaphore( void )
   {
-    destroy( );
-  }
-  void Semaphore::destroy( void )
-  {
-    if ( _semaphore )
-    {
-      vk::Device( *_device ).destroySemaphore( _semaphore );
-      //_semaphore = VK_NULL_HANDLE;
-    }
+    static_cast< vk::Device >( *_device ).destroySemaphore( _semaphore );
   }
 }

@@ -36,10 +36,12 @@ namespace lava
     const std::shared_ptr<Swapchain>& oldSwapchain )
     : VulkanResource( device )
   {
-    vk::SwapchainCreateInfoKHR sci( {}, static_cast< vk::SurfaceKHR >( *surface ),
+    vk::SwapchainCreateInfoKHR sci( { }, 
+      static_cast< vk::SurfaceKHR >( *surface ),
       numImageCount, imageFormat, colorSpace, imageExtent, imageArrayLayers, 
       imageUsage, imageSharingMode, queueFamilyIndices.size( ),
-      queueFamilyIndices.data( ), preTransform, compositeAlpha, presentMode, clipped,
+      queueFamilyIndices.data( ), preTransform, compositeAlpha, presentMode, 
+      clipped,
       oldSwapchain ? static_cast< vk::SwapchainKHR >( *oldSwapchain ) : nullptr );
 
     _swapchain = static_cast< vk::Device >( *_device ).createSwapchainKHR( sci );
@@ -55,12 +57,14 @@ namespace lava
     }
     _freeSemaphore = _device->createSemaphore( );
   }
-  Swapchain::~Swapchain( )
+  Swapchain::~Swapchain( void )
   {
+    _presentCompleteSemaphores.clear( );
     _images.clear( );
     static_cast< vk::Device >( *_device ).destroySwapchainKHR( _swapchain );
   }
-  std::vector<std::shared_ptr<Image>> const& Swapchain::getImages( void ) const
+  std::vector< std::shared_ptr< Image > > const& 
+    Swapchain::getImages( void ) const
   {
     return _images;
   }
@@ -71,8 +75,10 @@ namespace lava
     vk::ResultValue<uint32_t> result = static_cast< vk::Device >( *_device )
       .acquireNextImageKHR( _swapchain, timeout, *_freeSemaphore,
         fence ? static_cast< vk::Fence >( *fence ) : nullptr );
-    assert( result.result == vk::Result::eSuccess );  // need to handle timeout, not ready, and suboptimal
-                            // put the semaphore at the correct index and use the semaphore from the new index as next free semaphore
+    assert( result.result == vk::Result::eSuccess );  // need to handle timeout, 
+                                                      // not ready, and suboptimal
+                            // put the semaphore at the correct index and use the 
+                            // semaphore from the new index as next free semaphore
     std::swap( _freeSemaphore, _presentCompleteSemaphores[ result.value ] );
     return result.value;
 

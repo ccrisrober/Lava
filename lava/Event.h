@@ -17,6 +17,10 @@ namespace lava
   public:
     LAVA_API
     Event( const std::shared_ptr<Device>& device );
+
+    Event( const Event& rhs ) = delete;
+    Event& operator=( const Event& rhs ) = delete;
+    
     LAVA_API
     virtual ~Event( void );
 
@@ -32,9 +36,6 @@ namespace lava
     {
       return _event;
     }
-
-    Event( const Event& rhs ) = delete;
-    Event& operator=( const Event& rhs ) = delete;
 
   private:
     vk::Event _event;

@@ -57,6 +57,9 @@ namespace lava
     void setVulkanInstance( const std::shared_ptr< Instance > instance );
 
     LAVA_API
+    bool supportsGrab( void ) const;
+
+    LAVA_API
     void init( void );
     LAVA_API
     void reset( void );
@@ -67,6 +70,11 @@ namespace lava
     void endFrame( void );
     LAVA_API
     bool checkDeviceLost( vk::Result res );
+
+    /*LAVA_API
+    virtual void createPipelineCache( void ) = 0;
+    LAVA_API
+    virtual void savePipelineCache( void ) = 0;*/
 
     LAVA_API
     CommandBufferPtr currentCommandBuffer( void ) const;
@@ -174,6 +182,10 @@ namespace lava
     LAVA_API
     void setDeviceExtensions( const std::vector< std::string >& extensions );
 
+    virtual void getEnabledFeatures( void )
+    {
+    }
+
   private:
     void initCapabilites( void );
     bool createDefaultRenderPass( void );
@@ -186,6 +198,7 @@ namespace lava
     std::vector<std::string > _requestedDeviceExts;
 
   protected:
+    int numero = 0;
     std::shared_ptr< Instance > _instance;
     std::shared_ptr< PhysicalDevice > _physicalDevice;
     std::shared_ptr< Device > _device;

@@ -21,7 +21,6 @@ namespace lava
     {
       return _surface;
     }
-    void destroy( void );
   private:
     std::shared_ptr< Instance > _instance;
     vk::SurfaceKHR _surface;

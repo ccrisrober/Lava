@@ -30,6 +30,11 @@ namespace lava
     //protected:
       LAVA_API
       Material( void );
+      
+      LAVA_API
+      virtual ~Material( void ) 
+      {
+      }
 
       const std::shared_ptr<PipelineLayout>& pipelineLayout( void )
       {

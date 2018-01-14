@@ -29,10 +29,12 @@ set( LAVA_PUBLIC_HEADERS
   Descriptor.h
   Sampler.h
   Buffer.h
+  QueryPool.h
 
   Window.h
 
   Texture.h
+  Texture1D.h
   Texture2D.h
   Texture3D.h
   Texture2DArray.h
@@ -89,10 +91,12 @@ set( LAVA_SOURCES
   Descriptor.cpp
   Sampler.cpp
   Buffer.cpp
+  QueryPool.cpp
 
   Window.cpp
 
   Texture.cpp
+  Texture1D.cpp
   Texture2D.cpp
   Texture3D.cpp
   Texture2DArray.cpp

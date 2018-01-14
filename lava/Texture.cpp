@@ -29,7 +29,6 @@ namespace lava
   Texture::Texture(  const DeviceRef& device )
     : VulkanResource( device )
   {
-
   }
   Texture::~Texture( void )
   {

@@ -24,8 +24,10 @@ namespace lava
       bool clipped, const std::shared_ptr< Swapchain >& oldSwapchain );
     virtual ~Swapchain( void );
 
-    const std::vector<std::shared_ptr<Image>>& getImages( void ) const;
-    const std::vector<std::shared_ptr<Semaphore>>& getPresentCompleteSemaphores( ) const
+    const std::vector< std::shared_ptr< Image > >& 
+      getImages( void ) const;
+    const std::vector< std::shared_ptr< Semaphore > >& 
+      getPresentCompleteSemaphores( void ) const
     {
       return _presentCompleteSemaphores;
     }

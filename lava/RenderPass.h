@@ -10,12 +10,15 @@ namespace lava
   class RenderPass : public VulkanResource
   {
   public:
+    LAVA_API
     RenderPass( const DeviceRef& device,
       vk::ArrayProxy<const vk::AttachmentDescription> attachments, 
       vk::ArrayProxy<const vk::SubpassDescription> subpasses,
       vk::ArrayProxy<const vk::SubpassDependency> dependencies );
+    LAVA_API
     ~RenderPass( void );
 
+    LAVA_API
     inline operator vk::RenderPass( void ) const
     {
       return _renderPass;

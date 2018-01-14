@@ -31,15 +31,15 @@ namespace lava
       const std::shared_ptr<CommandPool>& cmdPool,
       const std::shared_ptr<Queue>& queue, vk::Format format,
       vk::ImageUsageFlags imageUsageFlags,
-      vk::ImageLayout imageLayout, bool forceLinear )
+      vk::ImageLayout imageLayout_, bool forceLinear )
     : Texture( device_ )
   {
     uint32_t textureWidth = 0;
     uint32_t textureHeight = 0;
     uint32_t textureChannels = 0;
-    uint32_t layerCount = filePaths.size( );
+    layerCount = filePaths.size( );
 
-    struct Image
+    struct Image_
     {
       unsigned char* pixels;
       uint32_t width;
@@ -48,7 +48,7 @@ namespace lava
       uint32_t size;
     };
 
-    std::vector<Image> images;
+    std::vector<Image_> images;
     uint32_t totalSize = 0;
     images.reserve( filePaths.size( ) );
     for ( uint32_t i = 0; i < layerCount; ++i )
@@ -194,7 +194,7 @@ namespace lava
       );
 
       // Change texture image layout to shader read after all mip levels have been copied
-      this->imageLayout = imageLayout;
+      this->imageLayout = imageLayout_;
 
       // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
       utils::setImageLayout(
@@ -249,7 +249,7 @@ namespace lava
 
       // Get sub resources layout 
       // Includes row pitch, size offsets, etc.
-      vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
+      //vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
 
       void* data = device.mapMemory( mappableMemory, 0, totalSize );
       memcpy( data, pixels, totalSize );
@@ -259,10 +259,11 @@ namespace lava
       // and can be directly used as textures
       image = mappableImage;
       deviceMemory = mappableMemory;
-      imageLayout = imageLayout;
+      this->imageLayout = imageLayout_;
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      
       // Setup image memory barrier
       utils::setImageLayout(
         copyCmd,

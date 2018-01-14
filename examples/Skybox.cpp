@@ -23,6 +23,9 @@ using namespace lava;
 #include <routes.h>
 #include "utils/Camera.h"
 
+const unsigned int SCR_WIDTH = 500;
+const unsigned int SCR_HEIGHT = 500;
+
 class CustomRenderer : public VulkanWindowRenderer
 {
 public:
@@ -30,11 +33,9 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Skybox with refract/reflect" );
     camera = Camera( glm::vec3( 0.0f, 2.0f, 8.0f ) );
   }
-
-  const unsigned int SCR_WIDTH = 800;
-  const unsigned int SCR_HEIGHT = 600;
 
   // camera
   Camera camera;
@@ -42,8 +43,8 @@ public:
   float deltaTime = 0.0f; // time between current frame and last frame
   float lastFrame = 0.0f;
 
-  float lastX = SCR_WIDTH / 2.0f;
-  float lastY = SCR_HEIGHT / 2.0f;
+  float lastX = SCR_WIDTH * 0.5f;
+  float lastY = SCR_HEIGHT * 0.5f;
   bool firstMouse = true;
 
   struct
@@ -64,7 +65,7 @@ public:
   };
 
   const float side = 5.0f;
-  const float side2 = side / 2.0f;
+  const float side2 = side * 0.5f;
   const std::vector<Vertex> vertices =
   {
     { { -side2, -side2,  side2 } },
@@ -115,15 +116,15 @@ public:
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
       auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc, 
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       skybox.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -138,15 +139,15 @@ public:
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
       auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
 
       skybox.indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive,
-        nullptr, vk::MemoryPropertyFlagBits::eDeviceLocal );
+        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
@@ -166,17 +167,17 @@ public:
 
     std::array< std::string, 6 > cubeImages =
     {
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/right.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/left.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/top.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/bottom.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/back.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/skyCubemap/front.jpg" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/right.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/left.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/top.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/bottom.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/back.png" ),
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/front.png" ),
     };
-    tex = std::make_shared<TextureCubemap>( device, cubeImages,
+
+    tex = device->createTextureCubemap( cubeImages, 
       _window->graphicsCommandPool( ), _window->graphicQueue( ),
       vk::Format::eR8G8B8A8Unorm );
-
 
     std::array<vk::DescriptorPoolSize, 2> poolSize =
     {
@@ -251,13 +252,11 @@ public:
         vk::DynamicState::eViewport, vk::DynamicState::eScissor
       } );
 
-
       model.pipelines.reflect = device->createGraphicsPipeline(
         _window->pipelineCache, {}, { vertexStage, fragmentStage },
         vertexInput, assembly, nullptr, viewport, rasterization, multisample,
         depthStencil, colorBlend, dynamic, model.pipelineLayout,
         _window->defaultRenderPass( ) );
-
 
       vertexStage = device->createShaderPipelineShaderStage(
         LAVA_EXAMPLES_SPV_ROUTE + std::string( "refract_vert.spv" ),
@@ -300,9 +299,9 @@ public:
       std::vector<DescriptorSetLayoutBinding> dslbs =
       {
         DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer,
-        vk::ShaderStageFlagBits::eVertex ),
+          vk::ShaderStageFlagBits::eVertex ),
         DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
-        vk::ShaderStageFlagBits::eFragment )
+          vk::ShaderStageFlagBits::eFragment )
       };
       auto descriptorSetLayout = device->createDescriptorSetLayout( dslbs );
 
@@ -349,7 +348,6 @@ public:
         vk::DynamicState::eViewport, vk::DynamicState::eScissor
       } );
 
-
       skybox.pipeline = device->createGraphicsPipeline( _window->pipelineCache, 
         { }, { vertexStage, fragmentStage }, vertexInput, assembly, nullptr, 
         viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
@@ -389,7 +387,7 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( 
       currentTime - startTime ).count( ) / 1000.0f;
-
+    
     float currentFrame = time;
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -401,10 +399,10 @@ public:
       ( float ) width / ( float ) height, 0.1f, 100.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformMVP->writeData( 0, sizeof( uboVS ), &uboVS );
+    uniformMVP->update( &uboVS );
 
     uboFS.viewPos = camera.Position;
-    uniformViewPos->writeData( 0, sizeof( uboFS ), &uboFS );
+    uniformViewPos->update( &uboFS );
   }
 
   bool modeReflect = true;
@@ -428,7 +426,12 @@ public:
     }
     else if ( Input::isKeyPressed( lava::Keyboard::Key::Space ) )
     {
-      saveScreenshot( "file.ppm", size.x, size.y );
+      lava::utils::saveScreenshot( _window->device( ), "file.ppm", 
+        size.x, size.y, _window->colorFormat( ),
+        // Source for the copy is the last rendered swapchain image
+        _window->defaultFramebuffer( )->getLastImage( ),
+        _window->graphicsCommandPool( ), _window->graphicQueue( )
+      );
     }
 
     // Mouse event
@@ -531,209 +534,6 @@ private:
   std::shared_ptr<Buffer> uniformMVP;
   std::shared_ptr<Buffer> uniformViewPos;
 
-
-  void saveScreenshot( const char* filename, uint32_t width, uint32_t height )
-  {
-    auto device = _window->device( );
-    // Get format properties for the swapchain color format
-    vk::FormatProperties formatProps;
-
-    bool supportsBlit = true;
-    // Check blit support for source and destination
-
-    // Check if the device supports blitting from optimal images (the swapchain images are in optimal format)
-    formatProps = _window->physicalDevice( )->getFormatProperties( _window->colorFormat( ) );
-    if ( !( formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc ) )
-    {
-      std::cerr << "Device does not support blitting from optimal tiled images, "
-        << "using copy instead of blit!" << std::endl;
-      supportsBlit = false;
-    }
-
-    // Check if the device supports blitting to linear images
-    formatProps = _window->physicalDevice( )->getFormatProperties( vk::Format::eR8G8B8A8Unorm );
-    if ( !( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst ) ) {
-      std::cerr << "Device does not support blitting to linear tiled images, "
-        << "using copy instead of blit!" << std::endl;
-      supportsBlit = false;
-    }
-
-    // Source for the copy is the last rendered swapchain image
-    auto srcImage = _window->defaultFramebuffer( )->getLastImage( );
-
-    // Create the linear tiled destination image to copy to and to read the memory from
-    std::shared_ptr<lava::Image> dstImage = device->createImage( {},
-      vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
-      vk::Extent3D( width, height, 1 ), 1, 1, vk::SampleCountFlagBits::e1,
-      vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
-      vk::SharingMode::eExclusive, {}, vk::ImageLayout::eUndefined,
-      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-    );
-
-    // Do the actual blit from the swapchain image to our host visible destination image
-    auto copyCmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-
-    copyCmd->beginSimple( );
-
-    // Transition destination image to transfer destination layout
-    lava::utils::insertImageMemoryBarrier( copyCmd, dstImage, {},
-      vk::AccessFlagBits::eTransferWrite,
-      vk::ImageLayout::eUndefined,
-      vk::ImageLayout::eTransferDstOptimal,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::ImageSubresourceRange(
-        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
-      )
-    );
-    // Transition swapchain image from present to transfer source layout
-    lava::utils::insertImageMemoryBarrier( copyCmd, srcImage,
-      vk::AccessFlagBits::eMemoryRead,
-      vk::AccessFlagBits::eTransferRead,
-      vk::ImageLayout::ePresentSrcKHR,
-      vk::ImageLayout::eTransferSrcOptimal,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::ImageSubresourceRange(
-        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
-      )
-    );
-
-    // If source and destination support blit we'll blit as this also does automatic format conversion (e.g. from BGR to RGB)
-    if ( supportsBlit )
-    {
-      // Define the region to blit (we will blit the whole swapchain image)
-      vk::Offset3D blitSize;
-      blitSize.x = width;
-      blitSize.y = height;
-      blitSize.z = 1;
-      vk::ImageBlit imageBlitRegion{};
-      imageBlitRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-      imageBlitRegion.srcSubresource.layerCount = 1;
-      imageBlitRegion.srcOffsets[ 1 ] = blitSize;
-      imageBlitRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-      imageBlitRegion.dstSubresource.layerCount = 1;
-      imageBlitRegion.dstOffsets[ 1 ] = blitSize;
-
-      // Issue the blit command
-      copyCmd->blitImage(
-        srcImage, vk::ImageLayout::eTransferSrcOptimal,
-        dstImage, vk::ImageLayout::eTransferDstOptimal,
-        { imageBlitRegion }, vk::Filter::eNearest
-      );
-    }
-    else
-    {
-      // Otherwise use image copy (requires us to manually flip components)
-      vk::ImageCopy imageCopyRegion{};
-      imageCopyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-      imageCopyRegion.srcSubresource.layerCount = 1;
-      imageCopyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-      imageCopyRegion.dstSubresource.layerCount = 1;
-      imageCopyRegion.extent.width = width;
-      imageCopyRegion.extent.height = height;
-      imageCopyRegion.extent.depth = 1;
-
-      // Issue the copy command
-      copyCmd->copyImage(
-        srcImage, vk::ImageLayout::eTransferSrcOptimal,
-        dstImage, vk::ImageLayout::eTransferDstOptimal,
-        { imageCopyRegion }
-      );
-    }
-    // Transition destination image to general layout, which is the required layout for mapping the image memory later on
-    lava::utils::insertImageMemoryBarrier(
-      copyCmd,
-      dstImage,
-      vk::AccessFlagBits::eTransferWrite,
-      vk::AccessFlagBits::eMemoryRead,
-      vk::ImageLayout::eTransferDstOptimal,
-      vk::ImageLayout::eGeneral,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::ImageSubresourceRange(
-        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
-      )
-    );
-
-    // Transition back the swap chain image after the blit is done
-    lava::utils::insertImageMemoryBarrier(
-      copyCmd,
-      srcImage,
-      vk::AccessFlagBits::eTransferRead,
-      vk::AccessFlagBits::eMemoryRead,
-      vk::ImageLayout::eTransferSrcOptimal,
-      vk::ImageLayout::ePresentSrcKHR,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer,
-      vk::ImageSubresourceRange(
-        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
-      )
-    );
-
-    copyCmd->end( );
-
-    _window->graphicQueue( )->submitAndWait( copyCmd );
-
-    // Get layout of the image (including row pitch)
-    vk::ImageSubresource isr;
-    isr.aspectMask = vk::ImageAspectFlagBits::eColor;
-    vk::SubresourceLayout subResourceLayout;
-
-    vk::Device dev = static_cast< vk::Device > ( *device );
-
-    dev.getImageSubresourceLayout(
-      static_cast< vk::Image >( *dstImage ), &isr, &subResourceLayout
-    );
-
-    // Map image memory so we can start copying from it
-    const char* data = ( const char* ) dev.mapMemory( dstImage->imageMemory, 0, VK_WHOLE_SIZE, {} );
-    data += subResourceLayout.offset;
-
-    std::ofstream file( filename, std::ios::out | std::ios::binary );
-
-    // ppm header
-    file << "P6\n" << width << "\n" << height << "\n" << 255 << "\n";
-
-    // If source is BGR (destination is always RGB) and we can't use blit (which does automatic conversion), we'll have to manually swizzle color components
-    bool colorSwizzle = false;
-    // Check if source is BGR 
-    // Note: Not complete, only contains most common and basic BGR surface formats for demonstation purposes
-    if ( !supportsBlit )
-    {
-      std::vector< vk::Format > formatsBGR = {
-        vk::Format::eB8G8R8A8Srgb, vk::Format::eB8G8R8A8Unorm,
-        vk::Format::eB8G8R8A8Snorm
-      };
-      colorSwizzle = ( std::find( formatsBGR.begin( ), formatsBGR.end( ),
-        _window->colorFormat( ) ) != formatsBGR.end( ) );
-    }
-
-    // ppm binary pixel data
-    for ( uint32_t y = 0; y < height; ++y )
-    {
-      unsigned int* row = ( unsigned int* ) data;
-      for ( uint32_t x = 0; x < width; ++x )
-      {
-        if ( colorSwizzle )
-        {
-          file.write( ( char* ) row + 2, 1 );
-          file.write( ( char* ) row + 1, 1 );
-          file.write( ( char* ) row, 1 );
-        }
-        else
-        {
-          file.write( ( char* ) row, 3 );
-        }
-        row++;
-      }
-      data += subResourceLayout.rowPitch;
-    }
-    file.close( );
-
-    std::cout << "Screenshot saved to disk" << std::endl;
-  }
-
 };
 
 class CustomVkWindow : public VulkanWindow
@@ -784,7 +584,7 @@ int main( void )
 
   CustomVkWindow w;
   w.setVulkanInstance( instance );
-  w.resize( 500, 500 );
+  w.resize( SCR_WIDTH, SCR_HEIGHT );
 
   w.show( );
 

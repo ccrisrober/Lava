@@ -173,7 +173,7 @@ namespace lava
     void Node::setRotation( float angle, const glm::vec3& axis, 
       TransformSpace space )
     {
-      setRotation( glm::quat( angle, axis ) );
+      setRotation( glm::quat( angle, axis ), space );
     }
     void Node::setRotation( const glm::quat& rotation, 
       TransformSpace space )

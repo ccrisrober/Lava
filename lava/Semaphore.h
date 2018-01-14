@@ -9,21 +9,23 @@
 namespace lava
 {
   class Device;
-  class Semaphore : public VulkanResource, private NonCopyable<Semaphore>
+  class Semaphore
+    : public VulkanResource
+    , private NonCopyable< Semaphore >
   {
   public:
+    LAVA_API
     Semaphore( const DeviceRef& device );
     Semaphore( const Semaphore& ) = delete;
 
     Semaphore& operator=( const Semaphore& ) = delete;
     virtual ~Semaphore( void );
 
+    LAVA_API
     inline operator vk::Semaphore( void )
     {
       return _semaphore;
     }
-
-    void destroy( void );
 
   protected:
     vk::Semaphore _semaphore;

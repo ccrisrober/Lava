@@ -1,19 +1,19 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 0.1.2 )
+project( lava VERSION 0.2.0 )
 set( lava_VERSION_ABI 1)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
-    message( FATAL "no in source building allowed." )
+  message( FATAL "no in source building allowed." )
 endif()
 
 list(APPEND CMAKE_MODULE_PATH
-    ${PROJECT_SOURCE_DIR}/CMake
-    ${CMAKE_SOURCE_DIR}/CMake/common)
+  ${PROJECT_SOURCE_DIR}/CMake
+  ${CMAKE_SOURCE_DIR}/CMake/common)
 
 # Default build type is Debug
 if( NOT CMAKE_BUILD_TYPE )
-    set( CMAKE_BUILD_TYPE Debug )
+  set( CMAKE_BUILD_TYPE Debug )
 endif( NOT CMAKE_BUILD_TYPE )
 
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
@@ -28,7 +28,7 @@ set( LAVA_DESCRIPTION "LAVA" )
 include(Common)
 
 # Allow warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
@@ -63,15 +63,12 @@ add_subdirectory( lava )
 add_subdirectory( examples )
 
 configure_file(
-  CMake/glsl2spirv.cmake
-  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake
+  CMake/glsl2spv.cmake
+  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spv.cmake
   COPYONLY
   )
-install( FILES CMake/glsl2spirv.cmake
+install( FILES CMake/glsl2spv.cmake
   DESTINATION ${CMAKE_MODULE_INSTALL_PATH} COMPONENT dev )
-
-add_custom_target( spv-gen ${CMAKE_COMMAND} -P 
-  ${PROJECT_BINARY_DIR}/${CMAKE_MODULE_INSTALL_PATH}/glsl2spirv.cmake )
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})

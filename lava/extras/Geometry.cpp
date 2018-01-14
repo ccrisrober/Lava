@@ -20,6 +20,8 @@
 #include "Geometry.h"
 #include "ModelImporter.h"
 
+#include "../Device.h"
+
 namespace lava
 {
   namespace extras
@@ -29,24 +31,26 @@ namespace lava
       SetAsIdentity();
     }
 
-    Transform::Transform(const glm::vec3& position, const glm::quat& rotation, const glm::vec3& scale) :
-      position(position),
-      rotation(rotation),
-      scale(scale)
+    Transform::Transform( const glm::vec3& position_, const glm::quat& rotation_, 
+      const glm::vec3& scale_ ) 
+    : position(position_)
+      , rotation(rotation_)
+      , scale(scale_)
     {
     }
 
-    Transform::Transform(const glm::vec3& position, const glm::quat& rotation) :
-      position(position),
-      rotation(rotation),
-      scale(glm::vec3(1.0f))
+    Transform::Transform( const glm::vec3& position_, 
+      const glm::quat& rotation_) 
+    : position(position_)
+      , rotation(rotation_)
+      , scale(glm::vec3(1.0f))
     {
     }
 
-    Transform::Transform(const glm::vec3& position) :
-      position(position),
-      rotation(glm::quat(glm::vec3(0.0f))),
-      scale(glm::vec3(1.0f))
+    Transform::Transform(const glm::vec3& position_) 
+    : position(position_)
+      , rotation(glm::quat(glm::vec3(0.0f)))
+      , scale(glm::vec3(1.0f))
     {
     }
 
@@ -120,19 +124,15 @@ namespace lava
 
       // Vertex buffer
       {
-        uint32_t vertexBufferSize = mesh.numVertices * 
-          sizeof( lava::extras::Vertex );
-        _vbo = std::make_shared<VertexBuffer>( 
-          _device, vertexBufferSize );
-        _vbo->writeData( 0, vertexBufferSize, 
-          mesh.vertices.data( ) );
+        uint32_t vertexBufferSize = mesh.numVertices * sizeof( Vertex );
+        _vbo = _device->createVertexBuffer( vertexBufferSize );
+        _vbo->writeData( 0, vertexBufferSize, mesh.vertices.data( ) );
       }
 
       // Index buffer
       {
         uint32_t indexBufferSize = _numIndices * sizeof( uint32_t );
-        _ibo = std::make_shared<IndexBuffer>( _device, 
-          vk::IndexType::eUint32, _numIndices );
+        _ibo = device->createIndexBuffer( vk::IndexType::eUint32, _numIndices );
         _ibo->writeData( 0, indexBufferSize, mesh.indices.data( ) );
       }
     }

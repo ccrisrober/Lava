@@ -72,10 +72,8 @@ namespace lava
     void* map( vk::DeviceSize offset, vk::DeviceSize length ) const;
     LAVA_API
     void unmap( void );
-    
-    //template <typename T> void update( vk::DeviceSize offset, 
-    //  vk::ArrayProxy<const T> data, std::shared_ptr<CommandBuffer> const& cmdBuff );
 
+    LAVA_API
     inline operator vk::Buffer( void ) const
     {
       return _buffer;
@@ -104,22 +102,29 @@ namespace lava
     LAVA_API
     void readData( vk::DeviceSize offset, vk::DeviceSize length, void* dst );
     LAVA_API
+    void read( void* dst );
+    LAVA_API
     void writeData( vk::DeviceSize offset, vk::DeviceSize length, const void* src );
+    LAVA_API
+    void update( const void* src );
 
-    // todo: virtual void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 ) = 0;
+    LAVA_API
+    void updateDescriptor( void );
+
+    LAVA_API
+    inline vk::DeviceSize getSize( void ) const
+    {
+      return _size;
+    }
+    
   //protected:
     vk::Buffer _buffer;
     vk::BufferView _view;
     vk::DeviceMemory _memory;
-
+  protected:
     vk::DeviceSize _size;
+    DescriptorBufferInfo descriptor;
   };
-  /*template<typename T>
-  inline void Buffer::update( vk::DeviceSize offset, vk::ArrayProxy<const T> data, 
-    std::shared_ptr<CommandBuffer> const & cmdBuff )
-  {
-    // todo
-  }*/
 
   class VertexBuffer: public Buffer
   {
@@ -138,7 +143,7 @@ namespace lava
       uint32_t numIndices );
     LAVA_API
     void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
-    inline const vk::IndexType getIndexType( void )
+    inline vk::IndexType getIndexType( void ) const
     {
       return _type;
     }

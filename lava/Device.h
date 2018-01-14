@@ -13,6 +13,13 @@
 #include "Buffer.h"
 #include "Event.h"
 
+#include "Texture.h"
+// TODO: #include "Texture1D.h"
+#include "Texture2D.h"
+#include "TextureCubemap.h"
+#include "Texture2DArray.h"
+// TODO: #include "Texture3D.h"
+
 #include <vector>
 #include <map>
 
@@ -155,7 +162,9 @@ namespace lava
 
     LAVA_API
     std::shared_ptr<PipelineCache> createPipelineCache( size_t initialSize, 
-      void const* initialData = nullptr );
+      void const* initialData );
+    LAVA_API
+    std::shared_ptr<PipelineCache> createPipelineCache( const std::string& filePath );
 
     LAVA_API
     std::shared_ptr<Pipeline> createGraphicsPipeline( 
@@ -228,7 +237,32 @@ namespace lava
     LAVA_API
     std::shared_ptr<IndexBuffer> createIndexBuffer( vk::IndexType type, 
       vk::DeviceSize size );
+
+    LAVA_API
+    std::shared_ptr< Texture2D > createTexture2D( const std::string& textureSrc,
+      std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
+      vk::Format format );
+    LAVA_API
+    std::shared_ptr< Texture2DArray > createTexture2DArray(
+      std::vector< std::string >& textureSrcs,
+      std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
+      vk::Format format );
+    LAVA_API
+    std::shared_ptr< TextureCubemap > createTextureCubemap(
+      std::array< std::string, 6 >& cubeImages,
+      std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
+      vk::Format format );
 #endif
+    // Sharing Mode: Exclusive
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
+      vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags memPropFlags );
+    // Sharing Mode: Concurrent
+    LAVA_API
+    std::shared_ptr<Buffer> createBuffer( vk::DeviceSize size, 
+      vk::BufferUsageFlags usageFlags, 
+      vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
+      vk::MemoryPropertyFlags memoryPropertyFlags );
 
   protected:
     void init(

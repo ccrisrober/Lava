@@ -500,7 +500,7 @@ namespace lava
 
   void VulkanApp::resize( uint32_t width, uint32_t height )
   {
-    assert( ( 0 <= width ) && ( 0 <= height ) );
+    //assert( ( 0 <= width ) && ( 0 <= height ) );
 
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
     _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
@@ -511,7 +511,7 @@ namespace lava
     doResize( width, height );
   }
 
-  void VulkanApp::doResize( uint32_t width, uint32_t height )
+  void VulkanApp::doResize( uint32_t, uint32_t )
   {
   }
 

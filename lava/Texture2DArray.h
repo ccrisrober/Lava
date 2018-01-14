@@ -19,7 +19,8 @@ namespace lava
   public:
     LAVA_API
     // All images on filePaths as same dimensions
-    Texture2DArray( const DeviceRef& device, std::vector< std::string >& filePaths,
+    Texture2DArray( const DeviceRef& device, 
+      std::vector< std::string >& filePaths,
       const std::shared_ptr<CommandPool>& cmdPool, 
       const std::shared_ptr<Queue>& queue,
       vk::Format format,

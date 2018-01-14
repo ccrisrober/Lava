@@ -31,14 +31,14 @@ namespace lava
       const std::shared_ptr<CommandPool>& cmdPool,
       const std::shared_ptr<Queue>& queue, vk::Format format,
       vk::ImageUsageFlags imageUsageFlags,
-      vk::ImageLayout imageLayout, bool forceLinear )
+      vk::ImageLayout imageLayout_, bool forceLinear )
     : Texture( device_ )
   {
     uint32_t textureWidth = 0;
     uint32_t textureHeight = 0;
     uint32_t channels = 0;
 
-    struct Image
+    struct Image_
     {
       unsigned char* pixels;
       uint32_t width;
@@ -47,7 +47,7 @@ namespace lava
       uint32_t size;
     };
 
-    std::vector<Image> images;
+    std::vector<Image_> images;
     uint32_t totalSize = 0;
     images.reserve( filePaths.size( ) );
     for ( uint32_t i = 0, l = filePaths.size( ); i < l; ++i )
@@ -183,7 +183,8 @@ namespace lava
 
       // Image barrier for optimal image (target)
       // Optimal image will be used as destination for the copy
-      // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+      // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED 
+      //    to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
       utils::setImageLayout(
         copyCmd,
         image,
@@ -199,9 +200,10 @@ namespace lava
       );
 
       // Change texture image layout to shader read after all mip levels have been copied
-      this->imageLayout = imageLayout;
+      this->imageLayout = imageLayout_;
 
-      // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+      // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+      //    to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
       utils::setImageLayout(
         copyCmd,
         image,
@@ -224,7 +226,8 @@ namespace lava
       // Prefer using optimal tiling, as linear tiling 
       // may support only a small set of features 
       // depending on implementation (e.g. no mip maps, only one layer, etc.)
-      assert( formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage );
+      assert( formatProps.linearTilingFeatures & 
+        vk::FormatFeatureFlagBits::eSampledImage );
 
       // Check if this support is supported for linear tiling
       vk::Image mappableImage;
@@ -249,15 +252,12 @@ namespace lava
 
       mappableImage = device.createImage( ici );
       mappableMemory = _device->allocateImageMemory( mappableImage,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
+        vk::MemoryPropertyFlagBits::eHostVisible | 
+        vk::MemoryPropertyFlagBits::eHostCoherent );  // Allocate + bind
 
       vk::ImageSubresource subRes;
       subRes.aspectMask = vk::ImageAspectFlagBits::eColor;
       subRes.mipLevel = 0;
-
-      // Get sub resources layout 
-      // Includes row pitch, size offsets, etc.
-      vk::SubresourceLayout subResLayout = device.getImageSubresourceLayout( mappableImage, subRes );
 
       void* data = device.mapMemory( mappableMemory, 0, totalSize );
       memcpy( data, pixels, totalSize );
@@ -267,10 +267,11 @@ namespace lava
       // and can be directly used as textures
       image = mappableImage;
       deviceMemory = mappableMemory;
-      imageLayout = imageLayout;
+      this->imageLayout = imageLayout_;
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      
       // Setup image memory barrier
       utils::setImageLayout(
         copyCmd,

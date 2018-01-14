@@ -9,13 +9,14 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
+    _window->setWindowTitle( "Secondary Buffer Quad" );
   }
   
   void initResources( void ) override
   {
     auto device = _window->device( );
 
-    tex = std::make_shared<Texture2D>( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), _window->graphicsCommandPool( ), 
       _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -146,12 +147,6 @@ public:
     {
       _window->_window->close( );
     }
-
-    /*static int i = 0;
-
-    ++i;
-
-    Log::info( std::to_string( i ) );*/
 
     std::array<vk::ClearValue, 2 > clearValues;
     std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };

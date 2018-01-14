@@ -17,6 +17,7 @@ namespace lava
   class Image;
   class RenderPass;
   class Framebuffer;
+  class QueryPool;
   class CommandBuffer;
 
   class CommandPool : 
@@ -60,7 +61,8 @@ namespace lava
   struct ImageMemoryBarrier
   {
     LAVA_API
-    ImageMemoryBarrier( vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
+    ImageMemoryBarrier( 
+      vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
       vk::ImageLayout oldLayout, vk::ImageLayout newLayout, 
       uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex,
       const std::shared_ptr<Image>& image, 
@@ -108,7 +110,8 @@ namespace lava
       vk::CommandBufferInheritanceInfo* inheritInfo = nullptr );
 
     LAVA_API
-    void clearAttachments( vk::ArrayProxy< const vk::ClearAttachment> attachments,
+    void clearAttachments( 
+      vk::ArrayProxy< const vk::ClearAttachment> attachments,
       vk::ArrayProxy<const vk::ClearRect> rects );
     LAVA_API
     void clearColorImage( const std::shared_ptr<Image>& image,
@@ -124,7 +127,15 @@ namespace lava
     LAVA_API
     void beginRenderPass( const std::shared_ptr<RenderPass>& renderPass,
       const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
-      vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents contents );
+      vk::ArrayProxy<const vk::ClearValue> clearValues, 
+      vk::SubpassContents contents );
+    
+    LAVA_API
+    void fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer, 
+      vk::DeviceSize dstOffset, vk::DeviceSize fillSize, uint32_t data );
+
+    LAVA_API
+    void nextSubpass( vk::SubpassContents contents );
 
     LAVA_API
     void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
@@ -147,60 +158,51 @@ namespace lava
     LAVA_API
     void blitImage( const std::shared_ptr<Image>& srcImage, 
       vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage, 
-      vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions, 
-      vk::Filter filter );
+      vk::ImageLayout dstImageLayout, 
+      vk::ArrayProxy<const vk::ImageBlit> regions, vk::Filter filter );
 
     LAVA_API
-    void setStencilCompareMask( vk::StencilFaceFlags faceMask, 
-      uint32_t stencilCompareMask );
+    void beginQuery( const std::shared_ptr<lava::QueryPool>& queryPool, 
+      uint32_t slot, vk::QueryControlFlags flags );
+    LAVA_API 
+    void copyQueryPoolResults( const std::shared_ptr<lava::QueryPool>& queryPool, 
+      uint32_t startQuery, uint32_t queryCount, 
+      const std::shared_ptr<lava::Buffer>& dstBuffer, vk::DeviceSize dstOffset, 
+      vk::DeviceSize dstStride, vk::QueryResultFlags flags );
     LAVA_API
-    void setStencilReference( vk::StencilFaceFlags faceMask, 
-      uint32_t stencilReference );
+    void endQuery( const std::shared_ptr<lava::QueryPool>& queryPool, 
+      uint32_t slot );
     LAVA_API
-    void setStencilWriteMask( vk::StencilFaceFlags faceMask, 
-      uint32_t stencilWriteMask );
+    void resetQueryPool( const std::shared_ptr<lava::QueryPool>& queryPool, 
+      uint32_t startQuery, uint32_t queryCount );
     LAVA_API
-    void setBlendConstants( const float blendConst[ 4 ] );
+    void writeTimestamp( vk::PipelineStageFlagBits pipelineStage, 
+      const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t entry );
 
     LAVA_API
-    void beginOcclusionQuery( vk::QueryPool queryPool, uint32_t query, 
-      vk::QueryControlFlags flags = { } );
-    LAVA_API
-    void endOcclusionQuery( vk::QueryPool queryPool, uint32_t query );
-
-    LAVA_API
-    void executeCommands( const std::vector< std::shared_ptr<lava::CommandBuffer> >& secondaryCmds );
+    void executeCommands( const std::vector< 
+      std::shared_ptr<lava::CommandBuffer> >& secondaryCmds );
 
 
     LAVA_API
-    void begin( vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlags( ),
-      const std::shared_ptr<RenderPass>& renderPass = std::shared_ptr<RenderPass>( ),
+    void begin( vk::CommandBufferUsageFlags flags = {},
+      const std::shared_ptr<RenderPass>& renderPass = {},
       uint32_t subpass = 0,
-      const std::shared_ptr<Framebuffer>& framebuffer = std::shared_ptr<Framebuffer>( ),
+      const std::shared_ptr<Framebuffer>& framebuffer = {},
       vk::Bool32 occlusionQueryEnable = false,
-      vk::QueryControlFlags queryFlags = vk::QueryControlFlags( ),
-      vk::QueryPipelineStatisticFlags pipelineStatistics = vk::QueryPipelineStatisticFlags( ) );
+      vk::QueryControlFlags queryFlags = {},
+      vk::QueryPipelineStatisticFlags pipelineStatistics = {} );
     LAVA_API
-    void end( );
+    void end( void );
 
     inline bool isRecording( void ) const
     {
       return _isRecording;
     }
 
-    LAVA_API
-    std::shared_ptr<RenderPass> getRenderPass( void ) const
-    {
-      return _renderPass;
-    }
-    LAVA_API
-    std::shared_ptr<Framebuffer> getFramebuffer( void ) const
-    {
-      return _framebuffer;
-    }
-
     template <typename T> void pushConstants( vk::PipelineLayout layout,
-      vk::ShaderStageFlags stageFlags, uint32_t start, vk::ArrayProxy<const T> values );
+      vk::ShaderStageFlags stageFlags, uint32_t start, 
+      vk::ArrayProxy<const T> values );
     LAVA_API
     void bindPipeline( vk::PipelineBindPoint bindingPoint, 
       const std::shared_ptr<Pipeline>& pipeline );
@@ -209,31 +211,47 @@ namespace lava
     LAVA_API
     void bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline );
     
-    /*void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint, 
-      std::shared_ptr<PipelineLayout> const& pipelineLayout, uint32_t firstSet, 
-      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets, 
-      vk::ArrayProxy<const uint32_t> dynamicOffsets );*/
     LAVA_API
     void setViewportScissors( uint32_t width, uint32_t height );
     LAVA_API
     void setViewportScissors( const vk::Extent2D& dimensions );
     LAVA_API
-    void setScissor( uint32_t first, vk::ArrayProxy<const vk::Rect2D> scissors );
+    void setScissor( uint32_t first, 
+      vk::ArrayProxy<const vk::Rect2D> scissors );
     LAVA_API
-    void setViewport( uint32_t first, vk::ArrayProxy<const vk::Viewport> viewports );
+    void setViewport( uint32_t first, 
+      vk::ArrayProxy<const vk::Viewport> viewports );
+    LAVA_API
+    void setDepthBias( float depthBias, float depthBiasClamp, 
+      float slopeScaledDepthBias );
+    LAVA_API
+    void setDepthBounds( float minDepthBounds, float maxDepthBounds );
+
     LAVA_API
     void setLineWidth( float lineWidth );
     LAVA_API
+      void setBlendConstants( const float blendConst[ 4 ] );
+    LAVA_API
+    void setStencilCompareMask( vk::StencilFaceFlags faceMask,
+      uint32_t stencilCompareMask );
+    LAVA_API
+    void setStencilReference( vk::StencilFaceFlags faceMask,
+      uint32_t stencilReference );
+    LAVA_API
+    void setStencilWriteMask( vk::StencilFaceFlags faceMask,
+      uint32_t stecilWriteMask );
+
+    LAVA_API
     void dispatch( uint32_t x, uint32_t y, uint32_t z );
     LAVA_API
-    void draw( uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex,
-      uint32_t firstInstance );
+    void draw( uint32_t vertexCount, uint32_t instanceCount, 
+      uint32_t firstVertex, uint32_t firstInstance );
     LAVA_API
     void drawIndirect( const std::shared_ptr<Buffer>& buffer,
       vk::DeviceSize offset, uint32_t count, uint32_t stride );
     LAVA_API
-    void drawIndexed( uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
-      int32_t vertexOffset, uint32_t firstInstance );
+    void drawIndexed( uint32_t indexCount, uint32_t instanceCount, 
+      uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance );
     LAVA_API
     void drawIndexedIndirect( const std::shared_ptr<Buffer>& buffer, 
       vk::DeviceSize offset, uint32_t count, uint32_t stride );
@@ -261,13 +279,14 @@ namespace lava
     void bindIndexBuffer( const std::shared_ptr<IndexBuffer>& buffer, 
       vk::DeviceSize offset = { } );
     LAVA_API
-    void bindVertexBuffer( uint32_t startBinding, const std::shared_ptr<Buffer>& buffer,
-      vk::DeviceSize offset );
+    void bindVertexBuffer( uint32_t startBinding, 
+      const std::shared_ptr<Buffer>& buffer, vk::DeviceSize offset );
     LAVA_API
     void bindVertexBuffers( uint32_t startBinding, 
       vk::ArrayProxy<const std::shared_ptr<Buffer>> buffers,
       vk::ArrayProxy<const vk::DeviceSize> offsets );
-    template <typename T> void updateBuffer( const std::shared_ptr<Buffer>& destBuffer,
+    template <typename T> void updateBuffer( 
+      const std::shared_ptr<Buffer>& destBuffer,
       vk::DeviceSize destOffset, vk::ArrayProxy<const T> data );
 
     LAVA_API
@@ -281,9 +300,11 @@ namespace lava
 
     
     LAVA_API
-    void resetEvent( const std::shared_ptr<Event>& event, vk::PipelineStageFlags stageMask);
+    void resetEvent( const std::shared_ptr<Event>& ev, 
+      vk::PipelineStageFlags stageMask);
     LAVA_API
-    void setEvent( const std::shared_ptr<Event>& event, vk::PipelineStageFlags stageMask);
+    void setEvent( const std::shared_ptr<Event>& ev, 
+      vk::PipelineStageFlags stageMask);
     LAVA_API
     void waitEvents(vk::ArrayProxy<const std::shared_ptr<Event>> events, 
       vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask, 
@@ -291,6 +312,16 @@ namespace lava
       vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers, 
       vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
     );
+    LAVA_API
+    inline std::shared_ptr<lava::RenderPass> getRenderPass( void ) const 
+    {
+      return _renderPass;
+    }
+    LAVA_API
+    inline std::shared_ptr<lava::Framebuffer> getFramebuffer( void ) const
+    {
+      return _framebuffer;
+    }
 
 
   protected:
@@ -301,15 +332,18 @@ namespace lava
     bool _isRecording;
     std::vector<::vk::DescriptorSet> _bindDescriptorSets;
     std::vector<::vk::Buffer> _bindVertexBuffers;
+    vk::CommandBufferLevel _level;
   };
   template<typename T>
   inline void CommandBuffer::pushConstants( vk::PipelineLayout layout,
-    vk::ShaderStageFlags stageFlags, uint32_t start, vk::ArrayProxy<const T> values )
+    vk::ShaderStageFlags stageFlags, uint32_t start, 
+    vk::ArrayProxy<const T> values )
   {
     _commandBuffer.pushConstants<T>( layout, stageFlags, start, values );
   }
   template<typename T>
-  inline void CommandBuffer::updateBuffer( const std::shared_ptr<Buffer>& destBuffer,
+  inline void CommandBuffer::updateBuffer( 
+    const std::shared_ptr<Buffer>& destBuffer,
     vk::DeviceSize destOffset, vk::ArrayProxy<const T> data )
   {
     _commandBuffer.updateBuffer<T>( *destBuffer, destOffset, data );
