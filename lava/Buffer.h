@@ -74,10 +74,7 @@ namespace lava
     void unmap( void );
 
     LAVA_API
-    inline operator vk::Buffer( void ) const
-    {
-      return _buffer;
-    }
+    inline operator vk::Buffer( void ) const { return _buffer; }
 
     LAVA_API
     void copy( const std::shared_ptr<CommandBuffer>& cmd, 
@@ -89,13 +86,7 @@ namespace lava
       const vk::ImageSubresourceLayers& range, vk::ImageLayout layout );
 
     LAVA_API
-    void CreateStaged( const std::shared_ptr<Queue>& q,
-      std::shared_ptr<CommandBuffer>& cmd,
-      vk::DeviceSize size, vk::BufferUsageFlags usageFlags, void* data,
-      vk::MemoryPropertyFlags props );
-
-    LAVA_API
-    void flush( vk::DeviceSize size, vk::DeviceSize offset = 0 );
+    void flush( vk::DeviceSize offset, vk::DeviceSize size );
     LAVA_API
     void invalidate( vk::DeviceSize size, vk::DeviceSize offset = 0 );
 
@@ -106,20 +97,27 @@ namespace lava
     LAVA_API
     void writeData( vk::DeviceSize offset, vk::DeviceSize length, const void* src );
     LAVA_API
-    void update( const void* src );
+    void set( const void* src );
 
     LAVA_API
     void updateDescriptor( void );
 
     LAVA_API
-    inline vk::DeviceSize getSize( void ) const
-    {
-      return _size;
-    }
+    inline vk::DeviceSize getSize( void ) const { return _size; }
     
+    template <typename T> 
+    void update( const std::shared_ptr<CommandBuffer>& commandBuffer,
+      vk::DeviceSize offset, vk::ArrayProxy<const T> data );
+
+    LAVA_API
+    inline vk::MemoryPropertyFlags getMemoryPropertyFlags( void ) const
+    {
+      return _memoryPropertyFlags;
+    }
+
   //protected:
     vk::Buffer _buffer;
-    vk::BufferView _view;
+    vk::MemoryPropertyFlags _memoryPropertyFlags;
     vk::DeviceMemory _memory;
   protected:
     vk::DeviceSize _size;
@@ -197,6 +195,44 @@ namespace lava
     vk::BufferView  _bufferView;
     std::shared_ptr<lava::Buffer> _buffer;
   };
+
+  template <typename T>
+  inline void Buffer::update( const std::shared_ptr<CommandBuffer>& cmdBuff,
+    vk::DeviceSize offset, vk::ArrayProxy<const T> data )
+  {
+    size_t size = data.size( ) * sizeof( T );
+    if ( ( ( offset & 0x3 ) == 0 ) && ( size < 64 * 1024 ) && 
+      ( ( size & 0x3 ) == 0 ) )
+    {
+      cmdBuff->updateBuffer( shared_from_this( ), offset, data );
+    }
+    else if ( getMemoryPropertyFlags( ) & 
+      vk::MemoryPropertyFlagBits::eHostVisible )
+    {
+      void* pData = this->map( offset, size );
+      memcpy( pData, data.data( ), size );
+      if ( !( getMemoryPropertyFlags( ) & 
+        vk::MemoryPropertyFlagBits::eHostCoherent ) )
+      {
+        this->flush( size, offset );
+      }
+      this->unmap( );
+    }
+    else
+    {
+      std::shared_ptr<Buffer> stagingBuffer = _device->createBuffer(
+        _size, vk::BufferUsageFlagBits::eTransferSrc, 
+        vk::SharingMode::eExclusive, nullptr, 
+        vk::MemoryPropertyFlagBits::eHostVisible
+      );
+      void * pData = stagingBuffer->map( offset, size );
+      memcpy( pData, data.data( ), size );
+      stagingBuffer->flush( offset, size );
+      stagingBuffer->unmap( );
+      cmdBuff->copyBuffer( stagingBuffer, shared_from_this( ),
+        vk::BufferCopy( 0, 0, size ) );
+    }
+  }
 }
 
 #endif /* __LAVA_BUFFER__ */

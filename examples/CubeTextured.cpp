@@ -97,45 +97,32 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
-
-      vertexBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eVertexBuffer | 
-        vk::BufferUsageFlagBits::eTransferDst,
-        vk::MemoryPropertyFlagBits::eDeviceLocal );
-
       auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
       cmd->beginSimple( );
-        stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
-      cmd->end( );
 
+      vertexBuffer = device->createBuffer( vertexBufferSize,
+        vk::BufferUsageFlagBits::eVertexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal );
+      vertexBuffer->update_<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+        vertices.data( ) } );
+      cmd->end( );
       _window->graphicQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-
-      auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
 
       indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-        stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
+      indexBuffer->update_<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+        indices.data( ) } );
       cmd->end( );
-
       _window->graphicQueue( )->submitAndWait( cmd );
     }
   
@@ -171,7 +158,8 @@ public:
 
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
+    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), 
+      vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription( 
@@ -256,7 +244,16 @@ public:
 
     uboVS.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
-    uboVS.proj[ 1 ][ 1 ] *= -1;
+
+    // Vulkan clip space has inverted Y and half Z.
+    glm::mat4 clip = glm::mat4( 
+      1.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, -1.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.5f, 0.0f,
+      0.0f, 0.0f, 0.5f, 1.0f
+    );
+    uboVS.proj = clip * uboVS.proj;
+    //uboVS.proj[ 1 ][ 1 ] *= -1;
 
     mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
   }

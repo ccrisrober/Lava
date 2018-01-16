@@ -115,45 +115,32 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, 
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
 
       skybox.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-      stagingBuffer->copy( cmd, skybox.vertexBuffer, 0, 0, vertexBufferSize );
+      skybox.vertexBuffer->update_<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+        vertices.data( ) } );
       cmd->end( );
-
       _window->graphicQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-
-      auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
 
       skybox.indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-      stagingBuffer->copy( cmd, skybox.indexBuffer, 0, 0, indexBufferSize );
+      skybox.indexBuffer->update_<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+        indices.data( ) } );
       cmd->end( );
-
       _window->graphicQueue( )->submitAndWait( cmd );
     }
 
@@ -365,9 +352,7 @@ public:
         WriteDescriptorSet( skybox.descriptorSet, 1, 0, 
           vk::DescriptorType::eCombinedImageSampler, 1,
           DescriptorImageInfo(
-            vk::ImageLayout::eGeneral,
-            std::make_shared<vk::ImageView>( tex->view ),
-            std::make_shared<vk::Sampler>( tex->sampler )
+            vk::ImageLayout::eGeneral, tex->view, tex->sampler
           ), nullptr
         )
       };

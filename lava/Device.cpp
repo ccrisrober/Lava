@@ -128,15 +128,16 @@ namespace lava
     for ( const auto& w : descriptorWrites )
     {
       diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>( 
-        w.imageInfo ? new vk::DescriptorImageInfo( w.imageInfo->sampler ? *w.imageInfo->sampler : nullptr,
-        w.imageInfo->imageView ? static_cast<vk::ImageView>( *w.imageInfo->imageView ) : nullptr,
-        w.imageInfo->imageLayout )
-        : nullptr ) );
+        w.imageInfo ? new vk::DescriptorImageInfo( 
+          w.imageInfo->sampler ? 
+            static_cast<vk::Sampler>( *w.imageInfo->sampler ) : nullptr,
+        w.imageInfo->imageView ? 
+            static_cast<vk::ImageView>( *w.imageInfo->imageView ) : nullptr,
+        w.imageInfo->imageLayout ) : nullptr ) );
       dbis.push_back( std::unique_ptr<vk::DescriptorBufferInfo>( 
         w.bufferInfo ? new vk::DescriptorBufferInfo( w.bufferInfo->buffer ? 
           static_cast<vk::Buffer>( *w.bufferInfo->buffer ) : nullptr,
-        w.bufferInfo->offset, w.bufferInfo->range )
-        : nullptr ) );
+        w.bufferInfo->offset, w.bufferInfo->range ) : nullptr ) );
       vk::WriteDescriptorSet write( 
         w.dstSet ? static_cast<vk::DescriptorSet>( *w.dstSet ) : nullptr, 
         w.dstBinding, 
@@ -353,9 +354,18 @@ namespace lava
   {
     return std::make_shared<Fence>( shared_from_this( ), signaled );
   }
-  std::shared_ptr<Sampler> Device::createSampler( const SamplerStateDesc & desc )
+  std::shared_ptr<Sampler> Device::createSampler( vk::Filter magFilter,
+    vk::Filter minFilter, vk::SamplerMipmapMode mipmapMode,
+    vk::SamplerAddressMode addressModeU, vk::SamplerAddressMode addressModeV,
+    vk::SamplerAddressMode addressModeW, float mipLodBias,
+    bool anisotropyEnable, float maxAnisotropy, bool compareEnable,
+    vk::CompareOp compareOp, float minLod, float maxLod,
+    vk::BorderColor borderColor, bool unnormalizedCoordinates )
   {
-    return std::make_shared<Sampler>( shared_from_this( ), desc );
+    return std::make_shared<Sampler>( shared_from_this( ), magFilter, minFilter, 
+      mipmapMode, addressModeU, addressModeV, addressModeW, mipLodBias, 
+      anisotropyEnable, maxAnisotropy, compareEnable, compareOp, minLod, maxLod, 
+      borderColor, unnormalizedCoordinates );
   }
   std::shared_ptr<DescriptorSetLayout> Device::createDescriptorSetLayout(
     vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings, 
@@ -446,14 +456,14 @@ namespace lava
     return std::make_shared<Texture2D>( shared_from_this( ), textureSrc, 
       cmdPool, queue, format );
   }
-  std::shared_ptr<Texture2DArray> Device::createTexture2DArray( 
+  /*std::shared_ptr<Texture2DArray> Device::createTexture2DArray( 
     std::vector<std::string>& textureSrcs,
     std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue, 
     vk::Format format )
   {
     return std::make_shared<Texture2DArray>( shared_from_this( ), textureSrcs,
       cmdPool, queue, format );
-  }
+  }*/
   std::shared_ptr<TextureCubemap> Device::createTextureCubemap( 
     std::array<std::string, 6>& cubeImages, std::shared_ptr<CommandPool> cmdPool, 
     std::shared_ptr<Queue> queue, vk::Format format )

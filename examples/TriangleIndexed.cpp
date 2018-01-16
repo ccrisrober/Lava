@@ -65,22 +65,16 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, 
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
+      cmd->beginSimple( );
 
-      vertexBuffer = device->createBuffer( vertexBufferSize,
+      vertexBuffer = device->createBuffer( vertexBufferSize, 
         vk::BufferUsageFlagBits::eVertexBuffer | 
         vk::BufferUsageFlagBits::eTransferDst, 
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-        stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
+      vertexBuffer->update_<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ), 
+        vertices.data( ) } );
       cmd->end( );
-
       _window->graphicQueue( )->submitAndWait( cmd );
     }
 

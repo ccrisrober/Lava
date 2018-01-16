@@ -3,6 +3,7 @@
 
 #include "includes.hpp"
 #include "Semaphore.h"
+#include "Fence.h"
 #include "Queue.h"
 #include "RenderPass.h"
 #include "Swapchain.h"
@@ -17,7 +18,7 @@
 // TODO: #include "Texture1D.h"
 #include "Texture2D.h"
 #include "TextureCubemap.h"
-#include "Texture2DArray.h"
+//#include "Texture2DArray.h"
 // TODO: #include "Texture3D.h"
 
 #include <vector>
@@ -144,7 +145,13 @@ namespace lava
     LAVA_API
     std::shared_ptr<Fence> createFence( bool signaled );
     LAVA_API
-    std::shared_ptr<Sampler> createSampler( const SamplerStateDesc & desc );
+    std::shared_ptr<Sampler> createSampler( vk::Filter magFilter, 
+      vk::Filter minFilter, vk::SamplerMipmapMode mipmapMode, 
+      vk::SamplerAddressMode addressModeU, vk::SamplerAddressMode addressModeV,
+      vk::SamplerAddressMode addressModeW, float mipLodBias, 
+      bool anisotropyEnable, float maxAnisotropy, bool compareEnable, 
+      vk::CompareOp compareOp, float minLod, float maxLod, 
+      vk::BorderColor borderColor, bool unnormalizedCoordinates );
     LAVA_API
     std::shared_ptr<DescriptorSetLayout> createDescriptorSetLayout(
       vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings, 
@@ -242,11 +249,11 @@ namespace lava
     std::shared_ptr< Texture2D > createTexture2D( const std::string& textureSrc,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
       vk::Format format );
-    LAVA_API
+    /*LAVA_API
     std::shared_ptr< Texture2DArray > createTexture2DArray(
       std::vector< std::string >& textureSrcs,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
-      vk::Format format );
+      vk::Format format );*/
     LAVA_API
     std::shared_ptr< TextureCubemap > createTextureCubemap(
       std::array< std::string, 6 >& cubeImages,

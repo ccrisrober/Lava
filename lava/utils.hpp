@@ -57,7 +57,7 @@ namespace lava
     //    sub resource into the given command buffer
     LAVA_API
     static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-      vk::Image image,
+      std::shared_ptr<Image> image,
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,
       vk::ImageSubresourceRange subresourceRange,
@@ -69,7 +69,7 @@ namespace lava
     // Uses a fixed sub resource layout with first mip level and layer
     LAVA_API
     static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-      vk::Image image,
+      std::shared_ptr<Image> image,
       vk::ImageAspectFlags aspectMask,
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,

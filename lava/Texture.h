@@ -12,6 +12,8 @@ namespace lava
 {
   class Device;
   class Queue;
+  class Image;
+  class ImageView;
   class Sampler;
   class CommandPool;
 
@@ -25,11 +27,10 @@ namespace lava
     LAVA_API
     void updateDescriptor( void );
 
-    vk::Image image;
+    std::shared_ptr<Image> image;
+    std::shared_ptr<ImageView> view;
+    std::shared_ptr<Sampler> sampler;
     vk::ImageLayout imageLayout;
-    vk::DeviceMemory deviceMemory;
-    vk::ImageView view;
-    vk::Sampler sampler;
     uint32_t width, height;
     uint32_t mipLevels;
     uint32_t layerCount;

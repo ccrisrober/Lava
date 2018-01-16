@@ -32,6 +32,7 @@ namespace lava
     vk::MemoryPropertyFlags memoryPropertyFlags )
     : VulkanResource( device )
     , _size( size )
+    , _memoryPropertyFlags( memoryPropertyFlags )
   {
     vk::BufferCreateInfo bci;
     bci.flags = createFlags;
@@ -40,7 +41,7 @@ namespace lava
     bci.sharingMode = sharingMode;
 
     _buffer = static_cast< vk::Device >( *_device ).createBuffer( bci );
-    _memory = _device->allocateBufferMemory( _buffer, memoryPropertyFlags );
+    _memory = _device->allocateBufferMemory( _buffer, _memoryPropertyFlags );
   
     // updateDescriptor( );
   }
@@ -57,11 +58,11 @@ namespace lava
 
   Buffer::~Buffer( void )
   {
-    if ( _view )
+    /*if ( _view )
     {
       std::cerr << "Destroy Buffer view" << std::endl;
       static_cast<vk::Device>( *_device ).destroyBufferView( _view );
-    }
+    }*/
     std::cerr << "Free Buffer memory" << std::endl;
     _device->freeMemory( _memory );
     std::cerr << "Destroy Buffer" << std::endl;
@@ -157,22 +158,7 @@ namespace lava
     cmd->copyBufferToImage( shared_from_this( ), dst, layout, region );
   }
 
-  void Buffer::CreateStaged( const std::shared_ptr<Queue>& q, 
-    std::shared_ptr<CommandBuffer>& cmd,
-    vk::DeviceSize size, vk::BufferUsageFlags usage, void* /*data*/, 
-    vk::MemoryPropertyFlags props )
-  {
-    cmd->beginSimple( );
-    std::shared_ptr<Buffer> buffer = _device->createBuffer( 
-      { }, size, usage, vk::SharingMode::eExclusive, nullptr, props );
-    copy( cmd, buffer, 0, 0, size );
-    // TODO: queue->submit( ) waitForFences( ... );
-    cmd->end( );
-    q->submitAndWait( cmd );
-  }
-
-
-  void Buffer::flush( vk::DeviceSize size, vk::DeviceSize offset )
+  void Buffer::flush( vk::DeviceSize offset, vk::DeviceSize size )
   {
     vk::MappedMemoryRange mappedRange;
     mappedRange.memory = _memory;
@@ -208,7 +194,7 @@ namespace lava
     memcpy( data, src, length );
     unmap( );
   }
-  void Buffer::update( const void * dst )
+  void Buffer::set( const void * dst )
   {
     writeData( 0, _size, dst );
   }
@@ -304,8 +290,8 @@ namespace lava
 
   BufferView::~BufferView( void )
   {
-    vk::Device dev = static_cast< vk::Device >( *_buffer->getDevice( ) );
-    dev.destroyBufferView(_bufferView );
+    static_cast< vk::Device >( *_buffer->getDevice( ) )
+          .destroyBufferView(_bufferView );
   }
 
 }

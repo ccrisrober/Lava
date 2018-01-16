@@ -22,6 +22,7 @@
 #include "Device.h"
 #include "Swapchain.h"
 #include "CommandBuffer.h"
+#include "Fence.h"
 
 #define DEFAULT_FENCE_TIMEOUT 100000000000
 
@@ -53,75 +54,7 @@ namespace lava
     signalSemaphores = rhs.signalSemaphores;
     return *this;
   }
-
-  Fence::Fence( const DeviceRef& device, bool signaled )
-    : VulkanResource( device )
-  {
-    vk::FenceCreateInfo fenceCreateInfo( signaled ?
-      vk::FenceCreateFlagBits::eSignaled : vk::FenceCreateFlags( ) );
-
-    _fence = static_cast< vk::Device >( *_device ).createFence( fenceCreateInfo );
-  }
-
-  Fence::~Fence( )
-  {
-    // From the spec:
-    //    fence must not be associated with any queue command that has not yet completed execution on that queue
-    static_cast< vk::Device >( *_device ).destroyFence( _fence );
-  }
-
-  bool Fence::isSignaled( ) const
-  {
-    vk::Result result = static_cast< vk::Device >( *_device ).getFenceStatus( _fence );
-    assert( ( result == vk::Result::eSuccess ) || ( result == vk::Result::eNotReady ) );
-    return( result == vk::Result::eSuccess );
-  }
-
-  void Fence::reset( )
-  {
-    static_cast< vk::Device >( *_device ).resetFences( _fence );
-  }
-
-  void Fence::wait( uint64_t timeout ) const
-  {
-    static_cast< vk::Device >( *_device ).waitForFences( _fence, true, timeout );
-  }
-
-
-  void Fence::resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences)
-  {
-    if ( !fences.empty( ) )
-    {
-      std::vector <vk::Fence> fencesArray;
-      for ( const auto& fence : fences )
-      {
-        assert( fences.front( )->getDevice( ) == fence->getDevice( ) );
-        fencesArray.push_back( *fence );
-      }
-      static_cast<vk::Device>( *fences.front( )->getDevice( ) )
-        .resetFences( fencesArray );
-    }
-  }
-
-  void Fence::waitForFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences, 
-    bool all, uint32_t timeout)
-  {
-    if ( !fences.empty( ) )
-    {
-      std::vector< vk::Fence > fencesArray;
-      for (const auto& fence : fences)
-      {
-        assert( fences.front( )->getDevice( ) == fence->getDevice( ) );
-        fencesArray.push_back(*fence);
-      }
-      static_cast<vk::Device>( *fences.front( )->getDevice( ) )
-        .waitForFences(fencesArray, all, timeout);
-    }
-  }
-
-
-
-
+  
   vk::Result Queue::submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
     const std::shared_ptr<Fence>& fenceIn )
   {

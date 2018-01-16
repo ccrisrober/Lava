@@ -26,7 +26,7 @@ namespace lava
   DescriptorSetLayoutBinding::DescriptorSetLayoutBinding(
     uint32_t binding_, vk::DescriptorType descriptorType_,
     vk::ShaderStageFlags stageFlags_,
-    vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> iss )
+    vk::ArrayProxy<const std::shared_ptr<lava::Sampler>> iss )
     : binding( binding_ )
     , descriptorType( descriptorType_ )
     , stageFlags( stageFlags_ )
@@ -175,8 +175,8 @@ namespace lava
       _descriptorSet );
   }
   DescriptorImageInfo::DescriptorImageInfo( vk::ImageLayout imageLayout_, 
-    const std::shared_ptr<vk::ImageView>& imageView_, 
-    const std::shared_ptr<vk::Sampler>& sampler_ )
+    const std::shared_ptr<ImageView>& imageView_, 
+    const std::shared_ptr<Sampler>& sampler_ )
     : imageLayout( imageLayout_ )
     , imageView( imageView_ )
     , sampler( sampler_ )

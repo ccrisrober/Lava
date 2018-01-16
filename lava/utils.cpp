@@ -363,7 +363,7 @@ namespace lava
     }
 	}
   void utils::setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-    vk::Image image,
+    std::shared_ptr<Image> image,
     vk::ImageAspectFlags aspectMask,
     vk::ImageLayout oldImageLayout,
     vk::ImageLayout newImageLayout,
@@ -395,7 +395,7 @@ namespace lava
   }
 
   void utils::setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-    vk::Image image,
+    std::shared_ptr<Image> image,
     vk::ImageLayout oldImageLayout,
     vk::ImageLayout newImageLayout,
     vk::ImageSubresourceRange subresourceRange,
@@ -406,7 +406,7 @@ namespace lava
     vk::ImageMemoryBarrier imageMemoryBarrier;
     imageMemoryBarrier.oldLayout = oldImageLayout;
     imageMemoryBarrier.newLayout = newImageLayout;
-    imageMemoryBarrier.image = image;
+    imageMemoryBarrier.image = *image;
     imageMemoryBarrier.subresourceRange = subresourceRange;
 
     // Source layouts (old)

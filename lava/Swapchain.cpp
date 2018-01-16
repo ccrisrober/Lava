@@ -50,7 +50,7 @@ namespace lava
       static_cast< vk::Device >( *_device ).getSwapchainImagesKHR( _swapchain );
     _images.reserve( images.size( ) );
     _presentCompleteSemaphores.reserve( images.size( ) + 1 );
-    for ( size_t i = 0; i < images.size( ); ++i )
+    for ( size_t i = 0, l = images.size( ); i < l; ++i )
     {
       _images.push_back( std::make_shared<Image>( _device, images[ i ] ) );
       _presentCompleteSemaphores.push_back( _device->createSemaphore( ) );

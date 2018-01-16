@@ -18,6 +18,7 @@ set( LAVA_PUBLIC_HEADERS
   Device.h
   VulkanResource.h
   Semaphore.h
+  Fence.h
   Queue.h
   RenderPass.h
   DefaultFramebuffer.h
@@ -30,15 +31,16 @@ set( LAVA_PUBLIC_HEADERS
   Sampler.h
   Buffer.h
   QueryPool.h
+##DeviceMemory.h
 
   Window.h
 
   Texture.h
   Texture1D.h
   Texture2D.h
-  Texture3D.h
-  Texture2DArray.h
+  ##Texture2DArray.h
   TextureCubemap.h
+  ##Texture3D.h
 
   extras/FpsController.h
 
@@ -80,6 +82,7 @@ set( LAVA_SOURCES
   Device.cpp
   VulkanResource.cpp
   Semaphore.cpp
+  Fence.cpp
   Queue.cpp
   RenderPass.cpp
   DefaultFramebuffer.cpp
@@ -92,15 +95,16 @@ set( LAVA_SOURCES
   Sampler.cpp
   Buffer.cpp
   QueryPool.cpp
+##DeviceMemory.cpp
 
   Window.cpp
 
   Texture.cpp
   Texture1D.cpp
   Texture2D.cpp
-  Texture3D.cpp
-  Texture2DArray.cpp
+  ##Texture2DArray.cpp
   TextureCubemap.cpp
+  ##Texture3D.cpp
 
   extras/Mesh.cpp
   extras/Material.cpp

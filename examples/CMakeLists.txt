@@ -14,15 +14,17 @@ if( LAVA_WITH_EXAMPLES )
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
 ## Basic Examples
+  set( LAVAVKINFO_HEADERS )
+  set( LAVAVKINFO_SOURCES VkInfo.cpp )
+  set( LAVAVKINFO_LINK_LIBRARIES lava )
+  common_application( lavaVkInfo )
+
   set( LAVACLEARSCREEN_HEADERS )
   set( LAVACLEARSCREEN_SOURCES ClearScreen.cpp )
   set( LAVACLEARSCREEN_LINK_LIBRARIES lava )
   common_application( lavaClearScreen )
 
-  set( LAVAVKINFO_HEADERS )
-  set( LAVAVKINFO_SOURCES VkInfo.cpp )
-  set( LAVAVKINFO_LINK_LIBRARIES lava )
-  common_application( lavaVkInfo )
+if(FALSE) # fake a block comment
 
   set( LAVATRIANGLENOBUFFER_HEADERS )
   set( LAVATRIANGLENOBUFFER_SOURCES TriangleNoBuffer.cpp )
@@ -33,6 +35,7 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
   set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava )
   common_application( lavaTriangleIndexed )
+endif( )
 
   set( LAVACUBETEXTURED_HEADERS )
   set( LAVACUBETEXTURED_SOURCES CubeTextured.cpp )
@@ -44,7 +47,7 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASAMPLERUNIFORMQUAD_SOURCES SamplerUniformQuad.cpp )
   set( LAVASAMPLERUNIFORMQUAD_LINK_LIBRARIES lava )
   common_application( lavaSamplerUniformQuad )
-
+  
   set( LAVASECONDARYBUFFER_HEADERS )
   set( LAVASECONDARYBUFFER_SOURCES SecondaryBuffer.cpp )
   set( LAVASECONDARYBUFFER_LINK_LIBRARIES lava )
@@ -54,6 +57,8 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASKYBOX_SOURCES Skybox.cpp )
   set( LAVASKYBOX_LINK_LIBRARIES lava )
   common_application( lavaSkybox )
+  
+if(FALSE) # fake a block comment
 
   set( LAVAPLANARREFLECTION_HEADERS )
   set( LAVAPLANARREFLECTION_SOURCES PlanarReflection.cpp )
@@ -148,5 +153,6 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAFRACTALCOMPUTE_SOURCES FractalCompute.cpp )
   set( LAVAFRACTALCOMPUTE_LINK_LIBRARIES lava )
   common_application( lavaFractalCompute )
+endif()
 
 endif( )

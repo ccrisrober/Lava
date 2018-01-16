@@ -55,8 +55,6 @@ namespace lava
       const std::vector<std::string>& enabledExtensionNames,
       const vk::PhysicalDeviceFeatures& enabledFeatures = {} );
 
-
-
     bool getSurfaceSupport( uint32_t qfi,
       const std::shared_ptr<Surface>& surface ) const
     {

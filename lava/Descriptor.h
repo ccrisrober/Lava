@@ -13,6 +13,7 @@ namespace lava
   class Device;
   class Buffer;
   class BufferView;
+  class ImageView;
   class Sampler;
   struct DescriptorSetLayoutBinding
   {
@@ -20,7 +21,7 @@ namespace lava
     DescriptorSetLayoutBinding( uint32_t binding,
       vk::DescriptorType descriptorType,
       vk::ShaderStageFlags stageFlags, 
-      vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> immutableSamplers = { }
+      vk::ArrayProxy<const std::shared_ptr<lava::Sampler>> immutableSamplers = { }
     );
     LAVA_API
     DescriptorSetLayoutBinding( DescriptorSetLayoutBinding const& rhs );
@@ -30,8 +31,7 @@ namespace lava
     uint32_t binding;
     vk::DescriptorType descriptorType;
     vk::ShaderStageFlags stageFlags;
-    // TODO: Use lava::Sampler?
-    std::vector<std::shared_ptr<vk::Sampler>> immutableSamplers;
+    std::vector<std::shared_ptr<lava::Sampler>> immutableSamplers;
   };
 
   class DescriptorSetLayout : public VulkanResource,
@@ -123,16 +123,16 @@ namespace lava
     }
     LAVA_API
     DescriptorImageInfo( vk::ImageLayout imageLayout,
-      const std::shared_ptr<vk::ImageView>& imageView,
-      const std::shared_ptr<vk::Sampler>& sampler );
+      const std::shared_ptr<ImageView>& imageView,
+      const std::shared_ptr<Sampler>& sampler );
     LAVA_API
     DescriptorImageInfo( const DescriptorImageInfo& rhs );
     LAVA_API
     DescriptorImageInfo& operator=( const DescriptorImageInfo& rhs );
 
     vk::ImageLayout imageLayout;
-    std::shared_ptr<vk::ImageView> imageView;
-    std::shared_ptr<vk::Sampler> sampler; // todo: Move to lava::Sampler
+    std::shared_ptr<ImageView> imageView;
+    std::shared_ptr<Sampler> sampler; 
   };
 
   struct WriteDescriptorSet

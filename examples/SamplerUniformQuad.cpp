@@ -83,22 +83,38 @@ public:
       sci.setAnisotropyEnable( VK_TRUE );
       sci.setBorderColor( vk::BorderColor::eFloatOpaqueWhite );
 
-      sampler1 = d.createSampler( sci );
+      sampler1 = device->createSampler( sci.magFilter, sci.minFilter, 
+        sci.mipmapMode, sci.addressModeU, sci.addressModeV, sci.addressModeW, 
+        sci.mipLodBias, sci.anisotropyEnable, sci.maxAnisotropy, 
+        sci.compareEnable, sci.compareOp, sci.minLod, sci.maxLod, 
+        sci.borderColor, sci.unnormalizedCoordinates );
 
       sci.setAddressModeU( vk::SamplerAddressMode::eMirroredRepeat );
       sci.setAddressModeV( vk::SamplerAddressMode::eMirroredRepeat );
       sci.setAddressModeW( vk::SamplerAddressMode::eMirroredRepeat );
-      sampler2 = d.createSampler( sci );
+      sampler2 = device->createSampler( sci.magFilter, sci.minFilter,
+        sci.mipmapMode, sci.addressModeU, sci.addressModeV, sci.addressModeW,
+        sci.mipLodBias, sci.anisotropyEnable, sci.maxAnisotropy,
+        sci.compareEnable, sci.compareOp, sci.minLod, sci.maxLod,
+        sci.borderColor, sci.unnormalizedCoordinates );
 
       sci.setAddressModeU( vk::SamplerAddressMode::eClampToEdge );
       sci.setAddressModeV( vk::SamplerAddressMode::eClampToEdge );
       sci.setAddressModeW( vk::SamplerAddressMode::eClampToEdge );
-      sampler3 = d.createSampler( sci );
+      sampler3 = device->createSampler( sci.magFilter, sci.minFilter,
+        sci.mipmapMode, sci.addressModeU, sci.addressModeV, sci.addressModeW,
+        sci.mipLodBias, sci.anisotropyEnable, sci.maxAnisotropy,
+        sci.compareEnable, sci.compareOp, sci.minLod, sci.maxLod,
+        sci.borderColor, sci.unnormalizedCoordinates );
 
       sci.setAddressModeU( vk::SamplerAddressMode::eClampToBorder );
       sci.setAddressModeV( vk::SamplerAddressMode::eClampToBorder );
       sci.setAddressModeW( vk::SamplerAddressMode::eClampToBorder );
-      sampler4 = d.createSampler( sci );
+      sampler4 = device->createSampler( sci.magFilter, sci.minFilter,
+        sci.mipmapMode, sci.addressModeU, sci.addressModeV, sci.addressModeW,
+        sci.mipLodBias, sci.anisotropyEnable, sci.maxAnisotropy,
+        sci.compareEnable, sci.compareOp, sci.minLod, sci.maxLod,
+        sci.borderColor, sci.unnormalizedCoordinates );
     }
 
     updateSamplerUniform( sampler1 );
@@ -150,7 +166,7 @@ public:
       pipelineLayout, _window->defaultRenderPass( ) );
   }
 
-  void updateSamplerUniform( vk::Sampler s )
+  void updateSamplerUniform( std::shared_ptr<Sampler> s )
   {
     auto device = _window->device( );
 
@@ -158,11 +174,11 @@ public:
 
     DescriptorImageInfo descriptor;
     descriptor.imageLayout = tex->imageLayout;
-    descriptor.imageView = std::make_shared< vk::ImageView>( tex->view );
+    descriptor.imageView = tex->view;
     descriptor.sampler = VK_NULL_HANDLE;
 
     DescriptorImageInfo samplerInfo;
-    samplerInfo.sampler = std::make_shared< vk::Sampler>( s );
+    samplerInfo.sampler = s;
 
     std::vector<WriteDescriptorSet> wdss =
     {
@@ -236,7 +252,7 @@ private:
   std::shared_ptr< Pipeline > pipeline;
   std::shared_ptr< Texture2D > tex;
 
-  vk::Sampler sampler1, sampler2, sampler3, sampler4;
+  std::shared_ptr<Sampler> sampler1, sampler2, sampler3, sampler4;
 };
 
 class CustomVkWindow : public VulkanWindow
