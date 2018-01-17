@@ -2,6 +2,7 @@ source_group(\\ FILES CMakeLists.txt)
 
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
+  fwd.h
 
   io/Keyboard.hpp
   io/Mouse.hpp

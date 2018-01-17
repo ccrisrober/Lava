@@ -104,7 +104,7 @@ public:
         vk::BufferUsageFlagBits::eVertexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-      vertexBuffer->update_<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+      vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
         vertices.data( ) } );
       cmd->end( );
       _window->graphicQueue( )->submitAndWait( cmd );
@@ -120,7 +120,7 @@ public:
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-      indexBuffer->update_<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+      indexBuffer->update<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
         indices.data( ) } );
       cmd->end( );
       _window->graphicQueue( )->submitAndWait( cmd );

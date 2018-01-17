@@ -122,7 +122,7 @@ public:
         vk::BufferUsageFlagBits::eVertexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-      skybox.vertexBuffer->update_<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+      skybox.vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
         vertices.data( ) } );
       cmd->end( );
       _window->graphicQueue( )->submitAndWait( cmd );
@@ -138,7 +138,7 @@ public:
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-      skybox.indexBuffer->update_<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+      skybox.indexBuffer->update<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
         indices.data( ) } );
       cmd->end( );
       _window->graphicQueue( )->submitAndWait( cmd );
@@ -384,10 +384,10 @@ public:
       ( float ) width / ( float ) height, 0.1f, 100.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformMVP->update( &uboVS );
+    uniformMVP->set( &uboVS );
 
     uboFS.viewPos = camera.Position;
-    uniformViewPos->update( &uboFS );
+    uniformViewPos->set( &uboFS );
   }
 
   bool modeReflect = true;

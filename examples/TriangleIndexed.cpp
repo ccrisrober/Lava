@@ -72,7 +72,7 @@ public:
         vk::BufferUsageFlagBits::eVertexBuffer | 
         vk::BufferUsageFlagBits::eTransferDst, 
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-      vertexBuffer->update_<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ), 
+      vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ), 
         vertices.data( ) } );
       cmd->end( );
       _window->graphicQueue( )->submitAndWait( cmd );
