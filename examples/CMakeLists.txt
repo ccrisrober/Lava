@@ -46,6 +46,11 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLETESSELATION_SOURCES TriangleTesselation.cpp )
   set( LAVATRIANGLETESSELATION_LINK_LIBRARIES lava )
   common_application( lavaTriangleTesselation )
+  
+  set( LAVAVERTEXBUFFERSBYJGM_HEADERS )
+  set( LAVAVERTEXBUFFERSBYJGM_SOURCES VertexBuffersByJGM.cpp )
+  set( LAVAVERTEXBUFFERSBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaVertexBuffersByJGM )
 
   set( LAVACUBEINDEXED_HEADERS )
   set( LAVACUBEINDEXED_SOURCES CubeIndexed.cpp )
