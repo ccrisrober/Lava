@@ -32,11 +32,6 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLE_LINK_LIBRARIES lava )
   common_application( lavaTriangle )
   
-  set( LAVATRIANGLEBYJGM_HEADERS )
-  set( LAVATRIANGLEBYJGM_SOURCES TriangleByJGM.cpp )
-  set( LAVATRIANGLEBYJGM_LINK_LIBRARIES lava )
-  common_application( lavaTriangleByJGM )
-
   set( LAVATRIANGLEINDEXED_HEADERS )
   set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
   set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava )
@@ -47,11 +42,6 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLETESSELATION_LINK_LIBRARIES lava )
   common_application( lavaTriangleTesselation )
   
-  set( LAVAVERTEXBUFFERSBYJGM_HEADERS )
-  set( LAVAVERTEXBUFFERSBYJGM_SOURCES VertexBuffersByJGM.cpp )
-  set( LAVAVERTEXBUFFERSBYJGM_LINK_LIBRARIES lava )
-  common_application( lavaVertexBuffersByJGM )
-
   set( LAVACUBEINDEXED_HEADERS )
   set( LAVACUBEINDEXED_SOURCES CubeIndexed.cpp )
   set( LAVACUBEINDEXED_LINK_LIBRARIES lava )
@@ -116,4 +106,27 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAARRAYSUM_SOURCES ArraySum.cpp )
   set( LAVAARRAYSUM_LINK_LIBRARIES lava )
   common_application( lavaArraySum )
+  
+  ### JGM ###
+  
+  set( LAVATRIANGLEBYJGM_HEADERS )
+  set( LAVATRIANGLEBYJGM_SOURCES TriangleByJGM.cpp )
+  set( LAVATRIANGLEBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaTriangleByJGM )
+  
+  set( LAVAVERTEXBUFFERSBYJGM_HEADERS )
+  set( LAVAVERTEXBUFFERSBYJGM_SOURCES VertexBuffersByJGM.cpp )
+  set( LAVAVERTEXBUFFERSBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaVertexBuffersByJGM )
+  
+  set( LAVASTAGINGBUFFERBYJGM_HEADERS )
+  set( LAVASTAGINGBUFFERBYJGM_SOURCES StagingBufferByJGM.cpp )
+  set( LAVASTAGINGBUFFERBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaStagingBufferByJGM )
+  
+  set( LAVAINDEXBUFFERBYJGM_HEADERS )
+  set( LAVAINDEXBUFFERBYJGM_SOURCES IndexBufferByJGM.cpp )
+  set( LAVAINDEXBUFFERBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaIndexBufferByJGM )
+  
 endif( )
