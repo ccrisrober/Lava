@@ -154,19 +154,19 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, grass.vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
     grass.numElements = uint32_t( vertices.size( ) );
     vertices.clear( );
 
     grass.tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE + 
-      std::string( "grass.png" ), _window->graphicsCommandPool( ), 
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "grass.png" ), _window->gfxCommandPool( ), 
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
     std::vector<DescriptorSetLayoutBinding> dslbs = 
@@ -289,19 +289,19 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, butterflies.vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
     butterflies.numElements = uint32_t( vertices.size( ) );
     vertices.clear( );
 
     butterflies.tex = device->createTexture2D(
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "butterfly.png" ), 
-      _window->graphicsCommandPool( ), _window->graphicQueue( ), 
+      _window->gfxCommandPool( ), _window->gfxQueue( ), 
       vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
@@ -411,12 +411,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, skybox.vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
@@ -434,12 +434,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, skybox.indexBuffer, 0, 0, indexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // MVP buffer
@@ -455,7 +455,7 @@ public:
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/front.jpg" ),
     };
     skybox.tex = device->createTextureCubemap( cubeImages,
-      _window->graphicsCommandPool( ), _window->graphicQueue( ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
@@ -566,10 +566,10 @@ public:
 
     // Grass rendering
     {
-      grass.cmd = _window->graphicsCommandPool( )->
+      grass.cmd = _window->gfxCommandPool( )->
         allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
 
-      grass.cmd->beginSimple(
+      grass.cmd->begin(
         vk::CommandBufferUsageFlagBits::eSimultaneousUse |
         vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
 
@@ -585,10 +585,10 @@ public:
 
     // Butterflies rendering
     {
-      butterflies.cmd = _window->graphicsCommandPool( )->
+      butterflies.cmd = _window->gfxCommandPool( )->
         allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
 
-      butterflies.cmd->beginSimple( 
+      butterflies.cmd->begin( 
         vk::CommandBufferUsageFlagBits::eSimultaneousUse |
         vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
 
@@ -604,10 +604,10 @@ public:
 
     // Skybox rendering
     {
-      skybox.cmd = _window->graphicsCommandPool( )->
+      skybox.cmd = _window->gfxCommandPool( )->
         allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
 
-      skybox.cmd->beginSimple(
+      skybox.cmd->begin(
         vk::CommandBufferUsageFlagBits::eSimultaneousUse |
         vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
 

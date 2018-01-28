@@ -19,14 +19,15 @@
 
 #include "Texture1D.h"
 
-#include "Device.h"
-#include "PhysicalDevice.h"
+#include <lava/Buffer.h>
+#include <lava/PhysicalDevice.h>
 
 #include "utils.hpp"
 
 namespace lava
 {
-  Texture1D::Texture1D( const DeviceRef& device_, const std::string& filename,
+  Texture1D::Texture1D( const std::shared_ptr<Device>& device_, 
+    const std::string& filename,
     const std::shared_ptr<CommandPool>& cmdPool,
     const std::shared_ptr<Queue>& queue, vk::Format format,
     vk::ImageUsageFlags imageUsageFlags, vk::ImageLayout imageLayout_, 
@@ -49,9 +50,7 @@ namespace lava
     // limited amount of formats and features (mip maps, cubemaps, arrays, etc.)
     VkBool32 useStaging = !forceLinear;
 
-    VkDeviceSize texSize = width * height * channels;
-
-    vk::Device device = static_cast< vk::Device >( *_device );
+    vk::DeviceSize texSize = width * height * channels;
 
     if ( useStaging )
     {
@@ -65,7 +64,7 @@ namespace lava
       free( pixels );
 
       // TODO: Generate MipLevels
-      uint32_t mipLevels = 1;
+      mipLevels = 1;
 
       // Create Image
       auto usageFlags = imageUsageFlags;
@@ -83,7 +82,7 @@ namespace lava
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto copyCmd = cmdPool->allocateCommandBuffer( );
-      copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
 
       // The sub resource range describes the regions of the image we will be transition
       vk::ImageSubresourceRange subresourceRange;
@@ -99,7 +98,7 @@ namespace lava
       // Image barrier for optimal image (target)
       // Optimal image will be used as destination for the copy
       // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-      utils::setImageLayout(
+      utils::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageLayout::eUndefined,          // Old layout is undefined
@@ -131,7 +130,7 @@ namespace lava
       this->imageLayout = imageLayout_;
       
       // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-      utils::setImageLayout(
+      utils::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageLayout::eTransferDstOptimal, // Older layout
@@ -180,10 +179,10 @@ namespace lava
       this->imageLayout = imageLayout_;
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
-      copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
       
       // Setup image memory barrier
-      utils::setImageLayout(
+      utils::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageAspectFlagBits::eColor,

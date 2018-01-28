@@ -157,7 +157,7 @@ int main( void )
   std::cout << "Run computations...";
 
   auto commandBuffer = commandPool->allocateCommandBuffer( );
-  commandBuffer->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+  commandBuffer->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
   commandBuffer->bindComputePipeline( pipeline );
   commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eCompute, 
     pipelineLayout, 0, { descriptorSet }, { } );

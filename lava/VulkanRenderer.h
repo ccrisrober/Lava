@@ -2,10 +2,15 @@
 #define __LAVA_VULKAN_RENDERER__
 
 #include <lava/api.h>
+#include <lava/api.h>
+#include <lava/CommandBuffer.h>
+#include <lava/Framebuffer.h>
+#include <lava/PhysicalDevice.h>
+#include <lava/Fence.h>
+#include <lava/Queue.h>
+#include <lava/Swapchain.h>
+#include <lava/Window.h>
 
-#include "includes.hpp"
-#include "Window.h"
-#include "Instance.h"
 #include "RenderAPICapabilites.h"
 #include "DefaultFramebuffer.h"
 
@@ -15,25 +20,31 @@ namespace lava
   {
   public:
     LAVA_API
-    virtual ~VulkanWindowRenderer( void ) { }
+    virtual ~VulkanWindowRenderer( void );
 
+    /**
+    * Method called when creating renderer's resources
+    */
     LAVA_API
-    virtual void preInitResources( void ) { }
+    virtual void initResources( void );
     LAVA_API
-    virtual void initResources( void ) { }
+    virtual void initSwapChainResources( void );
     LAVA_API
-    virtual void initSwapChainResources( void ) { }
+    virtual void releaseSwapChainResources( void );
+    /**
+    * Method called when renderer's resources must be released
+    */
     LAVA_API
-    virtual void releaseSwapChainResources( void ) { }
+    virtual void releaseResources( void );
+    /**
+    * Method called when the draw calls for the next frame are to be added
+    *   to the command buffer
+    */
     LAVA_API
-    virtual void releaseResources( void ) { }
-
     virtual void nextFrame( void ) = 0;
 
-    LAVA_API
-    virtual void physicalDeviceLost( void ) { }
-    LAVA_API
-    virtual void logicalDeviceLost( void ) { }
+    //virtual void physicalDeviceLost( void );
+    //virtual void logicalDeviceLost( void );
   };
 
   class VulkanWindow
@@ -71,13 +82,8 @@ namespace lava
     LAVA_API
     bool checkDeviceLost( vk::Result res );
 
-    /*LAVA_API
-    virtual void createPipelineCache( void ) = 0;
     LAVA_API
-    virtual void savePipelineCache( void ) = 0;*/
-
-    LAVA_API
-    CommandBufferPtr currentCommandBuffer( void ) const;
+    std::shared_ptr<CommandBuffer> currentCommandBuffer( void ) const;
 
     LAVA_API
     RenderAPICapabilities caps( void ) const;
@@ -100,9 +106,9 @@ namespace lava
     LAVA_API
     std::shared_ptr< Device > device( void ) const;
     LAVA_API
-    std::shared_ptr< Queue > graphicQueue( void ) const;
+    std::shared_ptr< Queue > gfxQueue( void ) const;
     LAVA_API
-    std::shared_ptr< CommandPool > graphicsCommandPool( void ) const;
+    std::shared_ptr< CommandPool > gfxCommandPool( void ) const;
     LAVA_API
     std::shared_ptr< RenderPass > defaultRenderPass( void ) const;
 
@@ -186,9 +192,23 @@ namespace lava
     {
     }
 
+    LAVA_API
+    std::shared_ptr<Instance> vulkanInstance( void )
+    {
+      return _instance;
+    }
+  protected:
+    LAVA_API
+    virtual bool setupRenderPass( void );
+
+    LAVA_API
+    virtual bool setupFramebuffer( void );
+
+    LAVA_API
+    virtual bool setupPipelineCache( void );
+
   private:
     void initCapabilites( void );
-    bool createDefaultRenderPass( void );
     void recreateSwapChain( void );
 
     bool _initialized;
@@ -220,7 +240,7 @@ namespace lava
 
     struct ImageResources
     {
-      CommandBufferPtr commandBuffer;
+      std::shared_ptr<CommandBuffer> commandBuffer;
     } imageRes[ 2 ];
   public:
     std::shared_ptr< CommandPool > _cmdPool;
@@ -238,6 +258,9 @@ namespace lava
 
     RenderAPICapabilities _caps;
     uint32_t _currentFrame;
+
+
+    bool _framePending = false;
   };
 }
 

@@ -1,9 +1,30 @@
+/**
+* Copyright (c) 2017, Lava
+* All rights reserved.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+**/
+
 #ifndef __LAVA_DEFAULTFRAMEBUFFER__
 #define __LAVA_DEFAULTFRAMEBUFFER__
 
 #include "includes.hpp"
 
 #include "Device.h"
+#include "Queue.h"
+#include "Swapchain.h"
 #include "Surface.h"
 
 #include "utils.hpp"
@@ -13,7 +34,7 @@ namespace lava
   class DefaultFramebuffer
   {
   public:
-    DefaultFramebuffer( const DeviceRef& device,
+    DefaultFramebuffer( const std::shared_ptr<Device>& device,
       const std::shared_ptr<Surface>& surface,
       vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace, 
       vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
@@ -22,7 +43,7 @@ namespace lava
     {
     }
 
-    void rebuild( const DeviceRef& device,
+    void rebuild( const std::shared_ptr<Device>& device,
       const std::shared_ptr<Surface>& surface,
       vk::Format surfaceFormat, vk::Format depthFormat,
       const std::shared_ptr<RenderPass>& renderPass );
@@ -80,7 +101,9 @@ namespace lava
 
     bool _swapChainSupportsReadBack;
 
+  public:
     std::shared_ptr<Swapchain> _swapchain;
+  protected:
     uint32_t _swapchainIndex;
     std::vector<std::shared_ptr<Image>> _colorImages;
     std::vector<std::shared_ptr<ImageView>> _colorViews;

@@ -19,11 +19,9 @@
 
 #include "VulkanResource.h"
 
-#include "Device.h"
-
 namespace lava
 {
-  VulkanResource::VulkanResource( const DeviceRef& device )
+  VulkanResource::VulkanResource( const std::shared_ptr<Device>& device )
     : _device( device )
   {
   }

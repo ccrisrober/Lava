@@ -30,14 +30,13 @@
 
 namespace lava
 {
-  class Device;
   class Fence
     : public VulkanResource
     , private NonCopyable< Fence >
   {
   public:
     LAVA_API
-    Fence( const DeviceRef& device, bool signaled );
+    Fence( const std::shared_ptr<Device>& device, bool signaled );
     LAVA_API
     virtual ~Fence( void );
     LAVA_API

@@ -65,7 +65,7 @@ public:
     };
 
     tex = device->createTexture2DArray( cubeImages, 
-      _window->graphicsCommandPool( ), _window->graphicQueue( ), 
+      _window->gfxCommandPool( ), _window->gfxQueue( ), 
       vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(

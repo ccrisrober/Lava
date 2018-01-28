@@ -62,16 +62,16 @@ public:
     }
 
     tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "earth/earth_diffuse.jpg" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "earth/earth_diffuse.jpg" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     tex2 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "earth/earth_normal.jpg" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "earth/earth_normal.jpg" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     tex3 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "earth/earth_clouds.png" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "earth/earth_clouds.png" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     std::array<vk::DescriptorPoolSize, 2> poolSize =
     {

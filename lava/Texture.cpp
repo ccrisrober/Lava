@@ -19,7 +19,6 @@
 
 #include "Texture.h"
 
-#include "Device.h"
 #include "Image.h"
 #include "PhysicalDevice.h"
 
@@ -27,7 +26,7 @@
 
 namespace lava
 {
-  Texture::Texture(  const DeviceRef& device )
+  Texture::Texture(  const std::shared_ptr<Device>& device )
     : VulkanResource( device )
   {
   }

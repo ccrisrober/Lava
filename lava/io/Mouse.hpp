@@ -17,7 +17,6 @@
  *
  **/
 
-
 #ifndef __LAVA_MOUSE__
 #define __LAVA_MOUSE__
 

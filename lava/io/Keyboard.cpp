@@ -17,7 +17,6 @@
  *
  **/
 
-
 #include "Keyboard.hpp"
 
 namespace lava

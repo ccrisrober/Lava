@@ -19,11 +19,9 @@
 
 #include "Fence.h"
 
-#include "Device.h"
-
 namespace lava
 {
-  Fence::Fence( const DeviceRef& device, bool signaled )
+  Fence::Fence( const std::shared_ptr<Device>& device, bool signaled )
     : VulkanResource( device )
   {
     vk::FenceCreateInfo fenceCreateInfo( signaled ?

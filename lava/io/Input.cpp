@@ -17,7 +17,6 @@
  *
  **/
 
-
 #include "Input.hpp"
 
 namespace lava

@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_PIPELINE__
 #define __LAVA_PIPELINE__
 
@@ -9,27 +28,30 @@
 
 #include <lava/api.h>
 
+#include "RenderPass.h"
+
 #include <iomanip>
 
 namespace lava
 {
-  class Device;
-  class RenderPass;
-
-  class ShaderModule : public VulkanResource, private NonCopyable<ShaderModule>
+  class ShaderModule
+    : public VulkanResource
+    , private NonCopyable<ShaderModule>
   {
   public:
     LAVA_API
-    ShaderModule( const DeviceRef& device, const std::string& filePath, 
-      vk::ShaderStageFlagBits type );
+    ShaderModule( const std::shared_ptr<Device>& device, 
+      const std::string& filePath, vk::ShaderStageFlagBits type );
     LAVA_API
-    ShaderModule( const DeviceRef& device, const std::string& filePath );
+    ShaderModule( const std::shared_ptr<Device>& device, 
+      const std::string& filePath );
     LAVA_API
-    ShaderModule( const DeviceRef& device, vk::ArrayProxy<const uint32_t> code );
+    ShaderModule( const std::shared_ptr<Device>& device, 
+      vk::ArrayProxy<const uint32_t> code );
     LAVA_API
     ~ShaderModule( void );
 
-    inline operator vk::ShaderModule( ) const { return _shaderModule; }
+    inline operator vk::ShaderModule( void ) const { return _shaderModule; }
 
   private:
     vk::ShaderModule _shaderModule;
@@ -46,7 +68,8 @@ namespace lava
     LAVA_API
     PipelineVertexInputStateCreateInfo( const PipelineVertexInputStateCreateInfo& rhs );
     LAVA_API
-    PipelineVertexInputStateCreateInfo & operator=( const PipelineVertexInputStateCreateInfo& rhs );
+    PipelineVertexInputStateCreateInfo & operator=( 
+      const PipelineVertexInputStateCreateInfo& rhs );
 
     std::vector<vk::VertexInputBindingDescription> vertexBindingDescriptions;
     std::vector<vk::VertexInputAttributeDescription> vertexAttrirDescriptions;
@@ -55,11 +78,13 @@ namespace lava
   struct PipelineDynamicStateCreateInfo
   {
     LAVA_API
-    PipelineDynamicStateCreateInfo( vk::ArrayProxy<const vk::DynamicState> dynamicStates );
+    PipelineDynamicStateCreateInfo( 
+      vk::ArrayProxy<const vk::DynamicState> dynamicStates );
     LAVA_API
     PipelineDynamicStateCreateInfo( const PipelineDynamicStateCreateInfo& rhs );
     LAVA_API
-    PipelineDynamicStateCreateInfo& operator=( const PipelineDynamicStateCreateInfo& rhs );
+    PipelineDynamicStateCreateInfo& operator=( 
+      const PipelineDynamicStateCreateInfo& rhs );
 
     std::vector<vk::DynamicState> dynamicStates;
   };
@@ -75,7 +100,8 @@ namespace lava
     LAVA_API
     PipelineViewportStateCreateInfo( const PipelineViewportStateCreateInfo& rhs );
     LAVA_API
-    PipelineViewportStateCreateInfo & operator=( const PipelineViewportStateCreateInfo& rhs );
+    PipelineViewportStateCreateInfo & operator=( 
+      const PipelineViewportStateCreateInfo& rhs );
 
     std::vector<vk::Viewport> viewports;
     std::vector<vk::Rect2D> scissors;
@@ -86,11 +112,12 @@ namespace lava
     LAVA_API
     PipelineColorBlendStateCreateInfo( bool logicEnable, vk::LogicOp logicOp, 
       vk::ArrayProxy<const vk::PipelineColorBlendAttachmentState> attachments, 
-      std::array<float, 4> const& blendConstants );
+      const std::array<float, 4>& blendConstants );
     LAVA_API
-    PipelineColorBlendStateCreateInfo( PipelineColorBlendStateCreateInfo const& rhs );
+    PipelineColorBlendStateCreateInfo( const PipelineColorBlendStateCreateInfo& rhs );
     LAVA_API
-    PipelineColorBlendStateCreateInfo & operator=( PipelineColorBlendStateCreateInfo const& rhs );
+    PipelineColorBlendStateCreateInfo& operator=( 
+      const PipelineColorBlendStateCreateInfo& rhs );
 
     bool logicEnable;
     vk::LogicOp logicOp;
@@ -106,25 +133,30 @@ namespace lava
       vk::ArrayProxy<const vk::SampleMask> sampleMasks,
       bool alphaToCoverageEnable, bool alphaToOneEnable );
     LAVA_API
-    PipelineMultisampleStateCreateInfo( PipelineMultisampleStateCreateInfo const &rhs );
+    PipelineMultisampleStateCreateInfo( const PipelineMultisampleStateCreateInfo& rhs );
     LAVA_API
-    PipelineMultisampleStateCreateInfo & operator=( PipelineMultisampleStateCreateInfo const& rhs );
+    PipelineMultisampleStateCreateInfo & operator=( 
+      const PipelineMultisampleStateCreateInfo& rhs );
 
     vk::SampleCountFlagBits rasterizationSamples;
     bool sampleShadingEnable;
     float minSampleShading;
     std::vector<vk::SampleMask> sampleMasks;
     bool alphaToCoverageEnable;
-    bool                        alphaToOneEnable;
+    bool alphaToOneEnable;
   };
-  class PipelineCache : private NonCopyable<PipelineCache>, public VulkanResource
+  class PipelineCache
+    : private NonCopyable<PipelineCache>
+    , public VulkanResource
   {
   public:
     LAVA_API
-    PipelineCache( const DeviceRef& device, const std::string& filename );
+    PipelineCache( const std::shared_ptr<Device>& device, 
+      const std::string& filename );
     LAVA_API
-    PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
-      size_t initialSize, void const* initialData );
+    PipelineCache( const std::shared_ptr<Device>& device, 
+      vk::PipelineCacheCreateFlags flags, size_t initialSize, 
+      void const* initialData );
     LAVA_API
     ~PipelineCache( );
 
@@ -158,7 +190,9 @@ namespace lava
     }
   };
 
-  class PipelineLayout : public VulkanResource, private NonCopyable<PipelineLayout>
+  class PipelineLayout 
+    : public VulkanResource
+    , private NonCopyable<PipelineLayout>
   {
   public:
     LAVA_API
@@ -188,7 +222,7 @@ namespace lava
     }
 
   protected:
-    Pipeline( const DeviceRef& device );
+    Pipeline( const std::shared_ptr<Device>& device );
     void setPipeline( const vk::Pipeline & pipeline );
 
   protected:
@@ -201,9 +235,9 @@ namespace lava
     SpecializationInfo( vk::ArrayProxy<const vk::SpecializationMapEntry> mapEntries, 
       const void* data );
     LAVA_API
-    SpecializationInfo( SpecializationInfo const& rhs );
+    SpecializationInfo( const SpecializationInfo& rhs );
     LAVA_API
-    SpecializationInfo & operator=( SpecializationInfo const& rhs );
+    SpecializationInfo & operator=( const SpecializationInfo& rhs );
 
     std::vector<vk::SpecializationMapEntry> mapEntries;
     const void*                             data;
@@ -228,7 +262,7 @@ namespace lava
   {
   public:
     LAVA_API
-    ComputePipeline( const DeviceRef& device,
+    ComputePipeline( const std::shared_ptr<Device>& device,
       const std::shared_ptr<PipelineCache>& pipelineCache,
       vk::PipelineCreateFlags flags,
       const PipelineShaderStageCreateInfo& stage,
@@ -255,9 +289,9 @@ namespace lava
       vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
       vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState,
       vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
-      std::shared_ptr<PipelineLayout> const& pipelineLayout,
-      std::shared_ptr<RenderPass> const& renderPass,
-      uint32_t subpass, std::shared_ptr<Pipeline> const& basePipelineHandle,
+      const std::shared_ptr<PipelineLayout>& pipelineLayout,
+      const std::shared_ptr<RenderPass>& renderPass,
+      uint32_t subpass, const std::shared_ptr<Pipeline>& basePipelineHandle,
       uint32_t basePipelineIndex );
   };
 }

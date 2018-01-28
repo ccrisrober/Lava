@@ -37,8 +37,8 @@ public:
     auto device = _window->device( );
 
     tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "sample.png" ), _window->graphicsCommandPool( ), 
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "sample.png" ), _window->gfxCommandPool( ), 
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -66,8 +66,6 @@ public:
 
 
     {
-      vk::Device d = static_cast< vk::Device >( *device );
-      
       vk::SamplerCreateInfo sci;
       sci.setMagFilter( vk::Filter::eLinear );
       sci.setMinFilter( vk::Filter::eLinear );

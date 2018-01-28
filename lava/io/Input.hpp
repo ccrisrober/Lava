@@ -17,7 +17,6 @@
  *
  **/
 
-
 #ifndef __LAVA_INPUT__
 #define __LAVA_INPUT__
 

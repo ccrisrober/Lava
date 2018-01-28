@@ -17,8 +17,8 @@ public:
     auto device = _window->device( );
 
     tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "uv_checker.png" ), _window->graphicsCommandPool( ), 
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "uv_checker.png" ), _window->gfxCommandPool( ), 
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -103,9 +103,9 @@ public:
     inheritInfo.renderPass = *_window->defaultRenderPass( );
     //inheritInfo.framebuffer = *_window->currentFramebuffer( );
 
-    secondaryCmd->beginSimple( //vk::CommandBufferUsageFlagBits::eOneTimeSubmit |
-      vk::CommandBufferUsageFlagBits::eSimultaneousUse |
-      vk::CommandBufferUsageFlagBits::eRenderPassContinue, &inheritInfo );
+    secondaryCmd->begin( vk::CommandBufferUsageFlagBits::eSimultaneousUse |
+      vk::CommandBufferUsageFlagBits::eRenderPassContinue, 
+      _window->defaultRenderPass( ) );
     secondaryCmd->bindGraphicsPipeline( pipeline );
 
     secondaryCmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
@@ -181,7 +181,7 @@ private:
   std::shared_ptr< Pipeline > pipeline;
   std::shared_ptr<Texture2D> tex;
 
-  CommandBufferPtr secondaryCmd;
+  std::shared_ptr< CommandBuffer > secondaryCmd;
 };
 
 class CustomVkWindow : public VulkanWindow

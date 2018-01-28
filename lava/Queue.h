@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_QUEUE__
 #define __LAVA_QUEUE__
 
@@ -13,17 +32,16 @@
 
 namespace lava
 {
-  class Device;
-  class Fence;
-  class Semaphore;
   class CommandBuffer;
   class Swapchain;
-  class CommandBuffer;
+}
 
+namespace lava
+{
   struct SubmitInfo
   {
     LAVA_API
-    SubmitInfo( 
+    SubmitInfo(
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores,
       vk::ArrayProxy<const vk::PipelineStageFlags> waitDstStageMasks,
       vk::ArrayProxy<const std::shared_ptr<CommandBuffer>> const& commandBuffers,
@@ -40,7 +58,9 @@ namespace lava
     std::vector< std::shared_ptr< Semaphore > > signalSemaphores;
   };
 
-  class Queue : public VulkanResource, private NonCopyable<Queue>
+  class Queue
+    : public VulkanResource
+    , private NonCopyable<Queue>
   {
   public:
     LAVA_API
@@ -60,6 +80,10 @@ namespace lava
     LAVA_API
     void waitIdle( void );
 
+    LAVA_API
+    void submitAndWait( std::shared_ptr<CommandBuffer>& cmd );
+
+    LAVA_API
     inline operator vk::Queue( void ) const
     {
       return _queue;
@@ -70,12 +94,10 @@ namespace lava
     {
       return _queueFamilyIndex;
     }
-
-    LAVA_API
-    void submitAndWait( std::shared_ptr<CommandBuffer>& cmd );
   protected:
     friend class Device;
-    Queue( const DeviceRef& device, vk::Queue queue, uint32_t queueIndex );
+    Queue( const std::shared_ptr<Device>& device, vk::Queue queue, 
+      uint32_t queueIndex );
 
     std::map<std::shared_ptr<Fence>, std::vector<SubmitInfo>> _submitInfos;
     vk::Queue _queue;

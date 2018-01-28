@@ -156,12 +156,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
@@ -179,12 +179,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Instance buffer

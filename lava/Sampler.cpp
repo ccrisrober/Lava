@@ -18,7 +18,6 @@
  **/
 
 #include "Sampler.h"
-#include "Device.h"
 
 namespace lava
 {
@@ -31,6 +30,13 @@ namespace lava
     bool unnormalizedCoordinates )
     : VulkanResource( device )
   {
+    if ( anisotropyEnable && maxAnisotropy <= 0.0f )
+    {
+      std::cerr << "Can't create a sampler with enabled anisotropy and" <<
+        " 0.0f for max value" << std::endl;
+      maxAnisotropy = false;
+    }
+
     vk::SamplerCreateInfo csci( { }, magFilter, minFilter, mipmapMode, 
       addressModeU, addressModeV, addressModeW, mipLodBias, anisotropyEnable, 
       maxAnisotropy, compareEnable, compareOp, minLod, maxLod,
@@ -38,7 +44,7 @@ namespace lava
     _sampler = static_cast<vk::Device>( *_device ).createSampler( csci );
   }
 
-  Sampler::~Sampler( )
+  Sampler::~Sampler( void )
   {
     static_cast<vk::Device>( *_device ).destroySampler( _sampler );
   }

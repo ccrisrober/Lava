@@ -132,7 +132,7 @@ if(FALSE) # fake a block comment
   set( LAVABUTTERFLIESGRASSLAND_LINK_LIBRARIES lava )
   common_application( lavaButterfliesGrassland )
 
-## Tesselation examples
+## Tesselation examples 
   set( LAVAHEIGHTMAPTESSELATION_HEADERS utils/Camera.h )
   set( LAVAHEIGHTMAPTESSELATION_SOURCES HeightmapTesselation.cpp )
   set( LAVAHEIGHTMAPTESSELATION_LINK_LIBRARIES lava )
@@ -153,6 +153,17 @@ if(FALSE) # fake a block comment
   set( LAVAFRACTALCOMPUTE_SOURCES FractalCompute.cpp )
   set( LAVAFRACTALCOMPUTE_LINK_LIBRARIES lava )
   common_application( lavaFractalCompute )
-endif()
+endif( )
+
+
+
+
+
+
+
+  set( LAVASPARKLE_HEADERS )
+  set( LAVASPARKLE_SOURCES Sparkle.cpp )
+  set( LAVASPARKLE_LINK_LIBRARIES lava )
+  common_application( lavaSparkle )
 
 endif( )

@@ -105,10 +105,10 @@ namespace lava
       return result;
     }
 
-    Geometry::Geometry( const DeviceRef& device, const std::string& path )
+    Geometry::Geometry( const std::shared_ptr<Device>& device, 
+      const std::string& path )
       : VulkanResource( device )
     {
-
       lava::extras::ModelImporter mi( path );
       lava::extras::Mesh mesh = mi._meshes[ 0 ];
 
@@ -136,11 +136,52 @@ namespace lava
         _ibo->writeData( 0, indexBufferSize, mesh.indices.data( ) );
       }
     }
+    Geometry::Geometry( const std::shared_ptr<Device>& device, 
+      const std::shared_ptr<CommandPool> cmdPool, 
+      const std::shared_ptr<Queue> queue, const std::string & path )
+      : VulkanResource( device )
+    {
+      lava::extras::ModelImporter mi( path );
+      lava::extras::Mesh mesh = mi._meshes[ 0 ];
+
+      _numIndices = mesh.numIndices;
+
+      // Vertex buffer
+      {
+        uint32_t vertexBufferSize = mesh.numVertices * sizeof( Vertex );
+        auto cmd = cmdPool->allocateCommandBuffer( );
+        cmd->begin( );
+
+        _vbo = device->createBuffer( vertexBufferSize,
+          vk::BufferUsageFlagBits::eVertexBuffer |
+          vk::BufferUsageFlagBits::eTransferDst,
+          vk::MemoryPropertyFlagBits::eDeviceLocal );
+        _vbo->update<Vertex>( cmd, 0, { uint32_t( mesh.vertices.size( ) ),
+          mesh.vertices.data( ) } );
+        cmd->end( );
+        queue->submitAndWait( cmd );
+      }
+      // Index buffer
+      {
+        uint32_t indexBufferSize = _numIndices * sizeof( uint32_t );
+        auto cmd = cmdPool->allocateCommandBuffer( );
+        cmd->begin( );
+
+        _ibo = device->createBuffer( indexBufferSize,
+          vk::BufferUsageFlagBits::eIndexBuffer |
+          vk::BufferUsageFlagBits::eTransferDst,
+          vk::MemoryPropertyFlagBits::eDeviceLocal );
+        _ibo->update<uint32_t>( cmd, 0, { uint32_t( mesh.indices.size( ) ),
+          mesh.indices.data( ) } );
+        cmd->end( );
+        queue->submitAndWait( cmd );
+      }
+    }
     void Geometry::render( std::shared_ptr<CommandBuffer> cmd, 
       uint32_t numInstance )
     {
-      _vbo->bind( cmd );
-      _ibo->bind( cmd );
+      cmd->bindVertexBuffer( 0, _vbo, 0 );
+      cmd->bindIndexBuffer( _ibo, 0, vk::IndexType::eUint32 );
       cmd->drawIndexed( _numIndices, numInstance, 0, 0, 0 );
     }
   }

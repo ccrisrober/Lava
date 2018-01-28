@@ -111,7 +111,7 @@ public:
       vk::MemoryPropertyFlagBits::eDeviceLocal );  // Allocate + bind
 
     std::shared_ptr<CommandBuffer> layoutCmd = cmdPool->allocateCommandBuffer( );
-    layoutCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+    layoutCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
 
     tex->imageLayout = vk::ImageLayout::eGeneral;
     lava::utils::setImageLayout(
@@ -122,7 +122,7 @@ public:
     // Send command buffer
     layoutCmd->end( );
 
-    _window->graphicQueue( )->submitAndWait( layoutCmd ); // TODO: Use another kind of quee
+    _window->gfxQueue( )->submitAndWait( layoutCmd ); // TODO: Use another kind of quee
 
                                                 // Create sampler
     vk::SamplerCreateInfo sci;
@@ -238,7 +238,7 @@ public:
       //  a pipeline change to ensure it's not currently in use
       compute.queue->waitIdle( );
 
-      compute.commandBuffer->beginSimple( );
+      compute.commandBuffer->begin( );
       compute.commandBuffer->bindComputePipeline( compute.pipeline );
       compute.commandBuffer->bindDescriptorSets(
         vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0,
@@ -271,12 +271,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, graphics.vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
@@ -294,12 +294,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, graphics.indexBuffer, 0, 0, indexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
   
     // Uniform buffers
@@ -311,7 +311,7 @@ public:
 
     textureComputeTarget = std::make_shared<Texture>( device );
     prepareTextureTarget( textureComputeTarget, compute.ubo.width, compute.ubo.height,
-      vk::Format::eR8G8B8A8Unorm, _window->graphicsCommandPool( ) );
+      vk::Format::eR8G8B8A8Unorm, _window->gfxCommandPool( ) );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),

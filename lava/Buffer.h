@@ -20,41 +20,31 @@
 #ifndef __LAVA_BUFFER__
 #define __LAVA_BUFFER__
 
-#include "includes.hpp"
-
-#include "VulkanResource.h"
-#include "noncopyable.hpp"
-
-#include "CommandBuffer.h"
-#include "Queue.h"
+#include <lava/CommandBuffer.h>
+#include <lava/Device.h>
+#include <lava/VulkanResource.h>
+#include <memory>
 
 namespace lava
 {
-  enum class BufferType
-  {
-    VERTEX,
-    INDEX,
-    UNIFORM,
-    GENERIC,
-    STORAGE,
-    STRUCTURED
-  };
+  class Image;
+
   class Buffer : public VulkanResource, private NonCopyable<Buffer>,
     public std::enable_shared_from_this<Buffer>
   {
   public:
     LAVA_API
-    Buffer( const DeviceRef& device, vk::BufferCreateFlags createFlags, 
-      vk::DeviceSize size, vk::BufferUsageFlags usageFlags, 
-      vk::SharingMode sharingMode,
-      vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
-      vk::MemoryPropertyFlags memoryPropertyFlags );
-    LAVA_API
-    Buffer( const DeviceRef& device, vk::BufferCreateFlags createFlags, 
-      vk::DeviceSize size, const BufferType& bufferType, 
-      vk::SharingMode sharingMode,
-      vk::ArrayProxy<const uint32_t> queueFamilyIndices, 
-      vk::MemoryPropertyFlags memoryPropertyFlags );
+      Buffer( const std::shared_ptr<Device>& device, 
+        vk::BufferCreateFlags createFlags, vk::DeviceSize size, 
+        vk::BufferUsageFlags usageFlags, vk::SharingMode sharingMode,
+        vk::ArrayProxy<const uint32_t> queueFamilyIndices,
+        vk::MemoryPropertyFlags memoryPropertyFlags );
+    /*LAVA_API
+      Buffer( const std::shared_ptr<Device>& device, vk::BufferCreateFlags createFlags,
+        vk::DeviceSize size, const BufferType& bufferType,
+        vk::SharingMode sharingMode,
+        vk::ArrayProxy<const uint32_t> queueFamilyIndices,
+        vk::MemoryPropertyFlags memoryPropertyFlags );*/
     LAVA_API
     virtual ~Buffer( void );
 
@@ -64,7 +54,7 @@ namespace lava
     Buffer& operator=( const Buffer& ) = delete;
     Buffer& operator=( Buffer&& ) = delete;
 
-    static vk::BufferUsageFlags getBufferUsage( const BufferType& type );
+    //static vk::BufferUsageFlags getBufferUsage( const BufferType& type );
 
     LAVA_API
     void map( vk::DeviceSize offset, vk::DeviceSize length, void* data );
@@ -77,12 +67,12 @@ namespace lava
     inline operator vk::Buffer( void ) const { return _buffer; }
 
     LAVA_API
-    void copy( const std::shared_ptr<CommandBuffer>& cmd, 
-      std::shared_ptr<Buffer> dst, vk::DeviceSize srcOffset, 
+    void copy( const std::shared_ptr<CommandBuffer>& cmd,
+      std::shared_ptr<Buffer> dst, vk::DeviceSize srcOffset,
       vk::DeviceSize dstOffset, vk::DeviceSize length );
     LAVA_API
-    void copy( const std::shared_ptr<CommandBuffer>& cmd, 
-      std::shared_ptr< Image > dst, const vk::Extent3D& extent, 
+    void copy( const std::shared_ptr<CommandBuffer>& cmd,
+      std::shared_ptr< Image > dst, const vk::Extent3D& extent,
       const vk::ImageSubresourceLayers& range, vk::ImageLayout layout );
 
     LAVA_API
@@ -104,8 +94,8 @@ namespace lava
 
     LAVA_API
     inline vk::DeviceSize getSize( void ) const { return _size; }
-    
-    template <typename T> 
+
+    template <typename T>
     void update( const std::shared_ptr<CommandBuffer>& commandBuffer,
       vk::DeviceSize offset, vk::ArrayProxy<const T> data );
 
@@ -115,81 +105,33 @@ namespace lava
       return _memoryPropertyFlags;
     }
 
-  //protected:
+    //protected:
     vk::Buffer _buffer;
     vk::MemoryPropertyFlags _memoryPropertyFlags;
     vk::DeviceMemory _memory;
   protected:
     vk::DeviceSize _size;
-    DescriptorBufferInfo descriptor;
-  };
-
-  class VertexBuffer: public Buffer
-  {
-  public:
-    LAVA_API
-    VertexBuffer( const DeviceRef& device, vk::DeviceSize size );
-    LAVA_API
-    void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
-  };
-
-  class IndexBuffer: public Buffer
-  {
-  public:
-    LAVA_API
-    IndexBuffer( const DeviceRef& device, const vk::IndexType type, 
-      uint32_t numIndices );
-    LAVA_API
-    void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
-    inline vk::IndexType getIndexType( void ) const
-    {
-      return _type;
-    }
-  protected:
-    static vk::DeviceSize calcIndexSize( const vk::IndexType& type, 
-      uint32_t numIndices );
-    vk::IndexType _type;
-  };
-
-  class UniformBuffer : public Buffer
-  {
-  public:
-    LAVA_API
-    UniformBuffer( const DeviceRef&, vk::DeviceSize size );
-  };
-
-  class StorageBuffer : public Buffer
-  {
-  public:
-    LAVA_API
-    StorageBuffer( const DeviceRef&, vk::DeviceSize size );
-  };
-
-  class UniformTexelBuffer : public Buffer
-  {
-  public:
-    LAVA_API
-    UniformTexelBuffer( const DeviceRef&, vk::DeviceSize size );
+    //DescriptorBufferInfo descriptor;
   };
 
   class BufferView
   {
-    public:
+  public:
     LAVA_API
-    BufferView(const std::shared_ptr<lava::Buffer>& buffer, 
-      vk::Format format, vk::DeviceSize offset, 
-      vk::DeviceSize range );
+      BufferView( const std::shared_ptr<lava::Buffer>& buffer,
+        vk::Format format, vk::DeviceSize offset,
+        vk::DeviceSize range );
     LAVA_API
-    virtual ~BufferView( void );
+      virtual ~BufferView( void );
 
     LAVA_API
-    inline operator vk::BufferView( void ) const
+      inline operator vk::BufferView( void ) const
     {
       return _bufferView;
     }
 
-    BufferView(BufferView const& rhs) = delete;
-    BufferView & operator=(BufferView const& rhs) = delete;
+    BufferView( BufferView const& rhs ) = delete;
+    BufferView & operator=( BufferView const& rhs ) = delete;
 
   private:
     vk::BufferView  _bufferView;
@@ -201,17 +143,17 @@ namespace lava
     vk::DeviceSize offset, vk::ArrayProxy<const T> data )
   {
     size_t size = data.size( ) * sizeof( T );
-    if ( ( ( offset & 0x3 ) == 0 ) && ( size < 64 * 1024 ) && 
+    if ( ( ( offset & 0x3 ) == 0 ) && ( size < 64 * 1024 ) &&
       ( ( size & 0x3 ) == 0 ) )
     {
       cmdBuff->updateBuffer( shared_from_this( ), offset, data );
     }
-    else if ( getMemoryPropertyFlags( ) & 
+    else if ( getMemoryPropertyFlags( ) &
       vk::MemoryPropertyFlagBits::eHostVisible )
     {
       void* pData = this->map( offset, size );
       memcpy( pData, data.data( ), size );
-      if ( !( getMemoryPropertyFlags( ) & 
+      if ( !( getMemoryPropertyFlags( ) &
         vk::MemoryPropertyFlagBits::eHostCoherent ) )
       {
         this->flush( size, offset );
@@ -221,8 +163,8 @@ namespace lava
     else
     {
       std::shared_ptr<Buffer> stagingBuffer = _device->createBuffer(
-        _size, vk::BufferUsageFlagBits::eTransferSrc, 
-        vk::SharingMode::eExclusive, nullptr, 
+        _size, vk::BufferUsageFlagBits::eTransferSrc,
+        vk::SharingMode::eExclusive, nullptr,
         vk::MemoryPropertyFlagBits::eHostVisible
       );
       void * pData = stagingBuffer->map( offset, size );
@@ -233,6 +175,57 @@ namespace lava
         vk::BufferCopy( 0, 0, size ) );
     }
   }
+
+
+  class VertexBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    VertexBuffer( const std::shared_ptr<Device>& device, vk::DeviceSize size );
+    LAVA_API
+    void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
+  };
+
+  class IndexBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    IndexBuffer( const std::shared_ptr<Device>& device, const vk::IndexType type,
+        uint32_t numIndices );
+    LAVA_API
+    void bind( std::shared_ptr<CommandBuffer>& cmd, unsigned int index = 0 );
+    LAVA_API
+    inline vk::IndexType getIndexType( void ) const
+    {
+      return _type;
+    }
+  protected:
+    static vk::DeviceSize calcIndexSize( const vk::IndexType& type,
+      uint32_t numIndices );
+    vk::IndexType _type;
+  };
+
+  class UniformBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    UniformBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+  };
+
+  class StorageBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    StorageBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+  };
+
+  class UniformTexelBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    UniformTexelBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+  };
+
 }
 
 #endif /* __LAVA_BUFFER__ */

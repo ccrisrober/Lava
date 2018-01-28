@@ -17,7 +17,6 @@
  *
  **/
 
-
 #include "Mouse.hpp"
 
 namespace lava

@@ -65,8 +65,8 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       vertexBuffer = device->createBuffer( vertexBufferSize, 
         vk::BufferUsageFlagBits::eVertexBuffer | 
@@ -75,7 +75,7 @@ public:
       vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ), 
         vertices.data( ) } );
       cmd->end( );
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
 #ifdef INDEXING_MODE
@@ -94,12 +94,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 #endif
 #ifdef TESS_MODE

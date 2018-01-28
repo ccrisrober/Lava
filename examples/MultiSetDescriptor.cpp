@@ -40,8 +40,8 @@ public:
   {
     auto device = _window->device( );
 
-    texture = device->createTexture2D( texPath, _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+    texture = device->createTexture2D( texPath, _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {

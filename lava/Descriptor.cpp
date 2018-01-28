@@ -51,8 +51,9 @@ namespace lava
     return *this;
   }
 
-  DescriptorBufferInfo::DescriptorBufferInfo( const std::shared_ptr<Buffer>& buffer_, 
-    vk::DeviceSize offset_, vk::DeviceSize range_ )
+  DescriptorBufferInfo::DescriptorBufferInfo( 
+    const std::shared_ptr<Buffer>& buffer_,  vk::DeviceSize offset_, 
+    vk::DeviceSize range_ )
     : buffer( buffer_ )
     , offset( offset_ )
     , range( range_ )
@@ -62,7 +63,8 @@ namespace lava
     : DescriptorBufferInfo( rhs.buffer, rhs.offset, rhs.range )
   {
   }
-  DescriptorBufferInfo& DescriptorBufferInfo::operator=( const DescriptorBufferInfo& rhs )
+  DescriptorBufferInfo& DescriptorBufferInfo::operator=( 
+    const DescriptorBufferInfo& rhs )
   {
     buffer = rhs.buffer;
     offset = rhs.offset;
@@ -72,7 +74,7 @@ namespace lava
 
 
 
-  DescriptorSetLayout::DescriptorSetLayout( const DeviceRef& device,
+  DescriptorSetLayout::DescriptorSetLayout( const std::shared_ptr<Device>& device,
     vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings,
     vk::DescriptorSetLayoutCreateFlags flags )
     : VulkanResource( device )
@@ -95,7 +97,8 @@ namespace lava
       }
 
       uint32_t dscptCount = 1;
-      if (!samplers.back( ).empty( ) && bind.descriptorType == vk::DescriptorType::eSampler )
+      if (!samplers.back( ).empty( ) && bind.descriptorType == 
+        vk::DescriptorType::eSampler )
       {
         dscptCount = samplers.back( ).size( );
       }
@@ -121,11 +124,12 @@ namespace lava
 
   DescriptorSetLayout::~DescriptorSetLayout( void )
   {
-    static_cast< vk::Device >( *_device ).destroyDescriptorSetLayout( _descriptorSetLayout );
+    static_cast< vk::Device >( *_device ).destroyDescriptorSetLayout( 
+      _descriptorSetLayout );
   }
 
 
-  DescriptorPool::DescriptorPool( const DeviceRef& device,
+  DescriptorPool::DescriptorPool( const std::shared_ptr<Device>& device,
     vk::DescriptorPoolCreateFlags flags, uint32_t maxSets,
     vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes )
     : VulkanResource( device )
@@ -139,7 +143,8 @@ namespace lava
       poolSizes.data( )
     );
 
-    _descriptorPool = static_cast< vk::Device >( *_device ).createDescriptorPool( dci );
+    _descriptorPool = static_cast< vk::Device >( *_device )
+      .createDescriptorPool( dci );
   }
 
   DescriptorPool::~DescriptorPool( void )
@@ -152,7 +157,7 @@ namespace lava
     static_cast< vk::Device >( *_device ).resetDescriptorPool( _descriptorPool );
   }
 
-  DescriptorSet::DescriptorSet( const DeviceRef& device, 
+  DescriptorSet::DescriptorSet( const std::shared_ptr<Device>& device, 
     const std::shared_ptr<DescriptorPool>& descriptorPool,
     const std::shared_ptr<DescriptorSetLayout>& layout)
     : VulkanResource( device )
@@ -212,10 +217,13 @@ namespace lava
   WriteDescriptorSet::WriteDescriptorSet( const WriteDescriptorSet & rhs )
     : WriteDescriptorSet( rhs.dstSet, rhs.dstBinding, rhs.dstArrayElement, 
       rhs.descriptorType, rhs.descriptorCount,
-      rhs.imageInfo.get( ) ? vk::Optional<const DescriptorImageInfo>( *rhs.imageInfo )
-        : vk::Optional<const DescriptorImageInfo>( nullptr ),
-      rhs.bufferInfo.get( ) ? vk::Optional<const DescriptorBufferInfo>( *rhs.bufferInfo ) 
-      : vk::Optional<const DescriptorBufferInfo>( nullptr ), rhs.texelBufferView )
+      rhs.imageInfo.get( ) ? 
+        vk::Optional<const DescriptorImageInfo>( *rhs.imageInfo )
+          : vk::Optional<const DescriptorImageInfo>( nullptr ),
+      rhs.bufferInfo.get( ) ? 
+        vk::Optional<const DescriptorBufferInfo>( *rhs.bufferInfo ) 
+          : vk::Optional<const DescriptorBufferInfo>( nullptr ),
+      rhs.texelBufferView )
   {
   }
   WriteDescriptorSet & WriteDescriptorSet::operator=( const WriteDescriptorSet & rhs )
@@ -225,8 +233,10 @@ namespace lava
     dstArrayElement = rhs.dstArrayElement;
     descriptorType = rhs.descriptorType;
     descriptorCount = rhs.descriptorCount;
-    imageInfo.reset( rhs.imageInfo ? new DescriptorImageInfo( *rhs.imageInfo ) : nullptr );
-    bufferInfo.reset( rhs.bufferInfo ? new DescriptorBufferInfo( *rhs.bufferInfo ) : nullptr );
+    imageInfo.reset( rhs.imageInfo ? 
+      new DescriptorImageInfo( *rhs.imageInfo ) : nullptr );
+    bufferInfo.reset( rhs.bufferInfo ? 
+      new DescriptorBufferInfo( *rhs.bufferInfo ) : nullptr );
     texelBufferView = rhs.texelBufferView;
     return *this;
   }

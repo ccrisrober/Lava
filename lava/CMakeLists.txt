@@ -2,126 +2,106 @@ source_group(\\ FILES CMakeLists.txt)
 
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
-  fwd.h
-
-  io/Keyboard.hpp
-  io/Mouse.hpp
-  io/Input.hpp
-
-  RenderAPICapabilites.h
   noncopyable.hpp
-
-  Instance.h
-  Event.h
-  PhysicalDevice.h
-  Surface.h
-  VulkanApp.h
-  Device.h
-  VulkanResource.h
-  Semaphore.h
-  Fence.h
-  Queue.h
-  RenderPass.h
-  DefaultFramebuffer.h
-  Swapchain.h
-  Image.h
-  Framebuffer.h
-  CommandBuffer.h
-  Pipeline.h
-  Descriptor.h
-  Sampler.h
+  
   Buffer.h
-  QueryPool.h
-##DeviceMemory.h
-
-  Window.h
-
-  Texture.h
-  Texture1D.h
-  Texture2D.h
-  ##Texture2DArray.h
-  TextureCubemap.h
-  ##Texture3D.h
-
-  extras/FpsController.h
-
-  extras/Mesh.h
-  extras/Material.h
-  extras/ModelImporter.h
-  extras/CustomFramebuffer.h
-  extras/CustomMaterial.h
-  extras/Geometry.h
-
-  engine/Material.h
-  engine/Node.h
-  engine/Clock.h
-
-  utils.hpp
-
+  CommandBuffer.h
+  Descriptor.h
+  Instance.h
+  Device.h
+  PhysicalDevice.h
+  Event.h
+  Fence.h
   Log.h
   MemoryUtils.h
   StringUtils.hpp
+  RenderAPICapabilites.h
 
+  DefaultFramebuffer.h
 
+  Image.h
+  RenderPass.h
+  Surface.h
+  Sampler.h
+  Semaphore.h
+  Swapchain.h
+  Texture.h
+  Texture1D.h
+  Texture2D.h
+  TextureCubemap.h
+  Texture2DArray.h
+  #Texture3D.h
+  Queue.h
+  Framebuffer.h
+  Pipeline.h
+
+  utils.hpp
+
+  VulkanResource.h
   VulkanRenderer.h
+  Window.h
+
+  engine/Clock.h
+  engine/Material.h
+  engine/Node.h
+
+  extras/Geometry.h
+  extras/Material.h
+  extras/Mesh.h
+  extras/ModelImporter.h
+
+  io/Input.hpp
+  io/Keyboard.hpp
+  io/Mouse.hpp
 )
 
 set( LAVA_SOURCES
-
-  io/Keyboard.cpp
-  io/Mouse.cpp
-  io/Input.cpp
-
-  VulkanRenderer.cpp
-
-
-  Instance.cpp
-  Event.cpp
-  PhysicalDevice.cpp
-  Surface.cpp
-  VulkanApp.cpp
-  Device.cpp
-  VulkanResource.cpp
-  Semaphore.cpp
-  Fence.cpp
-  Queue.cpp
-  RenderPass.cpp
-  DefaultFramebuffer.cpp
-  Swapchain.cpp
-  Image.cpp
-  Framebuffer.cpp
-  CommandBuffer.cpp
-  Pipeline.cpp
-  Descriptor.cpp
-  Sampler.cpp
   Buffer.cpp
-  QueryPool.cpp
-##DeviceMemory.cpp
+  CommandBuffer.cpp
+  Descriptor.cpp
+  Instance.cpp
+  Device.cpp
+  PhysicalDevice.cpp
+  Event.cpp
+  Fence.cpp
+  Log.cpp
 
-  Window.cpp
+  DefaultFramebuffer.cpp
 
+  Image.cpp
+  RenderPass.cpp
+  Surface.cpp
+  Sampler.cpp
+  Semaphore.cpp
+  Swapchain.cpp
   Texture.cpp
   Texture1D.cpp
   Texture2D.cpp
-  ##Texture2DArray.cpp
   TextureCubemap.cpp
-  ##Texture3D.cpp
+  Texture2DArray.cpp
+  #Texture3D.cpp
+  Queue.cpp
+  Framebuffer.cpp
+  Pipeline.cpp
 
-  extras/Mesh.cpp
-  extras/Material.cpp
-  extras/ModelImporter.cpp
-  extras/CustomFramebuffer.cpp
-  extras/CustomMaterial.cpp
-  extras/Geometry.cpp
-
-  engine/Node.cpp
-  engine/Material.cpp
-  engine/Clock.cpp
-
-	#Source.cpp
   utils.cpp
 
-  Log.cpp
+  VulkanResource.cpp
+  VulkanRenderer.cpp
+  Window.cpp
+
+  engine/Clock.cpp
+  engine/Material.cpp
+  engine/Node.cpp
+
+  extras/Geometry.cpp
+  extras/Material.cpp
+  extras/Mesh.cpp
+  extras/ModelImporter.cpp
+
+  io/Input.cpp
+  io/Keyboard.cpp
+  io/Mouse.cpp
 )
 
 set( LAVA_HEADERS

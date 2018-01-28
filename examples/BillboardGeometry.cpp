@@ -107,12 +107,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     uniformBuffer = device->createUniformBuffer( sizeof( ubo ) );
@@ -126,7 +126,7 @@ public:
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/djinn4.png" )
     };
     tex = device->createTexture2DArray( djinnImages,
-      _window->graphicsCommandPool( ), _window->graphicQueue( ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts

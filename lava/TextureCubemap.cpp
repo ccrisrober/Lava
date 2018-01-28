@@ -19,14 +19,14 @@
 
 #include "TextureCubemap.h"
 
-#include "Device.h"
-#include "PhysicalDevice.h"
+#include <lava/Buffer.h>
+#include <lava/PhysicalDevice.h>
 
 #include "utils.hpp"
 
 namespace lava
 {
-  TextureCubemap::TextureCubemap( const DeviceRef& device_, 
+  TextureCubemap::TextureCubemap( const std::shared_ptr<Device>& device_, 
       const std::array< std::string, 6 >& filePaths,
       const std::shared_ptr<CommandPool>& cmdPool,
       const std::shared_ptr<Queue>& queue, vk::Format format,
@@ -90,8 +90,6 @@ namespace lava
     // limited amount of formats and features (mip maps, cubemaps, arrays, etc.)
     VkBool32 useStaging = !forceLinear;
 
-    vk::Device device = static_cast< vk::Device >( *_device );
-
     if ( useStaging )
     {
       // Create a host-visible staging buffer that contains the raw image data
@@ -104,7 +102,7 @@ namespace lava
       free( pixels );
 
       // TODO: Generate MipLevels
-      uint32_t mipLevels = 1;
+      mipLevels = 1;
 
       // Create Image
       auto usageFlags = imageUsageFlags;
@@ -127,7 +125,7 @@ namespace lava
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto copyCmd = cmdPool->allocateCommandBuffer( );
-      copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
 
       // Setup buffer copy regions for each face including all of it's miplevels
       std::vector<vk::BufferImageCopy> bufferCopyRegions;
@@ -166,7 +164,7 @@ namespace lava
       // Optimal image will be used as destination for the copy
       // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED 
       //    to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-      utils::setImageLayout(
+      utils::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageLayout::eUndefined,          // Old layout is undefined
@@ -183,7 +181,7 @@ namespace lava
 
       // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
       //    to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-      utils::setImageLayout(
+      utils::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageLayout::eTransferDstOptimal, // Older layout
@@ -248,10 +246,10 @@ namespace lava
       this->imageLayout = imageLayout_;
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
-      copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+      copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
       
       // Setup image memory barrier
-      utils::setImageLayout(
+      utils::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageAspectFlagBits::eColor,

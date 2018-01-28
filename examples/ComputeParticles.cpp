@@ -141,7 +141,7 @@ public:
 
       // Build compute command buffer
       {
-        compute.commandBuffer->beginSimple( );
+        compute.commandBuffer->begin( );
           compute.commandBuffer->dispatch( totalParticles / 1000, 1, 1 );
         compute.commandBuffer->end( );
       }

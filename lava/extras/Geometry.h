@@ -1,10 +1,31 @@
-#pragma once
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
 
-#include "../CommandBuffer.h"
+#ifndef __LAVA_GEOMETRY__
+#define __LAVA_GEOMETRY__
+
 #include <memory>
 
-#include "../Buffer.h"
-#include "../VulkanResource.h"
+#include <lava/Buffer.h>
+#include <lava/CommandBuffer.h>
+#include <lava/Queue.h>
+#include <lava/VulkanResource.h>
 
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
@@ -55,13 +76,19 @@ namespace lava
     {
     public:
       LAVA_API
-      Geometry( const DeviceRef& device, const std::string& path );
+      Geometry( const std::shared_ptr<Device>& device, const std::string& path );
+      LAVA_API
+      Geometry( const std::shared_ptr<Device>& device, 
+        const std::shared_ptr<CommandPool> cmdPool, 
+        const std::shared_ptr<Queue> queue, const std::string& path );
       LAVA_API
       void render( std::shared_ptr<CommandBuffer> cmd, uint32_t numInstances = 1 );
     protected:
-      std::shared_ptr<VertexBuffer> _vbo;
-      std::shared_ptr<IndexBuffer> _ibo;
+      std::shared_ptr<Buffer> _vbo;
+      std::shared_ptr<Buffer> _ibo;
       uint32_t _numIndices;
     };
   }
 }
+
+#endif /* __LAVA_GEOMETRY__ */

@@ -23,7 +23,7 @@
 
 namespace lava
 {
-  DefaultFramebuffer::DefaultFramebuffer( const DeviceRef& device,
+  DefaultFramebuffer::DefaultFramebuffer( const std::shared_ptr<Device>& device,
     const std::shared_ptr<Surface>& surface, vk::Format surfaceFormat,
     vk::ColorSpaceKHR colorSpace, vk::Format depthFormat, 
     const std::shared_ptr<RenderPass>& renderPass )
@@ -55,7 +55,6 @@ namespace lava
     vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
 
     /*bool vsync = true;
-
     if ( !vsync )
     {
       bool founded = false;
@@ -68,7 +67,6 @@ namespace lava
           founded = true;
           break;
         }
-
         if ( pr == vk::PresentModeKHR::eFifoRelaxed )
         {
           presentMode = vk::PresentModeKHR::eFifoRelaxed;
@@ -215,7 +213,7 @@ namespace lava
     std::cout << "Framebuffer Swapchain OK" << std::endl;
   }
 
-  void DefaultFramebuffer::rebuild( const DeviceRef&,
+  void DefaultFramebuffer::rebuild( const std::shared_ptr<Device>&,
     const std::shared_ptr<Surface>&,
     vk::Format, vk::Format,
     const std::shared_ptr<RenderPass>& )

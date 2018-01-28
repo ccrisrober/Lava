@@ -1,11 +1,31 @@
 #include "VulkanRenderer.h"
-#include "engine/Clock.h"
 #include "Log.h"
 
+#include <lava/Instance.h>
 #include <thread>
 
 namespace lava
 {
+  VulkanWindowRenderer::~VulkanWindowRenderer( void )
+  {
+  }
+
+  void VulkanWindowRenderer::initResources( void )
+  {
+  }
+
+  void VulkanWindowRenderer::initSwapChainResources( void )
+  {
+  }
+
+  void VulkanWindowRenderer::releaseSwapChainResources( void )
+  {
+  }
+
+  void VulkanWindowRenderer::releaseResources( void )
+  {
+  }
+
   RenderAPICapabilities VulkanWindow::caps( void ) const
 	{
 		return _caps;
@@ -30,33 +50,23 @@ namespace lava
 
       // TODO: savePipelineCache( );
 		}
-    //float elapsed = 0.0f;
-    //uint32_t frames = 0;
-    //engine::Clock clock;
-		// TODO: SHOW WINDOW
     while ( _window->isRunning( ) )
     {
-      //const auto elapsedTime = clock.reset( );
       _window->pollEvents( );
       beginFrame( );
-      //endFrame( );
-
-      //elapsed += elapsedTime;
-      //++frames;
-
-      //if ( elapsed >= 1.0f )
-      //{
-      //  Log::info( "FPS: ", std::to_string( ( frames / elapsed ) * 0.1f ) );
-      //  frames = 0;
-      //  elapsed = 0.0f;
-      //}
 
       // Very crude method to prevent your GPU from overheating.
       std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 	}
 
-	void VulkanWindow::setVulkanInstance( const std::shared_ptr< Instance > instance )
+  VulkanWindowRenderer* VulkanWindow::createRenderer( void )
+  {
+    return nullptr;
+  }
+
+	void VulkanWindow::setVulkanInstance( 
+    const std::shared_ptr< Instance > instance )
 	{
     _instance = instance;
 	}
@@ -66,13 +76,15 @@ namespace lava
     return _defaultFramebuffer->supportsGrab( );
   }
 
-  VulkanWindowRenderer* VulkanWindow::createRenderer( void )
-  {
-    return nullptr;
-  }
-
   void VulkanWindow::frameReady( void )
   {
+    // TODO: Check only called by main thread std::this_thread::
+    if ( !_framePending )
+    {
+      throw "framePending() called without calling nextFrame( )";
+    }
+    _framePending = false;
+
     endFrame( );
   }
 
@@ -98,7 +110,8 @@ namespace lava
 
   void VulkanWindow::setSampleCountFlagBits( int sampleCount_ )
   {
-    for ( uint32_t i = 0, l = sizeof( sampleCounts ) / sizeof( sampleCounts[ 0 ] ); i < l; ++i )
+    for ( uint32_t i = 0, l = sizeof( sampleCounts ) / 
+      sizeof( sampleCounts[ 0 ] ); i < l; ++i )
     {
       if ( sampleCounts[ i ].count == sampleCount_ )
       {
@@ -279,8 +292,18 @@ namespace lava
 
 	void VulkanWindow::init( void )
 	{
-    _window = std::make_shared< Window >( "Title", 
+    if ( !_instance )
+    {
+      throw "Instance don't exist";
+    }
+
+    _window = std::make_shared< Window >( "Title",
       _swapChainImageSize.x, _swapChainImageSize.y );
+
+    if ( !renderer )
+    {
+      renderer = createRenderer( );
+    }
 
     // Find a physical device with presentation support
     assert( _instance->getPhysicalDeviceCount( ) != 0 );
@@ -298,11 +321,6 @@ namespace lava
     if ( !_physicalDevice )
     {
       LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
-    }
-
-    if ( !renderer )
-    {
-      renderer = createRenderer( );
     }
 
 		//initCapabilites( );
@@ -515,7 +533,7 @@ namespace lava
       { }, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
       _gfxQueueFamilyIdx );
 
-    if( !createDefaultRenderPass( ) )
+    if( !setupRenderPass( ) )
     {
       return;
     }
@@ -523,9 +541,9 @@ namespace lava
     _renderComplete = _device->createSemaphore( );
     //createPipelineCache( );
 
-    _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
-    _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
-      _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
+    setupFramebuffer( );
+
+    setupPipelineCache( );
 
     _window->_callbackResize = [&]( int w, int h )
     {
@@ -571,20 +589,30 @@ namespace lava
 
   void VulkanWindow::beginFrame( void )
   {
+    if ( !_defaultFramebuffer->_swapchain || _framePending ) return;
+
     _defaultFramebuffer->acquireNextFrame( );
 
-    imageRes[ _defaultFramebuffer->index( ) ].commandBuffer = _cmdPool->allocateCommandBuffer( );
+    size_t idx = _defaultFramebuffer->index( );
 
-    imageRes[ _defaultFramebuffer->index( ) ].commandBuffer->beginSimple( );
+    if ( imageRes[ idx ].commandBuffer )
+    {
+      imageRes[ idx ].commandBuffer.reset( ); // Reset command buffer
+      imageRes[ idx ].commandBuffer = nullptr;
+    }
+
+    imageRes[ idx ].commandBuffer = _cmdPool->allocateCommandBuffer( );
+    imageRes[ idx ].commandBuffer->begin( );
 
     if ( renderer )
     {
+      _framePending = true;
       renderer->nextFrame( );
     }
     else
     {
       std::array<vk::ClearValue, 2 > clearValues;
-      std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0f, 1.0f };
+      std::array<float, 4> ccv = { 1.0f, 0.0f, 0.0f, 1.0f };
       clearValues[ 0 ].color = vk::ClearColorValue( ccv );
       clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
@@ -607,25 +635,26 @@ namespace lava
 
   void VulkanWindow::endFrame( void )
   {
+    auto currrentCmd = imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
     if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
     {
       // Add the swapchain image release to the command buffer that will be submitted to the graphics queue.
       vk::ImageSubresourceRange issr;
       issr.aspectMask = vk::ImageAspectFlagBits::eColor;
       issr.levelCount = issr.layerCount = 1;
-      ImageMemoryBarrier barrier( {}, vk::AccessFlagBits::eColorAttachmentWrite, 
+      ImageMemoryBarrier presTrans( {}, vk::AccessFlagBits::eColorAttachmentWrite,
         vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::ePresentSrcKHR, 
         _gfxQueueFamilyIdx, _presQueueFamilyIdx, nullptr, issr );
       
-      currentCommandBuffer( )->pipelineBarrier( 
+      currrentCmd->pipelineBarrier(
         vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        vk::PipelineStageFlagBits::eBottomOfPipe, {}, {}, {}, { barrier } );
+        vk::PipelineStageFlagBits::eBottomOfPipe, {}, {}, {}, { presTrans } );
     }
-    currentCommandBuffer( )->end( );
+    currrentCmd->end( );
     vk::Result err = _gfxQueue->submit( SubmitInfo {
       { _defaultFramebuffer->getPresentSemaphore( ) },
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      currentCommandBuffer(),
+      currrentCmd,
       _renderComplete
     } );
 
@@ -655,7 +684,7 @@ namespace lava
     {
       if ( renderer )
       {
-        renderer->logicalDeviceLost( );
+        //renderer->logicalDeviceLost( );
       }
 
       //releaseSwapChain( );
@@ -674,12 +703,12 @@ namespace lava
   {
   }*/
 
-  CommandBufferPtr VulkanWindow::currentCommandBuffer( void ) const
+  std::shared_ptr<CommandBuffer> VulkanWindow::currentCommandBuffer( void ) const
   {
     return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
   }
 
-  bool VulkanWindow::createDefaultRenderPass( void )
+  bool VulkanWindow::setupRenderPass( void )
   {
     const bool msaa = sampleCount > vk::SampleCountFlagBits::e1;
 
@@ -740,6 +769,19 @@ namespace lava
     return true;
   }
 
+  bool lava::VulkanWindow::setupFramebuffer( void )
+  {
+    _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
+    _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
+      _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
+    return true;
+  }
+
+  bool VulkanWindow::setupPipelineCache( void )
+  {
+    return true;
+  }
+
   void VulkanWindow::recreateSwapChain( void )
   {
   }
@@ -759,12 +801,12 @@ namespace lava
 		return _device;
 	}
 
-	std::shared_ptr< Queue > VulkanWindow::graphicQueue( void ) const
+	std::shared_ptr< Queue > VulkanWindow::gfxQueue( void ) const
 	{
 		return _gfxQueue;
 	}
 
-	std::shared_ptr< CommandPool > VulkanWindow::graphicsCommandPool( void ) const
+	std::shared_ptr< CommandPool > VulkanWindow::gfxCommandPool( void ) const
 	{
 		return _cmdPool;
 	}
@@ -844,6 +886,11 @@ namespace lava
     {
       _window.reset( );
     }
+    if ( renderer )
+    {
+      renderer->releaseResources( );
+      _device->waitIdle( );
+    }
     if ( _device )
     {
       if ( imageRes[ 0 ].commandBuffer )
@@ -896,5 +943,7 @@ namespace lava
     {
       _instance.reset( );
     }*/
+
+    delete renderer;
   }
 }

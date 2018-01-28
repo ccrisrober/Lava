@@ -19,14 +19,14 @@
 
 #include "Texture3D.h"
 
-#include "Device.h"
-#include "PhysicalDevice.h"
+#include <lava/Buffer.h>
+#include <lava/PhysicalDevice.h>
 
 #include "utils.hpp"
 
 namespace lava
 {
-  Texture3D::Texture3D( const DeviceRef& device_, uint32_t width_, 
+  Texture3D::Texture3D( const std::shared_ptr<Device>& device_, uint32_t width_, 
     uint32_t height_, uint32_t depth_, const void* src,
     const std::shared_ptr<CommandPool>& cmdPool,
     const std::shared_ptr<Queue>& queue, vk::Format format )
@@ -157,7 +157,7 @@ namespace lava
     //free( pixels );
 
     std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
-    copyCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+    copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
 
     // The sub resource range describes the regions of the image we will be transition
     vk::ImageSubresourceRange subresourceRange;

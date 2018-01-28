@@ -20,8 +20,8 @@ public:
   void initResources( void ) override
   {
     auto device = _window->device( );
-    tq = new TeapotQuad( device, _window->graphicsCommandPool( ), 
-      _window->graphicQueue( ) );
+    tq = new TeapotQuad( device, _window->gfxCommandPool( ), 
+      _window->gfxQueue( ) );
   }
   void nextFrame( void ) override
   {

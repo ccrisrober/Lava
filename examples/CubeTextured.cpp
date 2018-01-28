@@ -97,8 +97,8 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
@@ -107,14 +107,14 @@ public:
       vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
         vertices.data( ) } );
       cmd->end( );
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
@@ -123,7 +123,7 @@ public:
       indexBuffer->update<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
         indices.data( ) } );
       cmd->end( );
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
   
     // MVP buffer
@@ -132,8 +132,8 @@ public:
     }
 
     tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "uv_checker.png" ), _window->graphicsCommandPool( ), 
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "uv_checker.png" ), _window->gfxCommandPool( ), 
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),

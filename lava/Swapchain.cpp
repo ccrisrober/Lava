@@ -18,12 +18,11 @@
  **/
 
 #include "Swapchain.h"
-#include "Device.h"
-#include "Surface.h"
+#include <lava/Surface.h>
 
 namespace lava
 {
-  Swapchain::Swapchain( const DeviceRef& device,
+  Swapchain::Swapchain( const std::shared_ptr<Device>& device,
     const std::shared_ptr<Surface>& surface, uint32_t numImageCount,
     vk::Format imageFormat, vk::ColorSpaceKHR colorSpace, 
     const vk::Extent2D& imageExtent,
