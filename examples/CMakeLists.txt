@@ -129,4 +129,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAINDEXBUFFERBYJGM_LINK_LIBRARIES lava )
   common_application( lavaIndexBufferByJGM )
   
+  set( LAVAUNIFORMBUFFERSBYJGM_HEADERS )
+  set( LAVAUNIFORMBUFFERSBYJGM_SOURCES UniformBuffersByJGM.cpp )
+  set( LAVAUNIFORMBUFFERSBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaUniformBuffersByJGM )
+  
 endif( )
