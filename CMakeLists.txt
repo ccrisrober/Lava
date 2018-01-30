@@ -49,6 +49,9 @@ common_find_package( STBI REQUIRED SYSTEM )
 common_find_package( ASSIMP REQUIRED SYSTEM )
 #common_find_package( GLSLANG REQUIRED )
 
+common_find_package(Qt5Core SYSTEM)
+common_find_package(Qt5Widgets SYSTEM)
+
 list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP 
 #GLSLANG
 )
@@ -61,6 +64,11 @@ common_find_package_post( )
 
 add_subdirectory( lava )
 add_subdirectory( lavaRenderer )
+
+if( QT5CORE_FOUND )
+  add_subdirectory( qtLava )
+endif( )
+
 add_subdirectory( examples )
 
 configure_file(
