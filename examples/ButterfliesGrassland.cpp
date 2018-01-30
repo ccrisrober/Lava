@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -645,9 +646,9 @@ public:
       grass.ubo.proj[ 1 ][ 1 ] *= -1;
 
       grass.ubo.time = time;
-      grass.uboBuffer->update( &grass.ubo );
+      grass.uboBuffer->set( &grass.ubo );
 
-      grass.uboBuffer2->update( &grass.ubo2 );
+      grass.uboBuffer2->set( &grass.ubo2 );
     }
 
     {
@@ -658,7 +659,7 @@ public:
 
       butterflies.ubo.time = time;
 
-      butterflies.uboBuffer->update( &butterflies.ubo );
+      butterflies.uboBuffer->set( &butterflies.ubo );
     }
 
     {
@@ -666,7 +667,7 @@ public:
       skybox.ubo.view = grass.ubo.view;
       skybox.ubo.proj = grass.ubo.proj;
 
-      skybox.uniformMVP->update( &skybox.ubo );
+      skybox.uniformMVP->set( &skybox.ubo );
     }
   }
 

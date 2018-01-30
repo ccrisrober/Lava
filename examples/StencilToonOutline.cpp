@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -228,9 +229,9 @@ public:
       width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformMVP->update( &uboVS );
+    uniformMVP->set( &uboVS );
 
-    uniformBufferOutline->update( &uboVS2 );
+    uniformBufferOutline->set( &uboVS2 );
   }
 
   void updateOutlineWidth( float inc )

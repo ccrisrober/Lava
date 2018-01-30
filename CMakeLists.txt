@@ -60,6 +60,7 @@ endif()
 common_find_package_post( )
 
 add_subdirectory( lava )
+add_subdirectory( lavaRenderer )
 add_subdirectory( examples )
 
 configure_file(

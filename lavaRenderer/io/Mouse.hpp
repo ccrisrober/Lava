@@ -17,12 +17,11 @@
  *
  **/
 
-#ifndef __LAVA_MOUSE__
-#define __LAVA_MOUSE__
+#ifndef __LAVARENDERER_MOUSE__
+#define __LAVARENDERER_MOUSE__
 
-#include <lava/api.h>
+#include <lavaRenderer/api.h>
 #include <cstring>
-
 #include "../includes.hpp"
 
 namespace lava
@@ -53,33 +52,33 @@ namespace lava
   class GLFWMouse : public Mouse
   {
   public:
-    LAVA_API
+    LAVARENDERER_API
     GLFWMouse( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual ~GLFWMouse( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int mouseX( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int mouseY( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int previousMouseX( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int previousMouseY( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int mouseWheelX( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int mouseWheelY( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual int deltaX( int val );
-    LAVA_API
+    LAVARENDERER_API
     virtual int deltaY( int val );
-    LAVA_API
+    LAVARENDERER_API
     virtual bool buttonRelease( MouseButton button );
-    LAVA_API
+    LAVARENDERER_API
     virtual bool buttonPress( MouseButton button );
-    LAVA_API
+    LAVARENDERER_API
     virtual bool singleButtonPress( MouseButton button );
-    LAVA_API
+    LAVARENDERER_API
     virtual void update( void );
 
     void onMouseMove( int x, int y );
@@ -104,4 +103,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVA_MOUSE__ */
+#endif /* __LAVARENDERER_MOUSE__ */

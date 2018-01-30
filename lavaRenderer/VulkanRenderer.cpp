@@ -1,7 +1,4 @@
 #include "VulkanRenderer.h"
-#include "Log.h"
-
-#include <lava/Instance.h>
 #include <thread>
 
 namespace lava
@@ -324,7 +321,7 @@ namespace lava
     }
 
 		//initCapabilites( );
-    _surface = _instance->createSurfaceKHR( _window->getWindow( ) );
+    _surface = createSurfaceKHR( _window->getWindow( ) );
     auto surfaceFormats = _physicalDevice->getSurfaceFormats( _surface );
     assert( !surfaceFormats.empty( ) );
     uint32_t numFormats = surfaceFormats.size( );

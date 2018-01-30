@@ -17,8 +17,6 @@ set( LAVA_PUBLIC_HEADERS
   StringUtils.hpp
   RenderAPICapabilites.h
 
-  DefaultFramebuffer.h
-
   Image.h
   RenderPass.h
   Surface.h
@@ -38,8 +36,6 @@ set( LAVA_PUBLIC_HEADERS
   utils.hpp
 
   VulkanResource.h
-  VulkanRenderer.h
-  Window.h
 
   engine/Clock.h
   engine/Material.h
@@ -49,10 +45,6 @@ set( LAVA_PUBLIC_HEADERS
   extras/Material.h
   extras/Mesh.h
   extras/ModelImporter.h
-
-  io/Input.hpp
-  io/Keyboard.hpp
-  io/Mouse.hpp
 )
 
 set( LAVA_SOURCES
@@ -65,8 +57,6 @@ set( LAVA_SOURCES
   Event.cpp
   Fence.cpp
   Log.cpp
-
-  DefaultFramebuffer.cpp
 
   Image.cpp
   RenderPass.cpp
@@ -87,8 +77,6 @@ set( LAVA_SOURCES
   utils.cpp
 
   VulkanResource.cpp
-  VulkanRenderer.cpp
-  Window.cpp
 
   engine/Clock.cpp
   engine/Material.cpp
@@ -98,10 +86,6 @@ set( LAVA_SOURCES
   extras/Material.cpp
   extras/Mesh.cpp
   extras/ModelImporter.cpp
-
-  io/Input.cpp
-  io/Keyboard.cpp
-  io/Mouse.cpp
 )
 
 set( LAVA_HEADERS
@@ -112,7 +96,6 @@ set( LAVA_MOC_HEADERS
 
 set( LAVA_LINK_LIBRARIES
 	${VULKAN_LIBRARY}
-	${GLFW3_LIBRARIES}
 	${GLM_LIBRARIES}
 	${STBI_LIBRARIES}
   ${ASSIMP_LIBRARIES}

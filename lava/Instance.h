@@ -63,18 +63,6 @@ namespace lava
       const vk::DebugReportCallbackCreateInfoEXT& debugInfo );
 
     LAVA_API
-    std::shared_ptr<Surface> createSurfaceKHR( GLFWwindow* window )
-    {
-      // Surface KHR
-      VkSurfaceKHR surface;
-      if ( glfwCreateWindowSurface( VkInstance( _instance ),
-        window, nullptr, &surface ) != VK_SUCCESS )
-      {
-        throw std::runtime_error( "failed to create window surface!" );
-      }
-      return std::make_shared<Surface>( shared_from_this( ), vk::SurfaceKHR( surface ) );
-    }
-    LAVA_API
     uint32_t getPhysicalDeviceCount( void ) const;
     LAVA_API
     std::shared_ptr<PhysicalDevice> getPhysicalDevice( uint32_t index );

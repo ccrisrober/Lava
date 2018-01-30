@@ -17,38 +17,10 @@
  *
  **/
 
-#ifndef __LAVA_SURFACE__
-#define __LAVA_SURFACE__
+#ifndef __LAVARENDERER_INCLUDES__
+#define __LAVARENDERER_INCLUDES__
 
-#include "includes.hpp"
-#include "noncopyable.hpp"
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
-#include <lava/api.h>
-
-namespace lava
-{
-  class Instance;
-  class Surface : private NonCopyable<Surface>
-  {
-  public:
-    LAVA_API
-    Surface( const std::shared_ptr< Instance >& instance, 
-      const vk::SurfaceKHR& surface );
-    Surface( const Surface& ) = delete;
-
-    Surface& operator=( const Surface& ) = delete;
-    LAVA_API
-    ~Surface( void );
-
-    LAVA_API
-    inline operator vk::SurfaceKHR( void ) const
-    {
-      return _surface;
-    }
-  private:
-    std::shared_ptr< Instance > _instance;
-    vk::SurfaceKHR _surface;
-  };
-}
-
-#endif /* __LAVA_SURFACE__ */
+#endif /* __LAVARENDERER_INCLUDES__ */

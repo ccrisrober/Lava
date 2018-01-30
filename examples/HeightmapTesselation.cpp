@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -343,7 +344,7 @@ public:
     );
     ubo.proj[ 1 ][ 1 ] *= -1;
 
-    mvpBuffer->update( &ubo );
+    mvpBuffer->set( &ubo );
   }
 
   void nextFrame( void ) override

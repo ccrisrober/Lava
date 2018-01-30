@@ -17,43 +17,45 @@
 *
 **/
 
-#ifndef __LAVA_DEFAULTFRAMEBUFFER__
-#define __LAVA_DEFAULTFRAMEBUFFER__
+#ifndef __LAVARENDERER_DEFAULTFRAMEBUFFER__
+#define __LAVARENDERER_DEFAULTFRAMEBUFFER__
 
-#include "includes.hpp"
+#include <lava/lava.h>
+#include <lavaRenderer/api.h>
 
-#include "Device.h"
-#include "Queue.h"
-#include "Swapchain.h"
-#include "Surface.h"
-
-#include "utils.hpp"
+#include <stdint.h> // UINT64_MAX
+#include <memory>
 
 namespace lava
 {
   class DefaultFramebuffer
   {
   public:
+    LAVARENDERER_API
     DefaultFramebuffer( const std::shared_ptr<Device>& device,
       const std::shared_ptr<Surface>& surface,
       vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace, 
       vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
 
+    LAVARENDERER_API
     ~DefaultFramebuffer( void )
     {
     }
 
+    LAVARENDERER_API
     void rebuild( const std::shared_ptr<Device>& device,
       const std::shared_ptr<Surface>& surface,
       vk::Format surfaceFormat, vk::Format depthFormat,
       const std::shared_ptr<RenderPass>& renderPass );
 
+    LAVARENDERER_API
     const vk::Extent2D& getExtent( void ) const { return _extent; }
+    LAVARENDERER_API
     const std::shared_ptr<Framebuffer>& getFramebuffer( void ) const
     {
       return _framebuffers[ _swapchainIndex ];
     }
-    LAVA_API // TODO: Remove API
+    LAVARENDERER_API // TODO: Remove API
     void acquireNextFrame( uint64_t timeout = UINT64_MAX, 
       const std::shared_ptr<Fence>& fence = nullptr )
     {
@@ -75,7 +77,7 @@ namespace lava
       return _swapchainIndex;
     }
 
-    LAVA_API // TODO: Remove API
+    LAVARENDERER_API // TODO: Remove API
     void present( const std::shared_ptr<Queue>& queue,
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = {} )
     {
@@ -83,13 +85,13 @@ namespace lava
       //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
       //std::cout << str << std::endl;
     }
-    LAVA_API
+    LAVARENDERER_API
     int imagesCount( void ) const
     {
       return _framebuffers.size( );
     }
 
-    LAVA_API
+    LAVARENDERER_API
     bool supportsGrab( void ) const
     {
       return _swapChainSupportsReadBack;
@@ -100,7 +102,7 @@ namespace lava
     vk::Extent2D _extent;
 
     bool _swapChainSupportsReadBack;
-
+    
   public:
     std::shared_ptr<Swapchain> _swapchain;
   protected:
@@ -113,4 +115,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVA_DEFAULTFRAMEBUFFER__ */
+#endif /* __LAVARENDERER_DEFAULTFRAMEBUFFER__ */

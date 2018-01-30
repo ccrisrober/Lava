@@ -1,46 +1,39 @@
-#ifndef __LAVA_VULKAN_RENDERER__
-#define __LAVA_VULKAN_RENDERER__
+#ifndef __LAVARENDERER_VULKAN_RENDERER__
+#define __LAVARENDERER_VULKAN_RENDERER__
 
-#include <lava/api.h>
-#include <lava/api.h>
-#include <lava/CommandBuffer.h>
-#include <lava/Framebuffer.h>
-#include <lava/PhysicalDevice.h>
-#include <lava/Fence.h>
-#include <lava/Queue.h>
-#include <lava/Swapchain.h>
-#include <lava/Window.h>
+#include <lava/lava.h>
+#include <lavaRenderer/api.h>
 
-#include "RenderAPICapabilites.h"
 #include "DefaultFramebuffer.h"
+#include "Window.h"
 
 namespace lava
 {
   class VulkanWindowRenderer
   {
   public:
-    LAVA_API
+    LAVARENDERER_API
     virtual ~VulkanWindowRenderer( void );
 
     /**
     * Method called when creating renderer's resources
     */
-    LAVA_API
+    LAVARENDERER_API
     virtual void initResources( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual void initSwapChainResources( void );
-    LAVA_API
+    LAVARENDERER_API
     virtual void releaseSwapChainResources( void );
     /**
     * Method called when renderer's resources must be released
     */
-    LAVA_API
+    LAVARENDERER_API
     virtual void releaseResources( void );
     /**
     * Method called when the draw calls for the next frame are to be added
     *   to the command buffer
     */
-    LAVA_API
+    LAVARENDERER_API
     virtual void nextFrame( void ) = 0;
 
     //virtual void physicalDeviceLost( void );
@@ -50,94 +43,94 @@ namespace lava
   class VulkanWindow
   {
   public:
-    LAVA_API
+    LAVARENDERER_API
     VulkanWindow( void)
     {
       _initialized = false;
       _swapChainImageSize = glm::ivec2( 500, 500 );
     }
-    LAVA_API
+    LAVARENDERER_API
     virtual ~VulkanWindow( void );
 
-    LAVA_API
+    LAVARENDERER_API
     VulkanWindow( const VulkanWindow& ) = delete;
-    LAVA_API
+    LAVARENDERER_API
     VulkanWindow& operator=( const VulkanWindow& ) = delete;
 
-    LAVA_API
+    LAVARENDERER_API
     void setVulkanInstance( const std::shared_ptr< Instance > instance );
 
-    LAVA_API
+    LAVARENDERER_API
     bool supportsGrab( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     void init( void );
-    LAVA_API
+    LAVARENDERER_API
     void reset( void );
 
-    LAVA_API
+    LAVARENDERER_API
     void beginFrame( void );
-    LAVA_API
+    LAVARENDERER_API
     void endFrame( void );
-    LAVA_API
+    LAVARENDERER_API
     bool checkDeviceLost( vk::Result res );
 
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr<CommandBuffer> currentCommandBuffer( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     RenderAPICapabilities caps( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     void setWindowTitle( const char*& name );
-    LAVA_API
+    LAVARENDERER_API
     void setWindowTitle( const std::string& name );
 
-    LAVA_API
+    LAVARENDERER_API
     vk::Extent2D getExtent( void ) const
     {
       return _defaultFramebuffer->getExtent( );
     }
 
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< PhysicalDevice > physicalDevice( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     const vk::PhysicalDeviceProperties physicalDeviceProperties( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< Device > device( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< Queue > gfxQueue( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< CommandPool > gfxCommandPool( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< RenderPass > defaultRenderPass( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     vk::Format colorFormat( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     vk::Format depthStencilFormat( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     glm::ivec2 swapChainImageSize( void ) const;
 
     int currentFrame( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     int swapChainImageCount( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     int currentSwapChainImageIndex( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< Image > swapChainImage( int idx ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< ImageView > swapChainImageView( int idx ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< Image > depthStencilImage( void ) const;
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< ImageView > depthStencilImageView( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     glm::mat4 clipCorrectionMatrix( void );
 
-    LAVA_API
+    LAVARENDERER_API
     virtual void resize( uint32_t width, uint32_t height ) final
     {
       //assert( ( 0 <= width ) && ( 0 <= height ) );
@@ -148,63 +141,63 @@ namespace lava
       resizeEvent( width, height );
     }
 
-    LAVA_API
+    LAVARENDERER_API
     virtual void resizeEvent( uint32_t w, uint32_t h );
 
-    LAVA_API
+    LAVARENDERER_API
     void show( void );
 
     std::shared_ptr< PipelineCache > pipelineCache;
 
-    LAVA_API
+    LAVARENDERER_API
     /*std::unique_ptr< */DefaultFramebuffer* /*>*/ defaultFramebuffer( void ) const // TODO: SO UGLY ...
     {
       return _defaultFramebuffer.get( );
     }
 
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr< Framebuffer > currentFramebuffer( void ) const
     {
       return _defaultFramebuffer->getFramebuffer( );
     }
-    LAVA_API
+    LAVARENDERER_API
     virtual VulkanWindowRenderer* createRenderer( void );
 
-    LAVA_API
+    LAVARENDERER_API
     void frameReady( void );
 
-    LAVA_API
+    LAVARENDERER_API
     vk::SampleCountFlagBits sampleCountFlagBits( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     void setSampleCountFlagBits( int sampleCount );
 
-    LAVA_API
+    LAVARENDERER_API
     std::vector< int > supportedSampleCounts( void );
 
-    LAVA_API
+    LAVARENDERER_API
     int imagesCount( void ) const;
 
-    LAVA_API
+    LAVARENDERER_API
     void setDeviceExtensions( const std::vector< std::string >& extensions );
 
     virtual void getEnabledFeatures( void )
     {
     }
 
-    LAVA_API
+    LAVARENDERER_API
     std::shared_ptr<Instance> vulkanInstance( void )
     {
       return _instance;
     }
   protected:
-    LAVA_API
+    LAVARENDERER_API
     virtual bool setupRenderPass( void );
 
-    LAVA_API
+    LAVARENDERER_API
     virtual bool setupFramebuffer( void );
 
-    LAVA_API
+    LAVARENDERER_API
     virtual bool setupPipelineCache( void );
 
   private:
@@ -261,7 +254,21 @@ namespace lava
 
 
     bool _framePending = false;
+
+    private:
+      std::shared_ptr<Surface> createSurfaceKHR( GLFWwindow* window )
+      {
+        // Surface KHR
+        VkSurfaceKHR surface;
+        if ( glfwCreateWindowSurface( VkInstance( 
+          static_cast< vk::Instance >( *_instance ) ), window, nullptr, 
+          &surface ) != VK_SUCCESS )
+        {
+          throw std::runtime_error( "failed to create window surface!" );
+        }
+        return std::make_shared<Surface>( _instance, vk::SurfaceKHR( surface ) );
+      }
   };
 }
 
-#endif /* __LAVA_VULKAN_RENDERER__ */
+#endif /* __LAVARENDERER_VULKAN_RENDERER__ */

@@ -18,6 +18,7 @@
 **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -306,7 +307,7 @@ public:
     diffuse.uboVS.lightPos.y = 5.0 + cos( time ) * 1.0f;
 
 
-    diffuse.mvpBuffer->update( &diffuse.uboVS );
+    diffuse.mvpBuffer->set( &diffuse.uboVS );
 
 
     atmosphere.uboVS.mvp = glm::rotate( glm::mat4( 1.0f ), 0.75f * time * glm::radians( 5.0f ),
@@ -314,7 +315,7 @@ public:
     atmosphere.uboVS.mvp = glm::scale( atmosphere.uboVS.mvp, glm::vec3( 1.015f ) );
     atmosphere.uboVS.mvp = diffuse.uboVS.proj * diffuse.uboVS.view * atmosphere.uboVS.mvp;
 
-    atmosphere.mvpBuffer->update( &atmosphere.uboVS );
+    atmosphere.mvpBuffer->set( &atmosphere.uboVS );
   }
 
   void nextFrame( void ) override

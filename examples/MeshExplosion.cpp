@@ -18,6 +18,7 @@
 **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -174,7 +175,7 @@ public:
 
     uboVS.time = time;
 
-    mvpBuffer->update( &uboVS );
+    mvpBuffer->set( &uboVS );
   }
 
   void nextFrame( void ) override

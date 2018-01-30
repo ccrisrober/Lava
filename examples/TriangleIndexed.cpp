@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -61,12 +62,12 @@ public:
   void initResources( void ) override
   {
     auto device = _window->device( );
+    auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+    cmd->begin( );
 
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
-      cmd->begin( );
 
       vertexBuffer = device->createBuffer( vertexBufferSize, 
         vk::BufferUsageFlagBits::eVertexBuffer | 
@@ -74,8 +75,6 @@ public:
         vk::MemoryPropertyFlagBits::eDeviceLocal );
       vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ), 
         vertices.data( ) } );
-      cmd->end( );
-      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
 #ifdef INDEXING_MODE
@@ -83,24 +82,15 @@ public:
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
-      auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, 
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
-
       indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
-      cmd->begin( );
-        stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
-      cmd->end( );
-
-      _window->gfxQueue( )->submitAndWait( cmd );
+      indexBuffer->update<uint32_t>( cmd, 0, { uint32_t( indices.size( ) ),
+        indices.data( ) } );
     }
+    cmd->end( );
+    _window->gfxQueue( )->submitAndWait( cmd );
 #endif
 #ifdef TESS_MODE
     material = std::make_shared<lava::engine::BasicTessTriangle>( );

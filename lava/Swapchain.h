@@ -37,6 +37,7 @@ namespace lava
   class Swapchain : public VulkanResource
   {
   public:
+    LAVA_API
     Swapchain( const std::shared_ptr<Device>& device, 
       const std::shared_ptr< Surface >& surface,
       uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
@@ -46,10 +47,13 @@ namespace lava
       vk::SurfaceTransformFlagBitsKHR preTransform,
       vk::CompositeAlphaFlagBitsKHR compAlpha, vk::PresentModeKHR presentMode,
       bool clipped, const std::shared_ptr< Swapchain >& oldSwapchain );
+    LAVA_API
     virtual ~Swapchain( void );
 
+    LAVA_API
     const std::vector< std::shared_ptr< Image > >& 
       getImages( void ) const;
+    LAVA_API
     const std::vector< std::shared_ptr< Semaphore > >& 
       getPresentCompleteSemaphores( void ) const
     {
@@ -61,6 +65,7 @@ namespace lava
       return _swapchain;
     }
 
+    LAVA_API
     uint32_t acquireNextImage( uint64_t timeout = UINT64_MAX,
       const std::shared_ptr< Fence >& fence = { } );
 

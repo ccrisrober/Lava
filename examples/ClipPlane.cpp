@@ -18,6 +18,7 @@
 **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -303,7 +304,7 @@ public:
 
     ubo.clipPlane.z = 7.0f * sin( time );
 
-    uboUniform->update( &ubo );
+    uboUniform->set( &ubo );
   }
 
   bool modeReflect = true;

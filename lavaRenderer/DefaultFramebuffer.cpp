@@ -19,8 +19,6 @@
 
 #include "DefaultFramebuffer.h"
 
-#include "PhysicalDevice.h"
-
 namespace lava
 {
   DefaultFramebuffer::DefaultFramebuffer( const std::shared_ptr<Device>& device,

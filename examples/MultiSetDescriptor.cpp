@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -202,7 +203,7 @@ public:
     ubo.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     ubo.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->update( &ubo );
+    uniformBufferMVP->set( &ubo );
   }
 
   void nextFrame( void ) override

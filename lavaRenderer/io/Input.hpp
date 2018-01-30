@@ -17,10 +17,10 @@
  *
  **/
 
-#ifndef __LAVA_INPUT__
-#define __LAVA_INPUT__
+#ifndef __LAVARENDERER_INPUT__
+#define __LAVARENDERER_INPUT__
 
-#include <lava/api.h>
+#include <lavaRenderer/api.h>
 
 #include "Mouse.hpp"
 #include "Keyboard.hpp"
@@ -31,53 +31,53 @@ namespace lava
   class Input
   {
   public:
-	LAVA_API
+	LAVARENDERER_API
 	static void initialize( void );
-	LAVA_API
+	LAVARENDERER_API
 	static void destroy( void );
-	LAVA_API
+	LAVARENDERER_API
 	static lava::Keyboard* Keyboard( void );
-	LAVA_API
+	LAVARENDERER_API
 	static lava::Mouse* Mouse( void );
-	LAVA_API
+	LAVARENDERER_API
 	static bool isKeyPressed(Keyboard::Key key);
-	LAVA_API
+	LAVARENDERER_API
 	static bool isKeyClicked(Keyboard::Key key);
-	LAVA_API
+	LAVARENDERER_API
 	static bool KeyReleased(Keyboard::Key key);
-	LAVA_API
+	LAVARENDERER_API
 	static int MouseX( void );
-	LAVA_API
+	LAVARENDERER_API
 	static int MouseY( void );
-	LAVA_API
+	LAVARENDERER_API
 	static Input* instance( void );
-	LAVA_API
+	LAVARENDERER_API
 	static int PreviousMouseX( void );
-	LAVA_API
+	LAVARENDERER_API
 	static int PreviousMouseY( void );
-	LAVA_API
+	LAVARENDERER_API
 	static int MouseWheelX( void );
-	LAVA_API
+	LAVARENDERER_API
 	static int MouseWheelY( void );
-	LAVA_API
+	LAVARENDERER_API
 	static int DeltaX( int val );
-	LAVA_API
+	LAVARENDERER_API
 	static int DeltaY( int val );
-	LAVA_API
+	LAVARENDERER_API
 	static bool MouseButtonPress( MouseButton button );
-	LAVA_API
+	LAVARENDERER_API
 	static bool MouseButtonSinglePress( MouseButton button );
-	LAVA_API
+	LAVARENDERER_API
 	static bool MouseButtonRelease( MouseButton button );
-	LAVA_API
+	LAVARENDERER_API
 	static void update( void );
 
-	LAVA_API
+	LAVARENDERER_API
 	static float getAxis( const std::string& axis )
 	{
 		return Input::instance( )->_axes[ axis ];
 	}
-	LAVA_API
+	LAVARENDERER_API
 	static void setAxis( const std::string& axis, float v )
 	{
 		Input::instance( )->_axes[ axis ] = v;
@@ -95,4 +95,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVA_INPUT__ */
+#endif /* __LAVARENDERER_INPUT__ */

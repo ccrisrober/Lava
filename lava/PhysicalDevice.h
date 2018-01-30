@@ -43,6 +43,7 @@ namespace lava
       return _physicalDevice;
     }
     // Returns a set of properties describing the physical device.
+    LAVA_API
     const vk::PhysicalDeviceProperties& getDeviceProperties( void ) const
     {
       return _deviceProperties;
@@ -50,20 +51,24 @@ namespace lava
 
     // Returns a set of features that the application can use to check if a 
     //    specific feature is supported.
+    LAVA_API
     const vk::PhysicalDeviceFeatures& getDeviceFeatures( void ) const
     {
       return _deviceFeatures;
     }
 
     // Returns a set of properties describing the memory of the physical device.
+    LAVA_API
     const vk::PhysicalDeviceMemoryProperties& getMemoryProperties( void ) const
     {
       return _memoryProperties;
     }
 
+    LAVA_API
     std::vector<vk::SurfaceFormatKHR> getSurfaceFormats(
       const std::shared_ptr<Surface>& surface ) const;
 
+    LAVA_API
     bool supportSurfaceKHR( size_t queueFamilyIdx,
       const std::shared_ptr<Surface>& surface );
 
@@ -74,28 +79,34 @@ namespace lava
       const std::vector<std::string>& enabledExtensionNames,
       const vk::PhysicalDeviceFeatures& enabledFeatures = {} );
 
+    LAVA_API
     vk::SurfaceCapabilitiesKHR getSurfaceCapabilities(
       const std::shared_ptr<Surface>& surface ) const;
 
+    LAVA_API
     vk::FormatProperties getFormatProperties( vk::Format format ) const
     {
       return _physicalDevice.getFormatProperties( format );
     }
-    
+
+    LAVA_API
     bool extensionSupported( const std::string& extension )
     {
       return ( std::find( supportedExtensions.begin( ), 
         supportedExtensions.end( ), extension ) != supportedExtensions.end( ) );
     }
-    
+
+    LAVA_API
     std::vector<vk::QueueFamilyProperties> getQueueFamilyProperties( void ) const
     {
       return _physicalDevice.getQueueFamilyProperties( );
     }
 
+    LAVA_API
     std::vector<uint32_t> getGraphicsPresentQueueFamilyIndices(
       const std::shared_ptr<Surface>& surface );
 
+    LAVA_API
     std::vector<uint32_t> getComputeQueueFamilyIndices( void );
 
   private:
