@@ -22,8 +22,8 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 
 /** Shaders. They must be in *.spv Vulkan format. **/
-std::string triangleVS( "/home/jguerrero/opt/Lava/resources/shaders/sh/triangleByJGM_vert.spv" );
-std::string triangleFS( "/home/jguerrero/opt/Lava/resources/shaders/sh/triangleByJGM_frag.spv" );
+std::string triangleVS( "/home/jguerrero/opt/Lava/spvs/JGM/triangleByJGM_vert.spv" );
+std::string triangleFS( "/home/jguerrero/opt/Lava/spvs/JGM/triangleByJGM_frag.spv" );
 
 /** Instance-related. **/
 

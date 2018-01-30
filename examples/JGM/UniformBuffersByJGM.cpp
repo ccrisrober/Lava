@@ -1,6 +1,6 @@
 /**
  * Lava.
- * File: StagingBufferByJGM.cpp
+ * File: UniformBuffersByJGM.cpp
  * Author: Juan Guerrero Martín.
  * Brief: Following The Khronos Group Inc. tutorial (https://vulkan-tutorial.com/).
  */
@@ -10,11 +10,14 @@
 #include <GLFW/glfw3.h>
 
 // glm.
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 // std.
 #include <array>
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <functional>
 #include <fstream>
@@ -27,7 +30,8 @@
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
-/** GLM. Vertex buffers. **/
+/** GLM. **/
+
 struct Vertex
 {
   glm::vec2 pos;
@@ -62,17 +66,28 @@ struct Vertex
   }
 };
 
-// Top vertex now is white.
-const std::vector<Vertex> vertices =
+// Now we have a rectangle.
+const std::vector< Vertex > vertices =
 {
-  { { 0.0f, -0.5f}, {1.0f, 1.0f, 1.0f} },
-  { { 0.5f,  0.5f}, {0.0f, 1.0f, 0.0f} },
-  { {-0.5f,  0.5f}, {0.0f, 0.0f, 1.0f} }
+  { {-0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+  { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+  { { 0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f } },
+  { {-0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f } }
+};
+
+const std::vector< uint16_t > indices =
+{ 0, 1, 2, 2, 3, 0 };
+
+struct UniformBufferObject
+{
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
 };
 
 /** Shaders. They must be in *.spv Vulkan format. **/
-std::string triangleVS( "/home/jguerrero/opt/Lava/spvs/vertexBuffersByJGM_vert.spv" );
-std::string triangleFS( "/home/jguerrero/opt/Lava/spvs/vertexBuffersByJGM_frag.spv" );
+std::string triangleVS( "/home/jguerrero/opt/Lava/spvs/JGM/uniformBuffersByJGM_vert.spv" );
+std::string triangleFS( "/home/jguerrero/opt/Lava/spvs/JGM/uniformBuffersByJGM_frag.spv" );
 
 /** Instance-related. **/
 
@@ -708,6 +723,28 @@ class HelloTriangleApplication
       }
     }
 
+    void createDescriptorSetLayout( void )
+    {
+      VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+      uboLayoutBinding.binding = 0;
+      uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      uboLayoutBinding.descriptorCount = 1;
+      uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+      uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+      VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+      layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+      layoutInfo.bindingCount = 1;
+      layoutInfo.pBindings = &uboLayoutBinding;
+
+      if( vkCreateDescriptorSetLayout( device, &layoutInfo, nullptr, &descriptorSetLayout ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create descriptor set layout!" );
+      }
+
+
+    }
+
     void createGraphicsPipeline( void )
     {
       // Getting shaders byte array.
@@ -791,7 +828,8 @@ class HelloTriangleApplication
       // If it is greater than 1 -> you must use a GPU feature.
       rasterizer.lineWidth = 1.0f;
       rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-      rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+      // In Vulkan, Y is inverted.
+      rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
       // Some bias can be added to the depth values.
       rasterizer.depthBiasEnable = VK_FALSE;
       rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -858,8 +896,8 @@ class HelloTriangleApplication
       /** Pipeline layout. **/
       VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
       pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-      pipelineLayoutInfo.setLayoutCount = 0; // Optional
-      pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+      pipelineLayoutInfo.setLayoutCount = 1;
+      pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
       pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
       pipelineLayoutInfo.pPushConstantRanges = 0; // Optional
 
@@ -1073,6 +1111,101 @@ class HelloTriangleApplication
       vkFreeMemory( device, stagingBufferMemory, nullptr );
     }
 
+    void createIndexBuffer( void )
+    {
+      VkDeviceSize bufferSize = sizeof( indices[0] ) * indices.size( );
+
+      // Staging buffer.
+      VkBuffer stagingBuffer;
+      VkDeviceMemory stagingBufferMemory;
+      createBuffer( bufferSize,
+                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    stagingBuffer,
+                    stagingBufferMemory );
+
+      // Data mapping.
+      void* data;
+      vkMapMemory( device, stagingBufferMemory, 0, bufferSize, 0, &data );
+      memcpy( data, indices.data( ), (size_t) bufferSize );
+      vkUnmapMemory( device, stagingBufferMemory );
+
+      // Actual index buffer.
+      createBuffer( bufferSize,
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    indexBuffer,
+                    indexBufferMemory );
+
+      copyBuffer( stagingBuffer, indexBuffer, bufferSize );
+
+      vkDestroyBuffer( device, stagingBuffer, nullptr );
+      vkFreeMemory( device, stagingBufferMemory, nullptr );
+    }
+
+    void createUniformBuffer( void )
+    {
+      VkDeviceSize bufferSize = sizeof( UniformBufferObject );
+      createBuffer( bufferSize,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    uniformBuffer, uniformBufferMemory );
+    }
+
+    void createDescriptorPool( void )
+    {
+      VkDescriptorPoolSize poolSize = {};
+      poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      poolSize.descriptorCount = 1;
+
+      VkDescriptorPoolCreateInfo poolInfo = {};
+      poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+      poolInfo.poolSizeCount = 1;
+      poolInfo.pPoolSizes = &poolSize;
+      poolInfo.maxSets = 1;
+
+      if( vkCreateDescriptorPool( device, &poolInfo, nullptr, &descriptorPool ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create descriptor pool!" );
+      }
+    }
+
+    void createDescriptorSet( void )
+    {
+      VkDescriptorSetLayout layouts[] = { descriptorSetLayout };
+      VkDescriptorSetAllocateInfo allocInfo = {};
+      allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+      allocInfo.descriptorPool = descriptorPool;
+      allocInfo.descriptorSetCount = 1;
+      allocInfo.pSetLayouts = layouts;
+
+      if( vkAllocateDescriptorSets( device, &allocInfo, &descriptorSet ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to allocate descriptor set!" );
+      }
+
+      VkDescriptorBufferInfo bufferInfo = {};
+      bufferInfo.buffer = uniformBuffer;
+      bufferInfo.offset = 0;
+      bufferInfo.range = sizeof( UniformBufferObject );
+
+      VkWriteDescriptorSet descriptorWrite = {};
+      descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrite.dstSet = descriptorSet;
+      descriptorWrite.dstBinding = 0;
+      descriptorWrite.dstArrayElement = 0;
+      descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      descriptorWrite.descriptorCount = 1;
+      descriptorWrite.pBufferInfo = &bufferInfo;
+      descriptorWrite.pImageInfo = nullptr; // Optional
+      descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+      vkUpdateDescriptorSets( device, 1, &descriptorWrite, 0, nullptr );
+    }
+
     void copyBuffer( VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size )
     {
       VkCommandBufferAllocateInfo allocInfo = {};
@@ -1165,16 +1298,22 @@ class HelloTriangleApplication
 
         vkCmdBeginRenderPass( commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-        vkCmdBindPipeline( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
+          vkCmdBindPipeline( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
 
-        // Working with buffers.
-        VkBuffer vertexBuffers[] = { vertexBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers( commandBuffers[i], 0, 1, vertexBuffers, offsets );
+          // Working with buffers.
+          VkBuffer vertexBuffers[] = { vertexBuffer };
+          VkDeviceSize offsets[] = { 0 };
+          vkCmdBindVertexBuffers( commandBuffers[i], 0, 1, vertexBuffers, offsets );
 
-        vkCmdDraw( commandBuffers[i],
-                   static_cast< uint32_t >( vertices.size( ) ),
-                   1, 0, 0 );
+          vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+          vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                  pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+
+          vkCmdDrawIndexed(
+            commandBuffers[i],
+            static_cast< uint32_t >( indices.size( ) ),
+            1, 0, 0, 0 );
 
         vkCmdEndRenderPass( commandBuffers[i] );
 
@@ -1360,10 +1499,16 @@ class HelloTriangleApplication
       createSwapChain( );
       createImageViews( );
       createRenderPass( );
+      createDescriptorSetLayout( );
       createGraphicsPipeline( );
       createFramebuffers( );
       createCommandPool( );
+      // Buffer-related.
       createVertexBuffer( );
+      createIndexBuffer( );
+      createUniformBuffer( );
+      createDescriptorPool( );
+      createDescriptorSet( );
       createCommandBuffers( );
       createSemaphores( );
     }
@@ -1373,9 +1518,39 @@ class HelloTriangleApplication
       while( !glfwWindowShouldClose( window ) )
       {
         glfwPollEvents( );
+
+        updateUniformBuffer( );
         drawFrame( );
       }
       vkDeviceWaitIdle(device);
+    }
+
+    void updateUniformBuffer( void )
+    {
+      static auto startTime = std::chrono::high_resolution_clock::now( );
+
+      auto currentTime = std::chrono::high_resolution_clock::now( );
+      float time = std::chrono::duration< float, std::chrono::seconds::period >
+                   ( currentTime - startTime ).count( );
+
+      UniformBufferObject ubo = {};
+      ubo.model = glm::rotate( glm::mat4( 1.0f ),
+                               time * glm::radians( 90.0f ),
+                               glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      ubo.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ),
+                              glm::vec3( 0.0f, 0.0f, 0.0f ),
+                              glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      ubo.proj = glm::perspective( glm::radians(45.0f),
+                                   swapChainExtent.width /
+                                   (float) swapChainExtent.height,
+                                   0.1f, 10.0f );
+      // GLM was written for OpenGL. Vulkan has the Y inverted.
+      ubo.proj[1][1] *= -1;
+
+      void* data;
+      vkMapMemory( device, uniformBufferMemory, 0, sizeof( ubo ), 0, &data );
+      memcpy( data, &ubo, sizeof( ubo ) );
+      vkUnmapMemory( device, uniformBufferMemory );
     }
 
     void cleanupSwapChain( void )
@@ -1406,9 +1581,23 @@ class HelloTriangleApplication
       // Swapchain, ImageView(s), RenderPass, Pipeline, CB(s), FB(s).
       cleanupSwapChain( );
 
+      // DescriptorPool(s).
+      vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+
+      // DescriptorSetLayout(s).
+      vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+
+      // Buffer(s).
+      vkDestroyBuffer(device, uniformBuffer, nullptr);
+      vkFreeMemory(device, uniformBufferMemory, nullptr);
+
+      vkDestroyBuffer(device, indexBuffer, nullptr);
+      vkFreeMemory(device, indexBufferMemory, nullptr);
+
       vkDestroyBuffer(device, vertexBuffer, nullptr);
       vkFreeMemory(device, vertexBufferMemory, nullptr);
 
+      // Semaphore(s).
       vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
       vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 
@@ -1445,6 +1634,7 @@ class HelloTriangleApplication
 
     // Pipeline-related.
     VkRenderPass renderPass;
+    VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
 
@@ -1458,8 +1648,16 @@ class HelloTriangleApplication
     // Device-related.
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // It will be destroyed with VkInstance.
     VkDevice device;
+
+    // Buffer-related.
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+    VkBuffer uniformBuffer;
+    VkDeviceMemory uniformBufferMemory;
+    VkDescriptorPool descriptorPool;
+    VkDescriptorSet descriptorSet;
 
     // Queue-related.
     VkQueue graphicsQueue;
