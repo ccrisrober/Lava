@@ -24,6 +24,7 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVACLEARSCREEN_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaClearScreen )
 
+if(FALSE) # fake a block comment
   set( LAVATRIANGLENOBUFFER_HEADERS )
   set( LAVATRIANGLENOBUFFER_SOURCES TriangleNoBuffer.cpp )
   set( LAVATRIANGLENOBUFFER_LINK_LIBRARIES lava lavaRenderer )
@@ -33,14 +34,13 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
   set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaTriangleIndexed )
-
+endif( )
   set( LAVACUBETEXTURED_HEADERS )
   set( LAVACUBETEXTURED_SOURCES CubeTextured.cpp )
   set( LAVACUBETEXTURED_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaCubeTextured )
 
-##if(FALSE) # fake a block comment
-
+if(FALSE) # fake a block comment
 ## Advanced Examples
   set( LAVASAMPLERUNIFORMQUAD_HEADERS )
   set( LAVASAMPLERUNIFORMQUAD_SOURCES SamplerUniformQuad.cpp )
@@ -161,6 +161,14 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASPARKLE_SOURCES Sparkle.cpp )
   set( LAVASPARKLE_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaSparkle )
-##endif( )
+endif( )
+
+
+if( QT5CORE_FOUND )
+  set( LAVAQTRENDER_HEADERS )
+  set( LAVAQTRENDER_SOURCES QtRender.cpp )
+  set( LAVAQTRENDER_LINK_LIBRARIES lava qtLava )
+  common_application( lavaQtRender )
+endif( )
 
 endif( )

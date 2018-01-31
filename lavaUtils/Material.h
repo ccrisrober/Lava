@@ -17,24 +17,24 @@
  *
  **/
 
-#ifndef __LAVA_MATERIAL__
-#define __LAVA_MATERIAL__
+#ifndef __LAVAUTILS_MATERIAL__
+#define __LAVAUTILS_MATERIAL__
 
 #ifdef LAVA_USE_ASSIMP
 
 #include <assimp/material.h>
-#include "../includes.hpp"
+#include <glm/glm.hpp>
 
-#include <lava/api.h>
+#include <lavaUtils/api.h>
 
 namespace lava
 {
-  namespace extras
+  namespace utility
   {
     class Material
     {
     public:
-      LAVA_API
+      LAVAUTILS_API
       Material( const aiMaterial* mtl, const std::string& globalPath );
       std::string albedoTexturePath;
       glm::vec3 albedoColor;
@@ -45,4 +45,4 @@ namespace lava
 
 #endif
 
-#endif /* __LAVA_MATERIAL__  */
+#endif /* __LAVAUTILS_MATERIAL__  */

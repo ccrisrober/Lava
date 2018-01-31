@@ -1,11 +1,13 @@
 #source_group(\\ FILES CMakeLists.txt)
 
 set( QTLAVA_PUBLIC_HEADERS
+	DefaultFramebuffer.h
 	QVulkanWindow.h
 )
 
 set( QTLAVA_SOURCES
-  QVulkanWindow.cpp
+	DefaultFramebuffer.cpp
+  	QVulkanWindow.cpp
 )
 
 set( QTLAVA_HEADERS

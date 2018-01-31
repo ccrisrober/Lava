@@ -47,7 +47,7 @@ namespace lava
     VulkanWindow( void)
     {
       _initialized = false;
-      _swapChainImageSize = glm::ivec2( 500, 500 );
+      _swapChainImageSize = vk::Offset2D( 500, 500 );
     }
     LAVARENDERER_API
     virtual ~VulkanWindow( void );
@@ -110,7 +110,7 @@ namespace lava
     LAVARENDERER_API
     vk::Format depthStencilFormat( void ) const;
     LAVARENDERER_API
-    glm::ivec2 swapChainImageSize( void ) const;
+    vk::Offset2D swapChainImageSize( void ) const;
 
     int currentFrame( void ) const;
 
@@ -127,8 +127,8 @@ namespace lava
     LAVARENDERER_API
     std::shared_ptr< ImageView > depthStencilImageView( void ) const;
 
-    LAVARENDERER_API
-    glm::mat4 clipCorrectionMatrix( void );
+    //LAVARENDERER_API
+    //glm::mat4 clipCorrectionMatrix( void );
 
     LAVARENDERER_API
     virtual void resize( uint32_t width, uint32_t height ) final
@@ -191,13 +191,10 @@ namespace lava
       return _instance;
     }
   protected:
-    LAVARENDERER_API
     virtual bool setupRenderPass( void );
 
-    LAVARENDERER_API
     virtual bool setupFramebuffer( void );
 
-    LAVARENDERER_API
     virtual bool setupPipelineCache( void );
 
   private:
@@ -239,7 +236,7 @@ namespace lava
     std::shared_ptr< CommandPool > _cmdPool;
     std::shared_ptr< Window > _window;
   protected:
-    glm::ivec2 _swapChainImageSize;
+    vk::Offset2D _swapChainImageSize;
 
     vk::Format _colorFormat;
     vk::ColorSpaceKHR _colorSpace;
@@ -247,7 +244,7 @@ namespace lava
 
     //vk::PresentModeKHR presentMode = vk::PresentMode::eFifoKHR;
 
-    glm::mat4 _clipCorrect;
+    //glm::mat4 _clipCorrect;
 
     RenderAPICapabilities _caps;
     uint32_t _currentFrame;

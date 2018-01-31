@@ -19,11 +19,13 @@
 
 #include "ModelImporter.h"
 
+#include <iostream>
+
 #ifdef LAVA_USE_ASSIMP
 
 namespace lava
 {
-  namespace extras
+  namespace utility
   {
     ModelImporter::ModelImporter( const std::string& path )
     {
@@ -58,7 +60,9 @@ namespace lava
       }
 
       for ( uint32_t i = 0; i < scene->mNumMaterials; ++i )
+      {
         _materials.emplace_back( scene->mMaterials[ i ], globalPath );
+      }
     }
   }
 }

@@ -24,7 +24,7 @@
 
 namespace lava
 {
-  namespace extras
+  namespace utility
   {
     Material::Material( const aiMaterial* mtl, const std::string& globalPath )
     {

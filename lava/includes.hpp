@@ -46,8 +46,6 @@
 //#define GLFW_INCLUDE_VULKAN
 //#include <GLFW/glfw3.h>
 
-#include <vulkan/vulkan.hpp>
-
 #if defined( __MINGW32__ ) || defined( WIN32 ) || defined( __WIN32__ )
   #define LAVA_PLATFORM_WINDOWS
   #define LAVA_KHR_EXT "VK_KHR_win32_surface"
@@ -70,10 +68,12 @@
   #define LAVA_KHR_ExT "VK_MVK_macos_surface"*/
 #endif
 
-#define GLM_FORCE_RADIANS
+#include <vulkan/vulkan.hpp>
+
+/*#define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>*/
 
 #include <iostream>
 

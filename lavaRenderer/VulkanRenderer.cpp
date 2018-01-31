@@ -613,7 +613,7 @@ namespace lava
       clearValues[ 0 ].color = vk::ClearColorValue( ccv );
       clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-      const glm::ivec2 size = swapChainImageSize( );
+      const vk::Offset2D size = swapChainImageSize( );
       auto cmd = currentCommandBuffer( );
       vk::Rect2D rect;
       rect.extent.width = size.x;
@@ -823,7 +823,7 @@ namespace lava
 		return _dsFormat;
 	}
 	
-	glm::ivec2 VulkanWindow::swapChainImageSize( void ) const
+	vk::Offset2D VulkanWindow::swapChainImageSize( void ) const
 	{
 		return _swapChainImageSize;
 	}
@@ -863,7 +863,7 @@ namespace lava
     return std::shared_ptr<ImageView>( ); // TODO
   }
 
-  glm::mat4 VulkanWindow::clipCorrectionMatrix( void )
+  /*glm::mat4 VulkanWindow::clipCorrectionMatrix( void )
 	{
 		if ( _clipCorrect == glm::mat4( 1.0f ) )
 		{
@@ -875,7 +875,7 @@ namespace lava
 			);
 		}
 		return _clipCorrect;
-	}
+	}*/
   VulkanWindow::~VulkanWindow( void )
   {
     _device->waitIdle( );

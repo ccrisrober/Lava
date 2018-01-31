@@ -22,7 +22,7 @@
 #ifdef LAVA_USE_ASSIMP
 namespace lava
 {
-  namespace extras
+  namespace utility
   {
     Mesh::Mesh( const aiMesh *mesh )
     {

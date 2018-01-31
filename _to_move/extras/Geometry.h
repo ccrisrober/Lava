@@ -72,22 +72,6 @@ namespace lava
       glm::quat rotation;
       glm::vec3 scale;
     };
-    class Geometry : public VulkanResource
-    {
-    public:
-      LAVA_API
-      Geometry( const std::shared_ptr<Device>& device, const std::string& path );
-      LAVA_API
-      Geometry( const std::shared_ptr<Device>& device, 
-        const std::shared_ptr<CommandPool> cmdPool, 
-        const std::shared_ptr<Queue> queue, const std::string& path );
-      LAVA_API
-      void render( std::shared_ptr<CommandBuffer> cmd, uint32_t numInstances = 1 );
-    protected:
-      std::shared_ptr<Buffer> _vbo;
-      std::shared_ptr<Buffer> _ibo;
-      uint32_t _numIndices;
-    };
   }
 }
 

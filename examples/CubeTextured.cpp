@@ -21,6 +21,11 @@
 #include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <routes.h>
 
 class CustomRenderer : public VulkanWindowRenderer
@@ -273,7 +278,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const vk::Offset2D size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -336,9 +341,9 @@ int main( void )
 
   std::vector<const char*> layers =
   {
-#ifndef NDEBUG
+/*#ifndef NDEBUG
     "VK_LAYER_LUNARG_standard_validation",
-#endif
+#endif*/
   };
   std::vector<const char*> extensions =
   {

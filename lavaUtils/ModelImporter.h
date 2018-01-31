@@ -17,41 +17,36 @@
  *
  **/
 
-#ifndef __LAVA_MESH__
-#define __LAVA_MESH__
+#ifndef __LAVAUTILS_MODELIMPORTER__
+#define __LAVAUTILS_MODELIMPORTER__
 
 #ifdef LAVA_USE_ASSIMP
 
-#include <vector>
-#include <glm/glm.hpp>
-#include <assimp/mesh.h>
+#include <lavaUtils/api.h>
 
-#include <lava/api.h>
+#include "Mesh.h"
+#include "Material.h"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 namespace lava
 {
-  namespace extras
+  namespace utility
   {
-    struct Vertex
-    {
-      glm::vec3 position;
-      glm::vec3 normal;
-      glm::vec2 texCoord;
-    };
-    class Mesh
+    class ModelImporter
     {
     public:
-      LAVA_API
-      Mesh( const aiMesh *mesh );
+      LAVAUTILS_API
+      ModelImporter( const std::string& path );
     public:
-      uint32_t numVertices;
-      uint32_t numIndices;
-      std::vector< Vertex > vertices;
-      std::vector< uint32_t > indices;
+      std::vector< Mesh > _meshes;
+      std::vector< Material > _materials;
     };
   }
 }
 
 #endif
 
-#endif /* __LAVA_MESH__ */
+#endif /* __LAVAUTILS_MODELIMPORTER__ */

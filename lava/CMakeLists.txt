@@ -3,6 +3,7 @@ source_group(\\ FILES CMakeLists.txt)
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
   noncopyable.hpp
+  Clock.h
   
   Buffer.h
   CommandBuffer.h
@@ -37,17 +38,18 @@ set( LAVA_PUBLIC_HEADERS
 
   VulkanResource.h
 
-  engine/Clock.h
-  engine/Material.h
-  engine/Node.h
+### engine/Clock.h
+### engine/Material.h
+### engine/Node.h
 
-  extras/Geometry.h
-  extras/Material.h
-  extras/Mesh.h
-  extras/ModelImporter.h
+### extras/Geometry.h
+### extras/Material.h
+### extras/Mesh.h
+### extras/ModelImporter.h
 )
 
 set( LAVA_SOURCES
+  Clock.cpp
   Buffer.cpp
   CommandBuffer.cpp
   Descriptor.cpp
@@ -78,14 +80,14 @@ set( LAVA_SOURCES
 
   VulkanResource.cpp
 
-  engine/Clock.cpp
-  engine/Material.cpp
-  engine/Node.cpp
+###  engine/Clock.cpp
+###  engine/Material.cpp
+###  engine/Node.cpp
 
-  extras/Geometry.cpp
-  extras/Material.cpp
-  extras/Mesh.cpp
-  extras/ModelImporter.cpp
+###  extras/Geometry.cpp
+###  extras/Material.cpp
+###  extras/Mesh.cpp
+###  extras/ModelImporter.cpp
 )
 
 set( LAVA_HEADERS
@@ -96,9 +98,7 @@ set( LAVA_MOC_HEADERS
 
 set( LAVA_LINK_LIBRARIES
 	${VULKAN_LIBRARY}
-	${GLM_LIBRARIES}
 	${STBI_LIBRARIES}
-  ${ASSIMP_LIBRARIES}
 )
 
 common_library( lava )

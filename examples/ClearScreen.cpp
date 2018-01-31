@@ -53,7 +53,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil  = vk::ClearDepthStencilValue(  1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const vk::Offset2D size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -99,9 +99,9 @@ int main( void )
 
   std::vector<const char*> layers =
   {
-#ifndef NDEBUG
+/*#ifndef NDEBUG
     "VK_LAYER_LUNARG_standard_validation",
-#endif
+#endif*/
   };
   std::vector<const char*> extensions =
   {
