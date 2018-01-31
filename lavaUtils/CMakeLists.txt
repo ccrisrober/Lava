@@ -5,6 +5,7 @@ set( LAVAUTILS_PUBLIC_HEADERS
 	Material.h
 	ModelImporter.h
 	Geometry.h
+	CustomMaterial.h
 )
 
 set( LAVAUTILS_SOURCES
@@ -12,6 +13,7 @@ set( LAVAUTILS_SOURCES
 	Material.cpp
 	ModelImporter.cpp
 	Geometry.cpp
+	CustomMaterial.cpp
 )
 
 set( LAVAUTILS_HEADERS

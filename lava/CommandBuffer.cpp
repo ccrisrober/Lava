@@ -116,6 +116,7 @@ namespace lava
     vk::CommandBufferLevel level )
     : _commandPool( cmdPool )
     , _level( level )
+    , _state( State::Ready )
   {
     vk::CommandBufferAllocateInfo info( *_commandPool, level, 1 );
     std::vector<vk::CommandBuffer> commandBuffers =
@@ -123,12 +124,18 @@ namespace lava
       .allocateCommandBuffers( info );
     assert( !commandBuffers.empty( ) );
     _commandBuffer = commandBuffers[ 0 ];
-
-    _isRecording = false;
   }
 
   CommandBuffer::~CommandBuffer( void )
   {
+    if ( _state == State::Submitted )
+    {
+      // TODO: Wait for finish
+    }
+    else if ( _state != State::Ready )
+    {
+
+    }
     static_cast<vk::Device>( *_commandPool->getDevice( ) )
       .freeCommandBuffers( *_commandPool, _commandBuffer );
   }
@@ -151,7 +158,8 @@ namespace lava
     vk::Bool32 occlusionQueryEnable, vk::QueryControlFlags queryFlags,
     vk::QueryPipelineStatisticFlags pipelineStatistics )
   {
-    assert( !_isRecording );
+    assert( _state == State::Ready );
+
     _renderPass = renderPass;
     _framebuffer = framebuffer;
 
@@ -168,15 +176,18 @@ namespace lava
     inheritanceInfo.pipelineStatistics = pipelineStatistics;
 
     _commandBuffer.begin( beginInfo );
-    _isRecording = true;
+
+    _state = State::Recording;
   }
 
 
   void CommandBuffer::end( void )
   {
-    assert( _isRecording );
-    _isRecording = false;
+    assert( _state == State::Recording );
+
     _commandBuffer.end( );
+
+    _state = State::RecordingDone;
   }
 
   void CommandBuffer::resetEvent( const std::shared_ptr<Event>& ev, 
@@ -215,6 +226,8 @@ namespace lava
     const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
     vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents cnts )
   {
+    assert( _state == State::Recording );
+
     _renderPass = rp;
     _framebuffer = framebuffer;
 
@@ -228,6 +241,8 @@ namespace lava
       reinterpret_cast< vk::ClearValue const* >( clearValues.data( ) );
 
     _commandBuffer.beginRenderPass( renderPassBeginInfo, cnts );
+
+    _state = State::RecordingRenderPass;
   }
 
   void CommandBuffer::fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
@@ -244,10 +259,14 @@ namespace lava
 
   void CommandBuffer::endRenderPass( void )
   {
+    assert( _state == State::RecordingRenderPass );
+
     _renderPass.reset( );
     _framebuffer.reset( );
 
     _commandBuffer.endRenderPass( );
+
+    _state = State::Recording;
   }
 
   void CommandBuffer::executeCommands(

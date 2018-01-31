@@ -17,39 +17,45 @@
  *
  **/
 
-#ifndef __LAVAUTILS_GEOMETRY__
-#define __LAVAUTILS_GEOMETRY__
+#ifndef __LAVAUTILS_CUSTOMMATERIAL__
+#define __LAVAUTILS_CUSTOMMATERIAL__
 
-#include <memory>
-
-#include <lava/lava.h>
 #include <lavaUtils/api.h>
 
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include <memory>
+#include <lava/lava.h>
 
 namespace lava
 {
   namespace utility
   {
-    class Geometry : public lava::VulkanResource
+    class CustomMaterial: public lava::VulkanResource
     {
     public:
       LAVAUTILS_API
-      Geometry( const std::shared_ptr<Device>& device, const std::string& path );
+      virtual void configure( const std::string& sourceDir,
+        std::shared_ptr< Device > device, std::shared_ptr< RenderPass > renderPass,
+        std::shared_ptr< PipelineCache > pipCache = nullptr ) = 0;
+
       LAVAUTILS_API
-      Geometry( const std::shared_ptr<Device>& device, 
-        const std::shared_ptr<CommandPool> cmdPool, 
-        const std::shared_ptr<Queue> queue, const std::string& path );
+      virtual void bind( std::shared_ptr< CommandBuffer > cmd );
+
       LAVAUTILS_API
-      void render( std::shared_ptr<CommandBuffer> cmd, uint32_t numInstances = 1 );
+      const std::shared_ptr< PipelineLayout >& pipelineLayout( void ) const
+      {
+        return _pipelineLayout;
+      }
+      LAVAUTILS_API
+      const std::shared_ptr< Pipeline >& pipeline( void ) const
+      {
+        return _pipeline;
+      }
+
     protected:
-      std::shared_ptr<Buffer> _vbo;
-      std::shared_ptr<Buffer> _ibo;
-      uint32_t _numIndices;
+      std::shared_ptr< Pipeline > _pipeline;
+      std::shared_ptr< PipelineLayout > _pipelineLayout;
     };
   }
 }
 
-#endif /* __LAVAUTILS_GEOMETRY__ */
+#endif /* __LAVAUTILS_CUSTOMMATERIAL__  */

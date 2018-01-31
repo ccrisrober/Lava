@@ -191,10 +191,13 @@ namespace lava
       return _instance;
     }
   protected:
+    LAVARENDERER_API
     virtual bool setupRenderPass( void );
 
+    LAVARENDERER_API
     virtual bool setupFramebuffer( void );
 
+    LAVARENDERER_API
     virtual bool setupPipelineCache( void );
 
   private:

@@ -29,7 +29,7 @@ include(Common)
 
 # Allow warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
 option( LAVA_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )

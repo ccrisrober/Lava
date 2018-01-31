@@ -17,32 +17,15 @@
  *
  **/
 
-#ifndef __LAVA_VULKAN_RESOURCE__
-#define __LAVA_VULKAN_RESOURCE__
-
-#include "includes.hpp"
-#include <memory>
-
-#include <lava/Device.h>
-
-#include <lava/api.h>
+#include "CustomMaterial.h"
 
 namespace lava
 {
-  class VulkanResource
+  namespace utility
   {
-  public:
-    LAVA_API
-    const std::shared_ptr<Device> getDevice( void )
+    void CustomMaterial::bind( std::shared_ptr<CommandBuffer> cmd )
     {
-      return _device;
+      cmd->bindGraphicsPipeline( _pipeline );
     }
-  protected:
-    LAVA_API
-    VulkanResource( const std::shared_ptr<Device>& device );
-
-    std::shared_ptr<Device> _device;
-  };
+  }
 }
-
-#endif /* __LAVA_VULKAN_RESOURCE__ */

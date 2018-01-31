@@ -99,6 +99,19 @@ namespace lava
 
   class CommandBuffer
   {
+    enum class State
+    {
+      // Buffer is ready to be re-used.
+      Ready,
+      // Buffer is currently recording commands, but isn't recording a render pass.
+      Recording,
+      // Buffer is currently recording render pass commands.
+      RecordingRenderPass,
+      // Buffer is done recording but hasn't been submitted.
+      RecordingDone,
+      // Buffer is done recording and is currently submitted on a queue.
+      Submitted
+    };
   public:
     LAVA_API
     CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool,
@@ -257,7 +270,7 @@ namespace lava
     LAVA_API
     inline bool isRecording( void ) const
     {
-      return _isRecording;
+      return _state == State::Recording;
     }
 
     LAVA_API
@@ -336,14 +349,16 @@ namespace lava
     LAVA_API
     void bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline );
   protected:
-    vk::CommandBuffer _commandBuffer;
     std::shared_ptr<CommandPool> _commandPool;
+    vk::CommandBufferLevel _level;
+
+    State _state;
+
+    vk::CommandBuffer _commandBuffer;
     std::shared_ptr<RenderPass> _renderPass;
     std::shared_ptr<Framebuffer> _framebuffer;
     std::vector<::vk::DescriptorSet> _bindDescriptorSets;
     std::vector<::vk::Buffer> _bindVertexBuffers;
-    bool _isRecording;
-    vk::CommandBufferLevel _level;
   };
   template<typename T>
   inline void CommandBuffer::pushConstants( vk::PipelineLayout layout, 
