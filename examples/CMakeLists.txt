@@ -139,4 +139,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVATEXTUREMAPPINGBYJGM_LINK_LIBRARIES lava )
   common_application( lavaTextureMappingByJGM )
   
+  set( LAVADEPTHBUFFERINGBYJGM_HEADERS )
+  set( LAVADEPTHBUFFERINGBYJGM_SOURCES JGM/DepthBufferingByJGM.cpp )
+  set( LAVADEPTHBUFFERINGBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaDepthBufferingByJGM )
+  
 endif( )
