@@ -47,14 +47,18 @@ namespace lava
 	{
     //Q_OBJECT
 	public:
-    QTLAVA_API
-    explicit QVulkanWindow( QWindow* parent = 0 );
-    QTLAVA_API
+	  QTLAVA_API
+	  explicit QVulkanWindow( QWindow* parent = 0 );
+	  QTLAVA_API
 		~QVulkanWindow( void );
+		
 		QTLAVA_API
 		void beginFrame( void );
 		QTLAVA_API
 		void endFrame( void );
+		QTLAVA_API
+  	void frameReady( void );
+
 		QTLAVA_API
 		std::shared_ptr<CommandBuffer> currentCommandBuffer( void ) const;
 		QTLAVA_API
@@ -169,13 +173,16 @@ namespace lava
 		uint32_t _currentFrame;
 
 
+    bool initialized = false;
+
 		bool _framePending = false;
   private:
 		std::shared_ptr< Surface > createSurfaceKHR( void )
 		{
       QPlatformNativeInterface *nativeInterface = qGuiApp->platformNativeInterface( );
       void *p = nativeInterface->nativeResourceForWindow(QByteArrayLiteral( "vkSurface" ), this );
-      return std::make_shared<Surface>( _instance, *static_cast< VkSurfaceKHR * >( p ) );
+      vk::SurfaceKHR surf( *static_cast< VkSurfaceKHR * >( p ) );
+      return std::make_shared<Surface>( _instance, surf );
 		}
   };
 }

@@ -175,6 +175,19 @@ namespace lava
 
     _defaultFramebuffer->present( _gfxQueue, _renderComplete );
   }
+
+  void QVulkanWindow::frameReady( void )
+  {
+    // TODO: Check only called by main thread std::this_thread::
+    if ( !_framePending )
+    {
+      throw "framePending() called without calling nextFrame( )";
+    }
+    _framePending = false;
+
+    endFrame( );
+  }
+  
   std::shared_ptr<CommandBuffer> QVulkanWindow::currentCommandBuffer( void ) const
   {
     return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
@@ -622,6 +635,8 @@ namespace lava
     {
       renderer->initResources( );
     }
+
+    initialized = true;
   }
 
   void QVulkanWindow::reset( void )
@@ -658,13 +673,23 @@ namespace lava
   {
     if( isExposed( ) )
     {
-      init( );
+      if ( !initialized )
+      {
+        init( );
+      }
+      requestUpdate( );
     }
   }
 
   void QVulkanWindow::resizeEvent( QResizeEvent* )
   {
-
+    std::cout << "Resize" << std::endl;
+    if ( _defaultFramebuffer )
+    {
+      _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
+      _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
+        _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
+    }
   }
 
   bool QVulkanWindow::event( QEvent* ev )
