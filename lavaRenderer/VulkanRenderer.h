@@ -55,7 +55,12 @@ namespace lava
     LAVARENDERER_API
     VulkanWindow( const VulkanWindow& ) = delete;
     LAVARENDERER_API
+    VulkanWindow( VulkanWindow&& ) = delete;
+
+    LAVARENDERER_API
     VulkanWindow& operator=( const VulkanWindow& ) = delete;
+    LAVARENDERER_API
+    VulkanWindow& operator=( VulkanWindow&& ) = delete;
 
     LAVARENDERER_API
     void setVulkanInstance( const std::shared_ptr< Instance > instance );
@@ -200,6 +205,9 @@ namespace lava
     LAVARENDERER_API
     virtual bool setupPipelineCache( void );
 
+    LAVARENDERER_API
+    std::shared_ptr< Image > recordImage( void );
+
   private:
     void initCapabilites( void );
     void recreateSwapChain( void );
@@ -240,7 +248,6 @@ namespace lava
     std::shared_ptr< Window > _window;
   protected:
     vk::Offset2D _swapChainImageSize;
-
     vk::Format _colorFormat;
     vk::ColorSpaceKHR _colorSpace;
     vk::Format _dsFormat;
@@ -254,6 +261,8 @@ namespace lava
 
 
     bool _framePending = false;
+    bool _frameRecord = false;
+    std::shared_ptr< Image > _frameRecordImage = nullptr;
 
     private:
       std::shared_ptr<Surface> createSurfaceKHR( GLFWwindow* window )

@@ -19,10 +19,12 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAVKINFO_LINK_LIBRARIES lava )
   common_application( lavaVkInfo )
 
+if( GLFW3_FOUND )
   set( LAVACLEARSCREEN_HEADERS )
   set( LAVACLEARSCREEN_SOURCES ClearScreen.cpp )
   set( LAVACLEARSCREEN_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaClearScreen )
+endif( )
 
 if(FALSE) # fake a block comment
   set( LAVATRIANGLENOBUFFER_HEADERS )
@@ -35,10 +37,13 @@ if(FALSE) # fake a block comment
   set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaTriangleIndexed )
 endif( )
+
+if( GLFW3_FOUND )
   set( LAVACUBETEXTURED_HEADERS )
   set( LAVACUBETEXTURED_SOURCES CubeTextured.cpp )
   set( LAVACUBETEXTURED_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaCubeTextured )
+endif( )
 
 if(FALSE) # fake a block comment
 ## Advanced Examples

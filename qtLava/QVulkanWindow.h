@@ -46,6 +46,16 @@ namespace lava
 	public:
         explicit QVulkanWindow( QWindow* parent = 0 );
 		~QVulkanWindow( void );
+		
+		QTLAVA_API
+	    QVulkanWindow( const QVulkanWindow& ) = delete;
+		QTLAVA_API
+	    QVulkanWindow( QVulkanWindow&& ) = delete;
+
+		QTLAVA_API
+	    QVulkanWindow& operator=( const QVulkanWindow& ) = delete;
+		QTLAVA_API
+	    QVulkanWindow& operator=( QVulkanWindow&& ) = delete;
 
 		QTLAVA_API
 		void beginFrame( void );

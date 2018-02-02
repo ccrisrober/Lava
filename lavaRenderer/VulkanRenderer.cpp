@@ -601,6 +601,11 @@ namespace lava
     imageRes[ idx ].commandBuffer = _cmdPool->allocateCommandBuffer( );
     imageRes[ idx ].commandBuffer->begin( );
 
+    if ( _framePending )
+    {
+      _frameRecordImage; // TODO = _device->createImage( { }, )
+    }
+
     if ( renderer )
     {
       _framePending = true;
@@ -647,6 +652,20 @@ namespace lava
         vk::PipelineStageFlagBits::eColorAttachmentOutput, 
         vk::PipelineStageFlagBits::eBottomOfPipe, {}, {}, {}, { presTrans } );
     }
+    // When recording a frame, we need to add a readback at the end and 
+    //  skip image presentation
+    if ( _frameRecord )
+    {
+      auto size = _swapChainImageSize;
+      _frameRecordImage = _device->createImage(
+        vk::ImageCreateFlagBits( ), vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
+        vk::Extent3D( size.x, size.y, 1 ), 1, 1, vk::SampleCountFlagBits::e1,
+        vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
+        vk::SharingMode::eExclusive, { }, vk::ImageLayout::eUndefined,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent );
+    }
+
     currrentCmd->end( );
     vk::Result err = _gfxQueue->submit( SubmitInfo {
       { _defaultFramebuffer->getPresentSemaphore( ) },
@@ -777,6 +796,26 @@ namespace lava
   bool VulkanWindow::setupPipelineCache( void )
   {
     return true;
+  }
+
+  std::shared_ptr< Image > VulkanWindow::recordImage( void )
+  {
+    if( !_defaultFramebuffer->_swapchain )
+    {
+      throw;
+    }
+    if ( _framePending )
+    {
+      throw;
+    }
+    if ( !_defaultFramebuffer->supportsGrab( ) )
+    {
+      throw;
+    }
+    _frameRecord = true;
+    beginFrame( );
+
+    return _frameRecordImage;
   }
 
   void VulkanWindow::recreateSwapChain( void )
