@@ -13,10 +13,10 @@ using namespace lava;
 class VulkanWindow: public lava::QVulkanWindow
 {
 public:
-  //lava::QVulkanWindowRenderer* createRenderer( void ) override
-  //{
-  //  return QCustomRenderer( this );
-  //}
+  /*lava::QVulkanWindowRenderer* createRenderer( void ) override
+  {
+    return QCustomRenderer( this );
+  }*/
 public slots:
   void checkButton( void )
   {
@@ -131,15 +131,17 @@ int main( int argc, char** argv )
   ) );
 
   /*VulkanWindow vw;
-  vw.setVulkanInstance( instance );
-
-  QApplication app(argc, argv);
+  vw.setQVulkanInstance( instance );
+  // QApplication app(argc, argv);
   MainWindow w( &vw );
-  w.show()*/;
-  VulkanWindow w;
-  w.setVulkanInstance( instance );
+  w.show();
+  */
 
+  VulkanWindow w;
+  //w.setVulkanInstance( instance );
+  w.setQVulkanInstance( instance );
   w.resize( 500, 500 );
   w.show( );
+
   return app.exec();
 }

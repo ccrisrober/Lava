@@ -21,6 +21,7 @@ namespace lava
   QVulkanWindow::QVulkanWindow( QWindow * parent )
     : QWindow( parent )
   {
+    setSurfaceType( QSurface::SurfaceType::VulkanSurface );
   }
   QVulkanWindow::~QVulkanWindow( void )
   {
@@ -344,10 +345,28 @@ namespace lava
     return result;
   }
   
-  void QVulkanWindow::setVulkanInstance( 
+  /*void QVulkanWindow::setVulkanInstance( 
     const std::shared_ptr< Instance > instance )
   {
     _instance = instance;
+  }*/
+
+  void QVulkanWindow::setQVulkanInstance( const std::shared_ptr< Instance > instance )
+  {
+    _instance = instance;
+
+    VkInstance vki = static_cast< VkInstance >( static_cast< vk::Instance >( *instance ) );
+    _qInstance = new QVulkanInstance( );
+    _qInstance->setVkInstance( vki );
+    if ( _qInstance->create( ) )
+    {
+      setVulkanInstance( _qInstance );
+    }
+    else
+    {
+      std::cerr << "Error: Can't create QVulkanInstance!" << std::endl;
+      exit( -1 );
+    }
   }
 
   void QVulkanWindow::init( void )

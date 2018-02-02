@@ -19,9 +19,61 @@
 
 #include <lava/lava.h>
 #include <lavaRenderer/lavaRenderer.h>
+#include <qtLava/qtLava.h>
 using namespace lava;
 
 #include <routes.h>
+
+class QCustomRenderer : public QVulkanWindowRenderer
+{
+public:
+  QCustomRenderer( lava::VulkanWindow *w )
+    : QVulkanWindowRenderer( )
+    , _window( w )
+  {
+    _window->setWindowTitle( "Clear Screen" );
+  }
+
+  void nextFrame( void ) override
+  {
+    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    {
+      _window->_window->close( );
+    }
+    static auto startTime = std::chrono::high_resolution_clock::now( );
+
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>(
+      currentTime - startTime ).count( ) / 1000.0f;
+
+    _red = sin( time ) * 0.5f + 0.5f;
+    _blue = cos( time ) * 0.5f + 0.5f;
+
+    std::array<vk::ClearValue, 2 > clearValues;
+    std::array<float, 4> ccv = { _red, 0.0f, _blue, 1.0f };
+    clearValues[0].color = vk::ClearColorValue( ccv );
+    clearValues[1].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
+
+    const vk::Offset2D size = _window->swapChainImageSize( );
+    auto cmd = _window->currentCommandBuffer( );
+    vk::Rect2D rect;
+    rect.extent.width = size.x;
+    rect.extent.height = size.y;
+    cmd->beginRenderPass(
+      _window->defaultRenderPass( ),
+      _window->currentFramebuffer( ),
+      rect, clearValues, vk::SubpassContents::eInline
+    );
+
+    cmd->endRenderPass( );
+
+    _window->frameReady( );
+  }
+private:
+  VulkanWindow *_window;
+  float _red = 0.0f;
+  float _blue = 0.0f;
+};
 
 class CustomRenderer : public VulkanWindowRenderer
 {
@@ -74,12 +126,22 @@ private:
   float _blue = 0.0f;
 };
 
+
 class CustomVkWindow : public VulkanWindow
 {
 public:
   VulkanWindowRenderer* createRenderer( void ) override
   {
     return new CustomRenderer( this );
+  }
+};
+
+class CustomVkWindow : public QVulkanWindow
+{
+public:
+  QVulkanWindowRenderer* createRenderer( void ) override
+  {
+    return new QCustomRenderer( this );
   }
 };
 
