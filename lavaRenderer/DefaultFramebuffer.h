@@ -28,91 +28,94 @@
 
 namespace lava
 {
-  class DefaultFramebuffer
+  namespace glfw
   {
-  public:
-    LAVARENDERER_API
-    DefaultFramebuffer( const std::shared_ptr<Device>& device,
-      const std::shared_ptr<Surface>& surface,
-      vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace, 
-      vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
-
-    LAVARENDERER_API
-    ~DefaultFramebuffer( void )
+    class DefaultFramebuffer
     {
-    }
+    public:
+      LAVARENDERER_API
+        DefaultFramebuffer( const std::shared_ptr<Device>& device,
+          const std::shared_ptr<Surface>& surface,
+          vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace,
+          vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
 
-    LAVARENDERER_API
-    void rebuild( const std::shared_ptr<Device>& device,
-      const std::shared_ptr<Surface>& surface,
-      vk::Format surfaceFormat, vk::Format depthFormat,
-      const std::shared_ptr<RenderPass>& renderPass );
+      LAVARENDERER_API
+        ~DefaultFramebuffer( void )
+      {
+      }
 
-    LAVARENDERER_API
-    const vk::Extent2D& getExtent( void ) const { return _extent; }
-    LAVARENDERER_API
-    const std::shared_ptr<Framebuffer>& getFramebuffer( void ) const
-    {
-      return _framebuffers[ _swapchainIndex ];
-    }
-    LAVARENDERER_API // TODO: Remove API
-    void acquireNextFrame( uint64_t timeout = UINT64_MAX, 
-      const std::shared_ptr<Fence>& fence = nullptr )
-    {
-      _swapchainIndex = _swapchain->acquireNextImage( timeout, fence );
-    }
+      LAVARENDERER_API
+        void rebuild( const std::shared_ptr<Device>& device,
+          const std::shared_ptr<Surface>& surface,
+          vk::Format surfaceFormat, vk::Format depthFormat,
+          const std::shared_ptr<RenderPass>& renderPass );
 
-    const std::shared_ptr<Semaphore>& getPresentSemaphore( void ) const
-    {
-      return _swapchain->getPresentCompleteSemaphores( )[ _swapchainIndex ];
-    }
+      LAVARENDERER_API
+        const vk::Extent2D& getExtent( void ) const { return _extent; }
+      LAVARENDERER_API
+        const std::shared_ptr<Framebuffer>& getFramebuffer( void ) const
+      {
+        return _framebuffers[ _swapchainIndex ];
+      }
+      LAVARENDERER_API // TODO: Remove API
+        void acquireNextFrame( uint64_t timeout = UINT64_MAX,
+          const std::shared_ptr<Fence>& fence = nullptr )
+      {
+        _swapchainIndex = _swapchain->acquireNextImage( timeout, fence );
+      }
 
-    const std::shared_ptr<Image> getLastImage( void )
-    {
-      return _colorImages[ _swapchainIndex ];
-    }
-    
-    uint32_t index( void ) const
-    {
-      return _swapchainIndex;
-    }
+      const std::shared_ptr<Semaphore>& getPresentSemaphore( void ) const
+      {
+        return _swapchain->getPresentCompleteSemaphores( )[ _swapchainIndex ];
+      }
 
-    LAVARENDERER_API // TODO: Remove API
-    void present( const std::shared_ptr<Queue>& queue,
-      vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = {} )
-    {
-      auto results = queue->present( waitSemaphores, _swapchain, _swapchainIndex );
-      //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
-      //std::cout << str << std::endl;
-    }
-    LAVARENDERER_API
-    int imagesCount( void ) const
-    {
-      return _framebuffers.size( );
-    }
+      const std::shared_ptr<Image> getLastImage( void )
+      {
+        return _colorImages[ _swapchainIndex ];
+      }
 
-    LAVARENDERER_API
-    bool supportsGrab( void ) const
-    {
-      return _swapChainSupportsReadBack;
-    }
-  private:
-    void clear( vk::SwapchainKHR swapChain );
+      uint32_t index( void ) const
+      {
+        return _swapchainIndex;
+      }
 
-    vk::Extent2D _extent;
+      LAVARENDERER_API // TODO: Remove API
+        void present( const std::shared_ptr<Queue>& queue,
+          vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = { } )
+      {
+        auto results = queue->present( waitSemaphores, _swapchain, _swapchainIndex );
+        //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
+        //std::cout << str << std::endl;
+      }
+      LAVARENDERER_API
+        int imagesCount( void ) const
+      {
+        return _framebuffers.size( );
+      }
 
-    bool _swapChainSupportsReadBack;
-    
-  public:
-    std::shared_ptr<Swapchain> _swapchain;
-  protected:
-    uint32_t _swapchainIndex;
-    std::vector<std::shared_ptr<Image>> _colorImages;
-    std::vector<std::shared_ptr<ImageView>> _colorViews;
-    std::shared_ptr<Image> _depthImage;
-    std::shared_ptr<ImageView> _depthView;
-    std::vector<std::shared_ptr<Framebuffer>> _framebuffers;
-  };
+      LAVARENDERER_API
+        bool supportsGrab( void ) const
+      {
+        return _swapChainSupportsReadBack;
+      }
+    private:
+      void clear( vk::SwapchainKHR swapChain );
+
+      vk::Extent2D _extent;
+
+      bool _swapChainSupportsReadBack;
+
+    public:
+      std::shared_ptr<Swapchain> _swapchain;
+    protected:
+      uint32_t _swapchainIndex;
+      std::vector<std::shared_ptr<Image>> _colorImages;
+      std::vector<std::shared_ptr<ImageView>> _colorViews;
+      std::shared_ptr<Image> _depthImage;
+      std::shared_ptr<ImageView> _depthView;
+      std::vector<std::shared_ptr<Framebuffer>> _framebuffers;
+    };
+  }
 }
 
 #endif /* __LAVARENDERER_DEFAULTFRAMEBUFFER__ */

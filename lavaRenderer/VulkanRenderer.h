@@ -155,7 +155,7 @@ namespace lava
     std::shared_ptr< PipelineCache > pipelineCache;
 
     LAVARENDERER_API
-    /*std::unique_ptr< */DefaultFramebuffer* /*>*/ defaultFramebuffer( void ) const // TODO: SO UGLY ...
+    /*std::unique_ptr< */glfw::DefaultFramebuffer* /*>*/ defaultFramebuffer( void ) const // TODO: SO UGLY ...
     {
       return _defaultFramebuffer.get( );
     }
@@ -227,7 +227,7 @@ namespace lava
     
     std::shared_ptr< Surface > _surface;
 
-    std::unique_ptr< DefaultFramebuffer > _defaultFramebuffer;
+    std::unique_ptr< glfw::DefaultFramebuffer > _defaultFramebuffer;
 
     vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
     

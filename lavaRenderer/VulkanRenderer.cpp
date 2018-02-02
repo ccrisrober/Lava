@@ -33,7 +33,7 @@ namespace lava
     if ( _defaultFramebuffer )
     {
       _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
-      _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
+      _defaultFramebuffer.reset( new glfw::DefaultFramebuffer( _device, _surface,
         _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
     }
   }
@@ -788,7 +788,7 @@ namespace lava
   bool lava::VulkanWindow::setupFramebuffer( void )
   {
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
-    _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
+    _defaultFramebuffer.reset( new glfw::DefaultFramebuffer( _device, _surface,
       _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
     return true;
   }

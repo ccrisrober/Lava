@@ -21,6 +21,7 @@ namespace lava
   QVulkanWindow::QVulkanWindow( QWindow * parent )
     : QWindow( parent )
   {
+    setSurfaceType( QSurface::SurfaceType::VulkanSurface );
   }
   QVulkanWindow::~QVulkanWindow( void )
   {
@@ -174,6 +175,19 @@ namespace lava
 
     _defaultFramebuffer->present( _gfxQueue, _renderComplete );
   }
+
+  void QVulkanWindow::frameReady( void )
+  {
+    // TODO: Check only called by main thread std::this_thread::
+    if ( !_framePending )
+    {
+      throw "framePending() called without calling nextFrame( )";
+    }
+    _framePending = false;
+
+    endFrame( );
+  }
+  
   std::shared_ptr<CommandBuffer> QVulkanWindow::currentCommandBuffer( void ) const
   {
     return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
@@ -243,7 +257,7 @@ namespace lava
   bool QVulkanWindow::setupFramebuffer( void )
   {
     _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
-    _defaultFramebuffer.reset( new DefaultFramebuffer( _device, _surface,
+    _defaultFramebuffer.reset( new qt::DefaultFramebuffer( _device, _surface,
       _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
     return true;
   }
@@ -344,10 +358,28 @@ namespace lava
     return result;
   }
   
-  void QVulkanWindow::setVulkanInstance( 
+  /*void QVulkanWindow::setVulkanInstance( 
     const std::shared_ptr< Instance > instance )
   {
     _instance = instance;
+  }*/
+
+  void QVulkanWindow::setQVulkanInstance( const std::shared_ptr< Instance > instance )
+  {
+    _instance = instance;
+
+    VkInstance vki = static_cast< VkInstance >( static_cast< vk::Instance >( *instance ) );
+    _qInstance = new QVulkanInstance( );
+    _qInstance->setVkInstance( vki );
+    if ( _qInstance->create( ) )
+    {
+      setVulkanInstance( _qInstance );
+    }
+    else
+    {
+      std::cerr << "Error: Can't create QVulkanInstance!" << std::endl;
+      exit( -1 );
+    }
   }
 
   void QVulkanWindow::init( void )
@@ -603,6 +635,8 @@ namespace lava
     {
       renderer->initResources( );
     }
+
+    initialized = true;
   }
 
   void QVulkanWindow::reset( void )
@@ -639,13 +673,23 @@ namespace lava
   {
     if( isExposed( ) )
     {
-      init( );
+      if ( !initialized )
+      {
+        init( );
+      }
+      requestUpdate( );
     }
   }
 
   void QVulkanWindow::resizeEvent( QResizeEvent* )
   {
-
+    std::cout << "Resize" << std::endl;
+    if ( _defaultFramebuffer )
+    {
+      _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
+      _defaultFramebuffer.reset( new qt::DefaultFramebuffer( _device, _surface,
+        _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
+    }
   }
 
   bool QVulkanWindow::event( QEvent* ev )

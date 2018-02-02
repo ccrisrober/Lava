@@ -168,6 +168,11 @@ if(FALSE) # fake a block comment
   common_application( lavaSparkle )
 endif( )
 
+  set( LAVATHREADPOOL_HEADERS )
+  set( LAVATHREADPOOL_SOURCES ThreadPool.cpp )
+  set( LAVATHREADPOOL_LINK_LIBRARIES lava lavaRenderer )
+  common_application( lavaThreadPool )
+
 
 if( QT5CORE_FOUND )
   set( LAVAQTRENDER_HEADERS )
