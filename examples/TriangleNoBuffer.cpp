@@ -116,7 +116,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 private:
   VulkanWindow *_window;

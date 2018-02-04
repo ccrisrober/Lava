@@ -1,3 +1,2 @@
 # -*- mode: cmake -*-
-#git_subproject(glslang https://github.com/KhronosGroup/glslang.git 82e95a3)
-#git_subproject(shaderc https://github.com/google/shaderc.git master)
+git_subproject(glslang https://github.com/KhronosGroup/glslang.git master)

@@ -98,7 +98,8 @@ public:
     device->updateDescriptorSets( wdss, {} );
 
 
-    secondaryCmd = _window->_cmdPool->allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
+    secondaryCmd = _window->gfxCommandPool( )->
+      allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
 
     vk::CommandBufferInheritanceInfo inheritInfo;
     inheritInfo.renderPass = *_window->defaultRenderPass( );
@@ -154,7 +155,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil  = vk::ClearDepthStencilValue(  1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -169,8 +170,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
-    //_window->requestUpdate( );
+    _window->requestUpdate( );
   }
 
 private:

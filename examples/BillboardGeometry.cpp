@@ -327,7 +327,7 @@ public:
     cmd->draw( vertices.size( ), 1, 0, 0 );
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 private:
   VulkanWindow *_window;

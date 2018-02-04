@@ -73,7 +73,7 @@ namespace lava
     return _defaultFramebuffer->supportsGrab( );
   }
 
-  void VulkanWindow::frameReady( void )
+  void VulkanWindow::requestUpdate( void )
   {
     // TODO: Check only called by main thread std::this_thread::
     if ( !_framePending )

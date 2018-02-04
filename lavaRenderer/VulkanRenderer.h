@@ -169,7 +169,7 @@ namespace lava
     virtual VulkanWindowRenderer* createRenderer( void );
 
     LAVARENDERER_API
-    void frameReady( void );
+    void requestUpdate( void );
 
     LAVARENDERER_API
     vk::SampleCountFlagBits sampleCountFlagBits( void ) const;

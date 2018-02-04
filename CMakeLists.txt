@@ -51,7 +51,9 @@ common_find_package( GLFW3 SYSTEM )
 common_find_package( Qt5Core SYSTEM )
 common_find_package( Qt5Widgets SYSTEM )
 
-list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
+common_find_package( glslang )
+
+list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI glslang )
 
 IF (NOT WIN32)
   link_libraries( -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread )

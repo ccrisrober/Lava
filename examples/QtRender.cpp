@@ -300,7 +300,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
     _window->requestUpdate( );
   }
 

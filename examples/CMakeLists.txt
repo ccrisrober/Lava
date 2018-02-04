@@ -51,12 +51,14 @@ if(FALSE) # fake a block comment
   set( LAVASAMPLERUNIFORMQUAD_SOURCES SamplerUniformQuad.cpp )
   set( LAVASAMPLERUNIFORMQUAD_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaSamplerUniformQuad )
+endif( )
   
   set( LAVASECONDARYBUFFER_HEADERS )
   set( LAVASECONDARYBUFFER_SOURCES SecondaryBuffer.cpp )
   set( LAVASECONDARYBUFFER_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaSecondaryBuffer )
 
+if(FALSE) # fake a block comment
   set( LAVASKYBOX_HEADERS utils/Camera.h )
   set( LAVASKYBOX_SOURCES Skybox.cpp )
   set( LAVASKYBOX_LINK_LIBRARIES lava lavaRenderer )
@@ -170,7 +172,7 @@ endif( )
 
   set( LAVATHREADPOOL_HEADERS )
   set( LAVATHREADPOOL_SOURCES ThreadPool.cpp )
-  set( LAVATHREADPOOL_LINK_LIBRARIES lava lavaRenderer )
+  set( LAVATHREADPOOL_LINK_LIBRARIES lava lavaRenderer lavaUtils )
   common_application( lavaThreadPool )
 
 
