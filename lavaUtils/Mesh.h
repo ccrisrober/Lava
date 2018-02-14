@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVA_MESH__
-#define __LAVA_MESH__
+#ifndef __LAVAUTILS_MESH__
+#define __LAVAUTILS_MESH__
 
 #ifdef LAVA_USE_ASSIMP
 
@@ -54,4 +54,4 @@ namespace lava
 
 #endif
 
-#endif /* __LAVA_MESH__ */
+#endif /* __LAVAUTILS_MESH__ */

@@ -1,3 +1,4 @@
+#pragma once 
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
@@ -300,7 +301,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
     _window->requestUpdate( );
   }
 
@@ -332,7 +333,7 @@ public slots:
 
 class MainWindow : public QMainWindow
 {
-  //Q_OBJECT
+	//Q_OBJECT
 public:
   MainWindow( VulkanWindow* window, QWidget *parent = 0 )
     : QMainWindow( parent )
@@ -411,54 +412,3 @@ private:
   QToolBar *mainToolBar;
   QStatusBar *statusBar;
 };
-
-int main( int argc, char** argv )
-{
-  QApplication app( argc, argv );
-
-  std::shared_ptr<Instance> instance;
-
-  // Create instance
-  vk::ApplicationInfo appInfo(
-    "App Name",
-    VK_MAKE_VERSION( 1, 0, 0 ),
-    "FooEngine",
-    VK_MAKE_VERSION( 1, 0, 0 ),
-    VK_API_VERSION_1_0
-  );
-
-  std::vector<const char*> layers =
-  {
-/*#ifndef NDEBUG
-    "VK_LAYER_LUNARG_standard_validation",
-#endif*/
-  };
-  std::vector<const char*> extensions =
-  {
-    VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
-    VK_EXT_DEBUG_REPORT_EXTENSION_NAME
-  };
-
-  instance = Instance::create( vk::InstanceCreateInfo(
-    { },
-    &appInfo,
-    layers.size( ),
-    layers.data( ),
-    extensions.size( ),
-    extensions.data( )
-  ) );
-
-  VulkanWindow vw;
-  vw.setQVulkanInstance( instance );
-  // QApplication app(argc, argv);
-  MainWindow w( &vw );
-  w.show();
-  /*VulkanWindow w;
-  w.setQVulkanInstance( instance );
-
-  w.resize( 500, 500 );
-  w.show( );*/
-
-  return app.exec();
-}

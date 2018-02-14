@@ -225,6 +225,13 @@ namespace lava
       queueFamilyIndices, memPropFlags );
   }
 
+  std::shared_ptr<BufferView> Device::createBufferView( 
+    std::shared_ptr<Buffer> buffer, vk::Format format, vk::DeviceSize offset,
+    vk::DeviceSize size )
+  {
+    return std::make_shared<BufferView>( buffer, format, offset, size );
+  }
+
   std::shared_ptr<Swapchain> Device::createSwapchain( 
     const std::shared_ptr<Surface>& surface, uint32_t numImageCount, 
     vk::Format imageFormat, vk::ColorSpaceKHR colorSpace, 

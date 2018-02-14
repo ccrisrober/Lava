@@ -76,7 +76,7 @@ namespace lava
     LAVARENDERER_API
     void beginFrame( void );
     LAVARENDERER_API
-    void endFrame( void );
+    void endFrame( std::shared_ptr<Semaphore> sem );
     LAVARENDERER_API
     bool checkDeviceLost( vk::Result res );
 
@@ -169,7 +169,7 @@ namespace lava
     virtual VulkanWindowRenderer* createRenderer( void );
 
     LAVARENDERER_API
-    void requestUpdate( void );
+    void requestUpdate( std::shared_ptr<Semaphore> sem = nullptr );
 
     LAVARENDERER_API
     vk::SampleCountFlagBits sampleCountFlagBits( void ) const;
@@ -236,8 +236,9 @@ namespace lava
     uint32_t _presQueueFamilyIdx;
     std::shared_ptr< Queue > _gfxQueue;
     std::shared_ptr< Queue > _presQueue;
-
+  public:
     std::shared_ptr< Semaphore > _renderComplete;
+  protected:
 
     struct ImageResources
     {

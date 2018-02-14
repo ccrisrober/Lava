@@ -13,6 +13,11 @@ if( LAVA_WITH_EXAMPLES )
     ${CMAKE_CURRENT_SOURCE_DIR}/routes.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
+  set( LAVAFOO_HEADERS )
+  set( LAVAFOO_SOURCES Foo.cpp )
+  set( LAVAFOO_LINK_LIBRARIES lava lavaRenderer lavaUtils )
+  common_application( lavaFoo )
+
 ## Basic Examples
   set( LAVAVKINFO_HEADERS )
   set( LAVAVKINFO_SOURCES VkInfo.cpp )
@@ -183,4 +188,13 @@ if( QT5CORE_FOUND )
   common_application( lavaQtRender )
 endif( )
 
+set( LAVADEFERREDSHADING_HEADERS )
+set( LAVADEFERREDSHADING_SOURCES DeferredShading.cpp )
+set( LAVADEFERREDSHADING_LINK_LIBRARIES lava lavaRenderer )
+common_application( lavaDeferredShading )
+
+set( LAVATEXELBUFFER_HEADERS )
+set( LAVATEXELBUFFER_SOURCES TexelBuffer.cpp )
+set( LAVATEXELBUFFER_LINK_LIBRARIES lava lavaRenderer )
+common_application( lavaTexelBuffer )
 endif( )

@@ -126,7 +126,7 @@ namespace lava
     if ( !( formatProps.optimalTilingFeatures & 
       vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
-      std::cerr << "Device does not support blitting from optimal tiled images, "
+      std::cerr << "Device doesn't support blitting from optimal tiled images, "
         << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
@@ -137,7 +137,7 @@ namespace lava
     if ( !( formatProps.linearTilingFeatures &
       vk::FormatFeatureFlagBits::eBlitDst ) )
     {
-      std::cerr << "Device does not support blitting to linear tiled images, "
+      std::cerr << "Device doesn't support blitting to linear tiled images, "
         << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
@@ -432,7 +432,7 @@ namespace lava
         std::string( " and recreate their swapchain if they wish to" ) +
         std::string( " continue presenting to the surface." );
     case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
-      return std::string( "The display used by a swapchain does not use" ) +
+      return std::string( "The display used by a swapchain doesn't use" ) +
         std::string( " the same presentable image layout, or is" ) +
         std::string( " incompatible in a way that prevents sharing an image." );
     case VK_ERROR_VALIDATION_FAILED_EXT:
@@ -499,7 +499,7 @@ namespace lava
     switch ( oldImageLayout )
     {
       case vk::ImageLayout::eUndefined:
-        // Image layout is undefined (or does not matter)
+        // Image layout is undefined (or doesn't matter)
         // Only valid as initial layout
         // No flags required, listed only for completeness
         imageMemoryBarrier.srcAccessMask = vk::AccessFlags( );

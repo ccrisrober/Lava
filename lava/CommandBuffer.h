@@ -147,6 +147,7 @@ namespace lava
     LAVA_API
     void end( void );
 
+    #pragma region EventCommands
     LAVA_API
     void resetEvent( const std::shared_ptr<Event>& ev,
       vk::PipelineStageFlags stageMask );
@@ -160,16 +161,13 @@ namespace lava
       vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers,
       vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
     );
+    #pragma endregion
 
     LAVA_API
     void beginRenderPass( const std::shared_ptr<RenderPass>& renderPass,
       const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
       vk::ArrayProxy<const vk::ClearValue> clearValues,
       vk::SubpassContents contents );
-
-    LAVA_API
-    void fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
-      vk::DeviceSize dstOffset, vk::DeviceSize fillSize, uint32_t data );
 
     LAVA_API
     void nextSubpass( vk::SubpassContents contents );
@@ -181,7 +179,7 @@ namespace lava
     void executeCommands( const std::vector<
       std::shared_ptr<lava::CommandBuffer> >& secondaryCmds );
 
-
+    #pragma region ClearCommands
     LAVA_API
     void clearAttachments(
       vk::ArrayProxy< const vk::ClearAttachment> attachments,
@@ -196,14 +194,9 @@ namespace lava
     void clearDepthStencilImage( const std::shared_ptr<Image>& image,
       vk::ImageLayout imageLayout, float depth, uint32_t stencil,
       vk::ArrayProxy<const vk::ImageSubresourceRange> ranges );
+    #pragma endregion
 
-    LAVA_API
-    void blitImage( const std::shared_ptr<Image>& srcImage,
-      vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage,
-      vk::ImageLayout dstImageLayout,
-      vk::ArrayProxy<const vk::ImageBlit> regions, vk::Filter filter );
-
-
+    #pragma region QueryCommands
     LAVA_API
     void beginQuery( const std::shared_ptr<lava::QueryPool>& queryPool,
       uint32_t slot, vk::QueryControlFlags flags );
@@ -220,8 +213,10 @@ namespace lava
       uint32_t startQuery, uint32_t queryCount );
     LAVA_API
     void writeTimestamp( vk::PipelineStageFlagBits pipelineStage,
-      const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t entry );
+      const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t entry );  
+    #pragma endregion
 
+    #pragma region SetterCommands
     LAVA_API
     void setViewportScissors( uint32_t width, uint32_t height );
     LAVA_API
@@ -251,7 +246,9 @@ namespace lava
     LAVA_API
     void setStencilWriteMask( vk::StencilFaceFlags faceMask,
       uint32_t stecilWriteMask );
+    #pragma endregion
 
+    #pragma region DrawDispatchCommands
     LAVA_API
     void dispatch( uint32_t x, uint32_t y, uint32_t z );
     LAVA_API
@@ -266,6 +263,7 @@ namespace lava
     LAVA_API
     void drawIndexedIndirect( const std::shared_ptr<Buffer>& buffer,
       vk::DeviceSize offset, uint32_t count, uint32_t stride );
+    #pragma endregion
 
     LAVA_API
     inline bool isRecording( void ) const
@@ -274,12 +272,23 @@ namespace lava
     }
 
     LAVA_API
+    void fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
+      vk::DeviceSize dstOffset, vk::DeviceSize fillSize, uint32_t data );
+
+    LAVA_API
+    void blitImage( const std::shared_ptr<Image>& srcImage,
+      vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage,
+      vk::ImageLayout dstImageLayout,
+      vk::ArrayProxy<const vk::ImageBlit> regions, vk::Filter filter );
+
+    LAVA_API
     void reset( vk::CommandBufferResetFlagBits flags = { } );
 
     template <typename T> void pushConstants( vk::PipelineLayout layout,
       vk::ShaderStageFlags stageFlags, uint32_t start,
       vk::ArrayProxy<const T> values );
 
+    #pragma region BindCommands
     LAVA_API
     void bindVertexBuffer( uint32_t startBinding,
       const std::shared_ptr<Buffer>& buffer, vk::DeviceSize offset );
@@ -293,8 +302,21 @@ namespace lava
     void bindVertexBuffers( uint32_t startBinding,
       vk::ArrayProxy<const std::shared_ptr<Buffer>> buffers,
       vk::ArrayProxy<const vk::DeviceSize> offsets );
+    LAVA_API
+    void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint,
+      const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
+      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets,
+      vk::ArrayProxy<const uint32_t> dynamicOffsets );
+    LAVA_API
+    void bindPipeline( vk::PipelineBindPoint bindingPoint,
+      const std::shared_ptr<Pipeline>& pipeline );
+    LAVA_API
+    void bindGraphicsPipeline( const std::shared_ptr<Pipeline>& pipeline );
+    LAVA_API
+    void bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline );
+    #pragma endregion
 
-
+    #pragma region CopyCommands
     LAVA_API
     void copyBuffer( const std::shared_ptr<Buffer>& srcBuffer,
       const std::shared_ptr<Buffer>& dstBuffer,
@@ -311,10 +333,11 @@ namespace lava
     void copyImageToBuffer( const std::shared_ptr<Image>& srcImage,
       vk::ImageLayout srcImageLayout, const std::shared_ptr<Buffer>& dstBuffer,
       vk::ArrayProxy<const vk::BufferImageCopy> regions );
+    #pragma endregion
+
     template <typename T> void updateBuffer(
       const std::shared_ptr<Buffer>& destBuffer,
       vk::DeviceSize destOffset, vk::ArrayProxy<const T> data );
-
 
     LAVA_API
     void pipelineBarrier(
@@ -336,18 +359,6 @@ namespace lava
       return _framebuffer;
     }
 
-    LAVA_API
-    void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint,
-      const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
-      vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets,
-      vk::ArrayProxy<const uint32_t> dynamicOffsets );
-    LAVA_API
-    void bindPipeline( vk::PipelineBindPoint bindingPoint,
-      const std::shared_ptr<Pipeline>& pipeline );
-    LAVA_API
-    void bindGraphicsPipeline( const std::shared_ptr<Pipeline>& pipeline );
-    LAVA_API
-    void bindComputePipeline( const std::shared_ptr<Pipeline>& pipeline );
   protected:
     std::shared_ptr<CommandPool> _commandPool;
     vk::CommandBufferLevel _level;

@@ -32,6 +32,9 @@ namespace lava
     : _instance( instance )
     , _physicalDevice( physicalDevice )
   {
+    _deviceProperties = _physicalDevice.getProperties( );
+
+#ifndef NDEBUG
     std::vector<vk::LayerProperties> properties =
       _physicalDevice.enumerateDeviceLayerProperties( );
     for ( const auto& prop : properties )
@@ -39,7 +42,6 @@ namespace lava
       std::cout << "\t" << prop.layerName << std::endl;
     }
 
-    _deviceProperties = _physicalDevice.getProperties( );
     const char* devTypeStr = "";
     switch ( _deviceProperties.deviceType )
     {
@@ -61,14 +63,17 @@ namespace lava
     }
 
     int deviceType = (int)_deviceProperties.deviceType;
-    printf( "Driver Version: %d\n", _deviceProperties.driverVersion );
     printf( "Device Name:    %s\n", _deviceProperties.deviceName );
-    printf( "Device Type:    %s(%d)\n", devTypeStr, deviceType );
+    printf( "Device ID:      %d\n", _deviceProperties.deviceID );
+    printf( "Device Vendor:  %d\n", _deviceProperties.vendorID );
     printf( "API Version:    %d.%d.%d\n",
       // See note below regarding this:
       ( _deviceProperties.apiVersion >> 22 ) & 0x3FF,
       ( _deviceProperties.apiVersion >> 12 ) & 0x3FF,
       ( _deviceProperties.apiVersion & 0xFFF ) );
+    printf( "Driver Version: %d\n", _deviceProperties.driverVersion );
+    printf( "Device Type:    %s(%d)\n", devTypeStr, deviceType );
+#endif
 
     _deviceFeatures = _physicalDevice.getFeatures( );
     _memoryProperties = _physicalDevice.getMemoryProperties( );

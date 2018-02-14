@@ -52,7 +52,46 @@ namespace lava
       // Find present mode
       auto presentModes = vk::PhysicalDevice(
         *device->getPhysicalDevice( ) ).getSurfacePresentModesKHR( *surface );
-      vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
+      
+      std::vector<vk::PresentModeKHR> desiredPresentModes;
+      // TODO: CHECK IF GLFW WINDOW HAS VSYNC enabled or not
+      bool vsync = true;
+      if ( vsync )
+      {
+        desiredPresentModes.push_back( vk::PresentModeKHR::eFifo );
+        desiredPresentModes.push_back( vk::PresentModeKHR::eFifoRelaxed );
+        desiredPresentModes.push_back( vk::PresentModeKHR::eMailbox );
+      }
+      else
+      {
+        desiredPresentModes.emplace_back( vk::PresentModeKHR::eImmediate );
+      }
+
+      std::vector<vk::PresentModeKHR> availablePresentModes =
+        static_cast< vk::PhysicalDevice >( *device->getPhysicalDevice( ) )
+        .getSurfacePresentModesKHR( *surface );
+
+      vk::PresentModeKHR presentMode = vk::PresentModeKHR::eImmediate;
+
+      {
+        vk::PresentModeKHR _selected = desiredPresentModes.empty( ) ?
+          desiredPresentModes[ 0 ] : vk::PresentModeKHR::eFifo;
+        bool _found = false;
+        for ( auto& _desired : desiredPresentModes )
+        {
+          for ( auto& _avaiable : availablePresentModes )
+          {
+            if ( _desired == _avaiable )
+            {
+              _found = true;
+              break;
+            }
+          }
+
+          if ( _found ) break;
+        }
+        presentMode = _selected;
+      }
 
       /*bool vsync = true;
       if ( !vsync )
@@ -130,6 +169,23 @@ namespace lava
       {
         usage |= vk::ImageUsageFlagBits::eTransferSrc;
       }
+
+      /* TODO uint32_t _queue_family_indices[2] =
+				{
+				  gfxQueueIdxx, presentQueueIdx
+				};
+				if (_queue_family_indices[0] != _queue_family_indices[1])
+				{
+					
+					If the graphics and present queues are from different queue families,
+					we either have to explicitly transfer ownership of images between
+					the queues, or we have to create the swap chain with imageSharingMode
+					as VK_SHARING_MODE_CONCURRENT
+					
+        _swap_chain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        _swap_chain_create_info.queueFamilyIndexCount = 2;
+        _swap_chain_create_info.pQueueFamilyIndices = _queue_family_indices;
+        }*/
 
       _swapchain = device->createSwapchain(
         surface, numImages, surfaceFormat, colorSpace, _extent, 1, usage,

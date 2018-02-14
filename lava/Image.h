@@ -61,6 +61,11 @@ namespace lava
         vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
       }
     );
+    LAVA_API
+    inline vk::Format format( void ) const
+    {
+      return _format;
+    }
   private:
     friend class ImageView;
     const std::shared_ptr<Device>& getDevice( void )

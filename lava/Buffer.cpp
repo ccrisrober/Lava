@@ -107,13 +107,14 @@ namespace lava
     cmd->copyBufferToImage( shared_from_this( ), dst, layout, region );
   }
 
-  void Buffer::flush( vk::DeviceSize offset, vk::DeviceSize size )
+  vk::Result Buffer::flush( vk::DeviceSize offset, vk::DeviceSize size )
   {
     vk::MappedMemoryRange mappedRange;
     mappedRange.memory = _memory;
     mappedRange.offset = offset;
     mappedRange.size = size;
-    static_cast< vk::Device >( *_device ).flushMappedMemoryRanges( { mappedRange } );
+    //static_cast< vk::Device >( *_device ).flushMappedMemoryRanges( { mappedRange } );
+    return static_cast< vk::Device >( *_device ).flushMappedMemoryRanges( 1, &mappedRange );
   }
 
   void Buffer::invalidate( vk::DeviceSize size, vk::DeviceSize offset )
@@ -139,8 +140,11 @@ namespace lava
   void Buffer::writeData( vk::DeviceSize offset, vk::DeviceSize length,
     const void * src )
   {
+    // We can't access to VRAM, but we can copy our data to DRAM
+    if ( _memoryPropertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal ) throw;
     void* data = map( offset, length );
     memcpy( data, src, length );
+    if ( flush( VK_WHOLE_SIZE, 0 ) != vk::Result::eSuccess ) throw;
     unmap( );
   }
   void Buffer::set( const void * dst )

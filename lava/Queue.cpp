@@ -44,7 +44,7 @@ namespace lava
       rhs.commandBuffers, rhs.signalSemaphores )
   {}
 
-  SubmitInfo & SubmitInfo::operator=( SubmitInfo const& rhs )
+  SubmitInfo& SubmitInfo::operator=( SubmitInfo const& rhs )
   {
     waitSemaphores = rhs.waitSemaphores;
     waitDstStageMasks = rhs.waitDstStageMasks;

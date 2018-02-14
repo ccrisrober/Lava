@@ -32,9 +32,17 @@ namespace lava
   {
     if ( _defaultFramebuffer )
     {
+      if ( renderer )
+      {
+        renderer->releaseSwapChainResources( );
+      }
       _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
       _defaultFramebuffer.reset( new glfw::DefaultFramebuffer( _device, _surface,
         _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
+      if ( renderer )
+      {
+        renderer->initSwapChainResources( );
+      }
     }
   }
 
@@ -72,8 +80,8 @@ namespace lava
   {
     return _defaultFramebuffer->supportsGrab( );
   }
-
-  void VulkanWindow::requestUpdate( void )
+  // TODO: frameReady
+  void VulkanWindow::requestUpdate( std::shared_ptr<Semaphore> sem )
   {
     // TODO: Check only called by main thread std::this_thread::
     if ( !_framePending )
@@ -82,7 +90,8 @@ namespace lava
     }
     _framePending = false;
 
-    endFrame( );
+    endFrame( sem != nullptr ? 
+      sem : defaultFramebuffer( )->getPresentSemaphore( ) );
   }
 
   vk::SampleCountFlagBits VulkanWindow::sampleCountFlagBits( void ) const
@@ -420,6 +429,7 @@ namespace lava
     _presQueueFamilyIdx = uint32_t( -1 );
 
     auto phyDev = static_cast< vk::PhysicalDevice >( *_physicalDevice );
+    std::cout << "Finding queue with graphic supporting ... " << std::endl;
     for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
     {
       VkBool32 presentSupport = phyDev.getSurfaceSupportKHR( i, *_surface );
@@ -433,6 +443,19 @@ namespace lava
         && presentSupport )
       {
         _gfxQueueFamilyIdx = i;
+        std::cout << "\tQueue graphic bit supported." << std::endl;
+        if ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eCompute )
+        {
+          std::cout << "\tQueue compute bit supported." << std::endl;
+        }
+        if ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eTransfer )
+        {
+          std::cout << "\tQueue transfer bit supported." << std::endl;
+        }
+        if ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eSparseBinding )
+        {
+          std::cout << "\tQueue sparse binding bit supported." << std::endl;
+        }
       }
     }
 
@@ -631,11 +654,11 @@ namespace lava
 
       cmd->endRenderPass( );
 
-      endFrame( );
+      endFrame( _defaultFramebuffer->getPresentSemaphore( ) );
     }
   }
 
-  void VulkanWindow::endFrame( void )
+  void VulkanWindow::endFrame( std::shared_ptr<Semaphore> sem )
   {
     auto currrentCmd = imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
     if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
@@ -668,7 +691,7 @@ namespace lava
 
     currrentCmd->end( );
     vk::Result err = _gfxQueue->submit( SubmitInfo {
-      { _defaultFramebuffer->getPresentSemaphore( ) },
+      { sem },//{ _defaultFramebuffer->getPresentSemaphore( ) },
       { vk::PipelineStageFlagBits::eColorAttachmentOutput },
       currrentCmd,
       _renderComplete

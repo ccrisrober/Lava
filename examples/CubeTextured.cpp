@@ -300,7 +300,8 @@ public:
     cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
 
     cmd->endRenderPass( );
-
+    
+    //_window->frameReady( );
     _window->requestUpdate( );
   }
 

@@ -31,6 +31,7 @@
 namespace lava
 {
   class Buffer;
+  class BufferView;
   class CommandPool;
   class Event;
   class Fence;
@@ -206,6 +207,10 @@ namespace lava
       vk::BufferUsageFlags usageFlags,
       vk::ArrayProxy<const uint32_t> queueFamilyIndices,
       vk::MemoryPropertyFlags memoryPropertyFlags );
+
+    LAVA_API
+    std::shared_ptr<BufferView> createBufferView( std::shared_ptr<Buffer> buf,
+      vk::Format format, vk::DeviceSize offset, vk::DeviceSize size );
 
     LAVA_API
     std::shared_ptr<Swapchain> createSwapchain( 
