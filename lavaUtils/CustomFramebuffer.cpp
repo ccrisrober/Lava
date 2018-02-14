@@ -18,10 +18,11 @@ namespace lava
     }
 
     uint32_t CustomFramebuffer::addAttachment( uint32_t width_, 
-      uint32_t height_, vk::Format format_, vk::ImageUsageFlags usage_ )
+      uint32_t height_, vk::Format format_, vk::ImageUsageFlags usage_, 
+      uint32_t numLayers )
     {
-      FramebufferAttachment attachment;
-      attachment.format = format_;
+      FramebufferAttachment att;
+      att.format = format_;
 
       vk::ImageAspectFlags aspectMask = { };
 
@@ -36,11 +37,11 @@ namespace lava
       // Depth (and/or stencil) attachment
       if ( usage_ & vk::ImageUsageFlagBits::eDepthStencilAttachment )
       {
-        if ( attachment.hasDepth( ) )
+        if ( att.hasDepth( ) )
         {
           aspectMask = vk::ImageAspectFlagBits::eDepth;
         }
-        if ( attachment.hasStencil( ) )
+        if ( att.hasStencil( ) )
         {
           aspectMask = aspectMask | vk::ImageAspectFlagBits::eStencil;
         }
@@ -53,48 +54,51 @@ namespace lava
       ici.extent.height = height_;
       ici.extent.depth = 1;
 
-      attachment.image = _device->createImage( { }, vk::ImageType::e2D, format_,
-        ici.extent, 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, 
-        usage_, ici.sharingMode, { }, ici.initialLayout, { }
+      att.image = _device->createImage( { }, vk::ImageType::e2D, format_,
+        ici.extent, 1, numLayers, vk::SampleCountFlagBits::e1, 
+        vk::ImageTiling::eOptimal, usage_, ici.sharingMode, { }, 
+        ici.initialLayout, { }
       );
 
-      vk::ImageSubresourceRange isr;
-      isr.aspectMask = aspectMask;
-      isr.baseMipLevel = 0;
-      isr.levelCount = 1;
-      isr.baseArrayLayer = 0;
-      isr.layerCount = 1;
+      att.subresourceRange.aspectMask = aspectMask;
+      att.subresourceRange.baseMipLevel = 0;
+      att.subresourceRange.levelCount = 1;
+      att.subresourceRange.baseArrayLayer = 0;
+      att.subresourceRange.layerCount = numLayers;
 
-      attachment.imageView = attachment.image->createImageView(
-        vk::ImageViewType::e2D, format_, vk::ComponentMapping{
+      vk::ImageViewType imageViewType =
+        ( numLayers == 1 ) ? vk::ImageViewType::e2D : vk::ImageViewType::e2DArray;
+
+      att.imageView = att.image->createImageView(
+        imageViewType, format_, vk::ComponentMapping{
           vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
           vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA
-        }, isr
+        }, att.subresourceRange
       );
 
       // Fill attachment description
-      attachment.description.samples = vk::SampleCountFlagBits::e1;
-      attachment.description.loadOp = vk::AttachmentLoadOp::eClear;
-      attachment.description.storeOp =
+      att.description.samples = vk::SampleCountFlagBits::e1;
+      att.description.loadOp = vk::AttachmentLoadOp::eClear;
+      att.description.storeOp =
         ( usage_ & vk::ImageUsageFlagBits::eSampled ) ?
         vk::AttachmentStoreOp::eStore : vk::AttachmentStoreOp::eDontCare;
-      attachment.description.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-      attachment.description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-      attachment.description.format = format_;
-      attachment.description.initialLayout = vk::ImageLayout::eUndefined;
+      att.description.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+      att.description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+      att.description.format = format_;
+      att.description.initialLayout = vk::ImageLayout::eUndefined;
 
       // Final layout
       // If not, final layout depends on attachment type
-      if ( attachment.hasDepth( ) || attachment.hasStencil( ) )
+      if ( att.hasDepth( ) || att.hasStencil( ) )
       {
-        attachment.description.finalLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+        att.description.finalLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
       }
       else
       {
-        attachment.description.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        att.description.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
       }
 
-      attachments.push_back( attachment );
+      attachments.push_back( att );
 
       return attachments.size( ) - 1;
     }
@@ -193,7 +197,14 @@ namespace lava
       }
 
       // Find max of num of layers
-      uint32_t maxLayers = 1; // TODO
+      uint32_t maxLayers = 0;
+      for ( const auto& att : attachments )
+      {
+        if ( att.subresourceRange.layerCount > maxLayers )
+        {
+          maxLayers = att.subresourceRange.layerCount;
+        }
+      }
 
       _framebuffer = _device->createFramebuffer( _renderPass, attViews, 
         vk::Extent2D{ _width, _height }, maxLayers );

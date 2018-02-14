@@ -1,5 +1,6 @@
 #include "QVulkanWindow.h"
 #include <QPlatformSurfaceEvent>
+#include <qapplication.h>
 
 namespace lava
 {
@@ -178,6 +179,11 @@ namespace lava
 
   void QVulkanWindow::frameReady( void )
   {
+    if ( QThread::currentThread( ) != QApplication::instance( )->thread( ) )
+    {
+      std::cerr << "You only can called this in main thread" << std::endl;
+      return;
+    }
     // TODO: Check only called by main thread std::this_thread::
     if ( !_framePending )
     {

@@ -3,6 +3,7 @@
 
 namespace lava
 {
+  std::thread::id main_thread_id = std::this_thread::get_id( );
   VulkanWindowRenderer::~VulkanWindowRenderer( void )
   {
   }
@@ -83,6 +84,11 @@ namespace lava
   // TODO: frameReady
   void VulkanWindow::requestUpdate( std::shared_ptr<Semaphore> sem )
   {
+    if ( main_thread_id != std::this_thread::get_id( ) )
+    {
+      std::cerr << "You only can called this in main thread" << std::endl;
+      return;
+    }
     // TODO: Check only called by main thread std::this_thread::
     if ( !_framePending )
     {

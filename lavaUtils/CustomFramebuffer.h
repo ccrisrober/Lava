@@ -78,7 +78,7 @@ namespace lava
 
 		  LAVAUTILS_API
 			uint32_t addAttachment( uint32_t width_, uint32_t height_, 
-				vk::Format format_, vk::ImageUsageFlags usage_ );
+				vk::Format format_, vk::ImageUsageFlags usage_, uint32_t numLayers = 1 );
       LAVAUTILS_API
       void createSampler( vk::Filter magFilter, vk::Filter minFilter, 
         vk::SamplerAddressMode addressMode );
