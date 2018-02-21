@@ -72,7 +72,6 @@ if( QT5CORE_FOUND )
 endif( )
 
 add_subdirectory( lavaUtils )
-
 add_subdirectory( examples )
 
 configure_file(

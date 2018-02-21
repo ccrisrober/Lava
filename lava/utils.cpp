@@ -292,8 +292,7 @@ namespace lava
     //    color components
     bool colorSwizzle = false;
     // Check if source is BGR 
-    // Note: Not complete, only contains most common and basic BGR surface 
-    //    formats for demonstation purposes
+    // TODO: Not complete, only contains most common BGR surface formats
     if ( !supportsBlit )
     {
       std::vector< vk::Format > formatsBGR = {
@@ -320,7 +319,7 @@ namespace lava
         {
           file.write( ( char* ) row, 3 );
         }
-        row++;
+        ++row;
       }
       data += subResourceLayout.rowPitch;
     }
@@ -333,11 +332,14 @@ namespace lava
     uint32_t& width, uint32_t& height, uint32_t& numChannels )
   {
     int w, h, c;
-    stbi_uc* pixels = stbi_load( fileName.c_str( ),
-      &w, &h, &c, STBI_rgb_alpha );
+    stbi_uc* pixels = stbi_load( fileName.c_str( ), &w, &h, &c, STBI_rgb_alpha );
 
-    if ( !pixels )
+    if ( pixels == nullptr )
     {
+      const std::string reason( stbi_failure_reason( ) );
+      printf( "%s failed to load. stb_image's reason: %s\n", fileName.c_str( ), 
+        reason.c_str( ) );
+
       throw std::runtime_error( "failed to load texture image!" );
     }
 

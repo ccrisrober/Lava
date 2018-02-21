@@ -342,9 +342,9 @@ int main( void )
 
   std::vector<const char*> layers =
   {
-/*#ifndef NDEBUG
+#ifndef NDEBUG
     "VK_LAYER_LUNARG_standard_validation",
-#endif*/
+#endif
   };
   std::vector<const char*> extensions =
   {

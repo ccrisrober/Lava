@@ -97,8 +97,9 @@ namespace lava
         usageFlags |= vk::ImageUsageFlagBits::eTransferDst;
       }
 
+      const uint32_t arraySize = 1;
       image = _device->createImage( { }, vk::ImageType::e2D, format_,
-        vk::Extent3D( width, height, 1 ), mipLevels, 1,
+        vk::Extent3D( width, height, 1 ), mipLevels, arraySize,
         vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, usageFlags,
         vk::SharingMode::eExclusive, { }, vk::ImageLayout::eUndefined,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
@@ -113,8 +114,8 @@ namespace lava
       // Start at first mip level
       subresourceRange.baseMipLevel = 0;
       // We will transition on all mip levels
-      subresourceRange.levelCount = 1;// TODO: mipLevels;
-                                      // The 2D texture only has one layer
+      subresourceRange.levelCount = mipLevels;
+      // The 2D texture only has one layer
       subresourceRange.layerCount = 1;
 
       // Image barrier for optimal image (target)
@@ -129,24 +130,27 @@ namespace lava
       );
 
       // Copy buffer to image
-      // todo: we can generate manual mip levels
-      vk::BufferImageCopy region = { };
-      region.bufferOffset = 0;
-      region.bufferRowLength = 0;
-      region.bufferImageHeight = 0;
-      region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-      region.imageSubresource.mipLevel = 0;
-      region.imageSubresource.baseArrayLayer = 0;
-      region.imageSubresource.layerCount = 1;
-      region.imageOffset = vk::Offset3D( 0, 0, 0 );
-      region.imageExtent = vk::Extent3D(
-        width,
-        height,
-        1
-      );
+      std::vector<vk::BufferImageCopy> bufferCopyRegions;
+      uint32_t offset = 0;
+      for ( uint32_t i = 0; i < mipLevels; ++i )
+      {
+        vk::BufferImageCopy region = { };
+        region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        region.imageSubresource.mipLevel = i;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageExtent = vk::Extent3D(
+          width,
+          height,
+          1
+        );
+        region.bufferOffset = offset;
+        bufferCopyRegions.push_back( region );
+        offset += texSize;
+      }
 
       copyCmd->copyBufferToImage( stagingBuffer, image,
-        vk::ImageLayout::eTransferDstOptimal, { region } );
+        vk::ImageLayout::eTransferDstOptimal, bufferCopyRegions );
 
       // Change texture image layout to shader read after all mip levels have been copied
       this->imageLayout = imageLayout_;

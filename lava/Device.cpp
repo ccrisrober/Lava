@@ -292,6 +292,7 @@ namespace lava
       if ( w.texelBufferView )
       {
         auto bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        auto bb = static_cast< VkBufferView >( bufferView );
         write.setPTexelBufferView( &bufferView );
       }
 

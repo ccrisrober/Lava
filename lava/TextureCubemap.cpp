@@ -63,6 +63,19 @@ namespace lava
         * sizeof( unsigned char );
       images.push_back( { pixels, textureWidth, textureHeight, channels, size } );
       totalSize += size;
+
+      auto deviceProps = _device->getPhysicalDevice( )->getDeviceProperties( );
+      if ( static_cast< int >( deviceProps.limits.maxImageDimensionCube ) < width ||
+        static_cast< int >( deviceProps.limits.maxImageDimensionCube ) < height )
+      {
+        printf( "%s is too big (%dx%d), max supported size is %dx%d.\n", 
+          filePaths[ i ].c_str( ), textureWidth, textureHeight,
+          deviceProps.limits.maxImageDimensionCube, 
+          deviceProps.limits.maxImageDimensionCube
+        );
+        textureWidth = deviceProps.limits.maxImageDimensionCube;
+        textureHeight = deviceProps.limits.maxImageDimensionCube;
+      }
     }
 
     unsigned char* pixels = ( unsigned char* ) malloc( totalSize );

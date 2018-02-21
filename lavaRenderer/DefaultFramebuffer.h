@@ -84,6 +84,11 @@ namespace lava
           vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = { } )
       {
         auto results = queue->present( waitSemaphores, _swapchain, _swapchainIndex );
+        vk::Result res = results.at( 0 );
+        if ( res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR )
+        {
+          // TODO: RESIZE
+        }
         //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
         //std::cout << str << std::endl;
       }

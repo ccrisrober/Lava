@@ -226,6 +226,13 @@ namespace lava
     UniformTexelBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
   };
 
+  class IndirectBuffer: public Buffer
+  {
+  public:
+    LAVA_API
+    IndirectBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+  };
+
 }
 
 #endif /* __LAVA_BUFFER__ */

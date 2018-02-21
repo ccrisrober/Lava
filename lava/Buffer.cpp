@@ -144,7 +144,7 @@ namespace lava
     if ( _memoryPropertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal ) throw;
     void* data = map( offset, length );
     memcpy( data, src, length );
-    if ( flush( VK_WHOLE_SIZE, 0 ) != vk::Result::eSuccess ) throw;
+    //if ( flush( VK_WHOLE_SIZE, 0 ) != vk::Result::eSuccess ) throw;
     unmap( );
   }
   void Buffer::set( const void * dst )
@@ -246,6 +246,15 @@ namespace lava
     vk::DeviceSize size )
     : Buffer( device, vk::BufferCreateFlags( ), size,
       vk::BufferUsageFlagBits::eUniformTexelBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
+  IndirectBuffer::IndirectBuffer( const std::shared_ptr<Device>& device,
+    vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eIndirectBuffer,
       vk::SharingMode::eExclusive, nullptr,
       vk::MemoryPropertyFlagBits::eHostVisible |
       vk::MemoryPropertyFlagBits::eHostCoherent )

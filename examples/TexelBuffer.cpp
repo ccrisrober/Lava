@@ -19,7 +19,6 @@
 
 #include <lava/lava.h>
 #include <lavaRenderer/lavaRenderer.h>
-#include <qtLava/qtLava.h>
 using namespace lava;
 
 #include <routes.h>
@@ -239,9 +238,9 @@ int main( void )
 
   std::vector<const char*> layers =
   {
-/*#ifndef NDEBUG
+#ifndef NDEBUG
     "VK_LAYER_LUNARG_standard_validation",
-#endif*/
+#endif
   };
   std::vector<const char*> extensions =
   {
