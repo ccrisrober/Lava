@@ -144,4 +144,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVADEPTHBUFFERINGBYJGM_LINK_LIBRARIES lava )
   common_application( lavaDepthBufferingByJGM )
   
+  set( LAVAMESHBYJGM_HEADERS )
+  set( LAVAMESHBYJGM_SOURCES JGM/MeshByJGM.cpp )
+  set( LAVAMESHBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaMeshByJGM )
+  
 endif( )
