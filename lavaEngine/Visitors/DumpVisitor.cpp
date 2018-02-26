@@ -5,7 +5,7 @@
 #include <lavaEngine/Scenegraph/Node.h>
 #include <lavaEngine/Scenegraph/Group.h>
 //#include <lavaEngine/Scenegraph/Geometry.h>
-//#include <lavaEngine/Scenegraph/Camera.h>
+#include <lavaEngine/Scenegraph/Camera.h>
 #include <lavaEngine/Scenegraph/Light.h>
 
 namespace lava
@@ -40,12 +40,12 @@ namespace lava
     /*void DumpVisitor::visitGeometry( Geometry *geometry )
     {
       _dumpNode( geometry, "Geometry" );
-    }
+    }*/
 
     void DumpVisitor::visitCamera( Camera *camera )
     {
       _dumpNode( camera, "Camera" );
-    }*/
+    }
 
     void DumpVisitor::visitLight( Light *light )
     {

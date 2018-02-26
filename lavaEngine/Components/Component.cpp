@@ -1,76 +1,79 @@
 #include "Component.h"
-#include "../Scenegraph/Node.h"
+#include <lavaEngine/Scenegraph/Node.h>
 #include <string>
 
-#include "../Utils/Log.hpp"
+//#include <lava/lava.h>
 
-namespace mb
+namespace lava
 {
-  Component::Component( )
-    : _enabled( true )
-    , _node( nullptr )
+  namespace engine
   {
-  }
-
-  Component::~Component( )
-  {
-    mb::Log::debug("[D] Component");
-  }
-
-  Node* Component::node( )
-  {
-    return _node;
-  }
-
-  void Component::setNode( Node* n )
-  {
-    _node = n;
-  }
-
-  void Component::update( const mb::Clock& )
-  {
-  }
-
-  void Component::start( void )
-  {
-    mb::Log::debug("Init ", GetUID( ), " component");
-  }
-
-  void Component::onAttach( void )
-  {
-    mb::Log::debug("Attached ", this->GetUID( ), " to node '",
-      this->node( )->name( ), "'");
-  }
-
-  void Component::onDetach( void )
-  {
-  }
-  bool Component::isEnabled( void ) const
-  {
-    return _enabled;
-  }
-  void Component::enable( void )
-  {
-    setEnabled( true );
-  }
-  void Component::disable( void )
-  {
-    setEnabled( false );
-  }
-  void Component::setEnabled( const bool v )
-  {
-    _enabled = v;
-    if ( _enabled == true )
+    Component::Component( void )
+      : _enabled( true )
+      , _node( nullptr )
     {
-      onEnable( );
     }
-    else if ( _enabled == false )
+
+    Component::~Component( void )
     {
-      onDisable( );
+      // lava::Log::debug("[D] Component");
     }
-  }
-  void Component::toggle( void )
-  {
-    setEnabled( !isEnabled( ) );
+
+    Node* Component::node( void )
+    {
+      return _node;
+    }
+
+    void Component::setNode( Node* n )
+    {
+      _node = n;
+    }
+
+    /* TODO: void Component::update( const mb::Clock& )
+    {
+    }*/
+
+    void Component::start( void )
+    {
+      // lava::Log::debug("Init ", GetUID( ), " component");
+    }
+
+    void Component::onAttach( void )
+    {
+      // lava::Log::debug("Attached ", this->GetUID( ), " to node '",
+      //  this->node( )->name( ), "'");
+    }
+
+    void Component::onDetach( void )
+    {
+    }
+    bool Component::isEnabled( void ) const
+    {
+      return _enabled;
+    }
+    void Component::enable( void )
+    {
+      setEnabled( true );
+    }
+    void Component::disable( void )
+    {
+      setEnabled( false );
+    }
+    void Component::setEnabled( const bool v )
+    {
+      _enabled = v;
+      if ( _enabled )
+      {
+        onEnable( );
+      }
+      else
+      {
+        onDisable( );
+      }
+    }
+    void Component::toggle( void )
+    {
+      setEnabled( !isEnabled( ) );
+    }
   }
 }

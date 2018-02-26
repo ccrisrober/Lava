@@ -11,9 +11,12 @@
 #include <lavaEngine/api.h>
 
 #include <lavaEngine/Visitors/Visitor.h>
+#include <lavaEngine/Utils/Layer.h>
 
 #ifdef LAVAENGINE_HASCOMPONENTS
   #include <unordered_map>
+  #include <functional>
+  #include <lavaEngine/Components/Component.h>
 #endif
 
 namespace lava
@@ -55,6 +58,30 @@ namespace lava
       void detachAllComponents( void );
       LAVAENGINE_API
       void forEachComponent( std::function< void( Component * ) > callback );
+
+      template< class T, typename ... Args >
+      T* addComponent( Args&& ... args );
+      template <class T>
+      bool hasComponent( void );
+      template <class T>
+      T* getComponent( void );
+      template <class T>
+      void removeComponent( void );
+      template <class T>
+      void removeComponents( void );
+      template <class T>
+      T* componentInParent( void );
+      /** TODO: More functions!
+        - GetComponentsInParent<T>(bool includeInactives)
+        - GetComponentsInChildren<T>(bool includeInactives)
+        - FindNodesWithTag(string tag) NOTE: Global? Local?
+      */
+
+      LAVAENGINE_API
+      Component* getComponentByName( const std::string& name );
+      LAVAENGINE_API
+      std::vector<Component*> getComponentsByName( const std::string& name,
+        bool includeInactive = false );
     protected:
       std::unordered_map< std::string, Component* > _components;
 #endif
@@ -89,9 +116,20 @@ namespace lava
 
     private:
       bool _enabled = true;
+
+    public:
+      LAVAENGINE_API
+      Layer& layer( void )
+      {
+        return _layer;
+      }
+    protected:
+      Layer _layer;
     };
+#ifdef LAVAENGINE_HASCOMPONENTS
+  #include "Node.inl"
+#endif
 	}
 }
-
 
 #endif /* __LAVAENGINE_NODE__ */

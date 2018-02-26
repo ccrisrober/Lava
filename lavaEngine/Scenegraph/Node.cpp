@@ -80,6 +80,31 @@ namespace lava
         }
       }
     }
+    Component* Node::getComponentByName( const std::string & name )
+    {
+      auto aux = _components.find( name );
+      if ( aux == _components.end( ) )
+      {
+        return nullptr;
+      }
+      return aux->second;
+    }
+    std::vector<Component*> Node::getComponentsByName( 
+      const std::string & name, bool includeInactive )
+    {
+      std::vector<Component*> cs;
+
+      auto finds = _components.equal_range( name );
+
+      for ( auto element = finds.first; element != finds.second; ++element )
+      {
+        if ( includeInactive || element->second->isEnabled( ) )
+        {
+          cs.push_back( element->second );
+        }
+      }
+      return cs;
+    }
 #endif
 	}
 }

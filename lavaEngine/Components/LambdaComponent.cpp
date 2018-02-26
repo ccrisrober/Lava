@@ -1,13 +1,16 @@
-#include "LambdaComponent.hpp"
+#include "LambdaComponent.h"
 
-namespace mb
+namespace lava
 {
-  LambdaComponent::LambdaComponent( LambdaCallback cb )
-    : _callback( cb )
-  {
-  }
-  void LambdaComponent::update( const mb::Clock& clock )
-  {
-    _callback( node(), clock );
-  }
+	namespace engine
+	{
+		LambdaComponent::LambdaComponent( LambdaCallback cb )
+			: _callback( cb )
+		{
+		}
+		/*void LambdaComponent::update( const mb::Clock& clock )
+		{
+			_callback( node( ), clock );
+		}*/
+	}
 }

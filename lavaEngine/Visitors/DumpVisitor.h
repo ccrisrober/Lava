@@ -22,8 +22,8 @@ namespace lava
       virtual void visitGroup( Group *group ) override;
       //LAVAENGINE_API
       //virtual void visitGeometry( Geometry *geometry ) override;
-      //LAVAENGINE_API
-      //virtual void visitCamera( Camera *camera ) override;
+      LAVAENGINE_API
+      virtual void visitCamera( Camera *camera ) override;
       LAVAENGINE_API
       virtual void visitLight( Light *light ) override;
     private:
