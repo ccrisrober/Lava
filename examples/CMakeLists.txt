@@ -154,4 +154,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAVERTEXDIFFUSELIGHTINGBYJGM_LINK_LIBRARIES lava )
   common_application( lavaVertexDiffuseLightingByJGM )
   
+  set( LAVAFRAGMENTSPECULARLIGHTINGBYJGM_HEADERS )
+  set( LAVAFRAGMENTSPECULARLIGHTINGBYJGM_SOURCES JGM/FragmentSpecularLightingByJGM.cpp )
+  set( LAVAFRAGMENTSPECULARLIGHTINGBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaFragmentSpecularLightingByJGM )
+  
 endif( )
