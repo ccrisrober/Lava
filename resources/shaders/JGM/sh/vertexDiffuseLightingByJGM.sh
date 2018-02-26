@@ -1,0 +1,2 @@
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/vertexDiffuseLightingByJGM.vert -o /home/jguerrero/opt/Lava/spvs/JGM/vertexDiffuseLightingByJGM_vert.spv
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/vertexDiffuseLightingByJGM.frag -o /home/jguerrero/opt/Lava/spvs/JGM/vertexDiffuseLightingByJGM_frag.spv

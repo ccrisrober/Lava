@@ -149,4 +149,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAMESHBYJGM_LINK_LIBRARIES lava )
   common_application( lavaMeshByJGM )
   
+  set( LAVAVERTEXDIFFUSELIGHTINGBYJGM_HEADERS )
+  set( LAVAVERTEXDIFFUSELIGHTINGBYJGM_SOURCES JGM/VertexDiffuseLightingByJGM.cpp )
+  set( LAVAVERTEXDIFFUSELIGHTINGBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaVertexDiffuseLightingByJGM )
+  
 endif( )
