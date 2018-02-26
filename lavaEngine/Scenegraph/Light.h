@@ -1,0 +1,70 @@
+#pragma once
+
+#include "Group.h"
+#include <lavaEngine/api.h>
+
+namespace lava
+{
+	namespace engine
+	{
+		typedef glm::vec3 Color;
+		class Light: public Node
+		{
+		public:
+      enum class Type
+      {
+        AMBIENT,
+        DIRECTIONAL,
+        HEMISPHERIC,
+        POINT,
+        SPOT
+      };
+			LAVAENGINE_API
+			Light( Light::Type t = Light::Type::POINT );
+			LAVAENGINE_API
+			virtual ~Light( void );
+			LAVAENGINE_API
+    	inline const Light::Type& getType( void ) const 
+    	{
+    		return _type;
+    	}
+			LAVAENGINE_API
+    	const Color& getColor( void ) 
+    	{
+    		return _diffuseColor;
+    	}
+			LAVAENGINE_API
+    	void setColor( const Color& c )
+    	{
+    		_diffuseColor = c;
+    	}
+			LAVAENGINE_API
+    	const Color& getGroundColor( void )
+    	{
+    		if ( _type == Type::HEMISPHERIC )
+    		{
+    			return _groundColor;
+    		}
+    		return Color( 0.0f, 0.0f, 0.0f );
+    	}
+			LAVAENGINE_API
+    	void setGroundColor( const Color& c )
+    	{
+    		_groundColor = c;
+    	}
+    public:
+    	LAVAENGINE_API
+    	virtual void accept( Visitor& v ) override;
+    protected:
+    	Light::Type _type;
+    	Color _diffuseColor;
+    	Color _ambientColor;
+    	Color _groundColor; // Only for hemispheric light
+    		
+		  float Constant = 1.0f;   // default: 1
+		  float Linear = 0.0f;     // default: 0
+		  float Quadratic = 0.0f;  // default: 0
+		  float Intensity = 1.0f;  // default: 1
+		};
+	}
+}

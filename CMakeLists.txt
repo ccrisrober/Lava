@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 1.0.1 )
+project( lava VERSION 1.1.0 )
 set( lava_VERSION_ABI 1)
 
 # Disable in source building
@@ -34,6 +34,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 
 option( LAVA_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
 option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
+option( LAVAENGINE_WITH_COMPONENTS "LAVA with components" OFF)
 
 if ( LAVA_WITH_DEVICE_BUILDERS )
   list(APPEND COMMON_FIND_PACKAGE_DEFINES LAVA_DEVICE_BUILDERS )
@@ -72,6 +73,8 @@ if( QT5CORE_FOUND )
 endif( )
 
 add_subdirectory( lavaUtils )
+add_subdirectory( lavaEngine )
+
 add_subdirectory( examples )
 
 configure_file(
