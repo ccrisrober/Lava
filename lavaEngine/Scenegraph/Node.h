@@ -26,6 +26,10 @@ namespace lava
     class Node
     {
     public:
+      enum class TransformSpace: short
+      {
+        Local, Parent, World
+      };
       //LAVAENGINE_API
       //Node( void );
       LAVAENGINE_API
@@ -125,6 +129,97 @@ namespace lava
       }
     protected:
       Layer _layer;
+    // Transforms section
+    public:
+      LAVAENGINE_API
+      void translate( const glm::vec3& direction,
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void rotate( float angle, const glm::vec3& axis, 
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void rotate( const glm::quat& quat,
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void scale( const glm::vec3& scale );
+      LAVAENGINE_API
+      void setPosition( const glm::vec3& position,
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void setRotation( float angle, const glm::vec3& axis, 
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void setRotation( const glm::quat& rotation, 
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void setDirection( const glm::vec3& spaceTargetDirection, 
+        const glm::vec3& localDirectionVector, 
+        const glm::vec3& localUpVector,
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void lookAt( const glm::vec3& targetPosition, 
+        const glm::vec3& localDirectionVector, 
+        const glm::vec3& localUpVector,
+        TransformSpace space = TransformSpace::Local );
+      LAVAENGINE_API
+      void update( void );
+      LAVAENGINE_API
+      inline const glm::vec3& getAbsolutePosition( void )
+      {
+        if ( _needUpdate )
+        {
+          update( );
+        }
+
+        return _absolutePosition;
+      }
+
+      LAVAENGINE_API
+      inline const glm::quat& getAbsoluteRotation( void )
+      {
+        if ( _needUpdate )
+        {
+          update( );
+        }
+        return _absoluteRotation;
+      }
+
+      LAVAENGINE_API
+      inline const glm::vec3& getAbsoluteScale( void )
+      {
+        if ( _needUpdate )
+        {
+          update( );
+        }
+
+        return _absoluteScale;
+      }
+
+      LAVAENGINE_API
+      inline const glm::mat4& getTransform( void )
+      {
+        if ( _needUpdate )
+        {
+          update( );
+        }
+        return _transform;
+      }
+    public:
+      virtual void needUpdate( void );  // TODO
+    private:
+      glm::vec3 _position = glm::vec3( 0.0f );
+      glm::quat _rotation;// = glm::quat( 0.0f, 0.0f, 0.0f, 1.0f );
+      glm::vec3 _scale = glm::vec3( 1.0f );
+
+      glm::vec3 _absolutePosition = glm::vec3( 0.0f );
+      glm::quat _absoluteRotation;// = glm::quat( 0.0f, 0.0f, 0.0f, 1.0f );
+      glm::vec3 _absoluteScale = glm::vec3( 1.0f );
+
+      glm::mat4 _transform = glm::mat4( 1.0f );
+
+      // TODO OPTIMIZATION: If identity, discard multiplication on global matrices generation!! bool _isIdentity;
+
+      bool _needUpdate = true;
     };
 #ifdef LAVAENGINE_HASCOMPONENTS
   #include "Node.inl"

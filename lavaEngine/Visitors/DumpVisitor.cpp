@@ -4,7 +4,7 @@
 
 #include <lavaEngine/Scenegraph/Node.h>
 #include <lavaEngine/Scenegraph/Group.h>
-//#include <lavaEngine/Scenegraph/Geometry.h>
+#include <lavaEngine/Scenegraph/Geometry.h>
 #include <lavaEngine/Scenegraph/Camera.h>
 #include <lavaEngine/Scenegraph/Light.h>
 
@@ -37,10 +37,10 @@ namespace lava
       --_auxLevel;
     }
 
-    /*void DumpVisitor::visitGeometry( Geometry *geometry )
+    void DumpVisitor::visitGeometry( Geometry *geometry )
     {
       _dumpNode( geometry, "Geometry" );
-    }*/
+    }
 
     void DumpVisitor::visitCamera( Camera *camera )
     {
@@ -61,8 +61,8 @@ namespace lava
         tab << "  ";
       }
 
-      std::cout << tab.str() << "[" + type + "] "
-        << node->name() << " (" << node << ")";
+      std::cout << tab.str( ) << "[" + type + "] "
+        << node->name( ) << " (" << node << ")";
     }
   }
 }

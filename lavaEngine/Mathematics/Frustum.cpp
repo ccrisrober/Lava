@@ -1,4 +1,5 @@
 #include "Frustum.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace lava
 {
@@ -48,7 +49,7 @@ namespace lava
       matrix[ 14 ] = -( 2.0f * far * near ) / ( far - near );
       matrix[ 15 ] = 0.0f;
 
-      return glm::mat4( ); // ( matrix );
+      return glm::make_mat4( matrix.data( ) );
     }
     glm::mat4 Frustum::computeOthoMatrix( void ) const
     {
@@ -81,7 +82,7 @@ namespace lava
       matrix[ 14 ] = 0.0f;
       matrix[ 15 ] = 1.0f;
 
-      return glm::mat4( ); // ( matrix );
+      return glm::make_mat4( matrix.data( ) );
     }
   }
 }

@@ -12,11 +12,18 @@ namespace lava
     {
     }
     Camera::Camera( const float fov, const float ar, 
-      const float n, const float f )
+      const float near, const float far )
       : Node( std::string( "Camera" ) )
+      , _frustum( fov, ar, near, far )
+      , _clearColor( glm::vec4( 0.2f, 0.3f, 0.3f, 1.0f ) )
+      , _viewport( glm::vec4( 0.0f, 0.0f, 1.0f, 1.0f ) )
     {
-      _projectionMatrix = glm::mat4( 1.0f );
-      _orthographicMatrix = glm::mat4( 1.0f );
+      for ( unsigned int i = 0; i < 32; ++i )
+      {
+        this->layer( ).enable( i );
+      }
+      _projectionMatrix = _frustum.computeProjMatrix( );
+      _orthographicMatrix = _frustum.computeOthoMatrix( );
       _viewMatrix = glm::mat4( 1.0f );
     }
     Camera::~Camera( void )
@@ -31,7 +38,7 @@ namespace lava
     {
       v.visitCamera( this );
     }
-    const glm::mat4 & Camera::getProjection( void ) const
+    const glm::mat4& Camera::getProjection( void ) const
     {
       return _projectionMatrix;
     }
@@ -39,7 +46,7 @@ namespace lava
     {
       _projectionMatrix = proj;
     }
-    const glm::mat4 & Camera::getOrtographic( void )
+    const glm::mat4& Camera::getOrtographic( void )
     {
       return _orthographicMatrix;
     }
@@ -49,7 +56,8 @@ namespace lava
     }
     const glm::mat4& Camera::getView( void )
     {
-      return glm::mat4( 1.0f );
+      _viewMatrix = glm::inverse( getTransform( ) );
+      return _viewMatrix;
     }
     void Camera::setView( const glm::mat4 view )
     {
@@ -60,6 +68,13 @@ namespace lava
       _frustum = frustum;
       _projectionMatrix = _frustum.computeProjMatrix( );
       _orthographicMatrix = _frustum.computeOthoMatrix( );
+    }
+    void Camera::computeCullingPlanes( void )
+    {
+      glm::vec3 position = getAbsolutePosition( );
+      glm::vec3 dir; // TODO: = glm::normalize( glm::vec3( getAbsoluteRotation( ) ) );
+
+      //_cullingPlanes[ 0 ] = Plane( dir, position + getFrustum( ).getDMin( ) * dir );
     }
   }
 }

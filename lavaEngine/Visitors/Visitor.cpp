@@ -2,7 +2,7 @@
 
 #include <lavaEngine/Scenegraph/Node.h>
 #include <lavaEngine/Scenegraph/Group.h>
-// #include <lavaEngine/Scenegraph/Geometry.h>
+#include <lavaEngine/Scenegraph/Geometry.h>
 #include <lavaEngine/Scenegraph/Camera.h>
 #include <lavaEngine/Scenegraph/Light.h>
 
@@ -55,9 +55,9 @@ namespace lava
       visitNode( camera );
     }
 
-    /*void Visitor::visitGeometry( Geometry *geometry )
+    void Visitor::visitGeometry( Geometry *geometry )
     {
       visitNode( geometry );
-    }*/
+    }
   }
 }

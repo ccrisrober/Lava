@@ -91,5 +91,13 @@ namespace lava
     {
       v.visitGroup( this );
     }
+    void Group::needUpdate( void )
+    {
+      Node::needUpdate( );
+      for( auto& c: _children )
+      {
+        c->needUpdate( );
+      }
+    }
   }
 }

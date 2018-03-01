@@ -47,6 +47,9 @@ namespace lava
     public:
       LAVAENGINE_API
       virtual void accept( Visitor& v );
+
+    public:
+      virtual void needUpdate( void ) override;
 		};
 	}
 }

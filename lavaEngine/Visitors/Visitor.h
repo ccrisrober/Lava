@@ -11,6 +11,7 @@ namespace lava
     class Group;
     class Light;
     class Camera;
+    class Geometry;
 
     class Visitor
     {
@@ -31,8 +32,8 @@ namespace lava
       virtual void visitCamera( Camera *camera );
       LAVAENGINE_API
       virtual void visitLight( Light* light );
-      // LAVAENGINE_API
-      // virtual void visitGeometry( Geometry *geometry );
+      LAVAENGINE_API
+      virtual void visitGeometry( Geometry *geometry );
     private:
       Visitor( const Visitor& );
       Visitor &operator= ( const Visitor& );
