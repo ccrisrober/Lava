@@ -109,10 +109,12 @@ namespace lava
 
       void parent( Node* p );
     public:
-      void setEnabled( bool enabled )
+      LAVAENGINE_API
+      virtual void setEnabled( bool enabled )
       {
         _enabled = enabled;
       }
+      LAVAENGINE_API
       bool isEnabled( void )
       {
         return _enabled;
@@ -164,7 +166,7 @@ namespace lava
       LAVAENGINE_API
       void update( void );
       LAVAENGINE_API
-      inline const glm::vec3& getAbsolutePosition( void )
+      inline glm::vec3& getAbsolutePosition( void )
       {
         if ( _needUpdate )
         {
@@ -175,7 +177,7 @@ namespace lava
       }
 
       LAVAENGINE_API
-      inline const glm::quat& getAbsoluteRotation( void )
+      inline glm::quat& getAbsoluteRotation( void )
       {
         if ( _needUpdate )
         {
@@ -185,7 +187,7 @@ namespace lava
       }
 
       LAVAENGINE_API
-      inline const glm::vec3& getAbsoluteScale( void )
+      inline glm::vec3& getAbsoluteScale( void )
       {
         if ( _needUpdate )
         {
@@ -196,7 +198,7 @@ namespace lava
       }
 
       LAVAENGINE_API
-      inline const glm::mat4& getTransform( void )
+      inline glm::mat4& getTransform( void )
       {
         if ( _needUpdate )
         {

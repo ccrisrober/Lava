@@ -20,6 +20,10 @@ namespace lava
     void BatchQueue::pushGeometry( Geometry* geom )
     {
       auto renderType = RenderableType::OPAQUE;
+      /*if( state.getBlending( ).isEnabled( ) )
+      {
+        renderType = RenderableType::TRANSPARENT;
+      }*/
       Renderable renderable( geom,
         geom->getTransform( ), 
         geom->getAbsolutePosition( ).z

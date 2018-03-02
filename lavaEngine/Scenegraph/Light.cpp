@@ -11,6 +11,7 @@ namespace lava
 			, _diffuseColor( Color( 1.0f, 1.0f, 1.0f ) )
 			, _ambientColor( Color( 0.0f, 0.0f, 0.0f ) )
 			, _groundColor( Color( 0.0f, 0.0f, 0.0f ) )
+      , _shadowType( ShadowType::NONE )
 		{
 		}
 		Light::~Light( void )

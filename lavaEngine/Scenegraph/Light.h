@@ -11,6 +11,10 @@ namespace lava
 		class Light: public Node
 		{
 		public:
+      enum class ShadowType
+      {
+        NONE, SOFT, HARD
+      };
       enum class Type
       {
         AMBIENT,
@@ -52,14 +56,48 @@ namespace lava
     	{
     		_groundColor = c;
     	}
+      LAVAENGINE_API
+      glm::mat4 computeProjectionMatrix( void) // TODO: const
+      {
+        return glm::ortho( 
+          -10.0f, 10.0f, 
+          -10.0f, 10.0f, 
+          _shadowNear, _shadowFar
+        );
+      }
+      LAVAENGINE_API
+      glm::mat4 computeViewMatrix( void) // TODO: const
+      {
+        return glm::inverse( getTransform( ) );
+      }
+      LAVAENGINE_API
+      glm::vec3 getPosition( void) // TODO: const
+      {
+        return getAbsolutePosition( );
+      }
+      LAVAENGINE_API
+      glm::vec3 getDirection( void ) // TODO: const
+      {
+        if ( _type == Type::POINT )
+        {
+          return glm::zero<glm::vec3>( );
+        }
+        return glm::eulerAngles( getAbsoluteRotation( ) );
+      }
     public:
     	LAVAENGINE_API
     	virtual void accept( Visitor& v ) override;
     protected:
     	Light::Type _type;
+
     	Color _diffuseColor;
     	Color _ambientColor;
     	Color _groundColor; // Only for hemispheric light
+
+      Light::ShadowType _shadowType;
+
+      float _shadowNear = 0.1f;
+      float _shadowFar = 1024.0f;
     		
 		  float Constant = 1.0f;   // default: 1
 		  float Linear = 0.0f;     // default: 0

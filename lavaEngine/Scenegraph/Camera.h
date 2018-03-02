@@ -12,6 +12,8 @@ namespace lava
 		class Camera: public Node
 		{
     public:
+      static bool findCameras;
+    public:
       LAVAENGINE_API
       static Camera* getMainCamera( void )
       {
@@ -33,6 +35,12 @@ namespace lava
       LAVAENGINE_API
       virtual ~Camera( void );
     public:
+      LAVAENGINE_API
+      virtual void setEnabled( bool enabled ) 
+      {
+        Node::setEnabled( enabled );
+        Camera::findCameras = true;
+      }
       LAVAENGINE_API
       virtual void accept( Visitor& v ) override;
     public:

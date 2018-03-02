@@ -6,6 +6,7 @@ namespace lava
   namespace engine
   {
     Camera* Camera::_mainCamera = nullptr;
+    bool Camera::findCameras = true;
 
     Camera::Camera( void )
       : Camera( 45.0f, 1.0f, 0.1f, 1000.0f )
@@ -33,6 +34,7 @@ namespace lava
       {
         setMainCamera( nullptr );
       }
+      Camera::findCameras = true;
     }
     void Camera::accept( Visitor& v )
     {

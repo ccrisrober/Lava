@@ -561,6 +561,8 @@ namespace lava
     );
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( 
       pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
+
+    _blendingEnabled = colorBlendState ? colorBlendState->logicEnable : false;
   }
 
 

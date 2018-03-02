@@ -5,12 +5,15 @@ set( LAVAENGINE_PUBLIC_HEADERS
 	Exceptions/HasParentException.h
 	Exceptions/RuntimeException.h
 
-	Mathematics/Color.h
+	#Mathematics/Color.h
 	Mathematics/Frustum.h
 	Mathematics/Mathf.h
 	Mathematics/Ray.h
+	Mathematics/Spherical.h
 
 	Rendering/BatchQueue.h
+	Rendering/RenderPasses/RenderingPass.h
+	Rendering/RenderPasses/StandardRenderingPass.h
 
 	Scenegraph/Node.h
 	Scenegraph/Group.h
@@ -37,13 +40,16 @@ set( LAVAENGINE_PUBLIC_HEADERS
 
 set( LAVAENGINE_SOURCES
 
-	Mathematics/Color.cpp
+	#Mathematics/Color.cpp
 	Mathematics/Frustum.cpp
 	Mathematics/Mathf.cpp
 	Mathematics/Ray.cpp
+	Mathematics/Spherical.cpp
 
 	Rendering/BatchQueue.cpp
-
+	Rendering/RenderPasses/RenderingPass.cpp
+	Rendering/RenderPasses/StandardRenderingPass.cpp
+	
 	Scenegraph/Node.cpp
 	Scenegraph/Group.cpp
 	Scenegraph/Light.cpp
@@ -76,6 +82,7 @@ if( LAVAENGINE_WITH_COMPONENTS )
 	list( APPEND LAVAENGINE_PUBLIC_HEADERS 
 		Components/Component.h
 		#Components/LambdaComponent.h
+		Components/StateMachineComponent.h
 
 		Visitors/StartComponents.h
 	)
@@ -83,6 +90,7 @@ if( LAVAENGINE_WITH_COMPONENTS )
 	list( APPEND LAVAENGINE_SOURCES
 		Components/Component.cpp
 		#Components/LambdaComponent.cpp
+		Components/StateMachineComponent.h
 
 		Visitors/StartComponents.cpp
 	)
@@ -91,6 +99,7 @@ endif( )
 set( LAVAENGINE_LINK_LIBRARIES
 	lava
 	lavaUtils
+	lavaRenderer
 	## ${GLM_LIBRARIES}		Required by lavaUtils
 	## ${ASSIMP_LIBRARIES}	Required by lavaUtils
 )

@@ -9,6 +9,7 @@ set( LAVAUTILS_PUBLIC_HEADERS
 	ThreadPool.h
 	###Glsl2SPV.h
 	CustomFramebuffer.h
+	CustomPingPong.h
 )
 
 set( LAVAUTILS_SOURCES

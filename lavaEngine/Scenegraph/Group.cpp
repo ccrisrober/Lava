@@ -2,6 +2,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include "Camera.h"
+
 namespace lava
 {
   namespace engine
@@ -39,6 +41,10 @@ namespace lava
       }
       node->parent( this );
       _children.push_back( node );
+      if ( typeid( node ) == typeid( Camera ) )
+      {
+        Camera::findCameras = true;
+      }
     }
 
     void Group::removeChild( Node* n )
