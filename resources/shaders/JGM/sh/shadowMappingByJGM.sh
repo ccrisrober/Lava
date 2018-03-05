@@ -1,0 +1,3 @@
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/shadowMappingFirstPassByJGM.vert -o /home/jguerrero/opt/Lava/spvs/JGM/shadowMappingFirstPassByJGM_vert.spv
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/shadowMappingSecondPassByJGM.vert -o /home/jguerrero/opt/Lava/spvs/JGM/shadowMappingSecondPassByJGM_vert.spv
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/shadowMappingSecondPassByJGM.frag -o /home/jguerrero/opt/Lava/spvs/JGM/shadowMappingSecondPassByJGM_frag.spv

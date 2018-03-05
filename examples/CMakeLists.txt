@@ -159,4 +159,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVAFRAGMENTSPECULARLIGHTINGBYJGM_LINK_LIBRARIES lava )
   common_application( lavaFragmentSpecularLightingByJGM )
   
+  set( LAVASHADOWMAPPINGBYJGM_HEADERS )
+  set( LAVASHADOWMAPPINGBYJGM_SOURCES JGM/ShadowMappingByJGM.cpp )
+  set( LAVASHADOWMAPPINGBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaShadowMappingByJGM )
+  
 endif( )

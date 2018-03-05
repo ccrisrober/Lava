@@ -1,6 +1,6 @@
 /**
  * Lava.
- * File: FragmentSpecularLightingByJGM.cpp
+ * File: ShadowMappingByJGM.cpp
  * Author: Juan Guerrero Martín.
  * Brief: Following The Khronos Group Inc. tutorial (https://vulkan-tutorial.com/).
  */
@@ -111,31 +111,32 @@ struct SwapChainSupportDetails {
   std::vector< VkPresentModeKHR > presentModes;
 };
 
-/** Attributes. **/
+/** Uniforms. **/
 
+// Descriptors.
 struct UniformBufferObject
 {
-  glm::mat4 model;
-  glm::mat4 view;
+  glm::mat4 lightView;
+  glm::mat4 cameraView;
   glm::mat4 proj;
 };
 
-struct LightParameters
-{
-  glm::vec4 Position;
-};
+/** Meshes **/
 
-// Using lava::extras::Mesh to handle a mesh.
-std::string meshPath = LAVA_EXAMPLES_MESHES_ROUTE + std::string("bunny.obj_");
+// Mesh 1: Bunny.
+std::string bunnyMeshPath = LAVA_EXAMPLES_MESHES_ROUTE + std::string("bunny.obj_");
+lava::extras::ModelImporter bunnyModel( bunnyMeshPath );
+lava::extras::Mesh bunnyMesh = bunnyModel._meshes[ 0 ];
 
-lava::extras::ModelImporter lavaModelImporter( meshPath );
-
-// Considering that the model has only one mesh.
-lava::extras::Mesh lavaMesh = lavaModelImporter._meshes[ 0 ];
+// Mesh 2: Table (Cube).
+std::string tableMeshPath = LAVA_EXAMPLES_MESHES_ROUTE + std::string("cube.obj_");
+lava::extras::ModelImporter tableModel( tableMeshPath );
+lava::extras::Mesh tableMesh = tableModel._meshes[ 0 ];
 
 /** Shaders. They must be in *.spv Vulkan format. **/
-std::string fragmentSpecularLightingByJGMVertexShader( "/home/jguerrero/opt/Lava/spvs/JGM/fragmentSpecularLightingByJGM_vert.spv" );
-std::string fragmentSpecularLightingByJGMFragmentShader( "/home/jguerrero/opt/Lava/spvs/JGM/fragmentSpecularLightingByJGM_frag.spv" );
+std::string shadowMappingFirstPassByJGMVertexShader( "/home/jguerrero/opt/Lava/spvs/JGM/shadowMappingFirstPassByJGM_vert.spv" );
+std::string shadowMappingSecondPassByJGMVertexShader( "/home/jguerrero/opt/Lava/spvs/JGM/shadowMappingSecondPassByJGM_vert.spv" );
+std::string shadowMappingSecondPassByJGMFragmentShader( "/home/jguerrero/opt/Lava/spvs/JGM/shadowMappingSecondPassByJGM_frag.spv" );
 
 class HelloTriangleApplication
 {
@@ -156,65 +157,94 @@ class HelloTriangleApplication
     // GLFW.
     GLFWwindow* window;
 
-    // Instance-related.
+    // Instance.
     VkInstance instance;
     VkDebugReportCallbackEXT callback;
     VkSurfaceKHR surface;
 
-    // Device-related.
+    // Device.
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // It will be destroyed with VkInstance.
     VkDevice device;
-
-    // Queue-related.
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
-    // SwapChain-related.
+    // SwapChain.
     VkSwapchainKHR swapChain;
-    std::vector< VkImage > swapChainImages;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
+    std::vector< VkImage > swapChainImages;
     std::vector< VkImageView > swapChainImageViews;
-    std::vector< VkFramebuffer > swapChainFramebuffers;
 
-    // Pipeline-related.
-    VkRenderPass renderPass;
+    // RenderPass.
+    VkRenderPass firstRenderPass;
+    VkRenderPass secondRenderPass;
 
-    VkDescriptorSetLayout descriptorSetLayout;
-    std::vector< VkPushConstantRange > pushConstantRanges;
+    // PipelineLayout (DescriptorSetLayout and PushConstantRange).
+    std::vector< VkPushConstantRange > pushConstantRangesForFirstPass;
+    std::vector< VkPushConstantRange > pushConstantRangesForSecondPass;
 
-    VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
+    VkDescriptorSetLayout descriptorSetLayoutForFirstPass;
+    VkDescriptorSetLayout descriptorSetLayoutForSecondPass;
 
+    VkPipelineLayout pipelineLayoutForFirstPass;
+    VkPipelineLayout pipelineLayoutForSecondPass;
+
+    // Pipeline.
+    VkPipeline graphicsPipelineForFirstPass;
+    VkPipeline graphicsPipelineForSecondPass;
+
+    // CommandPool.
     VkCommandPool commandPool;
 
-    // Depth attachment.
+    // Attachment.
+    VkImage shadowMapImage;
+    VkDeviceMemory shadowMapImageMemory;
+    VkImageView shadowMapImageView;
+    VkSampler shadowMapSampler;
+
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    // Texture-related.
-    //VkImage textureImage;
-    //VkDeviceMemory textureImageMemory;
-    //VkImageView textureImageView;
-    //VkSampler textureSampler;
+    /**
+     * Framebuffer.
+     */
+    std::vector< VkFramebuffer > swapChainFramebuffersForFirstPass;
+    std::vector< VkFramebuffer > swapChainFramebuffersForSecondPass;
 
-    // Vertex buffers.
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
+    /**
+     * Buffer.
+     */
+    VkBuffer bunnyVertexBuffer;
+    VkDeviceMemory bunnyVertexBufferMemory;
+    VkBuffer bunnyIndexBuffer;
+    VkDeviceMemory bunnyIndexBufferMemory;
 
-    // Uniform buffers.
+    VkBuffer tableVertexBuffer;
+    VkDeviceMemory tableVertexBufferMemory;
+    VkBuffer tableIndexBuffer;
+    VkDeviceMemory tableIndexBufferMemory;
+
+    glm::vec3 defaultLightPosition = glm::vec3( 0.0f, 8.0f, 3.0f );
+    glm::vec3 defaultCameraPosition = glm::vec3( 7.0f, 25.0f, -7.0f );
+
     VkBuffer uniformBuffer;
     VkDeviceMemory uniformBufferMemory;
 
-    VkDescriptorPool descriptorPool;
-    VkDescriptorSet descriptorSet;
+    VkDescriptorPool descriptorPoolForFirstPass;
+    VkDescriptorPool descriptorPoolForSecondPass;
 
+    VkDescriptorSet descriptorSetForFirstPass;
+    VkDescriptorSet descriptorSetForSecondPass;
+
+    /**
+     * CommandBuffer.
+     */
     std::vector< VkCommandBuffer > commandBuffers;
 
-    // Semaphores.
+    /**
+     * Synchronization.
+     */
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
 
@@ -238,30 +268,91 @@ class HelloTriangleApplication
 
     void initVulkan( void )
     {
+      /**
+       * Instance (with an application).
+       **/
       createInstance( );
+      // Validation layers (debugging).
       setupDebugCallback( );
+      // Creation of a surface out of an instance and a window.
       createSurface( );
+
+      /**
+       * Device (physical and logical).
+       */
       pickPhysicalDevice( );
       createLogicalDevice( );
+
+      /**
+       * SwapChain (queue of images for rendering purposes).
+       */
       createSwapChain( );
-      createImageViews( );
-      createRenderPass( );
-      createDescriptorSetLayout( );
-      createPushConstantRanges( );
-      createGraphicsPipeline( );
+      createSwapChainImageViews( );
+
+      /**
+       * RenderPass.
+       */
+      createFirstRenderPass( );
+      createSecondRenderPass( );
+
+      /**
+       * PipelineLayout.
+       */
+      createDescriptorSetLayoutForFirstPass( );
+      createDescriptorSetLayoutForSecondPass( );
+      createPushConstantRangesForFirstPass( );
+      createPushConstantRangesForSecondPass( );
+
+      /**
+       * Pipeline.
+       */
+      createGraphicsPipelineForFirstPass( );
+      createGraphicsPipelineForSecondPass( );
+
+      /**
+       * CommandPool (commands needed for a lot of operations).
+       *   - copyBuffer.
+       *   - copyBufferToImage.
+       *   - transitionImageLayout.
+       */
       createCommandPool( );
+
+      /**
+       * Attachment.
+       */
+      createShadowMapImageAndImageView( );
+      createShadowMapSampler( );
       createDepthResources( );
-      createFramebuffers( );
-      // Not creating textures in this example.
-      //createTextureImage( );
-      //createTextureImageView( );
-      //createTextureSampler( );
-      createVertexBuffer( );
-      createIndexBuffer( );
+
+      /**
+       * Framebuffer (RenderPass and Attachment).
+       */
+      createFramebuffersForFirstPass( );
+      createFramebuffersForSecondPass( );
+
+      /**
+       * Buffer.
+       */
+      createVertexBuffers( );
+      createIndexBuffers( );
       createUniformBuffer( );
-      createDescriptorPool( );
-      createDescriptorSet( );
+      initUniformBuffer( );
+
+      createDescriptorPoolForFirstPass( );
+      createDescriptorPoolForSecondPass( );
+      createDescriptorSetForFirstPass( );
+      createDescriptorSetForSecondPass( );
+      updateDescriptorSetForFirstPass( );
+      updateDescriptorSetForSecondPass( );
+
+      /**
+       * CommandBuffer.
+       */
       createCommandBuffers( );
+
+      /**
+       * Synchronization.
+       */
       createSemaphores( );
     }
 
@@ -271,7 +362,7 @@ class HelloTriangleApplication
       {
         glfwPollEvents( );
 
-        updateUniformBuffer( );
+        //updateUniformBuffer( );
         drawFrame( );
       }
       vkDeviceWaitIdle(device);
@@ -279,81 +370,124 @@ class HelloTriangleApplication
 
     void cleanupSwapChain( void )
     {
-      vkDestroyImageView(device, depthImageView, nullptr);
-      vkDestroyImage(device, depthImage, nullptr);
-      vkFreeMemory(device, depthImageMemory, nullptr);
+      /**
+       * Attachment.
+       */
+      vkDestroySampler( device, shadowMapSampler, nullptr );
+      vkDestroyImageView( device, shadowMapImageView, nullptr );
+      vkDestroyImage( device, shadowMapImage, nullptr );
+      vkFreeMemory( device, shadowMapImageMemory, nullptr );
 
-      for( size_t i = 0; i < swapChainFramebuffers.size( ); i++ )
+      vkDestroyImageView( device, depthImageView, nullptr );
+      vkDestroyImage( device, depthImage, nullptr );
+      vkFreeMemory( device, depthImageMemory, nullptr );
+
+      /**
+       * Framebuffer.
+       */
+      for( size_t i = 0; i < swapChainFramebuffersForFirstPass.size( ); i++ )
       {
-        vkDestroyFramebuffer( device, swapChainFramebuffers[i], nullptr );
+        vkDestroyFramebuffer( device, swapChainFramebuffersForFirstPass[i], nullptr );
+      }
+      for( size_t i = 0; i < swapChainFramebuffersForSecondPass.size( ); i++ )
+      {
+        vkDestroyFramebuffer( device, swapChainFramebuffersForSecondPass[i], nullptr );
       }
 
-      // Deallocating CB.
+      /**
+       * CommandBuffer.
+       */
       vkFreeCommandBuffers( device, commandPool,
                             static_cast< uint32_t >( commandBuffers.size( ) ), commandBuffers.data( ) );
 
-      vkDestroyPipeline( device, graphicsPipeline, nullptr );
-      vkDestroyPipelineLayout( device, pipelineLayout, nullptr );
-      vkDestroyRenderPass( device, renderPass, nullptr );
+      /**
+       * Pipeline.
+       */
+      vkDestroyPipeline( device, graphicsPipelineForFirstPass, nullptr );
+      vkDestroyPipeline( device, graphicsPipelineForSecondPass, nullptr );
 
+      /**
+       * PipelineLayout.
+       */
+      vkDestroyPipelineLayout( device, pipelineLayoutForFirstPass, nullptr );
+      vkDestroyPipelineLayout( device, pipelineLayoutForSecondPass, nullptr );
+      vkDestroyDescriptorSetLayout( device, descriptorSetLayoutForFirstPass, nullptr );
+      vkDestroyDescriptorSetLayout( device, descriptorSetLayoutForSecondPass, nullptr );
+      // PushConstantRanges have no a destroy function.
+
+      /**
+       * RenderPass.
+       */
+      vkDestroyRenderPass( device, firstRenderPass, nullptr );
+      vkDestroyRenderPass( device, secondRenderPass, nullptr );
+
+      /**
+       * SwapChain.
+       */
       for( size_t i = 0; i < swapChainImageViews.size( ); i++ )
       {
         vkDestroyImageView( device, swapChainImageViews[i], nullptr );
       }
-
       vkDestroySwapchainKHR( device, swapChain, nullptr );
     }
 
     void cleanup( void )
     {
-      // Swapchain, ImageView(s), RenderPass, Pipeline, CB(s), FB(s).
+      /**
+       * SwapChain, RenderPass, PipelineLayout, Pipeline,
+       * Attachment, Framebuffer, CommandBuffer.
+       **/
       cleanupSwapChain( );
 
-      // Texture image view and sampler.
-      //vkDestroySampler(device, textureSampler, nullptr);
-      //vkDestroyImageView(device, textureImageView, nullptr);
+      /**
+       * Buffer.
+       */
+      vkDestroyDescriptorPool( device, descriptorPoolForFirstPass, nullptr );
+      vkDestroyDescriptorPool( device, descriptorPoolForSecondPass, nullptr );
+      // Descriptor sets destroyed by the descriptor pools.
 
-      // Texture image.
-      //vkDestroyImage(device, textureImage, nullptr);
-      //vkFreeMemory(device, textureImageMemory, nullptr);
+      vkDestroyBuffer( device, uniformBuffer, nullptr );
+      vkFreeMemory( device, uniformBufferMemory, nullptr );
 
-      // DescriptorPool(s).
-      vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+      vkDestroyBuffer( device, bunnyVertexBuffer, nullptr );
+      vkFreeMemory( device, bunnyVertexBufferMemory, nullptr );
+      vkDestroyBuffer( device, bunnyIndexBuffer, nullptr );
+      vkFreeMemory( device, bunnyIndexBufferMemory, nullptr );
 
-      // DescriptorSetLayout(s).
-      vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+      vkDestroyBuffer( device, tableVertexBuffer, nullptr );
+      vkFreeMemory( device, tableVertexBufferMemory, nullptr );
+      vkDestroyBuffer( device, tableIndexBuffer, nullptr );
+      vkFreeMemory( device, tableIndexBufferMemory, nullptr );
 
-      // PushConstantRange(s).
-      //for( size_t i = 0; i < pushConstantRanges.size( ); i++ )
-      //{
-      //  vkDestroyPushConstantRange( device, pushConstantRanges[i], nullptr );
-      //}
+      /**
+       * Synchronization.
+       */
+      vkDestroySemaphore( device, renderFinishedSemaphore, nullptr );
+      vkDestroySemaphore( device, imageAvailableSemaphore, nullptr );
 
-      // Buffer(s).
-      vkDestroyBuffer(device, uniformBuffer, nullptr);
-      vkFreeMemory(device, uniformBufferMemory, nullptr);
-
-      vkDestroyBuffer(device, indexBuffer, nullptr);
-      vkFreeMemory(device, indexBufferMemory, nullptr);
-
-      vkDestroyBuffer(device, vertexBuffer, nullptr);
-      vkFreeMemory(device, vertexBufferMemory, nullptr);
-
-      // Semaphore(s).
-      vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-      vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
-
+      /**
+       * CommandPool.
+       */
       vkDestroyCommandPool( device, commandPool, nullptr );
 
-      // cleanupSwapChain( ) may be here too.
+      //-----------------------------------------------------------------------
 
+      /**
+       * Device.
+       */
+      // All the queues (graphics and present) will be destroyed with the device.
       vkDestroyDevice( device, nullptr );
+      // The physical device will be destroyed with the instance.
+
+      /**
+       * Instance.
+       **/
       DestroyDebugReportCallbackEXT( instance, callback, nullptr );
       vkDestroySurfaceKHR( instance, surface, nullptr );
       vkDestroyInstance( instance, nullptr );
 
+      // GLFW (window).
       glfwDestroyWindow( window );
-
       glfwTerminate( );
     }
 
@@ -375,12 +509,56 @@ class HelloTriangleApplication
 
       cleanupSwapChain( );
 
+      /**
+       * SwapChain (queue of images for rendering purposes).
+       */
       createSwapChain( );
-      createImageViews( );
-      createRenderPass( );
-      createGraphicsPipeline( );
+      createSwapChainImageViews( );
+
+      /**
+       * RenderPass.
+       */
+      createFirstRenderPass( );
+      createSecondRenderPass( );
+
+      /**
+       * PipelineLayout. ADDITIONAL.
+       */
+      createDescriptorSetLayoutForFirstPass( );
+      createDescriptorSetLayoutForSecondPass( );
+
+      /**
+       * Pipeline.
+       */
+      createGraphicsPipelineForFirstPass( );
+      createGraphicsPipelineForSecondPass( );
+
+      /**
+       * Attachment.
+       */
+      createShadowMapImageAndImageView( );
+      createShadowMapSampler( );
       createDepthResources( );
-      createFramebuffers( );
+
+      /**
+       * Framebuffer (RenderPass and Attachment).
+       */
+      createFramebuffersForFirstPass( );
+      createFramebuffersForSecondPass( );
+
+      /**
+       * Buffer. ADDITIONAL.
+       */
+      createDescriptorPoolForFirstPass( );
+      createDescriptorPoolForSecondPass( );
+      createDescriptorSetForFirstPass( );
+      createDescriptorSetForSecondPass( );
+      updateDescriptorSetForFirstPass( );
+      updateDescriptorSetForSecondPass( );
+
+      /**
+       * CommandBuffer.
+       */
       createCommandBuffers( );
     }
 
@@ -394,7 +572,7 @@ class HelloTriangleApplication
       // VkApplicationInfo struct. Optional.
       VkApplicationInfo appInfo = {};
       appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-      appInfo.pApplicationName = "Hello Triangle";
+      appInfo.pApplicationName = "Lava. Shadow mapping.";
       appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
       appInfo.pEngineName = "No Engine";
       appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -648,7 +826,7 @@ class HelloTriangleApplication
       swapChainExtent = extent;
     }
 
-    void createImageViews( void )
+    void createSwapChainImageViews( void )
     {
       swapChainImageViews.resize( swapChainImages.size( ) );
 
@@ -660,7 +838,68 @@ class HelloTriangleApplication
       }
     }
 
-    void createRenderPass( void )
+    void createFirstRenderPass( void )
+    {
+      // Shadow map as the depth attachment.
+      VkAttachmentDescription depthAttachment = {};
+      depthAttachment.format = findDepthFormatForShadowMap( );
+      depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+      depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+      depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+      depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+      depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+      depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+      VkAttachmentReference depthAttachmentRef = {};
+      depthAttachmentRef.attachment = 0;
+      depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+      // A pass can have multiple subpasses.
+      VkSubpassDescription subpass = {};
+      subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+      subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+      // Subpass dependencies.
+      VkSubpassDependency firstDependency = {};
+      firstDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+      firstDependency.dstSubpass = 0;
+      firstDependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+      firstDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+      firstDependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      firstDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+      VkSubpassDependency secondDependency = {};
+      secondDependency.srcSubpass = 0;
+      secondDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+      secondDependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+      secondDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+      secondDependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      secondDependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      secondDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+      std::array< VkSubpassDependency, 2 > dependencies =
+        { firstDependency, secondDependency };
+      std::array< VkAttachmentDescription, 1 > attachments =
+        { depthAttachment };
+
+      VkRenderPassCreateInfo renderPassInfo = {};
+      renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+      renderPassInfo.attachmentCount = static_cast< uint32_t >( attachments.size( ) );
+      renderPassInfo.pAttachments = attachments.data( );
+      renderPassInfo.subpassCount = 1;
+      renderPassInfo.pSubpasses = &subpass;
+      renderPassInfo.dependencyCount = static_cast< uint32_t >( dependencies.size( ) );
+      renderPassInfo.pDependencies = dependencies.data( );
+
+      // Finally creating the render pass.
+      if( vkCreateRenderPass( device, &renderPassInfo, nullptr, &firstRenderPass ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create render pass!" );
+      }
+    }
+
+    void createSecondRenderPass( void )
     {
       VkAttachmentDescription colorAttachment = {};
       colorAttachment.format = swapChainImageFormat;
@@ -702,8 +941,8 @@ class HelloTriangleApplication
       dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
       dependency.dstSubpass = 0;
       dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-      dependency.srcAccessMask = 0;
       dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+      dependency.srcAccessMask = 0;
       dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
                                  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
@@ -719,13 +958,36 @@ class HelloTriangleApplication
       renderPassInfo.pDependencies = &dependency;
 
       // Finally creating the render pass.
-      if( vkCreateRenderPass( device, &renderPassInfo, nullptr, &renderPass ) != VK_SUCCESS )
+      if( vkCreateRenderPass( device, &renderPassInfo, nullptr, &secondRenderPass ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create render pass!" );
       }
     }
 
-    void createDescriptorSetLayout( void )
+    void createDescriptorSetLayoutForFirstPass( void )
+    {
+      // Binding: uniform buffer.
+      VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+      uboLayoutBinding.binding = 0;
+      uboLayoutBinding.descriptorCount = 1;
+      uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+      uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+      std::array< VkDescriptorSetLayoutBinding, 1 > bindings =
+        { uboLayoutBinding };
+      VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+      layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+      layoutInfo.bindingCount = static_cast< uint32_t >( bindings.size( ) );
+      layoutInfo.pBindings = bindings.data( );
+
+      if( vkCreateDescriptorSetLayout( device, &layoutInfo, nullptr, &descriptorSetLayoutForFirstPass ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create descriptor set layout!" );
+      }
+    }
+
+    void createDescriptorSetLayoutForSecondPass( void )
     {
       // Binding: uniform buffer.
       VkDescriptorSetLayoutBinding uboLayoutBinding = {};
@@ -736,42 +998,245 @@ class HelloTriangleApplication
       uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
       // Binding: combined image sampler.
-      /**
       VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
       samplerLayoutBinding.binding = 1;
       samplerLayoutBinding.descriptorCount = 1;
       samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
       samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-      **/
 
-      //std::array< VkDescriptorSetLayoutBinding, 2 > bindings =
-      //  { uboLayoutBinding, samplerLayoutBinding };
-      std::array< VkDescriptorSetLayoutBinding, 1 > bindings =
-        { uboLayoutBinding };
+      std::array< VkDescriptorSetLayoutBinding, 2 > bindings =
+        { uboLayoutBinding, samplerLayoutBinding };
       VkDescriptorSetLayoutCreateInfo layoutInfo = {};
       layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
       layoutInfo.bindingCount = static_cast< uint32_t >( bindings.size( ) );
       layoutInfo.pBindings = bindings.data( );
 
-      if( vkCreateDescriptorSetLayout( device, &layoutInfo, nullptr, &descriptorSetLayout ) != VK_SUCCESS )
+      if( vkCreateDescriptorSetLayout( device, &layoutInfo, nullptr, &descriptorSetLayoutForSecondPass ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create descriptor set layout!" );
       }
     }
 
-    void createPushConstantRanges( void )
+    void createPushConstantRangesForFirstPass( void )
     {
-      VkPushConstantRange lightPosition = { VK_SHADER_STAGE_FRAGMENT_BIT,
-                                            0, 4 * sizeof( float ) };
-      pushConstantRanges.push_back( lightPosition );
+      // 0f - 16f (modelMatrix).
+      VkPushConstantRange vertexShaderPushConstant =
+      { VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof( float ) };
+
+      pushConstantRangesForFirstPass.push_back( vertexShaderPushConstant );
     }
 
-    void createGraphicsPipeline( void )
+    void createPushConstantRangesForSecondPass( void )
+    {
+      // 0f - 16f (modelMatrix). 16f - 20f (lightPosition).
+      VkPushConstantRange vertexShaderPushConstant =
+      { VK_SHADER_STAGE_VERTEX_BIT, 0, 20 * sizeof( float ) };
+
+      pushConstantRangesForSecondPass.push_back( vertexShaderPushConstant );
+    }
+
+    void createGraphicsPipelineForFirstPass( void )
     {
       // Getting shaders byte array.
-      auto vertShaderCode = readFile( fragmentSpecularLightingByJGMVertexShader );
-      auto fragShaderCode = readFile( fragmentSpecularLightingByJGMFragmentShader );
+      auto vertShaderCode = readFile( shadowMappingFirstPassByJGMVertexShader );
+
+      // Here we should check that byte size is equal to file byte size.
+
+      // VkShaderModule(s) are going to be used only here.
+      VkShaderModule vertShaderModule;
+      vertShaderModule = createShaderModule( vertShaderCode );
+
+      // Actually creating the vertex shader here.
+      VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
+      vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+      vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+      vertShaderStageInfo.module = vertShaderModule;
+      vertShaderStageInfo.pName = "main";
+
+      VkPipelineShaderStageCreateInfo shaderStages[] =
+        { vertShaderStageInfo };
+
+      // Vertex input. We have one binding description and several attribute descriptions.
+      VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+      vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+      // BEGIN vk::Name (C++ style) to VkName conversion.
+      VkVertexInputBindingDescription bindingDescription = lava::extras::Vertex::getBindingDescription( );
+      auto cPlusPlusAttributeDescriptions = lava::extras::Vertex::getAttributeDescriptions( );
+      // Only need the position here.
+      std::array< VkVertexInputAttributeDescription, 1 > attributeDescriptions = {};
+      attributeDescriptions[ 0 ] = cPlusPlusAttributeDescriptions[ 0 ];
+      // END vk::Name (C++ style) to VkName conversion.
+      vertexInputInfo.vertexBindingDescriptionCount = 1;
+      vertexInputInfo.vertexAttributeDescriptionCount =
+        static_cast< uint32_t >( attributeDescriptions.size( ) );
+      vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+      vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data( );
+
+      // Input assembly.
+      VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+      inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+      inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+      inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+      // Viewport.
+      VkViewport viewport = {};
+      viewport.x = 0.0f;
+      viewport.y = 0.0f;
+      viewport.width = ( float ) swapChainExtent.width;
+      viewport.height = ( float ) swapChainExtent.height;
+      viewport.minDepth = 0.0f;
+      viewport.maxDepth = 1.0f;
+
+      // Scissors.
+      VkRect2D scissor = {};
+      scissor.offset = {0, 0};
+      scissor.extent = swapChainExtent;
+
+      // Viewport state = Viewport + Scissors.
+      VkPipelineViewportStateCreateInfo viewportState = {};
+      viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+      viewportState.viewportCount = 1;
+      viewportState.pViewports = &viewport;
+      viewportState.scissorCount = 1;
+      viewportState.pScissors = &scissor;
+
+      /** Rasterizer. **/
+      VkPipelineRasterizationStateCreateInfo rasterizer = {};
+      rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+      // Frags out of frustum are only clamped (not discarded).
+      rasterizer.depthClampEnable = VK_FALSE;
+      // If true: no rasterizer action, no ouput.
+      rasterizer.rasterizerDiscardEnable = VK_FALSE;
+      // If fill is not used -> you must use a GPU feature.
+      rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+      // If it is greater than 1 -> you must use a GPU feature.
+      rasterizer.lineWidth = 1.0f;
+      rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+      // In Vulkan, Y is inverted.
+      rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+      // Some bias can be added to the depth values.
+      rasterizer.depthBiasEnable = VK_FALSE;
+      rasterizer.depthBiasConstantFactor = 0.0f; // Optional
+      rasterizer.depthBiasClamp = 0.0f; // Optional
+      rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+
+      /** Multisampling. **/
+      // If you use it -> you must use a GPU feature.
+      VkPipelineMultisampleStateCreateInfo multisampling = {};
+      multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+      multisampling.sampleShadingEnable = VK_FALSE;
+      multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+      multisampling.minSampleShading = 1.0f; // Optional
+      multisampling.pSampleMask = nullptr; // Optional
+      multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
+      multisampling.alphaToOneEnable = VK_FALSE; // Optional
+
+      // Depth and stencil testing. Not needed now.
+      /**/
+      VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+      depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+      depthStencil.depthTestEnable = VK_TRUE;
+      depthStencil.depthWriteEnable = VK_TRUE;
+      depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+      depthStencil.depthBoundsTestEnable = VK_FALSE;
+      depthStencil.minDepthBounds = 0.0f; // Optional
+      depthStencil.maxDepthBounds = 1.0f; // Optional
+      depthStencil.stencilTestEnable = VK_FALSE;
+      depthStencil.front = {}; // Optional
+      depthStencil.back = {}; // Optional
+      /**/
+
+      /** Color blending. **/
+      /**
+      // VkPipelineColorBlendAttachmentState for each framebuffer.
+      VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+      colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+                                            VK_COLOR_COMPONENT_G_BIT |
+                                            VK_COLOR_COMPONENT_B_BIT |
+                                            VK_COLOR_COMPONENT_A_BIT;
+      colorBlendAttachment.blendEnable = VK_FALSE;
+      colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+      colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+      colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+      colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+      colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+      colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+
+      // VkPipelineColorBlendStateCreateInfo for global config.
+      VkPipelineColorBlendStateCreateInfo colorBlending = {};
+      colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+      colorBlending.logicOpEnable = VK_FALSE;
+      colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
+      colorBlending.attachmentCount = 1;
+      colorBlending.pAttachments = &colorBlendAttachment;
+      colorBlending.blendConstants[0] = 0.0f; // Optional
+      colorBlending.blendConstants[1] = 0.0f; // Optional
+      colorBlending.blendConstants[2] = 0.0f; // Optional
+      colorBlending.blendConstants[3] = 0.0f; // Optional
+      **/
+
+      /** Dynamic state. **/
+      // Option 1. This is to change some things in drawing time.
+      /**
+      VkDynamicState dynamicStates[] = {
+          VK_DYNAMIC_STATE_VIEWPORT,
+          VK_DYNAMIC_STATE_LINE_WIDTH
+      };
+
+      VkPipelineDynamicStateCreateInfo dynamicState = {};
+      dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+      dynamicState.dynamicStateCount = 2;
+      dynamicState.pDynamicStates = dynamicStates;
+      **/
+      // Option 2.
+      // VkPipelineDynamicStateCreateInfo dynamicState = nullptr;
+
+      /** Pipeline layout. **/
+      VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+      pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+      pipelineLayoutInfo.setLayoutCount = 1;
+      pipelineLayoutInfo.pSetLayouts = &descriptorSetLayoutForFirstPass;
+      pipelineLayoutInfo.pushConstantRangeCount = pushConstantRangesForFirstPass.size( );
+      pipelineLayoutInfo.pPushConstantRanges = pushConstantRangesForFirstPass.data( );
+
+      if( vkCreatePipelineLayout( device, &pipelineLayoutInfo, nullptr, &pipelineLayoutForFirstPass ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create pipeline layout!" );
+      }
+
+      VkGraphicsPipelineCreateInfo pipelineInfo = {};
+      pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+      pipelineInfo.stageCount = 1;
+      pipelineInfo.pStages = shaderStages;
+      pipelineInfo.pVertexInputState = &vertexInputInfo;
+      pipelineInfo.pInputAssemblyState = &inputAssembly;
+      pipelineInfo.pViewportState = &viewportState;
+      pipelineInfo.pRasterizationState = &rasterizer;
+      pipelineInfo.pMultisampleState = &multisampling;
+      pipelineInfo.pDepthStencilState = &depthStencil;
+      pipelineInfo.pColorBlendState = nullptr; //&colorBlending;
+      pipelineInfo.pDynamicState = nullptr; // Optional
+      pipelineInfo.layout = pipelineLayoutForFirstPass;
+      pipelineInfo.renderPass = firstRenderPass;
+      pipelineInfo.subpass = 0;
+      pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+      pipelineInfo.basePipelineIndex = -1; // Optional
+
+      if( vkCreateGraphicsPipelines( device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipelineForFirstPass ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create graphics pipeline!" );
+      }
+
+      // Destroying VkShaderModule(s).
+      vkDestroyShaderModule( device, vertShaderModule, nullptr );
+    }
+
+    void createGraphicsPipelineForSecondPass( void )
+    {
+      // Getting shaders byte array.
+      auto vertShaderCode = readFile( shadowMappingSecondPassByJGMVertexShader );
+      auto fragShaderCode = readFile( shadowMappingSecondPassByJGMFragmentShader );
 
       // Here we should check that byte size is equal to file byte size.
 
@@ -934,11 +1399,11 @@ class HelloTriangleApplication
       VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
       pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
       pipelineLayoutInfo.setLayoutCount = 1;
-      pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-      pipelineLayoutInfo.pushConstantRangeCount = pushConstantRanges.size( );
-      pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data( );
+      pipelineLayoutInfo.pSetLayouts = &descriptorSetLayoutForSecondPass;
+      pipelineLayoutInfo.pushConstantRangeCount = pushConstantRangesForSecondPass.size( );
+      pipelineLayoutInfo.pPushConstantRanges = pushConstantRangesForSecondPass.data( );
 
-      if( vkCreatePipelineLayout( device, &pipelineLayoutInfo, nullptr, &pipelineLayout ) != VK_SUCCESS )
+      if( vkCreatePipelineLayout( device, &pipelineLayoutInfo, nullptr, &pipelineLayoutForSecondPass ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create pipeline layout!" );
       }
@@ -955,13 +1420,13 @@ class HelloTriangleApplication
       pipelineInfo.pDepthStencilState = &depthStencil;
       pipelineInfo.pColorBlendState = &colorBlending;
       pipelineInfo.pDynamicState = nullptr; // Optional
-      pipelineInfo.layout = pipelineLayout;
-      pipelineInfo.renderPass = renderPass;
+      pipelineInfo.layout = pipelineLayoutForSecondPass;
+      pipelineInfo.renderPass = secondRenderPass;
       pipelineInfo.subpass = 0;
       pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
       pipelineInfo.basePipelineIndex = -1; // Optional
 
-      if( vkCreateGraphicsPipelines( device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline ) != VK_SUCCESS )
+      if( vkCreateGraphicsPipelines( device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipelineForSecondPass ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create graphics pipeline!" );
       }
@@ -971,9 +1436,37 @@ class HelloTriangleApplication
       vkDestroyShaderModule( device, vertShaderModule, nullptr );
     }
 
-    void createFramebuffers( void )
+    void createFramebuffersForFirstPass( void )
     {
-      swapChainFramebuffers.resize( swapChainImageViews.size( ) );
+      swapChainFramebuffersForFirstPass.resize( swapChainImageViews.size( ) );
+
+      // Creating a framebuffer foreach set of image views.
+      for( size_t i = 0; i < swapChainImageViews.size( ); i++ )
+      {
+        std::array< VkImageView, 1 > attachments =
+        {
+          shadowMapImageView
+        };
+
+        VkFramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = firstRenderPass;
+        framebufferInfo.attachmentCount = static_cast< uint32_t >( attachments.size( ) );
+        framebufferInfo.pAttachments = attachments.data( );
+        framebufferInfo.width = swapChainExtent.width;
+        framebufferInfo.height = swapChainExtent.height;
+        framebufferInfo.layers = 1;
+
+        if( vkCreateFramebuffer( device, &framebufferInfo, nullptr, &swapChainFramebuffersForFirstPass[i] ) != VK_SUCCESS )
+        {
+          throw std::runtime_error( "failed to create framebuffer!" );
+        }
+      }
+    }
+
+    void createFramebuffersForSecondPass( void )
+    {
+      swapChainFramebuffersForSecondPass.resize( swapChainImageViews.size( ) );
 
       // Creating a framebuffer foreach set of image views.
       for( size_t i = 0; i < swapChainImageViews.size( ); i++ )
@@ -986,14 +1479,14 @@ class HelloTriangleApplication
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.renderPass = secondRenderPass;
         framebufferInfo.attachmentCount = static_cast< uint32_t >( attachments.size( ) );
         framebufferInfo.pAttachments = attachments.data( );
         framebufferInfo.width = swapChainExtent.width;
         framebufferInfo.height = swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if( vkCreateFramebuffer( device, &framebufferInfo, nullptr, &swapChainFramebuffers[i] ) != VK_SUCCESS )
+        if( vkCreateFramebuffer( device, &framebufferInfo, nullptr, &swapChainFramebuffersForSecondPass[i] ) != VK_SUCCESS )
         {
           throw std::runtime_error( "failed to create framebuffer!" );
         }
@@ -1065,101 +1558,69 @@ class HelloTriangleApplication
       );
     }
 
+    VkFormat findDepthFormatForShadowMap( void )
+    {
+      return findSupportedFormat(
+        { VK_FORMAT_D16_UNORM,
+          VK_FORMAT_D32_SFLOAT,
+          VK_FORMAT_D32_SFLOAT_S8_UINT,
+          VK_FORMAT_D24_UNORM_S8_UINT },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+      );
+    }
+
     bool hasStencilComponent( VkFormat format )
     {
       return format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
              format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
-    // Not creating texture in this example.
-    /**
-    void createTextureImage( void )
+    void createShadowMapImageAndImageView( void )
     {
-      int texWidth, texHeight, texChannels;
-      stbi_uc* pixels =
-        stbi_load( "/home/jguerrero/opt/Lava/resources/images/nice_flower_jgm.jpg",
-                   &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-      // 4 bytes (32 bits) per pixel. 1 byte per channel.
-      VkDeviceSize imageSize = texWidth * texHeight * 4;
-      if( !pixels )
-      {
-        throw std::runtime_error( "failed to load texture image!" );
-      }
-
-      // Staging buffer.
-      VkBuffer stagingBuffer;
-      VkDeviceMemory stagingBufferMemory;
-
-      createBuffer( imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    stagingBuffer, stagingBufferMemory );
-
-      // Mapping.
-      void* data;
-      vkMapMemory( device, stagingBufferMemory, 0, imageSize, 0, &data );
-      memcpy( data, pixels, static_cast< size_t >( imageSize ) );
-      vkUnmapMemory( device, stagingBufferMemory );
-
-      stbi_image_free( pixels );
-
-      createImage( texWidth, texHeight,
-                   VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
-                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+      VkFormat depthFormat = findDepthFormatForShadowMap( );
+      createImage( swapChainExtent.width, swapChainExtent.height,
+                   depthFormat, VK_IMAGE_TILING_OPTIMAL,
+                   VK_IMAGE_USAGE_SAMPLED_BIT |
+                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                   textureImage, textureImageMemory );
-
-      // Changing image layout.
-      transitionImageLayout( textureImage, VK_FORMAT_R8G8B8A8_UNORM,
+                   shadowMapImage, shadowMapImageMemory);
+      shadowMapImageView = createImageView( shadowMapImage, depthFormat,
+                                            VK_IMAGE_ASPECT_DEPTH_BIT );
+      /**/
+      transitionImageLayout( shadowMapImage, depthFormat,
                              VK_IMAGE_LAYOUT_UNDEFINED,
-                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL );
-
-      copyBufferToImage( stagingBuffer, textureImage,
-                         static_cast< uint32_t >( texWidth ),
-                         static_cast< uint32_t >( texHeight ) );
-
-      // Changing image layout a second time.
-      transitionImageLayout( textureImage, VK_FORMAT_R8G8B8A8_UNORM,
-                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
-
-      vkDestroyBuffer( device, stagingBuffer, nullptr );
-      vkFreeMemory( device, stagingBufferMemory, nullptr );
+                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL );
+      /**/
     }
 
-    void createTextureImageView( void )
-    {
-      textureImageView = createImageView( textureImage,
-                                          VK_FORMAT_R8G8B8A8_UNORM,
-                                          VK_IMAGE_ASPECT_COLOR_BIT );
-    }
-
-    void createTextureSampler( void )
+    void createShadowMapSampler( void )
     {
       VkSamplerCreateInfo samplerInfo = {};
       samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
       samplerInfo.magFilter = VK_FILTER_LINEAR;
       samplerInfo.minFilter = VK_FILTER_LINEAR;
-      samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      samplerInfo.anisotropyEnable = VK_TRUE;
-      samplerInfo.maxAnisotropy = 16;
+      samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+      samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+      samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+      // If anisotropy is disabled use 1 for maxAnisotropy.
+      samplerInfo.anisotropyEnable = VK_FALSE;
+      samplerInfo.maxAnisotropy = 1;
       samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
       samplerInfo.unnormalizedCoordinates = VK_FALSE;
       samplerInfo.compareEnable = VK_FALSE;
       samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-      samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+      samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
       samplerInfo.mipLodBias = 0.0f;
       samplerInfo.minLod = 0.0f;
-      samplerInfo.maxLod = 0.0f;
+      samplerInfo.maxLod = 100.0f;
 
-      if( vkCreateSampler( device, &samplerInfo, nullptr, &textureSampler ) != VK_SUCCESS )
+      if( vkCreateSampler( device, &samplerInfo, nullptr, &shadowMapSampler ) != VK_SUCCESS )
       {
         throw std::runtime_error("failed to create texture sampler!");
       }
     }
-    **/
 
     VkImageView createImageView( VkImage image, VkFormat format,
                                  VkImageAspectFlags aspectFlags )
@@ -1329,72 +1790,142 @@ class HelloTriangleApplication
       endSingleTimeCommands( commandBuffer );
     }
 
-    void createVertexBuffer( void )
+    void createVertexBuffers( void )
     {
-      VkDeviceSize bufferSize = sizeof( lavaMesh.vertices[0] ) * lavaMesh.numVertices;
+      // 1: Bunny.
+
+      VkDeviceSize bunnyBufferSize = sizeof( bunnyMesh.vertices[0] ) * bunnyMesh.numVertices;
 
       // Staging buffer.
-      VkBuffer stagingBuffer;
-      VkDeviceMemory stagingBufferMemory;
-      createBuffer( bufferSize,
+      VkBuffer bunnyStagingBuffer;
+      VkDeviceMemory bunnyStagingBufferMemory;
+      createBuffer( bunnyBufferSize,
                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    stagingBuffer,
-                    stagingBufferMemory );
+                    bunnyStagingBuffer,
+                    bunnyStagingBufferMemory );
 
       // Data mapping.
-      void* data;
-      vkMapMemory( device, stagingBufferMemory, 0, bufferSize, 0, &data );
-      memcpy( data, lavaMesh.vertices.data( ), (size_t) bufferSize );
-      vkUnmapMemory( device, stagingBufferMemory );
+      void* bunnyData;
+      vkMapMemory( device, bunnyStagingBufferMemory, 0, bunnyBufferSize, 0, &bunnyData );
+      memcpy( bunnyData, bunnyMesh.vertices.data( ), (size_t) bunnyBufferSize );
+      vkUnmapMemory( device, bunnyStagingBufferMemory );
 
       // Actual vertex buffer.
-      createBuffer( bufferSize,
+      createBuffer( bunnyBufferSize,
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    vertexBuffer,
-                    vertexBufferMemory );
+                    bunnyVertexBuffer,
+                    bunnyVertexBufferMemory );
 
-      copyBuffer( stagingBuffer, vertexBuffer, bufferSize );
+      copyBuffer( bunnyStagingBuffer, bunnyVertexBuffer, bunnyBufferSize );
 
-      vkDestroyBuffer( device, stagingBuffer, nullptr );
-      vkFreeMemory( device, stagingBufferMemory, nullptr );
-    }
+      vkDestroyBuffer( device, bunnyStagingBuffer, nullptr );
+      vkFreeMemory( device, bunnyStagingBufferMemory, nullptr );
 
-    void createIndexBuffer( void )
-    {
-      VkDeviceSize bufferSize = sizeof( lavaMesh.indices[0] ) * lavaMesh.numIndices;
+      // 2: Table.
+
+      VkDeviceSize tableBufferSize = sizeof( tableMesh.vertices[0] ) * tableMesh.numVertices;
 
       // Staging buffer.
-      VkBuffer stagingBuffer;
-      VkDeviceMemory stagingBufferMemory;
-      createBuffer( bufferSize,
+      VkBuffer tableStagingBuffer;
+      VkDeviceMemory tableStagingBufferMemory;
+      createBuffer( tableBufferSize,
                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    stagingBuffer,
-                    stagingBufferMemory );
+                    tableStagingBuffer,
+                    tableStagingBufferMemory );
 
       // Data mapping.
-      void* data;
-      vkMapMemory( device, stagingBufferMemory, 0, bufferSize, 0, &data );
-      memcpy( data, lavaMesh.indices.data( ), (size_t) bufferSize );
-      vkUnmapMemory( device, stagingBufferMemory );
+      void* tableData;
+      vkMapMemory( device, tableStagingBufferMemory, 0, tableBufferSize, 0, &tableData );
+      memcpy( tableData, tableMesh.vertices.data( ), (size_t) tableBufferSize );
+      vkUnmapMemory( device, tableStagingBufferMemory );
+
+      // Actual vertex buffer.
+      createBuffer( tableBufferSize,
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    tableVertexBuffer,
+                    tableVertexBufferMemory );
+
+      copyBuffer( tableStagingBuffer, tableVertexBuffer, tableBufferSize );
+
+      vkDestroyBuffer( device, tableStagingBuffer, nullptr );
+      vkFreeMemory( device, tableStagingBufferMemory, nullptr );
+    }
+
+    void createIndexBuffers( void )
+    {
+      // 1: Bunny.
+
+      VkDeviceSize bunnyBufferSize = sizeof( bunnyMesh.indices[0] ) * bunnyMesh.numIndices;
+
+      // Staging buffer.
+      VkBuffer bunnyStagingBuffer;
+      VkDeviceMemory bunnyStagingBufferMemory;
+      createBuffer( bunnyBufferSize,
+                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    bunnyStagingBuffer,
+                    bunnyStagingBufferMemory );
+
+      // Data mapping.
+      void* bunnyData;
+      vkMapMemory( device, bunnyStagingBufferMemory, 0, bunnyBufferSize, 0, &bunnyData );
+      memcpy( bunnyData, bunnyMesh.indices.data( ), (size_t) bunnyBufferSize );
+      vkUnmapMemory( device, bunnyStagingBufferMemory );
 
       // Actual index buffer.
-      createBuffer( bufferSize,
+      createBuffer( bunnyBufferSize,
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    indexBuffer,
-                    indexBufferMemory );
+                    bunnyIndexBuffer,
+                    bunnyIndexBufferMemory );
 
-      copyBuffer( stagingBuffer, indexBuffer, bufferSize );
+      copyBuffer( bunnyStagingBuffer, bunnyIndexBuffer, bunnyBufferSize );
 
-      vkDestroyBuffer( device, stagingBuffer, nullptr );
-      vkFreeMemory( device, stagingBufferMemory, nullptr );
+      vkDestroyBuffer( device, bunnyStagingBuffer, nullptr );
+      vkFreeMemory( device, bunnyStagingBufferMemory, nullptr );
+
+      // 2: Table.
+
+      VkDeviceSize tableBufferSize = sizeof( tableMesh.indices[0] ) * tableMesh.numIndices;
+
+      // Staging buffer.
+      VkBuffer tableStagingBuffer;
+      VkDeviceMemory tableStagingBufferMemory;
+      createBuffer( tableBufferSize,
+                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    tableStagingBuffer,
+                    tableStagingBufferMemory );
+
+      // Data mapping.
+      void* tableData;
+      vkMapMemory( device, tableStagingBufferMemory, 0, tableBufferSize, 0, &tableData );
+      memcpy( tableData, tableMesh.indices.data( ), (size_t) tableBufferSize );
+      vkUnmapMemory( device, tableStagingBufferMemory );
+
+      // Actual index buffer.
+      createBuffer( tableBufferSize,
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    tableIndexBuffer,
+                    tableIndexBufferMemory );
+
+      copyBuffer( tableStagingBuffer, tableIndexBuffer, tableBufferSize );
+
+      vkDestroyBuffer( device, tableStagingBuffer, nullptr );
+      vkFreeMemory( device, tableStagingBufferMemory, nullptr );
     }
 
     void createUniformBuffer( void )
@@ -1407,15 +1938,36 @@ class HelloTriangleApplication
                     uniformBuffer, uniformBufferMemory );
     }
 
-    void createDescriptorPool( void )
+    void initUniformBuffer( void )
+    {
+      UniformBufferObject defaultUniformBuffer = {};
+      defaultUniformBuffer.cameraView =
+        glm::lookAt( defaultCameraPosition,
+                     glm::vec3( 0.0f, 0.0f, 0.0f ),
+                     glm::vec3( -10.0f, 0.0f, 1.0f ) );
+      defaultUniformBuffer.lightView =
+        glm::lookAt( defaultLightPosition,
+                     glm::vec3( 0.0f, 0.0f, -3.0f ),
+                     glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      defaultUniformBuffer.proj =
+        glm::perspective( glm::radians(45.0f),
+                          swapChainExtent.width /
+                          (float) swapChainExtent.height,
+                          0.1f, 100.0f );
+      // GLM was written for OpenGL. Vulkan has the Y inverted.
+      defaultUniformBuffer.proj[1][1] *= -1;
+
+      void* data;
+      vkMapMemory( device, uniformBufferMemory, 0, sizeof( defaultUniformBuffer ), 0, &data );
+      memcpy( data, &defaultUniformBuffer, sizeof( defaultUniformBuffer ) );
+      vkUnmapMemory( device, uniformBufferMemory );
+    }
+
+    void createDescriptorPoolForFirstPass( void )
     {
       std::array< VkDescriptorPoolSize, 1 > poolSizes = {};
       poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       poolSizes[0].descriptorCount = 1;
-      /**
-      poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      poolSizes[1].descriptorCount = 1;
-      **/
 
       VkDescriptorPoolCreateInfo poolInfo = {};
       poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1423,59 +1975,115 @@ class HelloTriangleApplication
       poolInfo.pPoolSizes = poolSizes.data( );
       poolInfo.maxSets = 1;
 
-      if( vkCreateDescriptorPool( device, &poolInfo, nullptr, &descriptorPool ) != VK_SUCCESS )
+      if( vkCreateDescriptorPool( device, &poolInfo, nullptr, &descriptorPoolForFirstPass ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to create descriptor pool!" );
       }
     }
 
-    void createDescriptorSet( void )
+    void createDescriptorPoolForSecondPass( void )
     {
-      VkDescriptorSetLayout layouts[] = { descriptorSetLayout };
+      std::array< VkDescriptorPoolSize, 2 > poolSizes = {};
+      poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      poolSizes[0].descriptorCount = 1;
+      poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      poolSizes[1].descriptorCount = 1;
+
+      VkDescriptorPoolCreateInfo poolInfo = {};
+      poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+      poolInfo.poolSizeCount = static_cast< uint32_t >( poolSizes.size( ) );
+      poolInfo.pPoolSizes = poolSizes.data( );
+      poolInfo.maxSets = 1;
+
+      if( vkCreateDescriptorPool( device, &poolInfo, nullptr, &descriptorPoolForSecondPass ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to create descriptor pool!" );
+      }
+    }
+
+    void createDescriptorSetForFirstPass( void )
+    {
+      VkDescriptorSetLayout layouts[] = { descriptorSetLayoutForFirstPass };
       VkDescriptorSetAllocateInfo allocInfo = {};
       allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-      allocInfo.descriptorPool = descriptorPool;
+      allocInfo.descriptorPool = descriptorPoolForFirstPass;
       allocInfo.descriptorSetCount = 1;
       allocInfo.pSetLayouts = layouts;
 
-      if( vkAllocateDescriptorSets( device, &allocInfo, &descriptorSet ) != VK_SUCCESS )
+      if( vkAllocateDescriptorSets( device, &allocInfo, &descriptorSetForFirstPass ) != VK_SUCCESS )
       {
         throw std::runtime_error( "failed to allocate descriptor set!" );
       }
+    }
 
+    void updateDescriptorSetForFirstPass( void )
+    {
       // Uniform buffer.
       VkDescriptorBufferInfo bufferInfo = {};
       bufferInfo.buffer = uniformBuffer;
       bufferInfo.offset = 0;
       bufferInfo.range = sizeof( UniformBufferObject );
 
-      // Texture.
-      /**
-      VkDescriptorImageInfo imageInfo = {};
-      imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      imageInfo.imageView = textureImageView;
-      imageInfo.sampler = textureSampler;
-      **/
-
       std::array< VkWriteDescriptorSet, 1 > descriptorWrites = {};
 
       descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[0].dstSet = descriptorSet;
+      descriptorWrites[0].dstSet = descriptorSetForFirstPass;
       descriptorWrites[0].dstBinding = 0;
       descriptorWrites[0].dstArrayElement = 0;
       descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       descriptorWrites[0].descriptorCount = 1;
       descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-      /**
+      vkUpdateDescriptorSets( device, static_cast< uint32_t >( descriptorWrites.size( ) ),
+                              descriptorWrites.data( ), 0, nullptr );
+    }
+
+    void createDescriptorSetForSecondPass( void )
+    {
+      VkDescriptorSetLayout layouts[] = { descriptorSetLayoutForSecondPass };
+      VkDescriptorSetAllocateInfo allocInfo = {};
+      allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+      allocInfo.descriptorPool = descriptorPoolForSecondPass;
+      allocInfo.descriptorSetCount = 1;
+      allocInfo.pSetLayouts = layouts;
+
+      if( vkAllocateDescriptorSets( device, &allocInfo, &descriptorSetForSecondPass ) != VK_SUCCESS )
+      {
+        throw std::runtime_error( "failed to allocate descriptor set!" );
+      }
+    }
+
+    void updateDescriptorSetForSecondPass( void )
+    {
+      // Uniform buffer.
+      VkDescriptorBufferInfo bufferInfo = {};
+      bufferInfo.buffer = uniformBuffer;
+      bufferInfo.offset = 0;
+      bufferInfo.range = sizeof( UniformBufferObject );
+
+      // Shadow map.
+      VkDescriptorImageInfo imageInfo = {};
+      imageInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+      imageInfo.imageView = shadowMapImageView;
+      imageInfo.sampler = shadowMapSampler;
+
+      std::array< VkWriteDescriptorSet, 2 > descriptorWrites = {};
+
+      descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      descriptorWrites[0].dstSet = descriptorSetForSecondPass;
+      descriptorWrites[0].dstBinding = 0;
+      descriptorWrites[0].dstArrayElement = 0;
+      descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      descriptorWrites[0].descriptorCount = 1;
+      descriptorWrites[0].pBufferInfo = &bufferInfo;
+
       descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[1].dstSet = descriptorSet;
+      descriptorWrites[1].dstSet = descriptorSetForSecondPass;
       descriptorWrites[1].dstBinding = 1;
       descriptorWrites[1].dstArrayElement = 0;
       descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       descriptorWrites[1].descriptorCount = 1;
       descriptorWrites[1].pImageInfo = &imageInfo;
-      **/
 
       vkUpdateDescriptorSets( device, static_cast< uint32_t >( descriptorWrites.size( ) ),
                               descriptorWrites.data( ), 0, nullptr );
@@ -1582,7 +2190,7 @@ class HelloTriangleApplication
 
     void createCommandBuffers( void )
     {
-      commandBuffers.resize( swapChainFramebuffers.size( ) );
+      commandBuffers.resize( swapChainImageViews.size( ) );
 
       VkCommandBufferAllocateInfo allocInfo = {};
       allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1595,6 +2203,24 @@ class HelloTriangleApplication
         throw std::runtime_error( "failed to allocate command buffers!" );
       }
 
+      // VertexBuffers.
+      VkBuffer bunnyVertexBuffers[] = { bunnyVertexBuffer };
+      VkDeviceSize bunnyVertexBufferOffsets[] = { 0 };
+
+      VkBuffer tableVertexBuffers[] = { tableVertexBuffer };
+      VkDeviceSize tableVertexBufferOffsets[] = { 0 };
+
+      // PushConstants.
+      glm::mat4 bunnyModelMatrix = glm::mat4( 1.0f );
+      bunnyModelMatrix[ 3 ] = glm::vec4( 0.0f, 5.0f, 0.0f, 1.0f );
+
+      glm::mat4 tableModelMatrix = glm::mat4( 1.0f );
+      tableModelMatrix[ 0 ].x = 20.0f;
+      tableModelMatrix[ 1 ].y = 1.0f;
+      tableModelMatrix[ 2 ].z = 20.0f;
+
+      glm::vec4 initialLightPosition = glm::vec4( defaultLightPosition, 1.0f );
+
       for( size_t i = 0; i < commandBuffers.size( ); i++ )
       {
         VkCommandBufferBeginInfo beginInfo = {};
@@ -1604,49 +2230,128 @@ class HelloTriangleApplication
 
         vkBeginCommandBuffer( commandBuffers[i], &beginInfo );
 
-        VkRenderPassBeginInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = swapChainFramebuffers[i];
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = swapChainExtent;
-
-        std::array< VkClearValue, 2 > clearValues = {};
-        clearValues[0].color = {0.3f, 0.65f, 1.0f, 1.0f};
-        clearValues[1].depthStencil = {1.0f, 0};
-        renderPassInfo.clearValueCount = static_cast< uint32_t >( clearValues.size( ) );
-        renderPassInfo.pClearValues = clearValues.data( );
+        VkRenderPassBeginInfo firstRenderPassInfo = {};
+        firstRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        firstRenderPassInfo.renderPass = firstRenderPass;
+        firstRenderPassInfo.framebuffer = swapChainFramebuffersForFirstPass[i];
+        firstRenderPassInfo.renderArea.offset = {0, 0};
+        firstRenderPassInfo.renderArea.extent = swapChainExtent;
+        std::array< VkClearValue, 1 > clearValuesForFirstPass = {};
+        clearValuesForFirstPass[0].depthStencil = {1.0f, 0};
+        firstRenderPassInfo.clearValueCount = static_cast< uint32_t >( clearValuesForFirstPass.size( ) );
+        firstRenderPassInfo.pClearValues = clearValuesForFirstPass.data( );
 
         // BEGIN First render pass.
-        vkCmdBeginRenderPass( commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+        vkCmdBeginRenderPass( commandBuffers[i], &firstRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-          vkCmdBindPipeline( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline );
+          vkCmdBindPipeline( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelineForFirstPass );
+
+          // 1: Bunny.
 
           // Working with buffers.
-          VkBuffer vertexBuffers[] = { vertexBuffer };
-          VkDeviceSize offsets[] = { 0 };
-          vkCmdBindVertexBuffers( commandBuffers[i], 0, 1, vertexBuffers, offsets );
+          vkCmdBindVertexBuffers( commandBuffers[i], 0, 1,
+                                  bunnyVertexBuffers, bunnyVertexBufferOffsets );
 
           // To read meshes it is better to use VK_INDEX_TYPE_UINT32 instead of VK_INDEX_TYPE_UINT16.
-          vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+          vkCmdBindIndexBuffer( commandBuffers[i], bunnyIndexBuffer, 0, VK_INDEX_TYPE_UINT32 );
 
-          vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                  pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+          // Descriptor sets: a uniform buffer (view and proj).
+          vkCmdBindDescriptorSets( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                   pipelineLayoutForFirstPass, 0, 1, &descriptorSetForFirstPass, 0, nullptr );
 
-          // View-space light position.
-          LightParameters defaultLightParameters = {};
-          defaultLightParameters.Position = glm::vec4( 4.0f, 0.0f, -7.0f, 1.0f );
-          vkCmdPushConstants(commandBuffers[i], pipelineLayout,
-                             VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof( float ),
-                             &defaultLightParameters );
+          vkCmdPushConstants( commandBuffers[i], pipelineLayoutForFirstPass,
+                              VK_SHADER_STAGE_VERTEX_BIT,
+                              0, 16 * sizeof( float ),
+                              &bunnyModelMatrix );
 
           vkCmdDrawIndexed(
             commandBuffers[i],
-            static_cast< uint32_t >( lavaMesh.numIndices ),
+            static_cast< uint32_t >( bunnyMesh.numIndices ),
+            1, 0, 0, 0 );
+
+          // 2: Table.
+
+          vkCmdBindVertexBuffers( commandBuffers[i], 0, 1,
+                                  tableVertexBuffers, tableVertexBufferOffsets );
+
+          vkCmdBindIndexBuffer( commandBuffers[i], tableIndexBuffer, 0, VK_INDEX_TYPE_UINT32 );
+
+          vkCmdPushConstants( commandBuffers[i], pipelineLayoutForFirstPass,
+                              VK_SHADER_STAGE_VERTEX_BIT,
+                              0, 16 * sizeof( float ),
+                              &tableModelMatrix );
+
+          vkCmdDrawIndexed(
+            commandBuffers[i],
+            static_cast< uint32_t >( tableMesh.numIndices ),
             1, 0, 0, 0 );
 
         vkCmdEndRenderPass( commandBuffers[i] );
         // END First render pass.
+
+        VkRenderPassBeginInfo secondRenderPassInfo = {};
+        secondRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        secondRenderPassInfo.renderPass = secondRenderPass;
+        secondRenderPassInfo.framebuffer = swapChainFramebuffersForSecondPass[i];
+        secondRenderPassInfo.renderArea.offset = {0, 0};
+        secondRenderPassInfo.renderArea.extent = swapChainExtent;
+        std::array< VkClearValue, 2 > clearValuesForSecondPass = {};
+        clearValuesForSecondPass[0].color = {0.3f, 0.65f, 1.0f, 1.0f};
+        clearValuesForSecondPass[1].depthStencil = {1.0f, 0};
+        secondRenderPassInfo.clearValueCount = static_cast< uint32_t >( clearValuesForSecondPass.size( ) );
+        secondRenderPassInfo.pClearValues = clearValuesForSecondPass.data( );
+
+        // BEGIN Second render pass.
+        vkCmdBeginRenderPass( commandBuffers[i], &secondRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+          vkCmdBindPipeline( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelineForSecondPass );
+
+          // 1: Bunny.
+
+          // Working with buffers.
+          vkCmdBindVertexBuffers( commandBuffers[i], 0, 1,
+                                  bunnyVertexBuffers, bunnyVertexBufferOffsets );
+
+          // To read meshes it is better to use VK_INDEX_TYPE_UINT32 instead of VK_INDEX_TYPE_UINT16.
+          vkCmdBindIndexBuffer( commandBuffers[i], bunnyIndexBuffer, 0, VK_INDEX_TYPE_UINT32 );
+
+          // Descriptor sets: a uniform buffer (view and proj).
+          vkCmdBindDescriptorSets( commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                   pipelineLayoutForSecondPass, 0, 1, &descriptorSetForSecondPass, 0, nullptr );
+
+          // Push constants: a model matrix and a view-space light position.
+          vkCmdPushConstants( commandBuffers[i], pipelineLayoutForSecondPass,
+                              VK_SHADER_STAGE_VERTEX_BIT,
+                              0, 16 * sizeof( float ),
+                              &bunnyModelMatrix );
+          vkCmdPushConstants( commandBuffers[i], pipelineLayoutForSecondPass,
+                              VK_SHADER_STAGE_VERTEX_BIT,
+                              16 * sizeof( float ), 4 * sizeof( float ),
+                              &initialLightPosition );
+
+          vkCmdDrawIndexed(
+            commandBuffers[i],
+            static_cast< uint32_t >( bunnyMesh.numIndices ),
+            1, 0, 0, 0 );
+
+          // 2: Table.
+          vkCmdBindVertexBuffers( commandBuffers[i], 0, 1,
+                                  tableVertexBuffers, tableVertexBufferOffsets );
+
+          vkCmdBindIndexBuffer( commandBuffers[i], tableIndexBuffer, 0, VK_INDEX_TYPE_UINT32 );
+
+          vkCmdPushConstants( commandBuffers[i], pipelineLayoutForSecondPass,
+                              VK_SHADER_STAGE_VERTEX_BIT,
+                              0, 16 * sizeof( float ),
+                              &tableModelMatrix );
+
+          vkCmdDrawIndexed(
+            commandBuffers[i],
+            static_cast< uint32_t >( tableMesh.numIndices ),
+            1, 0, 0, 0 );
+
+        vkCmdEndRenderPass( commandBuffers[i] );
+        // END Second render pass.
 
         if( vkEndCommandBuffer( commandBuffers[i] ) != VK_SUCCESS )
         {
@@ -1667,6 +2372,7 @@ class HelloTriangleApplication
       }
     }
 
+    /**
     void updateUniformBuffer( void )
     {
       static auto startTime = std::chrono::high_resolution_clock::now( );
@@ -1694,6 +2400,7 @@ class HelloTriangleApplication
       memcpy( data, &ubo, sizeof( ubo ) );
       vkUnmapMemory( device, uniformBufferMemory );
     }
+    **/
 
     void drawFrame( void )
     {
