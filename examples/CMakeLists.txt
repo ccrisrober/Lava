@@ -164,4 +164,9 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASHADOWMAPPINGBYJGM_LINK_LIBRARIES lava )
   common_application( lavaShadowMappingByJGM )
   
+  set( LAVANORMALMAPPINGBYJGM_HEADERS )
+  set( LAVANORMALMAPPINGBYJGM_SOURCES JGM/NormalMappingByJGM.cpp )
+  set( LAVANORMALMAPPINGBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaNormalMappingByJGM )
+  
 endif( )

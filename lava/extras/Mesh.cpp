@@ -31,6 +31,23 @@ namespace lava
           v.texCoord = glm::vec2( 0.0f );
         }
 
+        if( mesh->HasTangentsAndBitangents( ) )
+        {
+          v.tangent = glm::vec3(
+            mesh->mTangents[ i ].x,
+            mesh->mTangents[ i ].y,
+            mesh->mTangents[ i ].z );
+          v.bitangent = glm::vec3(
+            mesh->mBitangents[ i ].x,
+            mesh->mBitangents[ i ].y,
+            mesh->mBitangents[ i ].z );
+        }
+        else
+        {
+          v.tangent = glm::vec3( 0.0f );
+          v.bitangent = glm::vec3( 0.0f );
+        }
+
         vertices.push_back( v );
       }
 
