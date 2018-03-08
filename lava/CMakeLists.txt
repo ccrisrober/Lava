@@ -2,121 +2,92 @@ source_group(\\ FILES CMakeLists.txt)
 
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
-
-  io/Keyboard.hpp
-  io/Mouse.hpp
-  io/Input.hpp
-
-  RenderAPICapabilites.h
   noncopyable.hpp
-
-  Instance.h
-  Event.h
-  PhysicalDevice.h
-  Surface.h
-  VulkanApp.h
-  Device.h
-  VulkanResource.h
-  Semaphore.h
-  Queue.h
-  RenderPass.h
-  DefaultFramebuffer.h
-  Swapchain.h
-  Image.h
-  Framebuffer.h
-  CommandBuffer.h
-  Pipeline.h
-  Descriptor.h
-  Sampler.h
+  Clock.h
+  
   Buffer.h
-  QueryPool.h
-
-  Window.h
-
-  Texture.h
-  Texture1D.h
-  Texture2D.h
-  Texture3D.h
-  Texture2DArray.h
-  TextureCubemap.h
-
-  extras/FpsController.h
-
-  extras/Mesh.h
-  extras/Material.h
-  extras/ModelImporter.h
-  extras/CustomFramebuffer.h
-  extras/CustomMaterial.h
-  extras/Geometry.h
-
-  engine/Material.h
-  engine/Node.h
-  engine/Clock.h
-
-  utils.hpp
-
+  CommandBuffer.h
+  Descriptor.h
+  Instance.h
+  Device.h
+  PhysicalDevice.h
+  Event.h
+  Fence.h
   Log.h
   MemoryUtils.h
   StringUtils.hpp
+  RenderAPICapabilites.h
 
+  Image.h
+  RenderPass.h
+  Surface.h
+  Sampler.h
+  Semaphore.h
+  Swapchain.h
+  Texture.h
+  Texture1D.h
+  Texture2D.h
+  TextureCubemap.h
+  Texture2DArray.h
+  #Texture3D.h
+  Queue.h
+  Framebuffer.h
+  Pipeline.h
 
-  VulkanRenderer.h
+  utils.hpp
+
+  VulkanResource.h
+
+### engine/Clock.h
+### engine/Material.h
+### engine/Node.h
+
+### extras/Geometry.h
+### extras/Material.h
+### extras/Mesh.h
+### extras/ModelImporter.h
 )
 
 set( LAVA_SOURCES
-
-  io/Keyboard.cpp
-  io/Mouse.cpp
-  io/Input.cpp
-
-  VulkanRenderer.cpp
-
-
-  Instance.cpp
-  Event.cpp
-  PhysicalDevice.cpp
-  Surface.cpp
-  VulkanApp.cpp
-  Device.cpp
-  VulkanResource.cpp
-  Semaphore.cpp
-  Queue.cpp
-  RenderPass.cpp
-  DefaultFramebuffer.cpp
-  Swapchain.cpp
-  Image.cpp
-  Framebuffer.cpp
-  CommandBuffer.cpp
-  Pipeline.cpp
-  Descriptor.cpp
-  Sampler.cpp
+  Clock.cpp
   Buffer.cpp
-  QueryPool.cpp
+  CommandBuffer.cpp
+  Descriptor.cpp
+  Instance.cpp
+  Device.cpp
+  PhysicalDevice.cpp
+  Event.cpp
+  Fence.cpp
+  Log.cpp
 
-  Window.cpp
-
+  Image.cpp
+  RenderPass.cpp
+  Surface.cpp
+  Sampler.cpp
+  Semaphore.cpp
+  Swapchain.cpp
   Texture.cpp
   Texture1D.cpp
   Texture2D.cpp
-  Texture3D.cpp
-  Texture2DArray.cpp
   TextureCubemap.cpp
+  Texture2DArray.cpp
+  #Texture3D.cpp
+  Queue.cpp
+  Framebuffer.cpp
+  Pipeline.cpp
 
-  extras/Mesh.cpp
-  extras/Material.cpp
-  extras/ModelImporter.cpp
-  extras/CustomFramebuffer.cpp
-  extras/CustomMaterial.cpp
-  extras/Geometry.cpp
-
-  engine/Node.cpp
-  engine/Material.cpp
-  engine/Clock.cpp
-
-	#Source.cpp
   utils.cpp
 
-  Log.cpp
+  VulkanResource.cpp
+
+###  engine/Clock.cpp
+###  engine/Material.cpp
+###  engine/Node.cpp
+
+###  extras/Geometry.cpp
+###  extras/Material.cpp
+###  extras/Mesh.cpp
+###  extras/ModelImporter.cpp
 )
 
 set( LAVA_HEADERS
@@ -127,10 +98,7 @@ set( LAVA_MOC_HEADERS
 
 set( LAVA_LINK_LIBRARIES
 	${VULKAN_LIBRARY}
-	${GLFW3_LIBRARIES}
-	${GLM_LIBRARIES}
 	${STBI_LIBRARIES}
-  ${ASSIMP_LIBRARIES}
 )
 
 common_library( lava )

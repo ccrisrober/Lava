@@ -25,14 +25,92 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stbi/stb_image.h>
 
-#include "Device.h"
-#include "PhysicalDevice.h"
-#include "CommandBuffer.h"
-#include "Queue.h"
-
 namespace lava
 {
-  void utils::saveScreenshot( std::shared_ptr<Device> device,
+   short utils::channelsFromFormat( const vk::Format& )
+   {
+     short numChannels = 4;
+     // TODO: https://github.com/googlesamples/vulkan-basic-samples/blob/master/layers/vk_format_utils.cpp
+     /*switch ( format )
+     {
+     case vk::Format::eR8G8B8A8Uint:
+     case vk::Format::eR8G8B8A8Sint:
+     case vk::Format::eR8G8B8A8Srgb:
+     case vk::Format::eR8G8B8A8Unorm:
+     case vk::Format::eR8G8B8A8Sscaled:
+     case vk::Format::eR16G16B16A16Uint:
+     case vk::Format::eR16G16B16A16Sint:
+     case vk::Format::eR16G16B16A16Sfloat:
+     case vk::Format::eR32G32B32A32Uint:
+     case vk::Format::eR32G32B32A32Sint:
+     case vk::Format::eR32G32B32A32Sfloat:
+     case vk::Format::eR4G4B4A4UnormPack16:
+     case vk::Format::eB4G4R4A4UnormPack16:
+     case vk::Format::eR5G5B5A1UnormPack16:
+     case vk::Format::eB5G5R5A1UnormPack16:
+     case vk::Format::eA1R5G5B5UnormPack16:
+       numChannels = 4;
+       break;
+     case vk::Format::eR8G8B8Uint:
+     case vk::Format::eR8G8B8Sint:
+     case vk::Format::eR8G8B8Srgb:
+     case vk::Format::eR8G8B8Unorm:
+     case vk::Format::eR8G8B8Sscaled:
+     case vk::Format::eR16G16B16Uint:
+     case vk::Format::eR16G16B16Sint:
+     case vk::Format::eR16G16B16Sfloat:
+     case vk::Format::eR32G32B32Uint:
+     case vk::Format::eR32G32B32Sint:
+     case vk::Format::eR32G32B32Sfloat:
+     case vk::Format::eR5G6B5UnormPack16:
+     case vk::Format::eB5G6R5UnormPack16:
+     case vk::Format::eR8G8B8Uscaled:
+     case vk::Format::eB8G8R8Unorm:
+     case vk::Format::eB8G8R8Snorm:
+     case vk::Format::eR8G8B8Snorm:
+     case vk::Format::eB8G8R8Uscaled:
+     case vk::Format::eB8G8R8Uint:
+     case vk::Format::eB8G8R8Sint:
+     case vk::Format::eB8G8R8Sscaled:
+       numChannels = 3;
+       break;
+     case vk::Format::eR8G8Uint:
+     case vk::Format::eR8G8Sint:
+     case vk::Format::eR8G8Srgb:
+     case vk::Format::eR8G8Unorm:
+     case vk::Format::eR8G8Sscaled:
+     case vk::Format::eR16G16Uint:
+     case vk::Format::eR16G16Sint:
+     case vk::Format::eR16G16Sfloat:
+     case vk::Format::eR32G32Uint:
+     case vk::Format::eR32G32Sint:
+     case vk::Format::eR32G32Sfloat:
+     case vk::Format::eR4G4UnormPack8:
+     case vk::Format::eR8G8Snorm:
+     case vk::Format::eR8G8Uscaled:
+       numChannels = 2;
+       break;
+     case vk::Format::eR8Uint:
+     case vk::Format::eR8Sint:
+     case vk::Format::eR8Snorm:
+     case vk::Format::eR8Srgb:
+     case vk::Format::eR8Unorm:
+     case vk::Format::eR8Sscaled:
+     case vk::Format::eR16Uint:
+     case vk::Format::eR16Sint:
+     case vk::Format::eR16Sfloat:
+     case vk::Format::eR32Uint:
+     case vk::Format::eR32Sint:
+     case vk::Format::eR32Sfloat:
+     case vk::Format::eR8Uscaled:
+       numChannels = 1;
+       break;
+    case vk::Format::eUndefined:
+      throw;
+     }*/
+     return numChannels;
+   }
+   void utils::saveScreenshot( std::shared_ptr<Device> device,
     const char * filename, uint32_t width, uint32_t height, 
     vk::Format colorFormat, std::shared_ptr<Image> srcImage,
     std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue )
@@ -48,7 +126,7 @@ namespace lava
     if ( !( formatProps.optimalTilingFeatures & 
       vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
-      std::cerr << "Device does not support blitting from optimal tiled images, "
+      std::cerr << "Device doesn't support blitting from optimal tiled images, "
         << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
@@ -59,7 +137,7 @@ namespace lava
     if ( !( formatProps.linearTilingFeatures &
       vk::FormatFeatureFlagBits::eBlitDst ) )
     {
-      std::cerr << "Device does not support blitting to linear tiled images, "
+      std::cerr << "Device doesn't support blitting to linear tiled images, "
         << "using copy instead of blit!" << std::endl;
       supportsBlit = false;
     }
@@ -79,7 +157,7 @@ namespace lava
     //      destination image
     auto copyCmd = cmdPool->allocateCommandBuffer( );
 
-    copyCmd->beginSimple( );
+    copyCmd->begin( );
 
     // Transition destination image to transfer destination layout
     lava::utils::insertImageMemoryBarrier( copyCmd, dstImage, { },
@@ -214,8 +292,7 @@ namespace lava
     //    color components
     bool colorSwizzle = false;
     // Check if source is BGR 
-    // Note: Not complete, only contains most common and basic BGR surface 
-    //    formats for demonstation purposes
+    // TODO: Not complete, only contains most common BGR surface formats
     if ( !supportsBlit )
     {
       std::vector< vk::Format > formatsBGR = {
@@ -242,7 +319,7 @@ namespace lava
         {
           file.write( ( char* ) row, 3 );
         }
-        row++;
+        ++row;
       }
       data += subResourceLayout.rowPitch;
     }
@@ -250,15 +327,19 @@ namespace lava
 
     std::cout << "Screenshot saved to disk" << std::endl;
   }
+  
   unsigned char* utils::loadImageTexture( const std::string& fileName,
     uint32_t& width, uint32_t& height, uint32_t& numChannels )
   {
     int w, h, c;
-    stbi_uc* pixels = stbi_load( fileName.c_str( ),
-      &w, &h, &c, STBI_rgb_alpha );
+    stbi_uc* pixels = stbi_load( fileName.c_str( ), &w, &h, &c, STBI_rgb_alpha );
 
-    if ( !pixels )
+    if ( pixels == nullptr )
     {
+      const std::string reason( stbi_failure_reason( ) );
+      printf( "%s failed to load. stb_image's reason: %s\n", fileName.c_str( ), 
+        reason.c_str( ) );
+
       throw std::runtime_error( "failed to load texture image!" );
     }
 
@@ -268,6 +349,7 @@ namespace lava
 
     return pixels;
   }
+  
   std::vector<char> utils::readBinaryile( const std::string& fileName )
   {
     std::ifstream file( fileName, std::ios::ate | std::ios::binary );
@@ -287,7 +369,8 @@ namespace lava
 
     return buffer;
   }
-	const std::string utils::translateVulkanResult( vk::Result res )
+	
+  const std::string utils::translateVulkanResult( vk::Result res )
 	{
     VkResult result = VkResult( res );
     switch ( result ) {
@@ -351,7 +434,7 @@ namespace lava
         std::string( " and recreate their swapchain if they wish to" ) +
         std::string( " continue presenting to the surface." );
     case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
-      return std::string( "The display used by a swapchain does not use" ) +
+      return std::string( "The display used by a swapchain doesn't use" ) +
         std::string( " the same presentable image layout, or is" ) +
         std::string( " incompatible in a way that prevents sharing an image." );
     case VK_ERROR_VALIDATION_FAILED_EXT:
@@ -362,8 +445,9 @@ namespace lava
       return ss.str( );
     }
 	}
-  void utils::setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-    vk::Image image,
+  
+  void utils::transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
+    std::shared_ptr<Image> image,
     vk::ImageAspectFlags aspectMask,
     vk::ImageLayout oldImageLayout,
     vk::ImageLayout newImageLayout,
@@ -375,7 +459,7 @@ namespace lava
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 1;
-    setImageLayout( cmd, image, oldImageLayout, newImageLayout, 
+    transitionImageLayout( cmd, image, oldImageLayout, newImageLayout, 
       subresourceRange, srcStageMask, dstStageMask );
   }
   void utils::insertImageMemoryBarrier( 
@@ -394,8 +478,8 @@ namespace lava
     cmdbuffer->pipelineBarrier( srcStageMask, dstStageMask, {}, {}, {}, imr );
   }
 
-  void utils::setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-    vk::Image image,
+  void utils::transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
+    std::shared_ptr<Image> image,
     vk::ImageLayout oldImageLayout,
     vk::ImageLayout newImageLayout,
     vk::ImageSubresourceRange subresourceRange,
@@ -406,8 +490,10 @@ namespace lava
     vk::ImageMemoryBarrier imageMemoryBarrier;
     imageMemoryBarrier.oldLayout = oldImageLayout;
     imageMemoryBarrier.newLayout = newImageLayout;
-    imageMemoryBarrier.image = image;
+    imageMemoryBarrier.image = *image;
     imageMemoryBarrier.subresourceRange = subresourceRange;
+    imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
     // Source layouts (old)
     // Source access mask controls actions that have to be finished
@@ -415,7 +501,7 @@ namespace lava
     switch ( oldImageLayout )
     {
       case vk::ImageLayout::eUndefined:
-        // Image layout is undefined (or does not matter)
+        // Image layout is undefined (or doesn't matter)
         // Only valid as initial layout
         // No flags required, listed only for completeness
         imageMemoryBarrier.srcAccessMask = vk::AccessFlags( );

@@ -18,7 +18,13 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <routes.h>
 
@@ -97,46 +103,33 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       vertexBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eVertexBuffer | 
+        vk::BufferUsageFlagBits::eVertexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-        stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
+      vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+        vertices.data( ) } );
       cmd->end( );
-
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-
-      auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-        stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
+      indexBuffer->update<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+        indices.data( ) } );
       cmd->end( );
-
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
   
     // MVP buffer
@@ -145,8 +138,8 @@ public:
     }
 
     tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "uv_checker.png" ), _window->graphicsCommandPool( ), 
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "uv_checker.png" ), _window->gfxCommandPool( ), 
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
@@ -171,7 +164,8 @@ public:
 
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), vk::VertexInputRate::eVertex );
+    vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ), 
+      vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription( 
@@ -256,7 +250,16 @@ public:
 
     uboVS.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
-    uboVS.proj[ 1 ][ 1 ] *= -1;
+
+    // Vulkan clip space has inverted Y and half Z.
+    glm::mat4 clip = glm::mat4( 
+      1.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, -1.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, 0.5f, 0.0f,
+      0.0f, 0.0f, 0.5f, 1.0f
+    );
+    uboVS.proj = clip * uboVS.proj;
+    //uboVS.proj[ 1 ][ 1 ] *= -1;
 
     mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
   }
@@ -275,7 +278,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const vk::Offset2D size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -297,8 +300,9 @@ public:
     cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
 
     cmd->endRenderPass( );
-
-    _window->frameReady( );
+    
+    //_window->frameReady( );
+    _window->requestUpdate( );
   }
 
 private:

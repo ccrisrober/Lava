@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -115,46 +116,33 @@ public:
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc, 
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       skybox.vertexBuffer = device->createBuffer( vertexBufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-      stagingBuffer->copy( cmd, skybox.vertexBuffer, 0, 0, vertexBufferSize );
+      skybox.vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+        vertices.data( ) } );
       cmd->end( );
-
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
-
-      auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
 
       skybox.indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
-        vk::BufferUsageFlagBits::eTransferDst, 
+        vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
-      stagingBuffer->copy( cmd, skybox.indexBuffer, 0, 0, indexBufferSize );
+      skybox.indexBuffer->update<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+        indices.data( ) } );
       cmd->end( );
-
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // MVP buffer
@@ -176,7 +164,7 @@ public:
     };
 
     tex = device->createTextureCubemap( cubeImages, 
-      _window->graphicsCommandPool( ), _window->graphicQueue( ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     std::array<vk::DescriptorPoolSize, 2> poolSize =
@@ -365,9 +353,7 @@ public:
         WriteDescriptorSet( skybox.descriptorSet, 1, 0, 
           vk::DescriptorType::eCombinedImageSampler, 1,
           DescriptorImageInfo(
-            vk::ImageLayout::eGeneral,
-            std::make_shared<vk::ImageView>( tex->view ),
-            std::make_shared<vk::Sampler>( tex->sampler )
+            vk::ImageLayout::eGeneral, tex->view, tex->sampler
           ), nullptr
         )
       };
@@ -399,10 +385,10 @@ public:
       ( float ) width / ( float ) height, 0.1f, 100.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    uniformMVP->update( &uboVS );
+    uniformMVP->set( &uboVS );
 
     uboFS.viewPos = camera.Position;
-    uniformViewPos->update( &uboFS );
+    uniformViewPos->set( &uboFS );
   }
 
   bool modeReflect = true;
@@ -430,7 +416,7 @@ public:
         size.x, size.y, _window->colorFormat( ),
         // Source for the copy is the last rendered swapchain image
         _window->defaultFramebuffer( )->getLastImage( ),
-        _window->graphicsCommandPool( ), _window->graphicQueue( )
+        _window->gfxCommandPool( ), _window->gfxQueue( )
       );
     }
 
@@ -502,7 +488,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 
 private:

@@ -19,15 +19,14 @@
 
 #include "Queue.h"
 
-#include "Device.h"
-#include "Swapchain.h"
-#include "CommandBuffer.h"
+#include <lava/CommandBuffer.h>
+#include <lava/Swapchain.h>
 
 #define DEFAULT_FENCE_TIMEOUT 100000000000
 
 namespace lava
 {
-  SubmitInfo::SubmitInfo( 
+  SubmitInfo::SubmitInfo(
     vk::ArrayProxy<const std::shared_ptr<Semaphore>> const& waitSemaphores_,
     vk::ArrayProxy<const vk::PipelineStageFlags> waitDstStageMasks_,
     vk::ArrayProxy<const std::shared_ptr<CommandBuffer>> const& commandBuffers_,
@@ -45,7 +44,7 @@ namespace lava
       rhs.commandBuffers, rhs.signalSemaphores )
   {}
 
-  SubmitInfo & SubmitInfo::operator=( SubmitInfo const& rhs )
+  SubmitInfo& SubmitInfo::operator=( SubmitInfo const& rhs )
   {
     waitSemaphores = rhs.waitSemaphores;
     waitDstStageMasks = rhs.waitDstStageMasks;
@@ -54,81 +53,13 @@ namespace lava
     return *this;
   }
 
-  Fence::Fence( const DeviceRef& device, bool signaled )
-    : VulkanResource( device )
-  {
-    vk::FenceCreateInfo fenceCreateInfo( signaled ?
-      vk::FenceCreateFlagBits::eSignaled : vk::FenceCreateFlags( ) );
-
-    _fence = static_cast< vk::Device >( *_device ).createFence( fenceCreateInfo );
-  }
-
-  Fence::~Fence( )
-  {
-    // From the spec:
-    //    fence must not be associated with any queue command that has not yet completed execution on that queue
-    static_cast< vk::Device >( *_device ).destroyFence( _fence );
-  }
-
-  bool Fence::isSignaled( ) const
-  {
-    vk::Result result = static_cast< vk::Device >( *_device ).getFenceStatus( _fence );
-    assert( ( result == vk::Result::eSuccess ) || ( result == vk::Result::eNotReady ) );
-    return( result == vk::Result::eSuccess );
-  }
-
-  void Fence::reset( )
-  {
-    static_cast< vk::Device >( *_device ).resetFences( _fence );
-  }
-
-  void Fence::wait( uint64_t timeout ) const
-  {
-    static_cast< vk::Device >( *_device ).waitForFences( _fence, true, timeout );
-  }
-
-
-  void Fence::resetFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences)
-  {
-    if ( !fences.empty( ) )
-    {
-      std::vector <vk::Fence> fencesArray;
-      for ( const auto& fence : fences )
-      {
-        assert( fences.front( )->getDevice( ) == fence->getDevice( ) );
-        fencesArray.push_back( *fence );
-      }
-      static_cast<vk::Device>( *fences.front( )->getDevice( ) )
-        .resetFences( fencesArray );
-    }
-  }
-
-  void Fence::waitForFences(vk::ArrayProxy<const std::shared_ptr<Fence>> fences, 
-    bool all, uint32_t timeout)
-  {
-    if ( !fences.empty( ) )
-    {
-      std::vector< vk::Fence > fencesArray;
-      for (const auto& fence : fences)
-      {
-        assert( fences.front( )->getDevice( ) == fence->getDevice( ) );
-        fencesArray.push_back(*fence);
-      }
-      static_cast<vk::Device>( *fences.front( )->getDevice( ) )
-        .waitForFences(fencesArray, all, timeout);
-    }
-  }
-
-
-
-
   vk::Result Queue::submit( vk::ArrayProxy<const SubmitInfo> submitInfos,
     const std::shared_ptr<Fence>& fenceIn )
   {
     // create a new fence if none has been passed to track completion of the submit.
-    std::shared_ptr<Fence> fence = fenceIn ? fenceIn : _device->createFence( false );
+    auto fence = fenceIn ? fenceIn : _device->createFence( false );
 
-    _submitInfos.insert( std::make_pair( fence, 
+    _submitInfos.insert( std::make_pair( fence,
       std::vector<SubmitInfo>( submitInfos.begin( ), submitInfos.end( ) ) ) );
 
     std::vector<std::vector<vk::Semaphore>> waitSemaphores;
@@ -150,7 +81,7 @@ namespace lava
       waitSemaphores.back( ).reserve( si.waitSemaphores.size( ) );
       for ( auto const& sem : si.waitSemaphores )
       {
-        waitSemaphores.back( ).push_back( sem ? 
+        waitSemaphores.back( ).push_back( sem ?
           static_cast< vk::Semaphore >( *sem ) : nullptr );
       }
 
@@ -158,7 +89,7 @@ namespace lava
       commandBuffers.back( ).reserve( si.commandBuffers.size( ) );
       for ( auto const& cmd : si.commandBuffers )
       {
-        commandBuffers.back( ).push_back( cmd ? 
+        commandBuffers.back( ).push_back( cmd ?
           static_cast< vk::CommandBuffer >( *cmd ) : nullptr );
       }
 
@@ -166,7 +97,7 @@ namespace lava
       signalSemaphores.back( ).reserve( si.signalSemaphores.size( ) );
       for ( auto const& sem : si.signalSemaphores )
       {
-        signalSemaphores.back( ).push_back( sem ? 
+        signalSemaphores.back( ).push_back( sem ?
           static_cast< vk::Semaphore >( *sem ) : nullptr );
       }
 
@@ -188,15 +119,15 @@ namespace lava
     return _queue.submit( to_submit.size( ), to_submit.data( ), *fence );
   }
 
-  void Queue::submit( const std::shared_ptr<CommandBuffer>& commandBuffer, 
+  void Queue::submit( const std::shared_ptr<CommandBuffer>& commandBuffer,
     const std::shared_ptr<Fence>& fence )
   {
     submit( SubmitInfo( nullptr, nullptr, commandBuffer, nullptr ), fence );
   }
 
-  std::vector<vk::Result> Queue::present( 
+  std::vector<vk::Result> Queue::present(
     vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores,
-    vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains, 
+    vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
     vk::ArrayProxy<const uint32_t> imageIndices )
   {
     assert( swapchains.size( ) == imageIndices.size( ) );
@@ -216,8 +147,8 @@ namespace lava
     }
 
     std::vector<vk::Result> results( swapchains.size( ) );
-    _queue.presentKHR( vk::PresentInfoKHR( 
-      waitSemaphoreData.size( ), waitSemaphoreData.data( ), 
+    _queue.presentKHR( vk::PresentInfoKHR(
+      waitSemaphoreData.size( ), waitSemaphoreData.data( ),
       swapchainData.size( ), swapchainData.data( ),
       imageIndices.data( ), results.data( ) ) );
     return results;
@@ -230,7 +161,7 @@ namespace lava
 
   void Queue::submitAndWait( std::shared_ptr<CommandBuffer>& cmd )
   {
-    std::shared_ptr<Fence> fence = _device->createFence( false );
+    auto fence = _device->createFence( false );
     this->submit( cmd, fence );
 
     std::vector<vk::Fence> vkFences;
@@ -238,14 +169,16 @@ namespace lava
     /*vkFences.reserve( fences.size( ) );
     for ( auto const& f : fences )
     {
-      vkFences.push_back( *f );
+    vkFences.push_back( *f );
     }*/
 
     // Wait for the fence to signal that command buffer has finished executing
-    static_cast< vk::Device >( *_device ).waitForFences( vkFences, VK_TRUE, DEFAULT_FENCE_TIMEOUT );
+    static_cast< vk::Device >( *_device ).waitForFences( vkFences, VK_TRUE,
+      DEFAULT_FENCE_TIMEOUT );
   }
 
-  Queue::Queue( const DeviceRef& device, vk::Queue queue, uint32_t queueFamilyIndex )
+  Queue::Queue( const std::shared_ptr<Device>& device, vk::Queue queue, 
+    uint32_t queueFamilyIndex )
     : VulkanResource( device )
     , _queue( queue )
     , _queueFamilyIndex( queueFamilyIndex )

@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -65,7 +66,7 @@ public:
     };
 
     tex = device->createTexture2DArray( cubeImages, 
-      _window->graphicsCommandPool( ), _window->graphicQueue( ), 
+      _window->gfxCommandPool( ), _window->gfxQueue( ), 
       vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
@@ -254,7 +255,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 
 private:

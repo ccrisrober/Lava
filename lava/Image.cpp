@@ -23,14 +23,14 @@
 
 namespace lava
 {
-  Image::Image( const DeviceRef& device, const vk::Image& image )
+  Image::Image( const std::shared_ptr<Device>& device, const vk::Image& image )
     : VulkanResource( device )
     , _image( image )
     , _managed( false )
   {
   }
-  Image::Image( const DeviceRef& device, vk::ImageCreateFlags createFlags, 
-    vk::ImageType type,
+  Image::Image( const std::shared_ptr<Device>& device, 
+    vk::ImageCreateFlags createFlags, vk::ImageType type,
     vk::Format format, vk::Extent3D extent, uint32_t mipLevels, 
     uint32_t arrayLayers, vk::SampleCountFlagBits samples,
     vk::ImageTiling tiling, vk::ImageUsageFlags usageFlags, 

@@ -18,41 +18,34 @@
  **/
 
 #include "Sampler.h"
-#include "Device.h"
 
 namespace lava
 {
-  Sampler::~Sampler( void )
-  {
-    static_cast< vk::Device >( *_device ).destroySampler( _sampler );
-  }
-  Sampler::Sampler( const DeviceRef& device, const SamplerStateDesc& desc )
+  Sampler::Sampler( const std::shared_ptr<Device>& device, vk::Filter magFilter,
+    vk::Filter minFilter, vk::SamplerMipmapMode mipmapMode, 
+    vk::SamplerAddressMode addressModeU, vk::SamplerAddressMode addressModeV, 
+    vk::SamplerAddressMode addressModeW, float mipLodBias, bool anisotropyEnable, 
+    float maxAnisotropy, bool compareEnable, vk::CompareOp compareOp, 
+    float minLod, float maxLod, vk::BorderColor borderColor, 
+    bool unnormalizedCoordinates )
     : VulkanResource( device )
   {
-    bool anisotropy = desc.minFilter == FilterOptions::ANISOTROPIC ||
-      desc.magFilter == FilterOptions::ANISOTROPIC ||
-      desc.mipFilter == FilterOptions::ANISOTROPIC;
+    if ( anisotropyEnable && maxAnisotropy <= 0.0f )
+    {
+      std::cerr << "Can't create a sampler with enabled anisotropy and" <<
+        " 0.0f for max value" << std::endl;
+      maxAnisotropy = false;
+    }
 
-    CompareFunction compareFunc = desc.comparisonFunc;
+    vk::SamplerCreateInfo csci( { }, magFilter, minFilter, mipmapMode, 
+      addressModeU, addressModeV, addressModeW, mipLodBias, anisotropyEnable, 
+      maxAnisotropy, compareEnable, compareOp, minLod, maxLod,
+      borderColor, unnormalizedCoordinates );
+    _sampler = static_cast<vk::Device>( *_device ).createSampler( csci );
+  }
 
-    vk::SamplerCreateInfo samplerInfo;
-    samplerInfo.pNext = nullptr;
-    samplerInfo.magFilter = getFilter( desc.magFilter );
-    samplerInfo.minFilter = getFilter( desc.minFilter );
-    samplerInfo.mipmapMode = getMipFilter( desc.mipFilter );
-    samplerInfo.addressModeU = getAddressingMode( desc.addressMode.u );
-    samplerInfo.addressModeV = getAddressingMode( desc.addressMode.v );
-    samplerInfo.addressModeW = getAddressingMode( desc.addressMode.w );
-    samplerInfo.mipLodBias = desc.mipmapBias;
-    samplerInfo.anisotropyEnable = anisotropy;
-    samplerInfo.maxAnisotropy = ( float ) desc.maxAniso;
-    samplerInfo.compareEnable = compareFunc != CompareFunction::ALWAYS_PASS;
-    samplerInfo.compareOp = getCompareOp( compareFunc );
-    samplerInfo.minLod = desc.mipMin;
-    samplerInfo.maxLod = desc.mipMax;
-    samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-    samplerInfo.unnormalizedCoordinates = false;
-
-    _sampler = static_cast< vk::Device >( *_device ).createSampler( samplerInfo );
+  Sampler::~Sampler( void )
+  {
+    static_cast<vk::Device>( *_device ).destroySampler( _sampler );
   }
 }

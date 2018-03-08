@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_INCLUDES__
 #define __LAVA_INCLUDES__
 
@@ -24,10 +43,8 @@
   #define LAVA_PLATFORM_MOBILE
 #endif*/
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#include <vulkan/vulkan.hpp>
+//#define GLFW_INCLUDE_VULKAN
+//#include <GLFW/glfw3.h>
 
 #if defined( __MINGW32__ ) || defined( WIN32 ) || defined( __WIN32__ )
   #define LAVA_PLATFORM_WINDOWS
@@ -51,10 +68,12 @@
   #define LAVA_KHR_ExT "VK_MVK_macos_surface"*/
 #endif
 
-#define GLM_FORCE_RADIANS
+#include <vulkan/vulkan.hpp>
+
+/*#define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>*/
 
 #include <iostream>
 

@@ -18,6 +18,7 @@
 **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -107,12 +108,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     uniformBuffer = device->createUniformBuffer( sizeof( ubo ) );
@@ -126,7 +127,7 @@ public:
       LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/djinn4.png" )
     };
     tex = device->createTexture2DArray( djinnImages,
-      _window->graphicsCommandPool( ), _window->graphicQueue( ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     // Init descriptor and pipeline layouts
@@ -258,7 +259,7 @@ public:
 
     ubo.viewPos = camera.Position;
 
-    uniformBuffer->update( &ubo );
+    uniformBuffer->set( &ubo );
   }
 
   void nextFrame( void ) override
@@ -326,7 +327,7 @@ public:
     cmd->draw( vertices.size( ), 1, 0, 0 );
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 private:
   VulkanWindow *_window;

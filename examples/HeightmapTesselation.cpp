@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -138,12 +139,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, vertexBufferPositions, 0, 0, vertexBufferPositionsSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
 
     }
 
@@ -161,12 +162,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, vertexBufferTexCoords, 0, 0, vertexBufferTexCoordsSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
 
     }
 
@@ -185,24 +186,24 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, indexBuffer, 0, 0, indexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     mvpBuffer = device->createUniformBuffer( sizeof( ubo ) );
 
 
     texHeightmap = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "DisplacementMapEarth.png" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "DisplacementMapEarth.png" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     texAlbedo = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "earth_diffuse.jpg" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "earth_diffuse.jpg" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
 
     // Init descriptor and pipeline layouts
@@ -343,7 +344,7 @@ public:
     );
     ubo.proj[ 1 ][ 1 ] *= -1;
 
-    mvpBuffer->update( &ubo );
+    mvpBuffer->set( &ubo );
   }
 
   void nextFrame( void ) override
@@ -422,7 +423,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 private:
   VulkanWindow *_window;

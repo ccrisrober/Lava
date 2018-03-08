@@ -22,7 +22,7 @@
 
 namespace lava
 {
-  RenderPass::RenderPass( const DeviceRef& device, 
+  RenderPass::RenderPass( const std::shared_ptr<Device>& device, 
     vk::ArrayProxy<const vk::AttachmentDescription> attachments, 
     vk::ArrayProxy<const vk::SubpassDescription> subpasses,
     vk::ArrayProxy<const vk::SubpassDependency> dependencies )

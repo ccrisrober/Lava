@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 0.2.0 )
-set( lava_VERSION_ABI 1)
+project( lava VERSION 1.1.0 )
+set( lava_VERSION_ABI 2)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
@@ -28,7 +28,7 @@ set( LAVA_DESCRIPTION "LAVA" )
 include(Common)
 
 # Allow warnings
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
@@ -43,15 +43,15 @@ endif( )
 set(STBI_INCLUDE_DIR ../stbi)
 
 common_find_package( Vulkan REQUIRED SYSTEM )
-common_find_package( GLFW3 REQUIRED SYSTEM )
-common_find_package( GLM REQUIRED SYSTEM )
 common_find_package( STBI REQUIRED SYSTEM )
-common_find_package( ASSIMP REQUIRED SYSTEM )
-#common_find_package( GLSLANG REQUIRED )
 
-list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan GLFW3 GLM STBI ASSIMP 
-#GLSLANG
-)
+common_find_package( GLM SYSTEM )
+common_find_package( ASSIMP SYSTEM )
+common_find_package( GLFW3 SYSTEM )
+common_find_package( Qt5Core SYSTEM )
+common_find_package( Qt5Widgets SYSTEM )
+
+list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
 
 IF (NOT WIN32)
   link_libraries( -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread )
@@ -60,6 +60,16 @@ endif()
 common_find_package_post( )
 
 add_subdirectory( lava )
+
+if( GLFW3_FOUND )
+  add_subdirectory( lavaRenderer )
+endif( )
+
+if( QT5CORE_FOUND )
+  add_subdirectory( qtLava )
+endif( )
+
+add_subdirectory( lavaUtils )
 add_subdirectory( examples )
 
 configure_file(

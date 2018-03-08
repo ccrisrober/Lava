@@ -28,7 +28,7 @@
 
 namespace lava
 {
-  ShaderModule::ShaderModule( const DeviceRef& device, 
+  ShaderModule::ShaderModule( const std::shared_ptr<Device>& device, 
   const std::string& filePath, vk::ShaderStageFlagBits /* todo: UNUSE type */ )
     : VulkanResource( device )
   {
@@ -56,7 +56,7 @@ namespace lava
 
     _shaderModule = static_cast< vk::Device > ( *_device ).createShaderModule( sci );
   }
-  ShaderModule::ShaderModule( const DeviceRef& device,
+  ShaderModule::ShaderModule( const std::shared_ptr<Device>& device,
     const std::string& filePath )
     : ShaderModule( device, readFile( filePath ) )
   {
@@ -84,7 +84,7 @@ namespace lava
     return std::vector<uint32_t>( arr, arr + buffer.size( ) );
   }
 
-  ShaderModule::ShaderModule( const DeviceRef& device,
+  ShaderModule::ShaderModule( const std::shared_ptr<Device>& device,
     vk::ArrayProxy<const uint32_t> code )
     : VulkanResource( device )
   {
@@ -120,7 +120,7 @@ namespace lava
   }
 
   PipelineVertexInputStateCreateInfo & PipelineVertexInputStateCreateInfo::operator=(
-    PipelineVertexInputStateCreateInfo const& rhs )
+    const PipelineVertexInputStateCreateInfo& rhs )
   {
     vertexBindingDescriptions = rhs.vertexBindingDescriptions;
     vertexAttrirDescriptions = rhs.vertexAttrirDescriptions;
@@ -181,7 +181,7 @@ namespace lava
   PipelineColorBlendStateCreateInfo::PipelineColorBlendStateCreateInfo( 
     bool logicEnable_, vk::LogicOp logicOp_, 
     vk::ArrayProxy<const vk::PipelineColorBlendAttachmentState> attachments_, 
-    std::array<float, 4> const& blendConstants_ )
+    const std::array<float, 4>& blendConstants_ )
     : logicEnable( logicEnable_ )
     , logicOp( logicOp_ )
     , attachments( attachments_.begin( ), attachments_.end( ) )
@@ -190,7 +190,7 @@ namespace lava
   }
 
   PipelineColorBlendStateCreateInfo::PipelineColorBlendStateCreateInfo( 
-    PipelineColorBlendStateCreateInfo const& rhs )
+    const PipelineColorBlendStateCreateInfo& rhs )
     : PipelineColorBlendStateCreateInfo( rhs.logicEnable, rhs.logicOp, 
       rhs.attachments, rhs.blendConstants )
   {
@@ -198,7 +198,7 @@ namespace lava
 
   PipelineColorBlendStateCreateInfo& 
     PipelineColorBlendStateCreateInfo::operator=( 
-      PipelineColorBlendStateCreateInfo const& rhs )
+      const PipelineColorBlendStateCreateInfo& rhs )
   {
     logicEnable = rhs.logicEnable;
     logicOp = rhs.logicOp;
@@ -224,7 +224,7 @@ namespace lava
   }
 
   PipelineMultisampleStateCreateInfo::PipelineMultisampleStateCreateInfo( 
-    PipelineMultisampleStateCreateInfo const& rhs )
+    const PipelineMultisampleStateCreateInfo& rhs )
     : PipelineMultisampleStateCreateInfo( rhs.rasterizationSamples, 
       rhs.sampleShadingEnable, rhs.minSampleShading, rhs.sampleMasks, 
       rhs.alphaToCoverageEnable, rhs.alphaToOneEnable )
@@ -233,7 +233,7 @@ namespace lava
 
   PipelineMultisampleStateCreateInfo& 
     PipelineMultisampleStateCreateInfo::operator=( 
-      PipelineMultisampleStateCreateInfo const& rhs )
+      const PipelineMultisampleStateCreateInfo& rhs )
   {
     rasterizationSamples = rhs.rasterizationSamples;
     sampleShadingEnable = rhs.sampleShadingEnable;
@@ -244,7 +244,7 @@ namespace lava
     return *this;
   }
 
-  PipelineCache::PipelineCache( const DeviceRef& device, const std::string& filePath )
+  PipelineCache::PipelineCache( const std::shared_ptr<Device>& device, const std::string& filePath )
     : VulkanResource( device )
   {
     std::ifstream file( filePath, std::ios::ate | std::ios::binary );
@@ -351,7 +351,7 @@ namespace lava
     _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
   }
 
-  PipelineCache::PipelineCache( const DeviceRef& device, vk::PipelineCacheCreateFlags flags,
+  PipelineCache::PipelineCache( const std::shared_ptr<Device>& device, vk::PipelineCacheCreateFlags flags,
     size_t initialSize, void const* initialData )
     : VulkanResource( device )
   {
@@ -373,7 +373,7 @@ namespace lava
   {
     std::vector<vk::PipelineCache> caches;
     caches.reserve( srcCaches.size( ) );
-    for ( auto const& c : srcCaches )
+    for ( const auto& c : srcCaches )
     {
       caches.push_back( *c );
     }
@@ -405,12 +405,12 @@ namespace lava
     }
   }
 
-  Pipeline::Pipeline( const DeviceRef& device )
+  Pipeline::Pipeline( const std::shared_ptr<Device>& device )
     : VulkanResource( device )
   {
   }
 
-  void Pipeline::setPipeline( vk::Pipeline const& pipeline )
+  void Pipeline::setPipeline( const vk::Pipeline& pipeline )
   {
     _pipeline = pipeline;
   }
@@ -421,7 +421,7 @@ namespace lava
   }
 
 
-  ComputePipeline::ComputePipeline( const DeviceRef& device,
+  ComputePipeline::ComputePipeline( const std::shared_ptr<Device>& device,
     const std::shared_ptr<PipelineCache>& pipelineCache,
     vk::PipelineCreateFlags flags, const PipelineShaderStageCreateInfo& stage,
     const std::shared_ptr<PipelineLayout>& layout,
@@ -465,9 +465,9 @@ namespace lava
     vk::Optional<const vk::PipelineDepthStencilStateCreateInfo> depthStencilState,
     vk::Optional<const PipelineColorBlendStateCreateInfo> colorBlendState, 
     vk::Optional<const PipelineDynamicStateCreateInfo> dynamicState,
-    std::shared_ptr<PipelineLayout> const& pipelineLayout, 
-    std::shared_ptr<RenderPass> const& renderPass, uint32_t subpass,
-    std::shared_ptr<Pipeline> const& basePipelineHandle, uint32_t basePipelineIdx )
+    const std::shared_ptr<PipelineLayout>& pipelineLayout,
+    const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
+    const std::shared_ptr<Pipeline>& basePipelineHandle, uint32_t basePipelineIdx )
     : Pipeline( device )
   {
     std::vector<vk::SpecializationInfo> specializationInfos;
@@ -475,7 +475,7 @@ namespace lava
 
     std::vector<vk::PipelineShaderStageCreateInfo> vStages;
     vStages.reserve( stages.size( ) );
-    for ( auto const& s : stages )
+    for ( const auto& s : stages )
     {
       if ( s.specializationInfo )
       {
@@ -572,7 +572,7 @@ namespace lava
   {
     std::vector<vk::DescriptorSetLayout> dsl;
     dsl.reserve( setLayouts.size( ) );
-    for ( auto const& l : setLayouts )
+    for ( const auto& l : setLayouts )
     {
       dsl.push_back( static_cast< vk::DescriptorSetLayout >( *l ) );
     }
@@ -602,12 +602,12 @@ namespace lava
   {
   }
 
-  SpecializationInfo::SpecializationInfo( SpecializationInfo const& rhs )
+  SpecializationInfo::SpecializationInfo( const SpecializationInfo& rhs )
     : SpecializationInfo( rhs.mapEntries, rhs.data )
   {
   }
 
-  SpecializationInfo & SpecializationInfo::operator=( SpecializationInfo const& rhs )
+  SpecializationInfo & SpecializationInfo::operator=( const SpecializationInfo& rhs )
   {
     mapEntries = rhs.mapEntries;
     return *this;

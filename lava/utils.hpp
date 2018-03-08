@@ -1,18 +1,56 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_UTILS__
 #define __LAVA_UTILS__
 
 #include "includes.hpp"
 
-#include "CommandBuffer.h"
-
-#include "PhysicalDevice.h"
 #include "Device.h"
+#include "PhysicalDevice.h"
+#include "CommandBuffer.h"
+#include "Queue.h"
+
+#include <lava/Image.h>
+#include <mutex>
 
 namespace lava
 {
 	class utils
 	{
   public:
+  class Lockable
+  {
+  public:
+    inline void lock( void ) { _guard.lock( ); }
+    inline bool try_lock( void ) { return _guard.try_lock( ); }
+    inline void unlock( void ) { _guard.unlock( ); }
+
+    inline std::mutex& mutex( void ) const { return _guard; }
+
+  protected:
+    mutable std::mutex _guard;
+  };
+
+  typedef std::lock_guard<Lockable> LockableGuard;
+    LAVA_API
+    static short channelsFromFormat( const vk::Format& format );
     LAVA_API
     static void saveScreenshot( std::shared_ptr<Device> device,
       const char* filename, uint32_t width, uint32_t height, 
@@ -56,8 +94,8 @@ namespace lava
     // Put an image memory barrier for setting an image layout on the 
     //    sub resource into the given command buffer
     LAVA_API
-    static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-      vk::Image image,
+    static void transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
+      std::shared_ptr<Image> image,
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,
       vk::ImageSubresourceRange subresourceRange,
@@ -68,8 +106,8 @@ namespace lava
     );
     // Uses a fixed sub resource layout with first mip level and layer
     LAVA_API
-    static void setImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
-      vk::Image image,
+    static void transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
+      std::shared_ptr<Image> image,
       vk::ImageAspectFlags aspectMask,
       vk::ImageLayout oldImageLayout,
       vk::ImageLayout newImageLayout,

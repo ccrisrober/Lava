@@ -138,6 +138,7 @@ namespace lava
   }
   Instance::Instance( const vk::InstanceCreateInfo& ci )
   {
+
     _instance = vk::createInstance( ci );
     _physicalDevices = _instance.enumeratePhysicalDevices( );
     _physicalDevicesCache.resize( _physicalDevices.size( ) );

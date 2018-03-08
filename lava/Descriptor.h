@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_DESCRIPTOR__
 #define __LAVA_DESCRIPTOR__
 
@@ -7,20 +26,19 @@
 #include "noncopyable.hpp"
 
 #include <lava/api.h>
+#include <lava/Buffer.h>
+#include <lava/Image.h>
+#include <lava/Sampler.h>
 
 namespace lava
 {
-  class Device;
-  class Buffer;
-  class BufferView;
-  class Sampler;
   struct DescriptorSetLayoutBinding
   {
     LAVA_API
     DescriptorSetLayoutBinding( uint32_t binding,
       vk::DescriptorType descriptorType,
       vk::ShaderStageFlags stageFlags, 
-      vk::ArrayProxy<const std::shared_ptr<vk::Sampler>> immutableSamplers = { }
+      vk::ArrayProxy<const std::shared_ptr<lava::Sampler>> immutableSamplers = { }
     );
     LAVA_API
     DescriptorSetLayoutBinding( DescriptorSetLayoutBinding const& rhs );
@@ -30,8 +48,7 @@ namespace lava
     uint32_t binding;
     vk::DescriptorType descriptorType;
     vk::ShaderStageFlags stageFlags;
-    // TODO: Use lava::Sampler?
-    std::vector<std::shared_ptr<vk::Sampler>> immutableSamplers;
+    std::vector<std::shared_ptr<lava::Sampler>> immutableSamplers;
   };
 
   class DescriptorSetLayout : public VulkanResource,
@@ -39,7 +56,7 @@ namespace lava
   {
   public:
     LAVA_API
-    DescriptorSetLayout( const DeviceRef& device,
+    DescriptorSetLayout( const std::shared_ptr<Device>& device,
       vk::ArrayProxy<const DescriptorSetLayoutBinding> bindings,
       vk::DescriptorSetLayoutCreateFlags flags = { } );
     LAVA_API
@@ -58,7 +75,7 @@ namespace lava
   {
   public:
     LAVA_API
-    DescriptorPool( const DeviceRef& device, vk::DescriptorPoolCreateFlags flags,
+    DescriptorPool( const std::shared_ptr<Device>& device, vk::DescriptorPoolCreateFlags flags,
       uint32_t maxSets, vk::ArrayProxy<const vk::DescriptorPoolSize> poolSizes );
     LAVA_API
     ~DescriptorPool( void );
@@ -80,7 +97,7 @@ namespace lava
   {
   public:
     LAVA_API
-    DescriptorSet( const DeviceRef& device, 
+    DescriptorSet( const std::shared_ptr<Device>& device, 
       const std::shared_ptr<DescriptorPool>& descriptorPool,
       const std::shared_ptr<DescriptorSetLayout>& layout);
     LAVA_API
@@ -123,16 +140,16 @@ namespace lava
     }
     LAVA_API
     DescriptorImageInfo( vk::ImageLayout imageLayout,
-      const std::shared_ptr<vk::ImageView>& imageView,
-      const std::shared_ptr<vk::Sampler>& sampler );
+      const std::shared_ptr<ImageView>& imageView,
+      const std::shared_ptr<Sampler>& sampler );
     LAVA_API
     DescriptorImageInfo( const DescriptorImageInfo& rhs );
     LAVA_API
     DescriptorImageInfo& operator=( const DescriptorImageInfo& rhs );
 
     vk::ImageLayout imageLayout;
-    std::shared_ptr<vk::ImageView> imageView;
-    std::shared_ptr<vk::Sampler> sampler; // todo: Move to lava::Sampler
+    std::shared_ptr<ImageView> imageView;
+    std::shared_ptr<Sampler> sampler; 
   };
 
   struct WriteDescriptorSet

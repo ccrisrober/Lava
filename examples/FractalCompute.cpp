@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -101,20 +102,21 @@ public:
     ici.samples = vk::SampleCountFlagBits::e1;
     ici.tiling = vk::ImageTiling::eOptimal;
     // Image will be sampled in the fragment shader and used as storage target in the compute shader
-    ici.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
+    auto usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
 
     vk::Device dev = static_cast<vk::Device>( *device );
 
-    tex->image = dev.createImage( ici );
-
-    tex->deviceMemory = device->allocateImageMemory( tex->image,
-      vk::MemoryPropertyFlagBits::eDeviceLocal );  // Allocate + bind
+    tex->image = device->createImage( { }, vk::ImageType::e2D, format,
+      vk::Extent3D( tex->width, tex->height, 1 ), 1, 1,
+      vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, usageFlags,
+      vk::SharingMode::eExclusive, { }, vk::ImageLayout::eUndefined,
+      vk::MemoryPropertyFlagBits::eDeviceLocal );
 
     std::shared_ptr<CommandBuffer> layoutCmd = cmdPool->allocateCommandBuffer( );
-    layoutCmd->beginSimple( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+    layoutCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
 
     tex->imageLayout = vk::ImageLayout::eGeneral;
-    lava::utils::setImageLayout(
+    lava::utils::transitionImageLayout(
       layoutCmd, tex->image, vk::ImageAspectFlagBits::eColor,
       vk::ImageLayout::eUndefined, tex->imageLayout
     );
@@ -122,42 +124,18 @@ public:
     // Send command buffer
     layoutCmd->end( );
 
-    _window->graphicQueue( )->submitAndWait( layoutCmd ); // TODO: Use another kind of quee
+    _window->gfxQueue( )->submitAndWait( layoutCmd ); // TODO: Use another kind of quee
 
-                                                // Create sampler
-    vk::SamplerCreateInfo sci;
-    sci.setMagFilter( vk::Filter::eLinear );
-    sci.setMinFilter( vk::Filter::eLinear );
-    sci.setMipmapMode( vk::SamplerMipmapMode::eLinear );
-    sci.setAddressModeU( vk::SamplerAddressMode::eClampToBorder );
-    sci.setAddressModeV( vk::SamplerAddressMode::eClampToBorder );
-    sci.setAddressModeW( vk::SamplerAddressMode::eClampToBorder );
-    sci.setMipLodBias( 0.0f );
-    sci.setCompareOp( vk::CompareOp::eNever );
-    sci.setMinLod( 0.0f );
-    sci.setMaxLod( 0.0f );
-    sci.setMaxAnisotropy( 1.0f );
-    sci.setAnisotropyEnable( VK_TRUE );
-    sci.setBorderColor( vk::BorderColor::eFloatOpaqueWhite );
-
-    tex->sampler = dev.createSampler( sci );
+    // Create sampler
+    tex->sampler = device->createSampler( vk::Filter::eLinear, vk::Filter::eLinear,
+      vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToBorder,
+      vk::SamplerAddressMode::eClampToBorder, vk::SamplerAddressMode::eClampToBorder,
+      0.0f, true, 1.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+      vk::BorderColor::eFloatOpaqueWhite, false );
 
 
     // Create image view
-    vk::ImageViewCreateInfo vci;
-    vci.setViewType( vk::ImageViewType::e2D );
-    vci.setFormat( format );
-    vci.setComponents( {
-      vk::ComponentSwizzle::eR,
-      vk::ComponentSwizzle::eG,
-      vk::ComponentSwizzle::eB,
-      vk::ComponentSwizzle::eA
-    } );
-    vci.setSubresourceRange( { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } );
-    vci.subresourceRange.levelCount = 1;
-    vci.image = tex->image;
-
-    tex->view = dev.createImageView( vci );
+    tex->view = tex->image->createImageView( vk::ImageViewType::e2D, format );
 
     // Initialize a descriptor for later use
     tex->updateDescriptor( );
@@ -238,7 +216,7 @@ public:
       //  a pipeline change to ensure it's not currently in use
       compute.queue->waitIdle( );
 
-      compute.commandBuffer->beginSimple( );
+      compute.commandBuffer->begin( );
       compute.commandBuffer->bindComputePipeline( compute.pipeline );
       compute.commandBuffer->bindDescriptorSets(
         vk::PipelineBindPoint::eCompute, compute.pipelineLayout, 0,
@@ -271,12 +249,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, graphics.vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
 
     // Index buffer
@@ -294,12 +272,12 @@ public:
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
-      auto cmd = _window->graphicsCommandPool( )->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+      cmd->begin( );
         stagingBuffer->copy( cmd, graphics.indexBuffer, 0, 0, indexBufferSize );
       cmd->end( );
 
-      _window->graphicQueue( )->submitAndWait( cmd );
+      _window->gfxQueue( )->submitAndWait( cmd );
     }
   
     // Uniform buffers
@@ -311,7 +289,7 @@ public:
 
     textureComputeTarget = std::make_shared<Texture>( device );
     prepareTextureTarget( textureComputeTarget, compute.ubo.width, compute.ubo.height,
-      vk::Format::eR8G8B8A8Unorm, _window->graphicsCommandPool( ) );
+      vk::Format::eR8G8B8A8Unorm, _window->gfxCommandPool( ) );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
       LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
@@ -489,7 +467,8 @@ public:
     ImageMemoryBarrier imb( vk::AccessFlagBits::eShaderWrite,
       vk::AccessFlagBits::eShaderRead, vk::ImageLayout::eGeneral,
       vk::ImageLayout::eGeneral, 0, 0,
-      std::make_shared< lava::Image >( _window->device( ), textureComputeTarget->image ),
+      textureComputeTarget->image,
+      //std::make_shared< lava::Image >( _window->device( ), textureComputeTarget->image ),
       vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
     );
 
@@ -518,7 +497,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 
 private:

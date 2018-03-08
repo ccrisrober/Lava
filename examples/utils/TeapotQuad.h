@@ -31,7 +31,7 @@ public:
         vk::MemoryPropertyFlagBits::eDeviceLocal );
 
       auto cmd = cmdPool->allocateCommandBuffer( );
-      cmd->beginSimple( );
+      cmd->begin( );
       stagingBuffer->copy( cmd, vertexBuffer, 0, 0, vertexBufferSize );
       cmd->end( );
 

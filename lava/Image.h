@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_IMAGES__
 #define __LAVA_IMAGES__
 
@@ -10,15 +29,16 @@
 
 namespace lava
 {
-  class Device;
   class ImageView;
-  class Image : public VulkanResource, public std::enable_shared_from_this<Image>
+  class Image 
+    : public VulkanResource
+    , public std::enable_shared_from_this<Image>
   {
   public:
     LAVA_API
-    Image( const DeviceRef& device, const vk::Image& image );
+    Image( const std::shared_ptr<Device>& device, const vk::Image& image );
     LAVA_API
-    Image( const DeviceRef& device, vk::ImageCreateFlags createFlags, 
+    Image( const std::shared_ptr<Device>& device, vk::ImageCreateFlags createFlags, 
       vk::ImageType type, vk::Format format, vk::Extent3D extent, 
       uint32_t mipLevels, uint32_t arrayLayers, vk::SampleCountFlagBits samples, 
       vk::ImageTiling tiling, vk::ImageUsageFlags usageFlags, 
@@ -41,9 +61,14 @@ namespace lava
         vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
       }
     );
+    LAVA_API
+    inline vk::Format format( void ) const
+    {
+      return _format;
+    }
   private:
     friend class ImageView;
-    const DeviceRef& getDevice( void )
+    const std::shared_ptr<Device>& getDevice( void )
     {
       return _device;
     }

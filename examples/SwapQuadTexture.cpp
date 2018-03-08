@@ -18,6 +18,7 @@
 **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -100,11 +101,11 @@ public:
     auto device = _window->device( );
 
     auto tex1 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "chesterfieldDiffuseMap.png" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "chesterfieldDiffuseMap.png" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
     auto tex2 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
-      std::string( "chesterfieldNormalMap.png" ), _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+      std::string( "chesterfieldNormalMap.png" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     cpp = new CustomPingPong<std::shared_ptr<Texture2D>>( tex1, tex2 );
 
@@ -215,7 +216,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 private:
   VulkanWindow *_window;

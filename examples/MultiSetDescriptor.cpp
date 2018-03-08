@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
@@ -40,8 +41,8 @@ public:
   {
     auto device = _window->device( );
 
-    texture = device->createTexture2D( texPath, _window->graphicsCommandPool( ),
-      _window->graphicQueue( ), vk::Format::eR8G8B8A8Unorm );
+    texture = device->createTexture2D( texPath, _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     std::vector<DescriptorSetLayoutBinding> dslbs =
     {
@@ -202,7 +203,7 @@ public:
     ubo.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     ubo.proj[ 1 ][ 1 ] *= -1;
 
-    uniformBufferMVP->update( &ubo );
+    uniformBufferMVP->set( &ubo );
   }
 
   void nextFrame( void ) override
@@ -272,7 +273,7 @@ public:
 
     cmd->endRenderPass( );
 
-    _window->frameReady( );
+    _window->requestUpdate( );
   }
 private:
   VulkanWindow *_window;
