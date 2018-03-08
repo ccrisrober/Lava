@@ -58,6 +58,16 @@ namespace lava
       _components.insert( std::pair<std::string, Component*>( comp->GetUID( ), comp ) );
       comp->onAttach( );
     }
+    void Node::updateComponents( const lava::engine::Clock & clock )
+    {
+      for ( auto& comp : _components )
+      {
+        if ( comp.second->isEnabled( ) )
+        {
+          comp.second->update( clock );
+        }
+      }
+    }
     void Node::detachAllComponents( void )
     {
       forEachComponent( [ ]( Component *cmp )

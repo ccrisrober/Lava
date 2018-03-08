@@ -35,20 +35,45 @@ namespace lava
 	class utils
 	{
   public:
-  class Lockable
-  {
-  public:
-    inline void lock( void ) { _guard.lock( ); }
-    inline bool try_lock( void ) { return _guard.try_lock( ); }
-    inline void unlock( void ) { _guard.unlock( ); }
+    template< class E >
+    class Singleton
+    {
+    private:
+      static E _dummyInstance;
+    public:
+      LAVA_API
+      static E* getInstance( void )
+      {
+        static E instance;
+        return &instance;
+      }
+    };
+    /**
+    * A class derived from this can't be copied or reassigned
+    */
+    class NonCopyable
+    {
+    protected:
+      NonCopyable( void ) { }
+      ~NonCopyable( void ) { }
+    private:
+      NonCopyable( const NonCopyable& ) = delete;
+      const NonCopyable& operator=( const NonCopyable& ) = delete;
+    };
+    class Lockable
+    {
+    public:
+      inline void lock( void ) { _guard.lock( ); }
+      inline bool try_lock( void ) { return _guard.try_lock( ); }
+      inline void unlock( void ) { _guard.unlock( ); }
 
-    inline std::mutex& mutex( void ) const { return _guard; }
+      inline std::mutex& mutex( void ) const { return _guard; }
 
-  protected:
-    mutable std::mutex _guard;
-  };
+    protected:
+      mutable std::mutex _guard;
+    };
 
-  typedef std::lock_guard<Lockable> LockableGuard;
+    typedef std::lock_guard<Lockable> LockableGuard;
     LAVA_API
     static short channelsFromFormat( const vk::Format& format );
     LAVA_API

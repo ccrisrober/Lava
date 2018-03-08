@@ -2,9 +2,8 @@
 #define __LAVAENGINE_COMPONENT__
 
 #include <iostream>
+#include <lava/lava.h>
 #include <lavaEngine/api.h>
-
-//#include "../Maths/Clock.hpp"
 
 namespace lava
 {
@@ -45,8 +44,8 @@ namespace lava
       {
         return _node;
       }
-      // TODO: LAVAENGINE_API
-      // TODO: virtual void update( const mb::Clock& clock );
+      LAVAENGINE_API
+      virtual void update( const lava::engine::Clock& clock );
       LAVAENGINE_API
       virtual void start( void );
       LAVAENGINE_API

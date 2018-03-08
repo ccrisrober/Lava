@@ -10,6 +10,7 @@ set( LAVAENGINE_PUBLIC_HEADERS
 	Mathematics/Mathf.h
 	Mathematics/Ray.h
 	Mathematics/Spherical.h
+	Mathematics/Figures.h
 
 	Rendering/BatchQueue.h
 	Rendering/RenderPasses/RenderingPass.h
@@ -45,6 +46,7 @@ set( LAVAENGINE_SOURCES
 	Mathematics/Mathf.cpp
 	Mathematics/Ray.cpp
 	Mathematics/Spherical.cpp
+	Mathematics/Figures.cpp
 
 	Rendering/BatchQueue.cpp
 	Rendering/RenderPasses/RenderingPass.cpp
@@ -83,16 +85,20 @@ if( LAVAENGINE_WITH_COMPONENTS )
 		Components/Component.h
 		#Components/LambdaComponent.h
 		Components/StateMachineComponent.h
+		Components/RotateComponent.h
 
 		Visitors/StartComponents.h
+		Visitors/UpdateComponents.h
 	)
 
 	list( APPEND LAVAENGINE_SOURCES
 		Components/Component.cpp
 		#Components/LambdaComponent.cpp
-		Components/StateMachineComponent.h
+		Components/StateMachineComponent.cpp
+		Components/RotateComponent.cpp
 
 		Visitors/StartComponents.cpp
+		Visitors/UpdateComponents.cpp
 	)
 endif( )
 

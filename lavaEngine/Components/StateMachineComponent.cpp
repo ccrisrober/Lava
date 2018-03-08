@@ -1,47 +1,49 @@
 #include "StateMachineComponent.h"
 #include <iostream>
 
-namespace mb
+namespace lava
 {
-  State::State( StateMachinePtr owner_ )
+  namespace engine
   {
-    this->owner = owner_;
-  }
-  State::~State( void )
-  {
-  }
-
-  StateMachine::StateMachine( void )
-  {
-    currentState = nullptr;
-  }
-
-  StateMachine::~StateMachine( void )
-  {
-  }
-
-  void StateMachine::SwitchState( StatePtr newState )
-  {
-    if ( currentState != nullptr )
+    State::State( StateMachinePtr owner_ )
     {
-      currentState->exit( );
+      this->owner = owner_;
+    }
+    State::~State( void )
+    {
     }
 
-    currentState = newState;
-    if ( newState != nullptr )
+    StateMachine::StateMachine( void )
     {
-      currentState->enter( );
+      currentState = nullptr;
+    }
+
+    StateMachine::~StateMachine( void )
+    {
+    }
+
+    void StateMachine::SwitchState( StatePtr newState )
+    {
+      if ( currentState != nullptr )
+      {
+        currentState->exit( );
+      }
+
+      currentState = newState;
+      if ( newState != nullptr )
+      {
+        currentState->enter( );
+      }
+    }
+
+    void StateMachine::update( const float& )
+    {
+      if ( currentState != nullptr )
+      {
+        std::cout << "State: " << currentState->description( ) << std::endl;
+        currentState->update( );
+      }
+      //Component::Update( dt );
     }
   }
-
-  void StateMachine::update( const float& )
-  {
-    if ( currentState != nullptr )
-    {
-      std::cout << "State: " << currentState->description( ) << std::endl;
-      currentState->update( );
-    }
-    //Component::Update( dt );
-  }
-
 }

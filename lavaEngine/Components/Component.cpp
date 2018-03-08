@@ -29,9 +29,9 @@ namespace lava
       _node = n;
     }
 
-    /* TODO: void Component::update( const mb::Clock& )
+    void Component::update( const lava::engine::Clock& )
     {
-    }*/
+    }
 
     void Component::start( void )
     {

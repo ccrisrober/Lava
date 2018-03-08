@@ -134,12 +134,12 @@ public:
 
     return cube;
   }
-
+  lava::engine::Camera* camera;
   lava::engine::Group* createScene( void )
   {
     auto scene = new lava::engine::Group( "scene" );
 
-    auto camera = new lava::engine::Camera( 75.0f, 500 / 500, 0.03f, 1000.0f );
+    camera = new lava::engine::Camera( 75.0f, 500 / 500, 0.03f, 1000.0f );
     camera->translate( glm::vec3( 0.0f, 10.0f, 50.0f ) );
 
     //camera->addComponent( new mb::FreeCameraComponent( ) );
@@ -299,29 +299,6 @@ public:
     };
     device->updateDescriptorSets( wdss, { } );
   }
-
-  void updateVP( void )
-  {
-    auto size = _window->getExtent( );
-
-    uint32_t width = size.width, height = size.height;
-
-    uboVS.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 20.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
-
-    // Vulkan clip space has inverted Y and half Z.
-    glm::mat4 clip = glm::mat4(
-      1.0f, 0.0f, 0.0f, 0.0f,
-      0.0f, -1.0f, 0.0f, 0.0f,
-      0.0f, 0.0f, 0.5f, 0.0f,
-      0.0f, 0.0f, 0.5f, 1.0f
-    );
-    uboVS.proj = clip * uboVS.proj;
-    //uboVS.proj[ 1 ][ 1 ] *= -1;
-
-    vpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
-  }
-
   void nextFrame( void ) override
   {
     if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
@@ -329,7 +306,7 @@ public:
       _window->_window->close( );
     }
 
-    updateVP( );
+    // updateVP( );
 
     std::array<vk::ClearValue, 2 > clearValues;
     std::array<float, 4> ccv = { 0.2f, 0.3f, 0.3f, 1.0f };
@@ -368,6 +345,8 @@ public:
       vk::ShaderStageFlagBits::eVertex, 0, pushConstant );
 
     cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );*/
+    const clock_t begin_time = clock( );
+    scene->getTransform( );
     lava::engine::FetchCameras fetchCameras;
     scene->perform( fetchCameras );
     std::vector<lava::engine::Camera*> cameras;
@@ -380,6 +359,8 @@ public:
       cameras.push_back( c );
     } );
 
+    // TODO: _simulationClock.tick( );
+    // TODO: scene->perform( lava::engine::UpdateComponents( _simulationClock ) );
     std::vector< std::shared_ptr< lava::engine::BatchQueue > > bqCollection;
 
     for ( auto c : cameras )
@@ -393,6 +374,30 @@ public:
       }
     }
 
+    {
+      auto size = _window->getExtent( );
+
+      uint32_t width = size.width, height = size.height;
+
+      lava::engine::Camera::getMainCamera( )->translate( 
+        glm::vec3( 0.1f, 0.2f, 0.3f ) * std::sin( time ) );
+
+      uboVS.view = lava::engine::Camera::getMainCamera( )->getView( );//glm::lookAt( glm::vec3( 2.0f, 2.0f, 20.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      uboVS.proj = lava::engine::Camera::getMainCamera( )->getProjection( );//glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
+
+      // Vulkan clip space has inverted Y and half Z.
+      glm::mat4 clip = glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, -1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        0.0f, 0.0f, 0.5f, 1.0f
+      );
+      uboVS.proj = clip * uboVS.proj;
+      //uboVS.proj[ 1 ][ 1 ] *= -1;
+
+      vpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
+    }
+
     auto solidRenderables = bqCollection[ 0 ]->renderables(
       lava::engine::BatchQueue::RenderableType::OPAQUE );
     for ( const auto& r : solidRenderables )
@@ -402,7 +407,7 @@ public:
         vk::ShaderStageFlagBits::eVertex, 0, pushConstant );
       cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     }
-
+    std::cout << float( clock( ) - begin_time ) / CLOCKS_PER_SEC << std::endl;
     cmd->endRenderPass( );
 
     //_window->frameReady( );

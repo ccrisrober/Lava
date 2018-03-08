@@ -205,7 +205,7 @@ common_application( lavaShadowMapping )
 endif( )
 
 
-set( LAVADEMO_HEADERS utils/Camera.h )
+set( LAVADEMO_HEADERS )
 set( LAVADEMO_SOURCES Demo.cpp )
 set( LAVADEMO_LINK_LIBRARIES lava lavaEngine )
 common_application( lavaDemo )

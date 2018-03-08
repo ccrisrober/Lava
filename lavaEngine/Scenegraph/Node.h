@@ -59,6 +59,8 @@ namespace lava
       LAVAENGINE_API
       void addComponent( Component* comp );
       LAVAENGINE_API
+      void updateComponents( const lava::engine::Clock& clock );
+      LAVAENGINE_API
       void detachAllComponents( void );
       LAVAENGINE_API
       void forEachComponent( std::function< void( Component * ) > callback );
