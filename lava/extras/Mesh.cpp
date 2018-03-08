@@ -15,6 +15,8 @@ namespace lava
           mesh->mVertices[ i ].x,
           mesh->mVertices[ i ].y,
           mesh->mVertices[ i ].z );
+
+        /**
         v.normal = glm::vec3(
           mesh->mNormals[ i ].x,
           mesh->mNormals[ i ].y,
@@ -47,6 +49,7 @@ namespace lava
           v.tangent = glm::vec3( 0.0f );
           v.bitangent = glm::vec3( 0.0f );
         }
+        **/
 
         vertices.push_back( v );
       }

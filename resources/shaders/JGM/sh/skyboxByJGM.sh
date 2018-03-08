@@ -1,0 +1,2 @@
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/skyboxByJGM.vert -o /home/jguerrero/opt/Lava/spvs/JGM/skyboxByJGM_vert.spv
+/home/jguerrero/opt/VulkanSDK/1.0.57.0/x86_64/bin/glslangValidator -V /home/jguerrero/opt/Lava/resources/shaders/JGM/skyboxByJGM.frag -o /home/jguerrero/opt/Lava/spvs/JGM/skyboxByJGM_frag.spv
