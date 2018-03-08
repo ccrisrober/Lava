@@ -31,17 +31,17 @@ if( GLFW3_FOUND )
   common_application( lavaClearScreen )
 endif( )
 
-if(FALSE) # fake a block comment
+##if(FALSE) # fake a block comment
   set( LAVATRIANGLENOBUFFER_HEADERS )
   set( LAVATRIANGLENOBUFFER_SOURCES TriangleNoBuffer.cpp )
   set( LAVATRIANGLENOBUFFER_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaTriangleNoBuffer )
 
-  set( LAVATRIANGLEINDEXED_HEADERS )
-  set( LAVATRIANGLEINDEXED_SOURCES TriangleIndexed.cpp )
+  set( LAVATRIANGLEINDEXED_HEADERS utils/Material.h )
+  set( LAVATRIANGLEINDEXED_SOURCES utils/Material.cpp TriangleIndexed.cpp )
   set( LAVATRIANGLEINDEXED_LINK_LIBRARIES lava lavaRenderer )
   common_application( lavaTriangleIndexed )
-endif( )
+##endif( )
 
 if( GLFW3_FOUND )
   set( LAVACUBETEXTURED_HEADERS )
