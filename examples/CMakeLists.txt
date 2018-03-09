@@ -173,5 +173,10 @@ if( LAVA_WITH_EXAMPLES )
   set( LAVASKYBOXBYJGM_SOURCES JGM/SkyboxByJGM.cpp )
   set( LAVASKYBOXBYJGM_LINK_LIBRARIES lava )
   common_application( lavaSkyboxByJGM )
+  
+  set( LAVASKYBOXREFLECTIONANDREFRACTIONBYJGM_HEADERS )
+  set( LAVASKYBOXREFLECTIONANDREFRACTIONBYJGM_SOURCES JGM/SkyboxReflectionAndRefractionByJGM.cpp )
+  set( LAVASKYBOXREFLECTIONANDREFRACTIONBYJGM_LINK_LIBRARIES lava )
+  common_application( lavaSkyboxReflectionAndRefractionByJGM )
     
 endif( )

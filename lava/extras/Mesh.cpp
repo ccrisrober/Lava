@@ -11,17 +11,22 @@ namespace lava
       {
         Vertex v;
 
-        v.position = glm::vec3(
+        glm::vec3 meshPosition = glm::vec3(
           mesh->mVertices[ i ].x,
           mesh->mVertices[ i ].y,
           mesh->mVertices[ i ].z );
 
-        /**
+        v.position = meshPosition;
+
+        // ÑAPA como una casa.
+        vertexPositions.push_back( meshPosition );
+
         v.normal = glm::vec3(
           mesh->mNormals[ i ].x,
           mesh->mNormals[ i ].y,
           mesh->mNormals[ i ].z );
 
+        /**
         if ( mesh->HasTextureCoords( 0 ) )
         {
           v.texCoord = glm::vec2(

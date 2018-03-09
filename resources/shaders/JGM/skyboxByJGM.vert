@@ -21,13 +21,15 @@ layout( push_constant ) uniform SkyboxPushConstants
 layout( location = 0 ) out vec3 vertTexCoord;
 	
 // auxiliar 	
-mat4 modelView = ubo.view * spc.modelMatrix;	
+// mat4 modelView = ubo.view * spc.modelMatrix;	
 	
 void main()	{
   vertTexCoord = inPosition;  
  
   // Only modelView rotation component.	
-  vec3 position = mat3( modelView ) * inPosition;
+  vec4 position = ubo.proj * mat4( mat3( ubo.view ) ) * spc.modelMatrix * vec4( inPosition, 1.0 );
+  //vec3 position = mat3( modelView ) * inPosition;
   // The vertex will lie on the far clipping plane.
-  gl_Position = ( ubo.proj * vec4( position, 0.0 ) ).xyzz;
+  gl_Position = position.xyww;
+  //gl_Position = ( ubo.proj * vec4( position, 0.0 ) ).xyzz;
 }

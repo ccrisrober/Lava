@@ -19,8 +19,8 @@ namespace lava
     struct Vertex
     {
       glm::vec3 position;
-      /**
       glm::vec3 normal;
+      /**
       glm::vec2 texCoord;
       glm::vec3 tangent;
       glm::vec3 bitangent;
@@ -37,21 +37,33 @@ namespace lava
         return bindingDescription;
       }
 
-      static std::array< vk::VertexInputAttributeDescription, 1 > getAttributeDescriptions( )
+      // ÑAPA como una casa.
+      static vk::VertexInputBindingDescription getBindingDescriptionOnlyPosition( )
       {
-        std::array< vk::VertexInputAttributeDescription, 1 > attributeDescriptions = {};
+        vk::VertexInputBindingDescription bindingDescription = {};
+
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof position;
+        bindingDescription.inputRate = vk::VertexInputRate::eVertex;
+
+        return bindingDescription;
+      }
+
+      static std::array< vk::VertexInputAttributeDescription, 2 > getAttributeDescriptions( )
+      {
+        std::array< vk::VertexInputAttributeDescription, 2 > attributeDescriptions = {};
 
         attributeDescriptions[0].binding = 0;
         attributeDescriptions[0].location = 0;
         attributeDescriptions[0].format = vk::Format::eR32G32B32Sfloat;
         attributeDescriptions[0].offset = offsetof( Vertex, position );
 
-        /**
         attributeDescriptions[1].binding = 0;
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = vk::Format::eR32G32B32Sfloat;
         attributeDescriptions[1].offset = offsetof( Vertex, normal );
 
+        /**
         attributeDescriptions[2].binding = 0;
         attributeDescriptions[2].location = 2;
         attributeDescriptions[2].format = vk::Format::eR32G32Sfloat;
@@ -80,6 +92,8 @@ namespace lava
       uint32_t numVertices;
       uint32_t numIndices;
       std::vector< Vertex > vertices;
+      // ÑAPA como una casa.
+      std::vector< glm::vec3 > vertexPositions;
       std::vector< uint32_t > indices;
     };
   }
