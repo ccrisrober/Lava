@@ -83,9 +83,9 @@ namespace lava
     void ThreadPool::setThreadCount( uint32_t count )
     {
       workers.clear( );
-      for ( auto i = 0; i < count; ++i )
+      for ( uint32_t i = 0; i < count; ++i )
       {
-        workers.push_back( std::make_unique<Thread>( ) );
+        workers.push_back( std::make_unique< Thread >( ) );
       }
     }
 
