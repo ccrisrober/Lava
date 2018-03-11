@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_CAMERA__
+#define __LAVA_ENGINE_CAMERA__
 
 #include "Node.h"
 #include <lavaEngine/Mathematics/Frustum.h>
@@ -146,3 +147,5 @@ namespace lava
 		};
 	}
 }
+
+#endif /* __LAVA_ENGINE_CAMERA__ */

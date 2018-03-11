@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_FIGURES__
+#define __LAVA_ENGINE_FIGURES__
 
 #include <glm/glm.hpp>
 
@@ -233,3 +234,5 @@ namespace lava
     };
   }
 }
+
+#endif /* __LAVA_ENGINE_FIGURES__ */

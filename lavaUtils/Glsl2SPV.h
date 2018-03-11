@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_UTILS_GLSL2SPV__
+#define __LAVA_UTILS_GLSL2SPV__
 
 #include <lava/lava.h>
 #include <lavaUtils/api.h>
@@ -26,3 +27,5 @@ namespace lava
   		vk::ShaderStageFlagBits stage, const std::string& source );
 	}
 }
+
+#endif /* __LAVA_UTILS_GLSL2SPV__ */

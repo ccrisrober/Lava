@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_SWITCH__
+#define __LAVA_ENGINE_SWITCH__
 
 #include "Group.h"
 #include <lavaEngine/api.h>
@@ -41,3 +42,5 @@ namespace lava
     };
   }
 }
+
+#endif /* __LAVA_ENGINE_SWITCH__ */

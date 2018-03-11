@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_LIGHT__
+#define __LAVA_ENGINE_LIGHT__
 
 #include "Group.h"
 #include <lavaEngine/api.h>
@@ -106,3 +107,5 @@ namespace lava
 		};
 	}
 }
+
+#endif /* __LAVA_ENGINE_LIGHT__ */

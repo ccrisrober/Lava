@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_MACROS__
+#define __LAVA_ENGINE_MACROS__
 
 // Create automatic getter and setter.
 #define LAVA_SYNTHESIZE(varType, varName, funName)\
@@ -50,3 +51,5 @@ public: virtual const varType& get##funName(void) const;\
 public: virtual void set##funName(const varType& var);
 
 #define LAVA_TO_STR(A) #A
+
+#endif /* __LAVA_ENGINE_MACROS__ */

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_BATCHQUEUE__
+#define __LAVA_ENGINE_BATCHQUEUE__
 
 #include <vector>
 #include <map>
@@ -66,3 +67,5 @@ namespace lava
     };
 	}
 }
+
+#endif /* __LAVA_ENGINE_BATCHQUEUE__ */

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_GEOMETRY__
+#define __LAVA_ENGINE_GEOMETRY__
 
 #include "Node.h"
 #include <memory>
@@ -37,3 +38,5 @@ namespace lava
 		};
 	}
 }
+
+#endif /* __LAVA_ENGINE_GEOMETRY__ */

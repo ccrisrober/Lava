@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_GROUP__
+#define __LAVA_ENGINE_GROUP__
 
 #include "Node.h"
 #include <vector>
@@ -53,3 +54,5 @@ namespace lava
 		};
 	}
 }
+
+#endif /* __LAVA_ENGINE_GROUP__ */

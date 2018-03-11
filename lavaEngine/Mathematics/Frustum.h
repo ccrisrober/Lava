@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_FRUSTUM__
+#define __LAVA_ENGINE_FRUSTUM__
 
 #include <array>
 #include <iomanip>
@@ -91,3 +92,5 @@ namespace lava
     };
   }
 }
+
+#endif /* __LAVA_ENGINE_FRUSTUM__ */

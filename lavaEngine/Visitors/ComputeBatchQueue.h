@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_COMPUTEBATCHQUEUE__
+#define __LAVA_ENGINE_COMPUTEBATCHQUEUE__
 
 #include "Visitor.h"
 #include <lavaEngine/api.h>
@@ -31,3 +32,5 @@ namespace lava
     };
   }
 }
+
+#endif /* __LAVA_ENGINE_COMPUTEBATCHQUEUE__ */

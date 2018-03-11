@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __LAVA_ENGINE_FETCHCAMERAS__
+#define __LAVA_ENGINE_FETCHCAMERAS__
 
 #include <lavaEngine/Scenegraph/Camera.h>
 #include <lavaEngine/api.h>
@@ -29,3 +30,5 @@ namespace lava
       };
   }
 }
+
+#endif /* __LAVA_ENGINE_FETCHCAMERAS__ */

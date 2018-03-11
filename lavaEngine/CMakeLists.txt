@@ -48,7 +48,6 @@ set( LAVAENGINE_SOURCES
 	Mathematics/Mathf.cpp
 	Mathematics/Ray.cpp
 	Mathematics/Spherical.cpp
-	Mathematics/Figures.cpp
 
 	Rendering/BatchQueue.cpp
 	Rendering/RenderPasses/RenderingPass.cpp
