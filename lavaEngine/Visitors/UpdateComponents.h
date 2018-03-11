@@ -4,7 +4,7 @@
 #include "LambdaVisitor.h"
 #include <lavaEngine/api.h>
 
-#include <lava/lava.h>
+#include <lavaEngine/Clock.h>
 
 namespace lava
 {

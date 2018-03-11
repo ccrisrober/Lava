@@ -2,7 +2,7 @@
 #define __LAVAENGINE_COMPONENT__
 
 #include <iostream>
-#include <lava/lava.h>
+#include <lavaEngine/Clock.h>
 #include <lavaEngine/api.h>
 
 namespace lava

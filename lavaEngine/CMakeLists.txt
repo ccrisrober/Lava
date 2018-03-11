@@ -37,6 +37,8 @@ set( LAVAENGINE_PUBLIC_HEADERS
 	Utils/Easing.h
 	Utils/Macros.h
 	Utils/Layer.h
+
+	Clock.h
 )
 
 set( LAVAENGINE_SOURCES
@@ -72,6 +74,8 @@ set( LAVAENGINE_SOURCES
 
 	Utils/Easing.cpp
 	Utils/Layer.cpp
+
+	Clock.cpp
 )
 
 set( LAVAENGINE_HEADERS

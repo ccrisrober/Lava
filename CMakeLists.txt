@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 1.3.0 )
-set( lava_VERSION_ABI 1)
+project( lava VERSION 1.4.0 )
+set( lava_VERSION_ABI 2)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
@@ -28,7 +28,7 @@ set( LAVA_DESCRIPTION "LAVA" )
 include(Common)
 
 # Allow warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
@@ -56,9 +56,7 @@ common_find_package( GLFW3 SYSTEM )
 common_find_package( Qt5Core SYSTEM )
 common_find_package( Qt5Widgets SYSTEM )
 
-common_find_package( glslang )
-
-list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI glslang )
+list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
 
 IF (NOT WIN32)
   link_libraries( -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread )

@@ -19,6 +19,8 @@
 
 #include <lava/lava.h>
 #include <lavaRenderer/lavaRenderer.h>
+#include "utils/Material.h"
+#include <glm/glm.hpp>
 using namespace lava;
 
 #include <routes.h>
@@ -93,9 +95,9 @@ public:
     _window->gfxQueue( )->submitAndWait( cmd );
 #endif
 #ifdef TESS_MODE
-    material = std::make_shared<lava::engine::BasicTessTriangle>( );
+    material = std::make_shared<lava::BasicTessTriangle>( );
 #else
-    material = std::make_shared<lava::engine::BasicTriangle>( );
+    material = std::make_shared<lava::BasicTriangle>( );
 #endif
     material->configure( LAVA_EXAMPLES_SPV_ROUTE, device, _window->defaultRenderPass( ) );
   }
@@ -112,7 +114,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -142,7 +144,7 @@ public:
   }
 private:
   VulkanWindow *_window;
-  std::shared_ptr<lava::engine::Material> material;
+  std::shared_ptr<lava::Material> material;
   std::shared_ptr<Buffer> vertexBuffer;
 #ifdef INDEXING_MODE
   std::shared_ptr<Buffer> indexBuffer;

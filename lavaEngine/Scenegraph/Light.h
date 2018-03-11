@@ -43,7 +43,7 @@ namespace lava
     		_diffuseColor = c;
     	}
 			LAVAENGINE_API
-    	const Color& getGroundColor( void )
+    	/*const Color&*/Color getGroundColor( void )
     	{
     		if ( _type == Type::HEMISPHERIC )
     		{

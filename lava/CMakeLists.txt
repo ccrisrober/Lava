@@ -3,7 +3,6 @@ source_group(\\ FILES CMakeLists.txt)
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
   noncopyable.hpp
-  Clock.h
   
   Buffer.h
   CommandBuffer.h
@@ -49,7 +48,6 @@ set( LAVA_PUBLIC_HEADERS
 )
 
 set( LAVA_SOURCES
-  Clock.cpp
   Buffer.cpp
   CommandBuffer.cpp
   Descriptor.cpp

@@ -2,7 +2,7 @@
 #define __LAVA_ENGINE_CLOCK__
 
 #include <functional>
-#include <lava/api.h>
+#include <lavaEngine/api.h>
 
 namespace lava
 {
@@ -11,29 +11,29 @@ namespace lava
     class Clock
     {
     public:
-      LAVA_API
+      LAVAENGINE_API
       Clock( void );
-      LAVA_API
+      LAVAENGINE_API
       explicit Clock( double dt );
-      LAVA_API
+      LAVAENGINE_API
       Clock( const Clock &c );
-      LAVA_API
+      LAVAENGINE_API
       ~Clock( void );
-      LAVA_API
+      LAVAENGINE_API
       Clock &operator=( const Clock &other );
 
-      LAVA_API
+      LAVAENGINE_API
       double reset( void );
-      LAVA_API
+      LAVAENGINE_API
       void tick( void );
 
-      LAVA_API
+      LAVAENGINE_API
       double getCurrentTime( void ) const;
-      LAVA_API
+      LAVAENGINE_API
       double getLastTime( void ) const;
-      LAVA_API
+      LAVAENGINE_API
       double getDeltaTime( void ) const;
-      LAVA_API
+      LAVAENGINE_API
       double getAccumTime( void ) const
       {
         return _accumTime;
@@ -46,11 +46,11 @@ namespace lava
 
     public:
       typedef std::function< void( void ) > TimeoutCallback;
-      LAVA_API
-        void setTimeout( TimeoutCallback const &callback,
+      LAVAENGINE_API
+      void setTimeout( TimeoutCallback const &callback,
         double timeout );
-      LAVA_API
-        void setInterval( TimeoutCallback const &callback,
+      LAVAENGINE_API
+      void setInterval( TimeoutCallback const &callback,
         double timeout );
 
     private:
@@ -64,7 +64,7 @@ namespace lava
        As a side effect, _accumTime gets incremented by the new
        _deltaTime. Callbacks get executed if timeout is over
        */
-      LAVA_API
+      LAVAENGINE_API
       Clock &operator+=( float delta );
 
       /**
@@ -72,7 +72,7 @@ namespace lava
        As a side effect, _accumTime gets incremented by the new
        _deltaTime. Callbacks get executed if timeout is over
        */
-      LAVA_API
+      LAVAENGINE_API
       Clock &operator+=( const Clock &other );
 
     private:
