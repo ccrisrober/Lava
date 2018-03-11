@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 1.4.1 )
+project( lava VERSION 1.4.2 )
 set( lava_VERSION_ABI 2)
 
 # Disable in source building
