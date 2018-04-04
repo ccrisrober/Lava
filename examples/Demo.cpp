@@ -93,6 +93,7 @@ public:
     { { side2, -side2, -side2 },{ 0.0f, 1.0f } },
     { { side2, -side2,  side2 },{ 1.0f, 1.0f } }
   };
+  
   const std::vector<uint16_t> indices =
   {
     0,  1,  2,     1,  3,  2,
@@ -112,7 +113,7 @@ public:
   }
 
   // Returns random values uniformly distributed in the range [a, b]
-  float _random( )
+  float _random( void )
   {
     return static_cast <float> ( rand( ) ) / static_cast <float> ( RAND_MAX );
   }
@@ -158,7 +159,6 @@ public:
   void initResources( void ) override
   {
     auto device = _window->device( );
-
 
     scene = createScene( );
     scene->getTransform( );
@@ -223,7 +223,7 @@ public:
       )
     };
 
-    descriptorSetLayout = device->createDescriptorSetLayout( dslbs );
+    descriptorSetLayout = device->createDescriptorSetLayout( dslbs, vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR );
 
     vk::PushConstantRange pushConstantRange(
       vk::ShaderStageFlagBits::eVertex, 0, sizeof( PushConstant )
@@ -286,7 +286,7 @@ public:
     // Init descriptor set
     descriptorSet = device->allocateDescriptorSet( dspPool, descriptorSetLayout );
 
-    std::vector<WriteDescriptorSet> wdss =
+    /*std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet(
         descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
@@ -297,10 +297,67 @@ public:
         tex->descriptor, nullptr
       )
     };
-    device->updateDescriptorSets( wdss, { } );
+    device->updateDescriptorSets( wdss, { } );*/
+
+    pipelineStatNames = {
+      "Input assembly vertex count        ",
+      "Input assembly primitives count    ",
+      "Vertex shader invocations          ",
+      "Clipping stage primitives processed",
+      "Clipping stage primtives output    ",
+      "Fragment shader invocations        "
+    };
+    pipelineStats.resize( pipelineStatNames.size( ) );
+    query = device->createPipelineStatisticsQuery( 6,
+      vk::QueryPipelineStatisticFlagBits::eInputAssemblyVertices |
+      vk::QueryPipelineStatisticFlagBits::eInputAssemblyPrimitives |
+      vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
+      vk::QueryPipelineStatisticFlagBits::eClippingInvocations |
+      vk::QueryPipelineStatisticFlagBits::eClippingPrimitives |
+      vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations );
   }
+ 
+  // Retrieves the results of the pipeline statistics query submitted to the command buffer
+  void getQueryResults( void )
+  {
+    uint32_t count = static_cast<uint32_t>( pipelineStats.size( ) );
+    pipelineStats = query->getResults<uint64_t>( 0, 1, count,
+      sizeof( uint64_t ), vk::QueryResultFlagBits::e64 );
+    if ( !pipelineStats.empty( ) )
+    {
+      for ( uint32_t i = 0; i < pipelineStats.size( ); ++i )
+      {
+        std::cout << pipelineStatNames[ i ] << ": " << pipelineStats[ i ] << std::endl;
+      }
+    }
+    std::cout << "====================================" << std::endl;
+  }
+
+  // Vector for storing pipeline statistics results
+  std::vector<uint64_t> pipelineStats;
+  std::vector<std::string> pipelineStatNames;
+  std::shared_ptr<lava::QueryPool> query;
+
+  virtual void initSwapChainResources( void ) override
+  {
+    if ( camera )
+    {
+      uint32_t w, h;
+
+      auto device = _window->device( );
+
+      auto sc = _window->getExtent( );
+      w = sc.width;
+      h = sc.height;
+
+      camera->setFrustum( 
+        lava::engine::Frustum( 75.0f, w * 1.0f / h, 0.01f, 100.0f ) );
+    }
+  }
+
   void nextFrame( void ) override
   {
+    getQueryResults( );
     if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
@@ -315,6 +372,10 @@ public:
 
     const vk::Offset2D size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
+
+    // Reset timestamp query pool
+    cmd->resetQueryPool( query, 0, pipelineStats.size( ) );
+
     vk::Rect2D rect;
     rect.extent.width = size.x;
     rect.extent.height = size.y;
@@ -324,6 +385,9 @@ public:
       rect, clearValues, vk::SubpassContents::eInline
     );
     cmd->setViewportScissors( _window->getExtent( ) );
+
+    // Start capture of pipeline statistics
+    cmd->beginQuery( query, 0, vk::QueryControlFlagBits::ePrecise );
 
     cmd->bindGraphicsPipeline( pipeline );
     cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
@@ -338,13 +402,6 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
-    /*pushConstant.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    pushConstant.model = glm::rotate( pushConstant.model, time * glm::radians( 45.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-
-    cmd->pushConstants< PushConstant>( *pipelineLayout, 
-      vk::ShaderStageFlagBits::eVertex, 0, pushConstant );
-
-    cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );*/
     const clock_t begin_time = clock( );
     scene->getTransform( );
     lava::engine::FetchCameras fetchCameras;
@@ -402,12 +459,32 @@ public:
       lava::engine::BatchQueue::RenderableType::OPAQUE );
     for ( const auto& r : solidRenderables )
     {
-      pushConstant.model = glm::rotate( r.modelTransform, time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      std::vector<WriteDescriptorSet> wdss =
+      {
+        WriteDescriptorSet(
+          nullptr, 0, 0, vk::DescriptorType::eUniformBuffer,
+          1, nullptr, DescriptorBufferInfo( vpBuffer, 0, sizeof( uboVS ) )
+        ),
+        WriteDescriptorSet(
+          nullptr, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
+          tex->descriptor, nullptr
+        )
+      };
+
+      cmd->pushDescriptorSetKHR( vk::PipelineBindPoint::eGraphics,
+        pipelineLayout, 0, wdss );
+
+      pushConstant.model = glm::rotate( r.modelTransform, 
+        time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
       cmd->pushConstants< PushConstant>( *pipelineLayout,
         vk::ShaderStageFlagBits::eVertex, 0, pushConstant );
       cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
     }
     std::cout << float( clock( ) - begin_time ) / CLOCKS_PER_SEC << std::endl;
+
+    // End capture of pipeline statistics
+    cmd->endQuery( query, 0 );
+
     cmd->endRenderPass( );
 
     //_window->frameReady( );
@@ -459,9 +536,10 @@ int main( void )
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
     LAVA_KHR_EXT, // OS specific surface extension
-    VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+    VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+    // Enable extension required for push descriptors
+    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
   };
-
 
   instance = Instance::create( vk::InstanceCreateInfo(
   { },

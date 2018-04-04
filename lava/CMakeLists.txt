@@ -30,6 +30,7 @@ set( LAVA_PUBLIC_HEADERS
   Texture2DArray.h
   #Texture3D.h
   Queue.h
+  QueryPool.h
   Framebuffer.h
   Pipeline.h
 
@@ -71,6 +72,7 @@ set( LAVA_SOURCES
   Texture2DArray.cpp
   #Texture3D.cpp
   Queue.cpp
+  QueryPool.cpp
   Framebuffer.cpp
   Pipeline.cpp
 

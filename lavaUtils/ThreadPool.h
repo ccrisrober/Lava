@@ -26,6 +26,7 @@
 #include <queue>
 #include <functional>
 #include <mutex>
+#include <condition_variable>
 
 #include <lavaUtils/api.h>
 

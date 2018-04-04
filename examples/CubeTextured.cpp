@@ -232,6 +232,25 @@ public:
       )
     };
     device->updateDescriptorSets( wdss, { } );
+
+    query = device->createOcclusionQuery( 1 );
+  }
+
+  uint64_t passedSamples;
+
+  std::shared_ptr<lava::QueryPool> query;
+
+  // Retrieves the results of the occlusion queries submitted to the command buffer
+  void getQueryResults( void )
+  {
+    // We use vkGetQueryResults to copy the results into a host visible buffer
+    // Store results a 64 bit values and wait until the results have been finished
+    // If you don't want to wait, you can use VK_QUERY_RESULT_WITH_AVAILABILITY_BIT
+    // which also returns the state of the result (ready) in the result
+    passedSamples = query->getResult<uint64_t>(0, sizeof(passedSamples),
+      vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait );
+
+    std::cout << "Num samples: " << passedSamples << std::endl;
   }
 
   void updateMVP( void )
@@ -245,7 +264,8 @@ public:
     auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>( currentTime - startTime ).count( ) / 1000.0f;
 
-    uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    uboVS.model = glm::mat4( 1.0f );
+    uboVS.model = glm::rotate( uboVS.model, time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
     uboVS.model = glm::rotate( uboVS.model, time * glm::radians( 45.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
     uboVS.view = glm::lookAt( glm::vec3( 2.0f, 2.0f, 2.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
@@ -263,9 +283,14 @@ public:
 
     mvpBuffer->writeData( 0, sizeof( uboVS ), &uboVS );
   }
-
+  bool first = true;
   void nextFrame( void ) override
   {
+    if(!first)
+    {
+      getQueryResults( );
+    }
+    first = false;
     if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
@@ -280,6 +305,11 @@ public:
 
     const vk::Offset2D size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
+
+    // Reset query pool
+    // Must be done outside of render pass
+    cmd->resetQueryPool( query, 0, 1 );
+
     vk::Rect2D rect;
     rect.extent.width = size.x;
     rect.extent.height = size.y;
@@ -288,6 +318,8 @@ public:
       _window->currentFramebuffer( ),
       rect, clearValues, vk::SubpassContents::eInline
     );
+    
+    cmd->beginQuery( query, 0, { } );
 
     cmd->bindGraphicsPipeline( pipeline );
     cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics, 
@@ -298,6 +330,8 @@ public:
 
     cmd->setViewportScissors( _window->getExtent( ) );
     cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
+
+    cmd->endQuery( query, 0 );
 
     cmd->endRenderPass( );
     

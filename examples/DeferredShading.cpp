@@ -17,7 +17,214 @@
  *
  **/
 
-int main( )
+#include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
+#include <lavaRenderer/lavaRenderer.h>
+#include <glm/glm.hpp>
+
+#include <routes.h>
+
+struct
 {
-	return 0;
+  struct
+  {
+    std::shared_ptr<lava::Texture2D> colorMap;
+    std::shared_ptr<lava::Texture2D> normalMap;
+  } model;
+  struct
+  {
+    std::shared_ptr<lava::Texture2D> colorMap;
+    std::shared_ptr<lava::Texture2D> normalMap;
+  } floor;
+} textures;
+
+struct
+{
+  std::shared_ptr<lava::utility::Geometry> model;
+  std::shared_ptr<lava::utility::Geometry> floor;
+} models;
+
+struct
+{
+  glm::mat4 projection;
+  glm::mat4 view;
+  glm::mat4 model;
+  glm::vec4 instancePos[ 3 ];
+} uboVS, uboOffScreenVS;
+
+struct Light
+{
+  glm::vec4 position;
+  glm::vec3 color;
+  float radius;
+};
+
+struct
+{
+  Light lights[ 4 ];
+  glm::vec4 viewPos;
+} uboFragmentLights;
+
+struct
+{
+  std::shared_ptr<lava::Buffer> vsFullScreen;
+  std::shared_ptr<lava::Buffer> vsOffScreen;
+  std::shared_ptr<lava::Buffer> fsLights;
+} ubos;
+
+struct
+{
+  std::shared_ptr<lava::PipelineLayout> deferred;
+  std::shared_ptr<lava::PipelineLayout> offscreen;
+} pipelines;
+
+struct
+{
+  std::shared_ptr<lava::DescriptorSet> deferred;
+  std::shared_ptr<lava::DescriptorSet> offscreen;
+} descriptorSets;
+
+std::shared_ptr<lava::DescriptorSet> descriptorSet;
+std::shared_ptr<lava::DescriptorSetLayout> descriptorSetLayout;
+
+std::shared_ptr<lava::utility::CustomFramebuffer> customFbo;
+#include <routes.h>
+
+class CustomRenderer : public lava::VulkanWindowRenderer
+{
+public:
+  CustomRenderer( lava::VulkanWindow *w )
+    : lava::VulkanWindowRenderer( )
+    , _window( w )
+  {
+    _window->setWindowTitle( "Clear Screen" );
+  }
+
+
+  void initResources( void ) override
+  {
+    auto device = _window->device( );
+
+    models.model = std::make_shared<lava::utility::Geometry>( device,
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "armor.dae" ) );
+
+    models.floor = std::make_shared<lava::utility::Geometry>( device,
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "floor.obj_" ) );
+
+    textures.model.colorMap = device->createTexture2D(
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "armor_color.png" ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
+      vk::Format::eR8G8B8A8Unorm );
+
+    textures.model.normalMap = device->createTexture2D(
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "armor_normal.png" ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
+      vk::Format::eR8G8B8A8Unorm );
+
+    textures.floor.colorMap = device->createTexture2D(
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "stonefloor_color.png" ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
+      vk::Format::eR8G8B8A8Unorm );
+
+    textures.floor.normalMap = device->createTexture2D(
+      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "stonefloor_normal.png" ),
+      _window->gfxCommandPool( ), _window->gfxQueue( ),
+      vk::Format::eR8G8B8A8Unorm );
+  }
+
+  void nextFrame( void ) override
+  {
+    if ( lava::Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    {
+      _window->_window->close( );
+    }
+    static auto startTime = std::chrono::high_resolution_clock::now( );
+
+    auto currentTime = std::chrono::high_resolution_clock::now( );
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>(
+      currentTime - startTime ).count( ) / 1000.0f;
+
+    _red = sin( time ) * 0.5f + 0.5f;
+    _blue = cos( time ) * 0.5f + 0.5f;
+
+    std::array<vk::ClearValue, 2 > clearValues;
+    std::array<float, 4> ccv = { _red, 0.0f, _blue, 1.0f };
+    clearValues[ 0 ].color = vk::ClearColorValue( ccv );
+    clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
+
+    const vk::Offset2D size = _window->swapChainImageSize( );
+    auto cmd = _window->currentCommandBuffer( );
+    vk::Rect2D rect;
+    rect.extent.width = size.x;
+    rect.extent.height = size.y;
+    cmd->beginRenderPass(
+      _window->defaultRenderPass( ),
+      _window->currentFramebuffer( ),
+      rect, clearValues, vk::SubpassContents::eInline
+    );
+
+    cmd->endRenderPass( );
+
+    _window->requestUpdate( );
+  }
+private:
+  lava::VulkanWindow *_window;
+  float _red = 0.0f;
+  float _blue = 0.0f;
+};
+
+
+class CustomVkWindow : public lava::VulkanWindow
+{
+public:
+  lava::VulkanWindowRenderer* createRenderer( void ) override
+  {
+    return new CustomRenderer( this );
+  }
+};
+
+int main( void )
+{
+  std::shared_ptr<lava::Instance> instance;
+
+  // Create instance
+  vk::ApplicationInfo appInfo(
+    "App Name",
+    VK_MAKE_VERSION( 1, 0, 0 ),
+    "FooEngine",
+    VK_MAKE_VERSION( 1, 0, 0 ),
+    VK_API_VERSION_1_0
+  );
+
+
+  std::vector<const char*> layers =
+  {
+    /*#ifndef NDEBUG
+    "VK_LAYER_LUNARG_standard_validation",
+    #endif*/
+  };
+  std::vector<const char*> extensions =
+  {
+    VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
+    LAVA_KHR_EXT, // OS specific surface extension
+    VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+  };
+
+
+  instance = lava::Instance::create( vk::InstanceCreateInfo(
+  { },
+    &appInfo,
+    layers.size( ),
+    layers.data( ),
+    extensions.size( ),
+    extensions.data( )
+  ) );
+
+  CustomVkWindow w;
+  w.setVulkanInstance( instance );
+  w.resize( 500, 500 );
+
+  w.show( );
+
+  return 0;
 }

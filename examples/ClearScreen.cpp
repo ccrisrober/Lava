@@ -82,6 +82,25 @@ public:
   {
     return new CustomRenderer( this );
   }
+  virtual void getEnabledFeatures( vk::PhysicalDeviceFeatures& enabledFeatures )
+  {
+    auto deviceProps = this->physicalDeviceProperties( );
+
+    // Geometry shader support is required for this example
+    if ( deviceFeatures.geometryShader ) {
+      enabledFeatures.geometryShader = VK_TRUE;
+    }
+    else {
+      throw "Selected GPU does not support geometry shaders!";
+    }
+    // Multiple viewports must be supported
+    if ( deviceFeatures.multiViewport ) {
+      enabledFeatures.multiViewport = VK_TRUE;
+    }
+    else {
+      throw "Selected GPU does not support multi viewports!";
+    }
+  }
 };
 
 int main( void )
@@ -100,9 +119,9 @@ int main( void )
 
   std::vector<const char*> layers =
   {
-/*#ifndef NDEBUG
+#ifndef NDEBUG
     "VK_LAYER_LUNARG_standard_validation",
-#endif*/
+#endif
   };
   std::vector<const char*> extensions =
   {
@@ -110,7 +129,6 @@ int main( void )
     LAVA_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
-
 
   instance = Instance::create( vk::InstanceCreateInfo(
     { },

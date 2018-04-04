@@ -43,7 +43,7 @@ namespace lava
     static_cast<vk::Device>( *_device ).destroyQueryPool( _query );
   }
 
-  std::vector< uint8_t > QueryPool::getResults(uint32_t startQuery, 
+  /*std::vector< uint8_t > QueryPool::getResults(uint32_t startQuery, 
     uint32_t queryCount, size_t dataSize, vk::DeviceSize stride, 
     vk::QueryResultFlags flags)
   {
@@ -52,5 +52,5 @@ namespace lava
       .getQueryPoolResults< uint8_t >( _query, startQuery, queryCount, data, 
         stride, flags );
     return data;
-  }
+  }*/
 }

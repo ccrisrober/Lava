@@ -29,6 +29,7 @@
 #include <lava/Pipeline.h>
 #include <lava/PhysicalDevice.h>
 #include <lava/Queue.h>
+#include <lava/QueryPool.h>
 #include <lava/RenderPass.h>
 #include <lava/Semaphore.h>
 #include <lava/Swapchain.h>
@@ -469,6 +470,26 @@ namespace lava
       cmdPool, queue, format );
   }
 #endif
+  std::shared_ptr<QueryPool> Device::createQuery( vk::QueryPoolCreateFlags flags,
+    vk::QueryType queryType, uint32_t entryCount,
+    vk::QueryPipelineStatisticFlags pipelineStatistics )
+  {
+    return std::make_shared<QueryPool>( shared_from_this( ),
+      flags, queryType, entryCount, pipelineStatistics );
+  }
+  std::shared_ptr<QueryPool> Device::createOcclusionQuery( uint32_t entryCount )
+  {
+    return createQuery( vk::QueryPoolCreateFlags( ),
+      vk::QueryType::eOcclusion, entryCount, 
+      vk::QueryPipelineStatisticFlags( ) );
+  }
+
+  std::shared_ptr<QueryPool> Device::createPipelineStatisticsQuery(
+    uint32_t entryCount, vk::QueryPipelineStatisticFlags flags )
+  {
+    return createQuery( vk::QueryPoolCreateFlags( ), 
+      vk::QueryType::ePipelineStatistics, entryCount, flags );
+  }
 
   Device::Device( const std::shared_ptr<PhysicalDevice>& phyDev )
     : _physicalDevice( phyDev )

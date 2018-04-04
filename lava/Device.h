@@ -45,6 +45,7 @@ namespace lava
   class Sampler;
   class Swapchain;
   class Queue;
+  class QueryPool;
 
   class UniformBuffer;
   class StorageBuffer;
@@ -332,6 +333,17 @@ namespace lava
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
       vk::Format format );
 #endif
+    LAVA_API
+    std::shared_ptr<QueryPool> createQuery( vk::QueryPoolCreateFlags flags, 
+      vk::QueryType queryType, uint32_t entryCount, 
+      vk::QueryPipelineStatisticFlags pipelineStatistics );
+
+    LAVA_API
+    std::shared_ptr<QueryPool> createOcclusionQuery( uint32_t entryCount );
+
+    LAVA_API
+    std::shared_ptr<QueryPool> createPipelineStatisticsQuery(
+      uint32_t entryCount, vk::QueryPipelineStatisticFlags flags );
   protected:
     Device( const std::shared_ptr<PhysicalDevice>& phyDev );
     void init(

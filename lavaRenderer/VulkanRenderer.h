@@ -72,6 +72,9 @@ namespace lava
     virtual ~VulkanWindow( void );
 
     LAVARENDERER_API
+    virtual void getEnabledFeatures( vk::PhysicalDeviceFeatures& ) { };
+
+    LAVARENDERER_API
     VulkanWindow( const VulkanWindow& ) = delete;
     LAVARENDERER_API
     VulkanWindow( VulkanWindow&& ) = delete;
@@ -204,10 +207,6 @@ namespace lava
 
     LAVARENDERER_API
     void setDeviceExtensions( const std::vector< std::string >& extensions );
-
-    virtual void getEnabledFeatures( void )
-    {
-    }
 
     LAVARENDERER_API
     std::shared_ptr<Instance> vulkanInstance( void )

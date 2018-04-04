@@ -345,7 +345,6 @@ namespace lava
       if ( glfwGetPhysicalDevicePresentationSupport( inst, pd, 0 ) )
       {
         _physicalDevice = _instance->getPhysicalDevice( i );
-        getEnabledFeatures( );  // TODO
         break;
       }
     }
@@ -536,6 +535,10 @@ namespace lava
       }
     }
 
+    // TODO: PushDescriptorKHR
+    enabledExtensionNames.push_back( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
+    // TODO: PushDescriptorKHR
+
     vk::DeviceQueueCreateInfo dqci;
     dqci.setQueueFamilyIndex( _gfxQueueFamilyIdx );
 
@@ -556,11 +559,17 @@ namespace lava
       queueCreateInfos.push_back( dqci2 );
     }
 
+    auto enabledFeatures = _physicalDevice->getDeviceFeatures( );
+    getEnabledFeatures( enabledFeatures );
+
+    VkPhysicalDeviceFeatures enabledFeature
+    VkPhysicalDeviceFeatures deviceFeatures;
+
     _device = _physicalDevice->createDevice( 
       queueCreateInfos, 
       enabledLayerNames,
       enabledExtensionNames,
-      _physicalDevice->getDeviceFeatures( )
+      enabledFeatures
     );
 
     _gfxQueue = _device->getQueue( _gfxQueueFamilyIdx, 0 );
