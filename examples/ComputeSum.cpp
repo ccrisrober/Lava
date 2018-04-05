@@ -183,7 +183,7 @@ int main( void )
 
   std::cout << "Input data:" << std::endl;
 
-  for ( int32_t i = 0; i < 10; ++i )
+  for ( i = 0; i < 10; ++i )
   {
     std::cout << (hostDataA[ i ] + hostDataB[ i ]) << ", ";
   }
@@ -222,7 +222,7 @@ int main( void )
   }
 
   std::cout << "Output data:" << std::endl;
-  for ( int32_t i = 0; i < 10; ++i )
+  for ( i = 0; i < 10; ++i )
   {
     std::cout << result[ i ] << ", ";
   }

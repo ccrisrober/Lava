@@ -46,11 +46,11 @@ namespace lava
       return !_primitives.empty( );
     }
 
-    void Geometry::removePrmitive( std::shared_ptr<Primitive> p )
+    /*void Geometry::removePrimitive( std::shared_ptr<Primitive> p )
     {
       _primitives.erase( std::find( _primitives.begin( ), 
         _primitives.end( ), p ) );
-    }
+    }*/
 
     void Geometry::removeAllPrimitives( void )
     {

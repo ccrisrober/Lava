@@ -33,6 +33,8 @@ namespace lava
     {
     public:
       LAVAUTILS_API
+      virtual ~CustomMaterial( void ) { }
+      LAVAUTILS_API
       virtual void configure( const std::string& sourceDir,
         std::shared_ptr< Device > device, std::shared_ptr< RenderPass > renderPass,
         std::shared_ptr< PipelineCache > pipCache = nullptr ) = 0;

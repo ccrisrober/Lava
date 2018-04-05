@@ -74,7 +74,7 @@ namespace lava
         }
         queue->insert( it, renderable );
         // TODO: Required order?*/
-        queue->push_back( renderable );
+        queue->insert( it, renderable );
       }
 
       /*if ( geom->castShadows( ) )

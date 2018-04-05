@@ -536,7 +536,7 @@ namespace lava
     }
 
     // TODO: PushDescriptorKHR
-    enabledExtensionNames.push_back( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
+    // TODO: enabledExtensionNames.push_back( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
     // TODO: PushDescriptorKHR
 
     vk::DeviceQueueCreateInfo dqci;
@@ -562,8 +562,8 @@ namespace lava
     auto enabledFeatures = _physicalDevice->getDeviceFeatures( );
     getEnabledFeatures( enabledFeatures );
 
-    VkPhysicalDeviceFeatures enabledFeature
-    VkPhysicalDeviceFeatures deviceFeatures;
+    //VkPhysicalDeviceFeatures enabledFeature
+    //VkPhysicalDeviceFeatures deviceFeatures;
 
     _device = _physicalDevice->createDevice( 
       queueCreateInfos, 
@@ -660,7 +660,7 @@ namespace lava
 
     if ( _framePending )
     {
-      _frameRecordImage; // TODO = _device->createImage( { }, )
+      // TODO _frameRecordImaged = _device->createImage( { }, )
     }
 
     if ( renderer )

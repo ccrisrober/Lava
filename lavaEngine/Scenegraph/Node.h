@@ -38,6 +38,8 @@
   #include <lavaEngine/Components/Component.h>
 #endif
 
+#include <vector>
+
 namespace lava
 {
 	namespace engine

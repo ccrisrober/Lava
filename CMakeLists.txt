@@ -71,7 +71,7 @@ if( GLFW3_FOUND )
 endif( )
 
 if( QT5CORE_FOUND )
-  add_subdirectory( qtLava )
+#  add_subdirectory( qtLava )
 endif( )
 
 add_subdirectory( lavaUtils )

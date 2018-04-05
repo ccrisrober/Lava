@@ -82,7 +82,7 @@ public:
   {
     return new CustomRenderer( this );
   }
-  virtual void getEnabledFeatures( vk::PhysicalDeviceFeatures& enabledFeatures )
+  /*virtual void getEnabledFeatures( vk::PhysicalDeviceFeatures& enabledFeatures )
   {
     auto deviceProps = this->physicalDeviceProperties( );
 
@@ -100,7 +100,7 @@ public:
     else {
       throw "Selected GPU does not support multi viewports!";
     }
-  }
+  }*/
 };
 
 int main( void )

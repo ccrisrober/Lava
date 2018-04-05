@@ -34,7 +34,7 @@ namespace lava
       std::shared_ptr<BatchQueue>& bq, Camera * c )
     {
       // Clear window (HARDCODED) TODO
-      const Color& cc = c->getClearColor( );
+      //const Color& cc = c->getClearColor( );
       // TODO: glClearColor( cc.r( ), cc.g( ), cc.b( ), cc.a( ) );
 
       // computeShadows( )
@@ -72,17 +72,17 @@ namespace lava
       }
     }
 
-    void StandardRenderingPass::beginRenderStandard( Renderer* renderer, 
+    void StandardRenderingPass::beginRenderStandard( Renderer*, 
       Renderable& renderable )
     {
-      renderable.geometry->forEachPrimitive( [ & ]( std::shared_ptr<Primitive> p )
+      renderable.geometry->forEachPrimitive( [ & ]( std::shared_ptr<Primitive> )
       {
         std::cout << " TODO: Drawing primitive" << std::endl;
       } );
     }
 
     void StandardRenderingPass::renderOpaqueObjects( Renderer* renderer, 
-      std::shared_ptr<BatchQueue>& bq, Camera * c )
+      std::shared_ptr<BatchQueue>& bq, Camera* )
     {
       auto renderables = bq->renderables( BatchQueue::RenderableType::OPAQUE );
       if ( renderables.empty( ) )
@@ -90,10 +90,10 @@ namespace lava
         return;
       }
       //    std::cout << "Render OpaqueObjects" << std::endl;
-      glm::mat4 projection = bq->getProjectionMatrix( );
-      glm::mat4 view = bq->getViewMatrix( );
+      //glm::mat4 projection = bq->getProjectionMatrix( );
+      //glm::mat4 view = bq->getViewMatrix( );
 
-      uint32_t numLights = bq->_lights.size( );
+      //uint32_t numLights = bq->_lights.size( );
       for ( auto& renderable : renderables )
       {
         // TODO: Set all uniforms!
@@ -103,7 +103,7 @@ namespace lava
     }
 
     void StandardRenderingPass::renderTransparentObjects( Renderer* renderer, 
-      std::shared_ptr<BatchQueue>& bq, Camera * c )
+      std::shared_ptr<BatchQueue>& bq, Camera* )
     {
       auto renderables = bq->renderables( BatchQueue::RenderableType::TRANSPARENT );
       if ( renderables.empty( ) )
@@ -111,8 +111,8 @@ namespace lava
         return;
       }
       //std::cout << "Render TransparentObjects" << std::endl;
-      glm::mat4 projection = bq->getProjectionMatrix( );
-      glm::mat4 view = bq->getViewMatrix( );
+      //glm::mat4 projection = bq->getProjectionMatrix( );
+      //glm::mat4 view = bq->getViewMatrix( );
       for ( auto& renderable : renderables )
       {
         /*auto material = renderable.material;
@@ -129,7 +129,7 @@ namespace lava
       Renderable& renderable /*, MaterialPtr*/ )
     {
       renderable.geometry->forEachPrimitive( 
-        [ & ]( std::shared_ptr<Primitive> p )
+        [ & ]( std::shared_ptr<Primitive> )
       {
         std::cout << "TODO: Drawing primitive" << std::endl;
       } );

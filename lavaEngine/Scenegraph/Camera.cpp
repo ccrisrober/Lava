@@ -80,7 +80,7 @@ namespace lava
       _viewMatrix = glm::inverse( getTransform( ) );
       return _viewMatrix;
     }
-    void Camera::setView( const glm::mat4 view )
+    void Camera::setView( const glm::mat4 )
     {
       // TODO
     }
@@ -92,8 +92,8 @@ namespace lava
     }
     void Camera::computeCullingPlanes( void )
     {
-      glm::vec3 position = getAbsolutePosition( );
-      glm::vec3 dir; // TODO: = glm::normalize( glm::vec3( getAbsoluteRotation( ) ) );
+      //glm::vec3 position = getAbsolutePosition( );
+      //glm::vec3 dir; // TODO: = glm::normalize( glm::vec3( getAbsoluteRotation( ) ) );
 
       //_cullingPlanes[ 0 ] = Plane( dir, position + getFrustum( ).getDMin( ) * dir );
     }

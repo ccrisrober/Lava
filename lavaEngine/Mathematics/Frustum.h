@@ -27,6 +27,7 @@
 #include <glm/glm.hpp>
 
 #include <lavaEngine/api.h>
+#include <iostream>
 
 namespace lava
 {
