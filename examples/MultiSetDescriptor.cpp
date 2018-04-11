@@ -18,10 +18,13 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
 #include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 class CustomRenderer : public VulkanWindowRenderer
 {
@@ -80,7 +83,7 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::extras::Geometry>( device, 
+    geometry = std::make_shared<lava::utility::Geometry>( device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
     // MVP buffer
@@ -138,13 +141,13 @@ public:
     );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, 
-            offsetof( lava::extras::Vertex, position ) ),
+            offsetof( lava::utility::Vertex, position ) ),
           vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, 
-            offsetof( lava::extras::Vertex, normal ) )
+            offsetof( lava::utility::Vertex, normal ) )
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( {}, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -220,7 +223,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil  = vk::ClearDepthStencilValue(  1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -280,7 +283,7 @@ private:
 
   std::shared_ptr<Buffer> uniformBufferMVP;
 
-  std::shared_ptr<lava::extras::Geometry> geometry;
+  std::shared_ptr<lava::utility::Geometry> geometry;
 
   struct
   {

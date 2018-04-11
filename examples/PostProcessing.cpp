@@ -18,8 +18,8 @@
 **/
 
 #include <lava/lava.h>
-#include <lavaRenderer/lavaRenderer.h>
 #include <lavaUtils/lavaUtils.h>
+#include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #define GLM_FORCE_RADIANS
@@ -39,7 +39,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
-    _window->setWindowTitle( "Cube textured" );
+    _window->setWindowTitle( "Post Processing" );
   }
 
   struct
@@ -588,49 +588,6 @@ public:
     vk::Rect2D rect;
     rect.extent.width = size.x;
     rect.extent.height = size.y;
-
-    /*{
-      cmdSolidBuffer = _window->gfxCommandPool( )->allocateCommandBuffer( );
-      cmdSolidBuffer->begin( );
-
-      cmdSolidBuffer->beginRenderPass(
-        postProcessFBO->_renderPass,
-        postProcessFBO->_framebuffer,
-        rect, clearValues, vk::SubpassContents::eInline );
-
-      cmdSolidBuffer->setViewportScissors( _window->getExtent( ) );
-      cmdSolidBuffer->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-        pipelineLayouts.solid, 0, { descriptorSets.solid }, nullptr );
-      cmdSolidBuffer->bindGraphicsPipeline( pipelines.solid );
-
-      cmdSolidBuffer->bindVertexBuffer( 0, vertexBuffer, 0 );
-      cmdSolidBuffer->bindIndexBuffer( indexBuffer, 0, vk::IndexType::eUint16 );
-
-      cmdSolidBuffer->drawIndexed( indices.size( ), 1, 0, 0, 1 );
-      cmdSolidBuffer->endRenderPass( );
-
-      cmdSolidBuffer->end( );
-    }
-    {
-      ppSolidBuffer2 = _window->gfxCommandPool( )->allocateCommandBuffer( );
-      ppSolidBuffer2->begin( );
-
-      ppSolidBuffer2->beginRenderPass(
-        postProcessFBO2->_renderPass,
-        postProcessFBO2->_framebuffer,
-        rect, clearValues, vk::SubpassContents::eInline
-      );
-
-      ppSolidBuffer2->setViewportScissors( _window->getExtent( ) );
-      ppSolidBuffer2->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
-        pipelineLayouts.postprocess, 0, { descriptorSets.postprocess }, nullptr );
-      ppSolidBuffer2->bindGraphicsPipeline( pipelines.postprocess );
-      ppSolidBuffer2->draw( 4, 1, 0, 0 );
-      ppSolidBuffer2->endRenderPass( );
-
-      ppSolidBuffer2->end( );
-    }*/
-
 
     {
       cmd->beginRenderPass(

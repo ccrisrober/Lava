@@ -660,7 +660,14 @@ namespace lava
 
     if ( _framePending )
     {
-      // TODO _frameRecordImaged = _device->createImage( { }, )
+      _frameGrabTargetImage = _device->createImage( { },
+        vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
+        vk::Extent3D( _window->getWidth( ), _window->getHeight( ), 1 ), 
+        1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, 
+        vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive, { }, 
+        vk::ImageLayout::eUndefined, vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent
+      );
     }
 
     if ( renderer )
@@ -713,14 +720,7 @@ namespace lava
     //  skip image presentation
     if ( _frameRecord )
     {
-      auto size = _swapChainImageSize;
-      _frameRecordImage = _device->createImage(
-        vk::ImageCreateFlagBits( ), vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
-        vk::Extent3D( size.x, size.y, 1 ), 1, 1, vk::SampleCountFlagBits::e1,
-        vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
-        vk::SharingMode::eExclusive, { }, vk::ImageLayout::eUndefined,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
+      addReadback( );
     }
 
     currrentCmd->end( );
@@ -778,6 +778,10 @@ namespace lava
 
   std::shared_ptr<CommandBuffer> VulkanWindow::currentCommandBuffer( void ) const
   {
+    if ( !_framePending )
+    {
+      throw "Attemped to call currentFramebuffer( ) without a active frame";
+    }
     return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
   }
 
@@ -872,11 +876,106 @@ namespace lava
     _frameRecord = true;
     beginFrame( );
 
-    return _frameRecordImage;
+    return _frameGrabTargetImage;
   }
 
   void VulkanWindow::recreateSwapChain( void )
   {
+  }
+
+  void VulkanWindow::addReadback( void )
+  {
+    auto frameGrabImage = device( )->createImage( { }, vk::ImageType::e2D,
+      vk::Format::eR8G8B8A8Unorm, _frameGrabTargetImage->extent( ), 1, 1,
+      vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, 
+      vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode::eExclusive, { }, 
+      vk::ImageLayout::eUndefined, vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent );
+    // Do the actual blit from the swapchain image to our host visible 
+    //      destination image
+    auto copyCmd = gfxCommandPool( )->allocateCommandBuffer( );
+    auto image = defaultFramebuffer( )->getLastImage( );
+    copyCmd->begin( );
+    ImageMemoryBarrier imr( vk::AccessFlagBits::eMemoryRead, 
+      vk::AccessFlagBits::eTransferRead, vk::ImageLayout::ePresentSrcKHR,
+      vk::ImageLayout::eTransferSrcOptimal, { }, { }, image, 
+      vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 ) );
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTopOfPipe, 
+      vk::PipelineStageFlagBits::eTransfer, { }, { }, { }, imr );
+
+    imr.oldLayout = vk::ImageLayout::ePreinitialized;
+    imr.newLayout = vk::ImageLayout::eTransferDstOptimal;
+    imr.srcAccessMask = { };
+    imr.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+    imr.image = frameGrabImage;
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTopOfPipe,
+      vk::PipelineStageFlagBits::eTransfer, { }, { }, { }, imr );
+
+    vk::ImageCopy imageCopyRegion{ };
+    imageCopyRegion.srcSubresource.aspectMask =
+      vk::ImageAspectFlagBits::eColor;
+    imageCopyRegion.srcSubresource.layerCount = 1;
+    imageCopyRegion.dstSubresource.aspectMask =
+      vk::ImageAspectFlagBits::eColor;
+    imageCopyRegion.dstSubresource.layerCount = 1;
+    imageCopyRegion.extent.width = _window->getWidth( );
+    imageCopyRegion.extent.height = _window->getHeight( );
+    imageCopyRegion.extent.depth = 1;
+    copyCmd->copyImage( 
+      image, vk::ImageLayout::eTransferSrcOptimal, 
+      frameGrabImage, vk::ImageLayout::eTransferDstOptimal, 
+      imageCopyRegion );
+
+    imr.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+    imr.newLayout = vk::ImageLayout::eGeneral;
+    imr.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+    imr.dstAccessMask = vk::AccessFlagBits::eHostRead;
+    imr.image = frameGrabImage;
+
+    copyCmd->pipelineBarrier( vk::PipelineStageFlagBits::eTopOfPipe, 
+      vk::PipelineStageFlagBits::eTransfer, { }, { }, { }, imr );
+  }
+  void VulkanWindow::finishBlockingReadback( void )
+  {
+    auto image = defaultFramebuffer( )->getLastImage( );
+
+    //Fence::waitForFences( );
+    //Fence::resetFences( );
+
+    vk::ImageSubresource isr( vk::ImageAspectFlagBits::eColor, 0, 0 );
+    vk::SubresourceLayout srl;
+
+    vk::Device dev = static_cast< vk::Device > ( *device( ) );
+
+    dev.getImageSubresourceLayout(
+      static_cast< vk::Image >( *frameGrabImage ), &isr, &srl
+    );
+
+    // Map image memory so we can start copying from it
+    const char* data = ( const char* ) dev.mapMemory( frameGrabImage->imageMemory, 0,
+      VK_WHOLE_SIZE, { } );
+    data += srl.offset;
+
+
+
+  }
+
+  std::shared_ptr< Image > VulkanWindow::grab( void )
+  {
+    if ( !_defaultFramebuffer )
+    {
+      throw "Try to call grab() without a swapchain";
+    }
+    if ( _framePending )
+    {
+      throw "Try to call grab() while a frame is still pending";
+    }
+    // TODO !swapChaing->supportReadback( );
+
+    _framePending = true;
+    beginFrame( );
+
+    return _frameGrabTargetImage;
   }
 
 	std::shared_ptr< PhysicalDevice > VulkanWindow::physicalDevice( void ) const
@@ -926,6 +1025,10 @@ namespace lava
 
   int VulkanWindow::currentFrame( void ) const
   {
+    if ( !_framePending )
+    {
+      throw "Attemped to call currentFrame( ) without a active frame";
+    }
     return _currentFrame;
   }
 
@@ -936,6 +1039,10 @@ namespace lava
 
   int VulkanWindow::currentSwapChainImageIndex( void ) const
   {
+    if ( !_framePending )
+    {
+      throw "Attemped to call currentSwapChainImageIndex( ) without a active frame";
+    }
     return 0; // TODO
   }
 

@@ -116,16 +116,20 @@ public:
 
     device->updateDescriptorSets( wdss, {} );
 
+    createSecondaryCmd( );
+  }
 
+  void createSecondaryCmd( void )
+  {
     secondaryCmd = _window->gfxCommandPool( )->
       allocateCommandBuffer( vk::CommandBufferLevel::eSecondary );
 
-    vk::CommandBufferInheritanceInfo inheritInfo;
-    inheritInfo.renderPass = *_window->defaultRenderPass( );
+    //vk::CommandBufferInheritanceInfo inheritInfo;
+    //inheritInfo.renderPass = *_window->defaultRenderPass( );
     //inheritInfo.framebuffer = *_window->currentFramebuffer( );
 
     secondaryCmd->begin( vk::CommandBufferUsageFlagBits::eSimultaneousUse |
-      vk::CommandBufferUsageFlagBits::eRenderPassContinue, 
+      vk::CommandBufferUsageFlagBits::eRenderPassContinue,
       _window->defaultRenderPass( ) );
     secondaryCmd->bindGraphicsPipeline( pipeline );
 
@@ -137,6 +141,16 @@ public:
 
     secondaryCmd->end( );
   }
+
+  virtual void initSwapChainResources( void ) override
+  {
+    createSecondaryCmd( );
+  }
+
+  /*virtual void releaseSwapChainResources( void ) override
+  {
+  }*/
+
 
   void releaseResources( void ) override
   {

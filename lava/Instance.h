@@ -42,6 +42,8 @@ namespace lava
   {
   public:
     LAVA_API
+    static std::shared_ptr< Instance > createDefault( const std::string& appName );
+    LAVA_API
     static std::shared_ptr<Instance> create( const std::string& appName );
     LAVA_API
     static std::shared_ptr<Instance> create( const vk::InstanceCreateInfo& ci );

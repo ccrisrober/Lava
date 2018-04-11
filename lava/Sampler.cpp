@@ -33,7 +33,7 @@ namespace lava
     if ( anisotropyEnable && maxAnisotropy <= 0.0f )
     {
       std::cerr << "Can't create a sampler with enabled anisotropy and" <<
-        " 0.0f for max value" << std::endl;
+        " 0.0f for max value. Disabling anisotropy" << std::endl;
       maxAnisotropy = false;
     }
 

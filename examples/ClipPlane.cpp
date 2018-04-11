@@ -326,7 +326,7 @@ public:
     }
 
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
 
     // Mouse event
     {

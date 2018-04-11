@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
 #include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
@@ -150,7 +151,7 @@ public:
 
     uniformViewPos = device->createUniformBuffer( sizeof( uboFS ) );
 
-    geometry = std::make_shared<lava::extras::Geometry>( device,
+    geometry = std::make_shared<lava::utility::Geometry>( device,
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
     std::array< std::string, 6 > cubeImages =
@@ -204,15 +205,15 @@ public:
       );
 
       PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
+        vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
           vk::VertexInputRate::eVertex ),
           {
             vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
-            offsetof( lava::extras::Vertex, position )
+            offsetof( lava::utility::Vertex, position )
             ),
-        vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::extras::Vertex, normal )
-        )
+            vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
+              offsetof( lava::utility::Vertex, normal )
+            )
           }
       );
       vk::PipelineInputAssemblyStateCreateInfo assembly( {},
@@ -400,7 +401,7 @@ public:
       _window->_window->close( );
     }
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
 
     if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
     {
@@ -516,7 +517,7 @@ private:
   std::shared_ptr<TextureCubemap> tex;
   std::shared_ptr<DescriptorPool> descriptorPool;
 
-  std::shared_ptr<lava::extras::Geometry> geometry;
+  std::shared_ptr<lava::utility::Geometry> geometry;
   std::shared_ptr<Buffer> uniformMVP;
   std::shared_ptr<Buffer> uniformViewPos;
 

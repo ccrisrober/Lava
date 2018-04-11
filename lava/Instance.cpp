@@ -105,6 +105,57 @@ namespace lava
     return VK_TRUE;
   }
 
+  std::shared_ptr<Instance> Instance::createDefault( const std::string& appName )
+  {
+    vk::ApplicationInfo appInfo(
+      appName.c_str( ),
+      VK_MAKE_VERSION(
+        LAVA_VERSION_MAJOR,
+        LAVA_VERSION_MINOR,
+        LAVA_VERSION_PATCH
+      ),
+      "LavaEngine",
+      VK_MAKE_VERSION(
+        LAVA_VERSION_MAJOR,
+        LAVA_VERSION_MINOR,
+        LAVA_VERSION_PATCH
+      ),
+      VK_API_VERSION_1_0
+    );
+
+    std::vector<const char*> layers =
+    {
+#ifndef NDEBUG
+#ifndef __ANDROID__
+      "VK_LAYER_LUNARG_standard_validation"
+#else
+      "VK_LAYER_GOOGLE_threading",
+      "VK_LAYER_LUNARG_parameter_validation",
+      "VK_LAYER_LUNARG_object_tracker",
+      "VK_LAYER_LUNARG_core_validation",
+      "VK_LAYER_LUNARG_swapchain",
+      "VK_LAYER_GOOGLE_unique_objects"
+#endif
+#endif
+    };
+    std::vector<const char*> extensions =
+    {
+      VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
+      LAVA_KHR_EXT, // OS specific surface extension
+      VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+    };
+
+    vk::InstanceCreateInfo ci(
+      vk::InstanceCreateFlags( ),
+      &appInfo,
+      layers.size( ),
+      layers.data( ),
+      extensions.size( ),
+      extensions.data( )
+    );
+    return std::make_shared<Instance>( ci );
+  }
+
   std::shared_ptr<Instance> Instance::create( const std::string& appName )
   {
     vk::ApplicationInfo appInfo(

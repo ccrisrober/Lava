@@ -18,12 +18,14 @@
 **/
 
 #include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
 #include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
 
 #include "utils/Camera.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 const unsigned int SCR_WIDTH = 500;
 const unsigned int SCR_HEIGHT = 500;
@@ -53,7 +55,7 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::extras::Geometry>( device,
+    geometry = std::make_shared<lava::utility::Geometry>( device,
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "sphere.obj_" ) );
 
     // MVP buffers
@@ -112,21 +114,21 @@ public:
 
       diffuse.pipelineLayout = device->createPipelineLayout( diffuse.descriptorSetLayout, pushConstantRange );
 
-      vk::VertexInputBindingDescription binding( 0, sizeof( lava::extras::Vertex ),
+      vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
         vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
         vk::VertexInputAttributeDescription(
           0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::extras::Vertex, position )
+          offsetof( lava::utility::Vertex, position )
         ),
         vk::VertexInputAttributeDescription(
           1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::extras::Vertex, normal )
+          offsetof( lava::utility::Vertex, normal )
         ),
         vk::VertexInputAttributeDescription(
           2, 0, vk::Format::eR32G32Sfloat,
-          offsetof( lava::extras::Vertex, texCoord )
+          offsetof( lava::utility::Vertex, texCoord )
         )
       } );
 
@@ -209,21 +211,21 @@ public:
 
       atmosphere.pipelineLayout = device->createPipelineLayout( atmosphere.descriptorSetLayout, nullptr );
 
-      vk::VertexInputBindingDescription binding( 0, sizeof( lava::extras::Vertex ),
+      vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
         vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
         vk::VertexInputAttributeDescription(
           0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::extras::Vertex, position )
+          offsetof( lava::utility::Vertex, position )
         ),
         vk::VertexInputAttributeDescription(
           1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::extras::Vertex, normal )
+          offsetof( lava::utility::Vertex, normal )
         ),
         vk::VertexInputAttributeDescription(
           2, 0, vk::Format::eR32G32Sfloat,
-          offsetof( lava::extras::Vertex, texCoord )
+          offsetof( lava::utility::Vertex, texCoord )
         )
       } );
 
@@ -370,7 +372,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -450,7 +452,7 @@ private:
     } uboVS;
   } atmosphere;
 
-  std::shared_ptr< lava::extras::Geometry > geometry;
+  std::shared_ptr< lava::utility::Geometry > geometry;
 };
 
 class CustomVkWindow : public VulkanWindow

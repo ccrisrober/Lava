@@ -66,6 +66,11 @@ namespace lava
     {
       return _format;
     }
+    LAVA_API
+    inline vk::Extent3D extent( void ) const
+    {
+      return _extent;
+    }
   private:
     friend class ImageView;
     const std::shared_ptr<Device>& getDevice( void )

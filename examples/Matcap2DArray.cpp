@@ -18,10 +18,12 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
 #include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 class CustomRenderer : public VulkanWindowRenderer
 {
@@ -45,7 +47,7 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::extras::Geometry>( device, 
+    geometry = std::make_shared<lava::utility::Geometry>( device, 
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
     // MVP buffer
@@ -85,7 +87,7 @@ public:
       ),
       DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler,
         vk::ShaderStageFlagBits::eFragment,
-        std::make_shared<vk::Sampler>( tex->sampler ) // Inmutable sampler
+        tex->sampler  // Inmutable sampler
       )
     };
 
@@ -94,14 +96,14 @@ public:
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::extras::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat, 
-            offsetof( lava::extras::Vertex, position )
+            offsetof( lava::utility::Vertex, position )
           ),
           vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat, 
-            offsetof( lava::extras::Vertex, normal )
+            offsetof( lava::utility::Vertex, normal )
           )
         }
     );
@@ -152,7 +154,7 @@ public:
     // Null sampler for inmutable sampler mode
     DescriptorImageInfo descriptor;
     descriptor.imageLayout = tex->imageLayout;
-    descriptor.imageView = std::make_shared< vk::ImageView>( tex->view );
+    descriptor.imageView = tex->view;
     descriptor.sampler = VK_NULL_HANDLE;
 
     std::vector<WriteDescriptorSet> wdss =
@@ -189,7 +191,7 @@ public:
     uboVS.proj = glm::perspective( glm::radians( 45.0f ), width / ( float ) height, 0.1f, 10.0f );
     uboVS.proj[ 1 ][ 1 ] *= -1;
 
-    mvpBuffer->update( &uboVS );
+    mvpBuffer->set( &uboVS );
   }
 
   void nextFrame( void ) override
@@ -235,7 +237,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -265,7 +267,7 @@ private:
   std::shared_ptr< DescriptorSet > descriptorSet;
   std::shared_ptr< PipelineLayout > pipelineLayout;
   std::shared_ptr< Pipeline > pipeline;
-  std::shared_ptr< lava::extras::Geometry > geometry;
+  std::shared_ptr< lava::utility::Geometry > geometry;
   std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 

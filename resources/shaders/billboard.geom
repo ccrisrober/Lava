@@ -1,5 +1,4 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(binding = 0) uniform ubo0
 {
@@ -33,8 +32,8 @@ void main( )
   float cameraDist = distance( P.xyz, viewPos );
 
   float pointSize = 1.0 - (cameraDist / maxDistance);
-  pointSize = max(pointSize, minPointScale);
-  pointSize = min(pointSize, maxPointScale);
+  pointSize = max( pointSize, minPointScale );
+  pointSize = min( pointSize, maxPointScale );
 
   pointSize *= particleSize;
 

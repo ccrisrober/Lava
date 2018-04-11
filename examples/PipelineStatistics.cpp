@@ -38,7 +38,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
-    _window->setWindowTitle( "Cube textured" );
+    _window->setWindowTitle( "Pipeline Statistics" );
   }
 
   struct
@@ -223,7 +223,7 @@ public:
       )
     };
 
-    descriptorSetLayout = device->createDescriptorSetLayout( dslbs, vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR );
+    descriptorSetLayout = device->createDescriptorSetLayout( dslbs, { } );
 
     vk::PushConstantRange pushConstantRange(
       vk::ShaderStageFlagBits::eVertex, 0, sizeof( PushConstant )
@@ -286,7 +286,7 @@ public:
     // Init descriptor set
     descriptorSet = device->allocateDescriptorSet( dspPool, descriptorSetLayout );
 
-    /*std::vector<WriteDescriptorSet> wdss =
+    std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet(
         descriptorSet, 0, 0, vk::DescriptorType::eUniformBuffer,
@@ -297,7 +297,7 @@ public:
         tex->descriptor, nullptr
       )
     };
-    device->updateDescriptorSets( wdss, { } );*/
+    device->updateDescriptorSets( wdss, { } );
 
     pipelineStatNames = {
       "Input assembly vertex count        ",
@@ -459,21 +459,6 @@ public:
       lava::engine::BatchQueue::RenderableType::OPAQUE );
     for ( const auto& r : solidRenderables )
     {
-      std::vector<WriteDescriptorSet> wdss =
-      {
-        WriteDescriptorSet(
-          nullptr, 0, 0, vk::DescriptorType::eUniformBuffer,
-          1, nullptr, DescriptorBufferInfo( vpBuffer, 0, sizeof( uboVS ) )
-        ),
-        WriteDescriptorSet(
-          nullptr, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
-          tex->descriptor, nullptr
-        )
-      };
-
-      cmd->pushDescriptorSetKHR( vk::PipelineBindPoint::eGraphics,
-        pipelineLayout, 0, wdss );
-
       pushConstant.model = glm::rotate( r.modelTransform, 
         time * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
       cmd->pushConstants< PushConstant>( *pipelineLayout,

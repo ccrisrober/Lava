@@ -18,10 +18,14 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
 #include <lavaRenderer/lavaRenderer.h>
 using namespace lava;
 
 #include <routes.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 class CustomRenderer : public VulkanWindowRenderer
 {
@@ -30,7 +34,7 @@ public:
     : VulkanWindowRenderer( )
     , _window( w )
   {
-    _window->setWindowTitle( "Cube textured" );
+    _window->setWindowTitle( "Sparkle Style" );
   }
 
   struct
@@ -51,7 +55,7 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::extras::Geometry>( device,
+    geometry = std::make_shared<lava::utility::Geometry>( device,
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "ico.obj" ) );
   
     // MVP buffer
@@ -109,18 +113,18 @@ public:
 
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    vk::VertexInputBindingDescription binding( 0, sizeof( lava::extras::Vertex ), 
+    vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ), 
       vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription( 
-        0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, position )
+        0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::utility::Vertex, position )
       ),
       vk::VertexInputAttributeDescription(
-        1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::extras::Vertex, normal )
+        1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::utility::Vertex, normal )
       ),
       vk::VertexInputAttributeDescription(
-        2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::extras::Vertex, texCoord )
+        2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::utility::Vertex, texCoord )
       )
     } );
 
@@ -239,7 +243,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
     rect.extent.width = size.x;
@@ -279,7 +283,7 @@ private:
   std::shared_ptr< UniformBuffer > mvpBuffer;
   std::shared_ptr< UniformBuffer > fsBuffer;
 
-  std::shared_ptr<lava::extras::Geometry> geometry;
+  std::shared_ptr<lava::utility::Geometry> geometry;
 };
 
 class CustomVkWindow : public VulkanWindow

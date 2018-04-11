@@ -185,6 +185,10 @@ namespace lava
   LAVARENDERER_API
   std::shared_ptr< Framebuffer > currentFramebuffer( void ) const
   {
+    if ( !_framePending )
+    {
+      throw "Attemped to call currentFramebuffer( ) without a active frame";
+    }
     return _defaultFramebuffer->getFramebuffer( );
   }
   LAVARENDERER_API
@@ -193,6 +197,9 @@ namespace lava
   LAVARENDERER_API
   void requestUpdate( std::shared_ptr<Semaphore> sem = nullptr );
 
+  /**
+    Reurnt current sample count.
+  */
   LAVARENDERER_API
   vk::SampleCountFlagBits sampleCountFlagBits( void ) const;
 
@@ -281,7 +288,8 @@ namespace lava
 
   bool _framePending = false;
   bool _frameRecord = false;
-  std::shared_ptr< Image > _frameRecordImage = nullptr;
+  std::shared_ptr< Image > _frameGrabTargetImage = nullptr;
+  std::shared_ptr< Image > frameGrabImage = nullptr;
 
   private:
     std::shared_ptr<Surface> createSurfaceKHR( GLFWwindow* window )
@@ -296,6 +304,11 @@ namespace lava
     }
     return std::make_shared<Surface>( _instance, vk::SurfaceKHR( surface ) );
     }
+  private:
+    void addReadback( void );
+    void finishBlockingReadback( void );
+  public:
+    std::shared_ptr< Image > grab( void );
   };
 }
 

@@ -445,12 +445,15 @@ int main( int argc, char** argv )
     VK_MAKE_VERSION( 1, 0, 0 ),
     VK_API_VERSION_1_0
   );
+#ifndef NDEBUG
+  QLoggingCategory::setFilterRules( QStringLiteral( "qt.vulkan=true" ) );
+#endif
 
   std::vector<const char*> layers =
   {
-/*#ifndef NDEBUG
+#ifndef NDEBUG
     "VK_LAYER_LUNARG_standard_validation",
-#endif*/
+#endif
   };
   std::vector<const char*> extensions =
   {

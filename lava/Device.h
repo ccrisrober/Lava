@@ -53,6 +53,7 @@ namespace lava
   class VertexBuffer;
   class IndexBuffer;
   class Texture2D;
+  class Texture2DArray;
   class TextureCubemap;
 
   class DescriptorSetLayout;
@@ -322,11 +323,11 @@ namespace lava
     std::shared_ptr< Texture2D > createTexture2D( const std::string& textureSrc,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
         vk::Format format );
-    /*LAVA_API
+    LAVA_API
     std::shared_ptr< Texture2DArray > createTexture2DArray(
     std::vector< std::string >& textureSrcs,
     std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
-    vk::Format format );*/
+    vk::Format format );
     LAVA_API
     std::shared_ptr< TextureCubemap > createTextureCubemap(
       std::array< std::string, 6 >& cubeImages,

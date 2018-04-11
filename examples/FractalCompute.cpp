@@ -23,6 +23,9 @@ using namespace lava;
 
 #include <routes.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 class CustomRenderer : public VulkanWindowRenderer
 {
 public:
@@ -460,7 +463,7 @@ public:
     clearValues[ 0 ].color = vk::ClearColorValue( ccv );
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-    const glm::ivec2 size = _window->swapChainImageSize( );
+    const auto size = _window->swapChainImageSize( );
     auto cmd = _window->currentCommandBuffer( );
 
 
