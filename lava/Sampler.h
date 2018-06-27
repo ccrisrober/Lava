@@ -50,6 +50,15 @@ namespace lava
     Sampler( Sampler const& rhs ) = delete;
     Sampler & operator=( Sampler const& rhs ) = delete;
 
+    bool operator==( const Sampler& rhs ) const
+    {
+      return _sampler == rhs._sampler;
+    }
+    bool operator!=( const Sampler& rhs ) const
+    {
+      return _sampler != rhs._sampler;
+    }
+
   private:
     vk::Sampler _sampler;
   };

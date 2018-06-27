@@ -70,11 +70,6 @@
 
 #include <vulkan/vulkan.hpp>
 
-/*#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>*/
-
 #include <iostream>
 
 #define LAVA_RUNTIME_ERROR(s) throw std::runtime_error( s );

@@ -48,6 +48,10 @@ namespace lava
     size_t, int32_t msgCode, const char* pLayerPrefix,
     const char* pMsg, void* )
   {
+    std::cerr << "vulkan: " << pMsg << std::endl;
+    return VK_FALSE;
+
+    /**
     std::stringstream message;
 
     // Determine prefix
@@ -102,7 +106,32 @@ namespace lava
     assert( !message );
 
     // Abort calls that caused a validation message
-    return VK_TRUE;
+    return VK_FALSE;
+    /**/
+  }
+
+  Instance::Instance( const vk::Instance& i )
+  {
+    _instance = i;
+    _physicalDevices = _instance.enumeratePhysicalDevices( );
+    _physicalDevicesCache.resize( _physicalDevices.size( ) );
+
+    static bool initialized = false;
+    if ( !initialized )
+    {
+      pfnVkCreateDebugReportCallbackEXT = reinterpret_cast
+        < PFN_vkCreateDebugReportCallbackEXT >(
+          _instance.getProcAddr( "vkCreateDebugReportCallbackEXT" ) );
+      pfnVkDestroyDebugReportCallbackEXT = reinterpret_cast
+        < PFN_vkDestroyDebugReportCallbackEXT >(
+          _instance.getProcAddr( "vkDestroyDebugReportCallbackEXT" ) );
+      initialized = true;
+    }
+  }
+
+  std::shared_ptr< Instance > Instance::createFromVkInstance( const vk::Instance& i )
+  {
+    return std::make_shared< Instance >( i );
   }
 
   std::shared_ptr<Instance> Instance::createDefault( const std::string& appName )
@@ -183,13 +212,14 @@ namespace lava
     );
     return std::make_shared<Instance>( ci );
   }
+  
   std::shared_ptr<Instance> Instance::create( const vk::InstanceCreateInfo& ci )
   {
     return std::make_shared<Instance>( ci );
   }
+
   Instance::Instance( const vk::InstanceCreateInfo& ci )
   {
-
     _instance = vk::createInstance( ci );
     _physicalDevices = _instance.enumeratePhysicalDevices( );
     _physicalDevicesCache.resize( _physicalDevices.size( ) );

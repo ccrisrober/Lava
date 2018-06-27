@@ -233,7 +233,7 @@ namespace lava
     return std::make_shared<BufferView>( buffer, format, offset, size );
   }
 
-  std::shared_ptr<Swapchain> Device::createSwapchain( 
+  /*std::shared_ptr<Swapchain> Device::createSwapchain( 
     const std::shared_ptr<Surface>& surface, uint32_t numImageCount, 
     vk::Format imageFormat, vk::ColorSpaceKHR colorSpace, 
     const vk::Extent2D& imageExtent, uint32_t imageArrayLayers, 
@@ -247,7 +247,7 @@ namespace lava
       numImageCount, imageFormat, colorSpace, imageExtent, imageArrayLayers,
       imageUsage, imageSharingMode, queueFamilyIndices, preTransform,
       compAlpha, presentMode, clipped, oldSwapchain );
-  }
+  }*/
   std::shared_ptr<DescriptorSet> Device::allocateDescriptorSet(
     const std::shared_ptr<DescriptorPool>& pool,
     const std::shared_ptr<DescriptorSetLayout>& layout )

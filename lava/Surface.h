@@ -33,7 +33,7 @@ namespace lava
   public:
     LAVA_API
     Surface( const std::shared_ptr< Instance >& instance, 
-      const vk::SurfaceKHR& surface );
+      const vk::SurfaceKHR& surface, bool selfDestroy = true );
     Surface( const Surface& ) = delete;
 
     Surface& operator=( const Surface& ) = delete;
@@ -48,6 +48,7 @@ namespace lava
   private:
     std::shared_ptr< Instance > _instance;
     vk::SurfaceKHR _surface;
+    bool _selfDestroy;
   };
 }
 

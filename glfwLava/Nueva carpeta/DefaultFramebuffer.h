@@ -21,7 +21,7 @@
 #define __LAVARENDERER_DEFAULTFRAMEBUFFER__
 
 #include <lava/lava.h>
-#include <lavaRenderer/api.h>
+#include <glfwLava/api.h>
 
 #include <stdint.h> // UINT64_MAX
 #include <memory>
@@ -33,31 +33,31 @@ namespace lava
     class DefaultFramebuffer
     {
     public:
-      LAVARENDERER_API
+      GLFWLAVA_API
         DefaultFramebuffer( const std::shared_ptr<Device>& device,
           const std::shared_ptr<Surface>& surface,
           vk::Format surfaceFormat, vk::ColorSpaceKHR colorSpace,
           vk::Format depthFormat, const std::shared_ptr<RenderPass>& renderPass );
 
-      LAVARENDERER_API
+      GLFWLAVA_API
         ~DefaultFramebuffer( void )
       {
       }
 
-      LAVARENDERER_API
+      GLFWLAVA_API
         void rebuild( const std::shared_ptr<Device>& device,
           const std::shared_ptr<Surface>& surface,
           vk::Format surfaceFormat, vk::Format depthFormat,
           const std::shared_ptr<RenderPass>& renderPass );
 
-      LAVARENDERER_API
+      GLFWLAVA_API
         const vk::Extent2D& getExtent( void ) const { return _extent; }
-      LAVARENDERER_API
+      GLFWLAVA_API
         const std::shared_ptr<Framebuffer>& getFramebuffer( void ) const
       {
         return _framebuffers[ _swapchainIndex ];
       }
-      LAVARENDERER_API // TODO: Remove API
+      GLFWLAVA_API // TODO: Remove API
         void acquireNextFrame( uint64_t timeout = UINT64_MAX,
           const std::shared_ptr<Fence>& fence = nullptr )
       {
@@ -79,7 +79,7 @@ namespace lava
         return _swapchainIndex;
       }
 
-      LAVARENDERER_API // TODO: Remove API
+      GLFWLAVA_API // TODO: Remove API
         void present( const std::shared_ptr<Queue>& queue,
           vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores = { } )
       {
@@ -92,13 +92,13 @@ namespace lava
         //auto str = lava::utils::translateVulkanResult( results[ 0 ] );
         //std::cout << str << std::endl;
       }
-      LAVARENDERER_API
+      GLFWLAVA_API
         int imagesCount( void ) const
       {
         return _framebuffers.size( );
       }
 
-      LAVARENDERER_API
+      GLFWLAVA_API
         bool supportsGrab( void ) const
       {
         return _swapChainSupportsReadBack;

@@ -443,6 +443,7 @@ namespace lava
   void CommandBuffer::reset( vk::CommandBufferResetFlagBits flags )
   {
     _commandBuffer.reset( flags );
+    _state = State::Ready; // TODO ?
   }
 
   void CommandBuffer::bindVertexBuffer( uint32_t startBinding,

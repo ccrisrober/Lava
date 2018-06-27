@@ -23,7 +23,7 @@
 #include "Component.h"
 #include <lavaEngine/api.h>
 
-#include <glm/glm.hpp>
+#include "../glm_config.h"
 
 namespace lava
 {

@@ -20,7 +20,7 @@
 #ifndef __LAVARENDERER_WINDOW__
 #define __LAVARENDERER_WINDOW__
 
-#include <lavaRenderer/api.h>
+#include <glfwLava/api.h>
 #include <functional>
 
 #include "includes.hpp"
@@ -30,41 +30,41 @@ namespace lava
   class Window
   {
   public:
-    LAVARENDERER_API
+    GLFWLAVA_API
     Window( const char* title, uint32_t width, uint32_t height );
-    LAVARENDERER_API
+    GLFWLAVA_API
     ~Window( void );
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     void setWindowTitle( const std::string& title );
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     GLFWwindow *getWindow( void );
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     void pollEvents( void );
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     inline operator GLFWwindow*( void )
     {
       return _window;
     }
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     void setChangeSizeCallback( std::function<void( int, int )> cb );
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     void setErrorCallback( GLFWerrorfun fn );
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     uint32_t getWidth( void ) const;
-    LAVARENDERER_API
+    GLFWLAVA_API
     uint32_t getHeight( void ) const;
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     bool isRunning( void ) const;
 
-    LAVARENDERER_API
+    GLFWLAVA_API
     void close( void );
   protected:
     GLFWwindow* _window;

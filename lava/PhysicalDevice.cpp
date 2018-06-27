@@ -98,14 +98,19 @@ namespace lava
   }
   PhysicalDevice::~PhysicalDevice( void )
   {
-
+    // Nothing to do here
   }
 
   std::vector<vk::SurfaceFormatKHR> PhysicalDevice::getSurfaceFormats( 
     const std::shared_ptr<Surface>& surface ) const
   {
-    return _physicalDevice.getSurfaceFormatsKHR(
-      static_cast< vk::SurfaceKHR >( *surface ) );
+    return getSurfaceFormats( *surface );
+  }
+
+  std::vector<vk::SurfaceFormatKHR> PhysicalDevice::getSurfaceFormats(
+    const vk::SurfaceKHR& surface ) const
+  {
+    return _physicalDevice.getSurfaceFormatsKHR( surface );
   }
 
   bool PhysicalDevice::supportSurfaceKHR( size_t queueFamilyIdx,
@@ -135,9 +140,16 @@ namespace lava
   vk::SurfaceCapabilitiesKHR PhysicalDevice::getSurfaceCapabilities(
     const std::shared_ptr<Surface>& surface ) const
   {
-    return _physicalDevice.getSurfaceCapabilitiesKHR(
-      static_cast< vk::SurfaceKHR >( *surface ) );
+    return _physicalDevice.getSurfaceCapabilitiesKHR( *surface );
   }
+  
+  const std::vector< vk::PresentModeKHR >
+    PhysicalDevice::getSurfacePresentModes( 
+      const std::shared_ptr<Surface>& surface ) const
+  {
+    return _physicalDevice.getSurfacePresentModesKHR( *surface );
+  }
+
   std::vector<uint32_t> PhysicalDevice::getGraphicsPresentQueueFamilyIndices( 
     const std::shared_ptr<Surface>& surface )
   {

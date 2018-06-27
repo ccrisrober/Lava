@@ -41,6 +41,17 @@ namespace lava
     LAVA_API
     void updateDescriptor( void );
 
+    bool operator==( const Texture& rhs ) const
+    {
+      return image == rhs.image && view == rhs.view && sampler == rhs.sampler;
+    }
+    bool operator!=( const Texture& rhs ) const
+    {
+      return image != rhs.image
+        || view != rhs.view
+        || sampler != rhs.sampler;
+    }
+
     std::shared_ptr<Image> image;
     std::shared_ptr<ImageView> view;
     std::shared_ptr<Sampler> sampler;

@@ -20,12 +20,7 @@
 #ifndef __LAVAENGINE_NODE__
 #define __LAVAENGINE_NODE__
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include "../glm_config.h"
 
 #include <lavaEngine/api.h>
 

@@ -56,6 +56,10 @@ common_find_package( GLFW3 SYSTEM )
 common_find_package( Qt5Core SYSTEM )
 common_find_package( Qt5Widgets SYSTEM )
 
+
+#include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/vma/src")
+
+
 list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
 
 IF (NOT WIN32)
@@ -67,7 +71,7 @@ common_find_package_post( )
 add_subdirectory( lava )
 
 if( GLFW3_FOUND )
-  add_subdirectory( lavaRenderer )
+#  add_subdirectory( glfwLava )
 endif( )
 
 if( QT5CORE_FOUND )
@@ -75,9 +79,9 @@ if( QT5CORE_FOUND )
 endif( )
 
 add_subdirectory( lavaUtils )
-add_subdirectory( lavaEngine )
+# add_subdirectory( lavaEngine )
 
-add_subdirectory( examples )
+add_subdirectory( demos )
 
 configure_file(
   CMake/glsl2spv.cmake

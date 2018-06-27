@@ -20,7 +20,7 @@
 #ifndef __LAVARENDERER_INPUT__
 #define __LAVARENDERER_INPUT__
 
-#include <lavaRenderer/api.h>
+#include <glfwLava/api.h>
 
 #include "Mouse.hpp"
 #include "Keyboard.hpp"
@@ -31,53 +31,53 @@ namespace lava
   class Input
   {
   public:
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static void initialize( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static void destroy( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static lava::Keyboard* Keyboard( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static lava::Mouse* Mouse( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static bool isKeyPressed(Keyboard::Key key);
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static bool isKeyClicked(Keyboard::Key key);
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static bool KeyReleased(Keyboard::Key key);
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int MouseX( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int MouseY( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static Input* instance( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int PreviousMouseX( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int PreviousMouseY( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int MouseWheelX( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int MouseWheelY( void );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int DeltaX( int val );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static int DeltaY( int val );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static bool MouseButtonPress( MouseButton button );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static bool MouseButtonSinglePress( MouseButton button );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static bool MouseButtonRelease( MouseButton button );
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static void update( void );
 
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static float getAxis( const std::string& axis )
 	{
 		return Input::instance( )->_axes[ axis ];
 	}
-	LAVARENDERER_API
+	GLFWLAVA_API
 	static void setAxis( const std::string& axis, float v )
 	{
 		Input::instance( )->_axes[ axis ] = v;

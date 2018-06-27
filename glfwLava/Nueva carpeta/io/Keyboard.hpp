@@ -20,7 +20,7 @@
 #ifndef __LAVARENDERER_KEYBOARD__
 #define __LAVARENDERER_KEYBOARD__
 
-#include <lavaRenderer/api.h>
+#include <glfwLava/api.h>
 #include <bitset>
 #include "../includes.hpp"
 
@@ -106,17 +106,17 @@ namespace lava
   class GLFWKeyboard : public Keyboard
   {
   public:
-    LAVARENDERER_API
+    GLFWLAVA_API
     void onKeyUp( int code );
-    LAVARENDERER_API
+    GLFWLAVA_API
     void onKeyDown( int code );
-    LAVARENDERER_API
+    GLFWLAVA_API
     virtual bool keyPress( const Key& k );
-    LAVARENDERER_API
+    GLFWLAVA_API
     virtual bool keyRelease( const Key& k );
-    LAVARENDERER_API
+    GLFWLAVA_API
     virtual bool singleKeyPress( const Key& k );
-    LAVARENDERER_API
+    GLFWLAVA_API
     virtual void update( );
   private:
     std::bitset<GLFW_KEY_LAST> _keyPreviousState;

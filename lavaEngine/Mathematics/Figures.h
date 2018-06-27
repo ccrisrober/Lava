@@ -20,7 +20,7 @@
 #ifndef __LAVA_ENGINE_FIGURES__
 #define __LAVA_ENGINE_FIGURES__
 
-#include <glm/glm.hpp>
+#include "../glm_config.h"
 
 namespace lava
 {

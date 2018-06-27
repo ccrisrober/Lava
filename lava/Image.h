@@ -71,6 +71,14 @@ namespace lava
     {
       return _extent;
     }
+    bool operator==( const Image& rhs ) const
+    {
+      return _image == rhs._image && _format == rhs._format;
+    }
+    bool operator!=( const Image& rhs ) const
+    {
+      return _image != rhs._image || _format != rhs._format;
+    }
   private:
     friend class ImageView;
     const std::shared_ptr<Device>& getDevice( void )
@@ -108,6 +116,14 @@ namespace lava
     inline operator vk::ImageView( void )
     {
       return _imageView;
+    }
+    bool operator==( const ImageView& rhs ) const
+    {
+      return _imageView == rhs._imageView;
+    }
+    bool operator!=( const ImageView& rhs ) const
+    {
+      return _imageView != rhs._imageView;
     }
   protected:
     std::shared_ptr<Image> _image;

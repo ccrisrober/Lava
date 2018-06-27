@@ -41,6 +41,9 @@ namespace lava
     private NonCopyable<Instance>
   {
   public:
+    Instance( const vk::Instance& i );
+    LAVA_API
+    static std::shared_ptr< Instance > createFromVkInstance( const vk::Instance& i );
     LAVA_API
     static std::shared_ptr< Instance > createDefault( const std::string& appName );
     LAVA_API

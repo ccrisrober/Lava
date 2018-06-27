@@ -24,13 +24,17 @@
 namespace lava
 {
   Surface::Surface( const std::shared_ptr< Instance >& instance, 
-    const vk::SurfaceKHR& surface )
+    const vk::SurfaceKHR& surface, bool selfDestroy )
     : _instance( instance )
     , _surface( surface )
+    , _selfDestroy( selfDestroy )
   {
   }
   Surface::~Surface( void )
   {
-    static_cast< vk::Instance > ( *_instance ).destroySurfaceKHR( _surface );
+    if ( _selfDestroy )
+    {
+      static_cast< vk::Instance > ( *_instance ).destroySurfaceKHR( _surface );
+    }
   }
 }

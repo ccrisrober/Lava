@@ -23,8 +23,7 @@
 #include <array>
 #include <iomanip>
 
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
+#include "../glm_config.h"
 
 #include <lavaEngine/api.h>
 #include <iostream>

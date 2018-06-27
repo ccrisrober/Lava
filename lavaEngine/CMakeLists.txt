@@ -1,5 +1,7 @@
 #source_group(\\ FILES CMakeLists.txt)
 set( LAVAENGINE_PUBLIC_HEADERS
+	glm_config.h
+	
 	Exceptions/Exception.h
 	Exceptions/FileNotFoundException.h
 	Exceptions/HasParentException.h

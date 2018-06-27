@@ -214,7 +214,7 @@ namespace lava
     std::shared_ptr<BufferView> createBufferView( std::shared_ptr<Buffer> buf,
       vk::Format format, vk::DeviceSize offset, vk::DeviceSize size );
 
-    LAVA_API
+    /*LAVA_API
     std::shared_ptr<Swapchain> createSwapchain( 
       const std::shared_ptr<Surface>& surface, uint32_t numImageCount, 
       vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
@@ -224,7 +224,7 @@ namespace lava
       vk::SurfaceTransformFlagBitsKHR preTransform,
       vk::CompositeAlphaFlagBitsKHR compositeAlpha,
       vk::PresentModeKHR presentMode, bool clipped,
-      const std::shared_ptr<Swapchain>& oldSwapchain );
+      const std::shared_ptr<Swapchain>& oldSwapchain );*/
 
     LAVA_API
     std::shared_ptr<DescriptorSet> allocateDescriptorSet(

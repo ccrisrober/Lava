@@ -21,7 +21,7 @@
 #define __LAVARENDERER_VULKAN_RENDERER__
 
 #include <lava/lava.h>
-#include <lavaRenderer/api.h>
+#include <glfwLava/api.h>
 
 #include "DefaultFramebuffer.h"
 #include "Window.h"
@@ -31,28 +31,28 @@ namespace lava
   class VulkanWindowRenderer
   {
   public:
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual ~VulkanWindowRenderer( void );
 
   /**
   * Method called when creating renderer's resources
   */
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void initResources( void );
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void initSwapChainResources( void );
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void releaseSwapChainResources( void );
   /**
   * Method called when renderer's resources must be released
   */
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void releaseResources( void );
   /**
   * Method called when the draw calls for the next frame are to be added
   *   to the command buffer
   */
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void nextFrame( void ) = 0;
 
   //virtual void physicalDeviceLost( void );
@@ -62,102 +62,102 @@ namespace lava
   class VulkanWindow
   {
   public:
-  LAVARENDERER_API
+  GLFWLAVA_API
   VulkanWindow( void)
   {
     _initialized = false;
     _swapChainImageSize = vk::Offset2D( 500, 500 );
   }
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual ~VulkanWindow( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void getEnabledFeatures( vk::PhysicalDeviceFeatures& ) { };
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   VulkanWindow( const VulkanWindow& ) = delete;
-  LAVARENDERER_API
+  GLFWLAVA_API
   VulkanWindow( VulkanWindow&& ) = delete;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   VulkanWindow& operator=( const VulkanWindow& ) = delete;
-  LAVARENDERER_API
+  GLFWLAVA_API
   VulkanWindow& operator=( VulkanWindow&& ) = delete;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void setVulkanInstance( const std::shared_ptr< Instance > instance );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   bool supportsGrab( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void init( void );
-  LAVARENDERER_API
+  GLFWLAVA_API
   void reset( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void beginFrame( void );
-  LAVARENDERER_API
+  GLFWLAVA_API
   void endFrame( std::shared_ptr<Semaphore> sem );
-  LAVARENDERER_API
+  GLFWLAVA_API
   bool checkDeviceLost( vk::Result res );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr<CommandBuffer> currentCommandBuffer( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   RenderAPICapabilities caps( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void setWindowTitle( const char*& name );
-  LAVARENDERER_API
+  GLFWLAVA_API
   void setWindowTitle( const std::string& name );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   vk::Extent2D getExtent( void ) const
   {
     return _defaultFramebuffer->getExtent( );
   }
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< PhysicalDevice > physicalDevice( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   const vk::PhysicalDeviceProperties physicalDeviceProperties( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< Device > device( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< Queue > gfxQueue( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< CommandPool > gfxCommandPool( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< RenderPass > defaultRenderPass( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   vk::Format colorFormat( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   vk::Format depthStencilFormat( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   vk::Offset2D swapChainImageSize( void ) const;
 
   int currentFrame( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   int swapChainImageCount( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   int currentSwapChainImageIndex( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< Image > swapChainImage( int idx ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< ImageView > swapChainImageView( int idx ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< Image > depthStencilImage( void ) const;
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< ImageView > depthStencilImageView( void ) const;
 
-  //LAVARENDERER_API
+  //GLFWLAVA_API
   //glm::mat4 clipCorrectionMatrix( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void resize( uint32_t width, uint32_t height ) final
   {
     //assert( ( 0 <= width ) && ( 0 <= height ) );
@@ -168,21 +168,21 @@ namespace lava
     resizeEvent( width, height );
   }
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual void resizeEvent( uint32_t w, uint32_t h );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void show( void );
 
   std::shared_ptr< PipelineCache > pipelineCache;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   /*std::unique_ptr< */glfw::DefaultFramebuffer* /*>*/ defaultFramebuffer( void ) const // TODO: SO UGLY ...
   {
     return _defaultFramebuffer.get( );
   }
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< Framebuffer > currentFramebuffer( void ) const
   {
     if ( !_framePending )
@@ -191,46 +191,46 @@ namespace lava
     }
     return _defaultFramebuffer->getFramebuffer( );
   }
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual VulkanWindowRenderer* createRenderer( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void requestUpdate( std::shared_ptr<Semaphore> sem = nullptr );
 
   /**
     Reurnt current sample count.
   */
-  LAVARENDERER_API
+  GLFWLAVA_API
   vk::SampleCountFlagBits sampleCountFlagBits( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void setSampleCountFlagBits( int sampleCount );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::vector< int > supportedSampleCounts( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   int imagesCount( void ) const;
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   void setDeviceExtensions( const std::vector< std::string >& extensions );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr<Instance> vulkanInstance( void )
   {
     return _instance;
   }
   protected:
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual bool setupRenderPass( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual bool setupFramebuffer( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   virtual bool setupPipelineCache( void );
 
-  LAVARENDERER_API
+  GLFWLAVA_API
   std::shared_ptr< Image > recordImage( void );
 
   private:

@@ -444,7 +444,7 @@ int main( void )
 
 
   instance = Instance::create( vk::InstanceCreateInfo(
-  {},
+    { },
     &appInfo,
     layers.size( ),
     layers.data( ),
