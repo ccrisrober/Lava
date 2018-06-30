@@ -1,190 +1,323 @@
 #include "QVulkanWindow.h"
+
 #include <QPlatformSurfaceEvent>
-#include <qapplication.h>
+#include <QGuiApplication>
+#include <QApplication>
+#include <QThread>
 
 namespace lava
 {
-  QVulkanWindowRenderer::~QVulkanWindowRenderer( void )
+  std::set<std::string> GetSurfaceExtensionsForPlatform( void )
   {
+    const auto platform = QGuiApplication::platformName( );
+
+    if ( platform == "xcb" )
+    {
+      return{
+        "VK_KHR_surface",
+        "VK_KHR_xcb_surface"
+      };
+    }
+    else if ( platform == "wayland" )
+    {
+      return{
+        "VK_KHR_surface",
+        "VK_KHR_wayland_surface"
+      };
+    }
+    else if ( platform == "windows" )
+    {
+      return{
+        "VK_KHR_surface",
+        "VK_KHR_win32_surface"
+      };
+    }
+    else if ( platform == "cocoa" )
+    {
+      return{
+        "VK_KHR_surface",
+        "VK_MVK_macos_surface"
+      };
+    }
+    throw;
   }
-  void QVulkanWindowRenderer::initResources( void )
+
+  QtVulkanWindowRenderer* QtVulkanWindow::createRenderer( void )
   {
+    return nullptr;
   }
-  void QVulkanWindowRenderer::initSwapChainResources( void )
+
+  void QtVulkanWindow::setVkInstance( const vk::Instance& inst )
   {
+    _instance = lava::Instance::createFromVkInstance( inst );
+    if ( !_instance )
+    {
+      throw "Instance don't exist";
+    }
+
+    assert( _instance->getPhysicalDeviceCount( ) != 0 );
+    _physicalDevice = _instance->getPhysicalDevice( 0 );
   }
-  void QVulkanWindowRenderer::releaseSwapChainResources( void )
-  {
-  }
-  void QVulkanWindowRenderer::releaseResources( void )
-  {
-  }
-  QVulkanWindow::QVulkanWindow( QWindow * parent )
+
+  QtVulkanWindow::QtVulkanWindow( QWindow* parent )
     : QWindow( parent )
+    , _initialized( false )
   {
-    setSurfaceType( QSurface::SurfaceType::VulkanSurface );
+    setSurfaceType( QSurface::VulkanSurface );
+
+    lava::Engine::CreateInfo ci;
+    ci.appInfo = "QtRender";
+    ci.enableValidationLayers = true;
+    ci.requiredInstanceExtensions = lava::GetSurfaceExtensionsForPlatform( );
+
+    //ci.requiredDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    Engine e( ci );
+
+    inst.setVkInstance( static_cast< VkInstance >( e.GetVkInstance( ) ) );
+
+    if ( !inst.create( ) )
+    {
+      qFatal( "Failed to create vulkan instance: %d", inst.errorCode( ) );
+    }
+    setVulkanInstance( &inst );
+
+    _instance = lava::Instance::createFromVkInstance( e.GetVkInstance( ) );
+
+    if ( !_instance )
+    {
+      throw "Instance don't exist";
+    }
+
+    assert( _instance->getPhysicalDeviceCount( ) != 0 );
+    _physicalDevice = _instance->getPhysicalDevice( 0 );
   }
-  QVulkanWindow::~QVulkanWindow( void )
+
+  QtVulkanWindow::~QtVulkanWindow( void )
   {
-    _device->waitIdle( );
-    if ( renderer )
-    {
-      renderer->releaseResources( );
-      _device->waitIdle( );
-    }
-    if ( _device )
-    {
-      if ( imageRes[ 0 ].commandBuffer )
-      {
-        imageRes[ 0 ].commandBuffer.reset( );
-      }
-      if ( imageRes[ 1 ].commandBuffer )
-      {
-        imageRes[ 1 ].commandBuffer.reset( );
-      }
-      if ( _cmdPool )
-      {
-        _cmdPool.reset( );
-      }
-      if ( _renderComplete )
-      {
-        _renderComplete.reset( );
-      }
-      if ( _presQueue )
-      {
-        _presQueue.reset( );
-      }
-      if ( _gfxQueue )
-      {
-        _gfxQueue.reset( );
-      }
-      if ( _defaultFramebuffer )
-      {
-        _defaultFramebuffer.reset( );
-      }
-      if ( _renderPass )
-      {
-        _renderPass.reset( );
-      }
-      if ( _surface )
-      {
-        _surface.reset( );
-      }
-      if ( _device )
-      {
-        _device.reset( );
-      }
-    }
-
-    if ( _physicalDevice )
-    {
-      _physicalDevice.reset( );
-    }
-    /*if ( _instance )
-    {
-      _instance.reset( );
-    }*/
-
-    delete renderer;
+    cleanupVulkan( );
   }
-  void QVulkanWindow::beginFrame( void )
+  
+  void QtVulkanWindow::beginFrame( void )
   {
-    if ( !_defaultFramebuffer->_swapchain || _framePending ) return;
+    if ( !_dfbFramebuffer || !_dfbFramebuffer->swapchain( ) || _framePending ) return;
 
-    _defaultFramebuffer->acquireNextFrame( );
-
-    size_t idx = _defaultFramebuffer->index( );
-
-    if ( imageRes[ idx ].commandBuffer )
+    vk::Extent2D extent = _dfbFramebuffer->extent( );
+    if ( _dfbFramebuffer->extent( ) != swapchainImageSize( ) )
     {
-      imageRes[ idx ].commandBuffer.reset( ); // Reset command buffer
-      imageRes[ idx ].commandBuffer = nullptr;
+      recreateSwapchain( );
+      if ( !_dfbFramebuffer->swapchain( ) )
+      {
+        return;
+      }
     }
 
-    imageRes[ idx ].commandBuffer = _cmdPool->allocateCommandBuffer( );
-    imageRes[ idx ].commandBuffer->begin( );
+    // move on to next swapchain image
+    auto res = _dfbFramebuffer->swapchain( )->acquireNextImage( );
+
+    if ( res.result == vk::Result::eErrorOutOfDateKHR )
+    {
+      qWarning( "Swapchain out of date" );
+      // swapchain is out of date (e.g. the window was resized) and
+      // must be recreated:
+      recreateSwapchain( );
+      requestUpdate( );
+      return;
+    }
+    else if ( res.result != vk::Result::eSuccess &&
+      res.result != vk::Result::eSuboptimalKHR )
+    {
+      qWarning( "Swapchain SUBOPTIMAL" );
+      // swapchain is not as optimal as it could be, but the platform's
+      // presentation engine will still present the image correctly.
+      throw std::runtime_error( "Failed to acquire swapchain image" );
+    }
+
+    imageIdx = res.value;
+    cmds[ imageIdx ] = _cmdPool->allocateCommandBuffer( );
+
+    auto cmd = cmds[ imageIdx ];
+    cmd->begin( );
+
+    if ( _frameGrabbing )
+    {
+      _frameGrabTargetImage = QImage( size( ), QImage::Format_RGBA8888 );
+    }
 
     if ( renderer )
     {
       _framePending = true;
       renderer->nextFrame( );
+      // renderer call to frameReady( ) who calls endFrame( )
     }
     else
     {
       std::array<vk::ClearValue, 2 > clearValues;
-      std::array<float, 4> ccv = { 1.0f, 0.0f, 0.0f, 1.0f };
+      std::array<float, 4> ccv = { 1.0f, 1.0f, 1.0f, 1.0f };
+
       clearValues[ 0 ].color = vk::ClearColorValue( ccv );
       clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
-      const vk::Offset2D size = swapChainImageSize( );
-      auto cmd = currentCommandBuffer( );
-      vk::Rect2D rect;
-      rect.extent.width = size.x;
-      rect.extent.height = size.y;
-      cmd->beginRenderPass(
-        defaultRenderPass( ),
-        currentFramebuffer( ),
-        rect, clearValues, vk::SubpassContents::eInline
-      );
+      cmd->beginRenderPass( _dfbFramebuffer->renderPass( ),
+        _dfbFramebuffer->framebuffer( imageIdx ),
+        vk::Rect2D( { 0, 0 }, swapchainImageSize( ) ), clearValues,
+        vk::SubpassContents::eInline );
 
       cmd->endRenderPass( );
 
       endFrame( );
     }
   }
-  void QVulkanWindow::endFrame( void )
+  
+  void QtVulkanWindow::endFrame( void )
   {
-    auto currrentCmd = imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
+    if ( !isExposed( ) )
+    {
+      return;
+    }
+    // RENDER
+    {
+      try
+      {
+        auto cmd = cmds[ imageIdx ];
+
+        if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx && !_frameGrabbing )
+        {
+          // Add swapchain image release to the command buffer that will be
+          // submitted to the graphics queue.
+          lava::ImageMemoryBarrier presTrans( 
+            vk::AccessFlagBits( ), vk::AccessFlagBits::eColorAttachmentWrite, 
+            vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::ePresentSrcKHR, 
+            _gfxQueueFamilyIdx, _presQueueFamilyIdx, 
+            nullptr, // TODO: IMAGE
+            vk::ImageSubresourceRange( )
+              .setAspectMask( vk::ImageAspectFlagBits::eColor )
+              .setLevelCount( 1 )
+              .setLayerCount( 1 )
+          );
+
+          cmd->pipelineBarrier( vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+            vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlagBits( ), 
+            { }, { }, presTrans );
+        }
+
+        // When grabbing a frame, add a readback at the end and skip presenting.
+        if ( _frameGrabbing )
+        {
+          addReadback( );
+        }
+
+        cmd->end( );
+
+        vk::Result res = _gfxQueue->submit( SubmitInfo{
+          _dfbFramebuffer->swapchain( )->getPresentCompleteSemaphores( )[ imageIdx ],
+          { vk::PipelineStageFlagBits::eColorAttachmentOutput },
+          cmd,
+          _renderComplete
+        } );
+      }
+      catch ( std::exception e )
+      {
+        std::cerr << e.what( ) << std::endl;
+      }
+    }
+
+    // block and then bail out when grabbing
+    if ( _frameGrabbing )
+    {
+      finishBlockingReadback( );
+      _frameGrabbing = false;
+      // Leave frame.imageAcquired set to true.
+      // Don't change currentFrame.
+      //emit frameGrabbed( frameGrabTargetImage );
+      return;
+    }
+
     if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
     {
-      // Add the swapchain image release to the command buffer that will be submitted to the graphics queue.
-      vk::ImageSubresourceRange issr;
-      issr.aspectMask = vk::ImageAspectFlagBits::eColor;
-      issr.levelCount = issr.layerCount = 1;
-      ImageMemoryBarrier presTrans( {}, vk::AccessFlagBits::eColorAttachmentWrite,
-        vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::ePresentSrcKHR, 
-        _gfxQueueFamilyIdx, _presQueueFamilyIdx, nullptr, issr );
-      
-      currrentCmd->pipelineBarrier(
-        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        vk::PipelineStageFlagBits::eBottomOfPipe, {}, {}, {}, { presTrans } );
-    }
-    currrentCmd->end( );
-    /*vk::Result err =*/ _gfxQueue->submit( SubmitInfo {
-      { _defaultFramebuffer->getPresentSemaphore( ) },
-      { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      currrentCmd,
-      _renderComplete
-    } );
-
-    /*if ( err != vk::Result::eSuccess )
-    {
-      if ( err == vk::Result::eErrorOutOfDateKHR )
-      {
-        // recreateSwapChain and update
-        return;
-      }
-      else if ( err != vk::Result::eSuboptimalKHR )
+      /*// Submit the swapchain image acquire to the present queue.
+      submitInfo.pWaitSemaphores = &frame.drawSem;
+      submitInfo.pSignalSemaphores = &frame.presTransSem;
+      submitInfo.pCommandBuffers = &image.presTransCmdBuf; // must be USAGE_SIMULTANEOUS
+      err = devFuncs->vkQueueSubmit( presQueue, 1, &submitInfo, VK_NULL_HANDLE );
+      if ( err != vk::Result::eSuccess )
       {
         if ( !checkDeviceLost( err ) )
         {
-          std::cerr << "Failed to present : " << err << std::endl;
+          qWarning( "QVulkanWindow: Failed to submit to present queue: %d", err );
         }
         return;
+      }*/
+    }
+
+
+
+
+
+    vk::Result presentResult = vk::Result::eSuccess;
+    try
+    {
+      auto waitSemaphores = { _renderComplete };
+      auto swapchains = { _dfbFramebuffer->swapchain( ) };
+      std::vector<uint32_t> imageIndices = { imageIdx };
+      vk::Queue _queue = *_presQueue;
+      {
+        std::vector<vk::Semaphore> waitSemaphoreData;
+        waitSemaphoreData.reserve( waitSemaphores.size( ) );
+        for ( auto const& s : waitSemaphores )
+        {
+          waitSemaphoreData.push_back( *s );
+        }
+
+        std::vector<vk::SwapchainKHR> swapchainData;
+        swapchainData.reserve( swapchains.size( ) );
+        for ( auto const& s : swapchains )
+        {
+          swapchainData.push_back( static_cast< vk::SwapchainKHR >( *s ) );
+        }
+
+        presentResult = _queue.presentKHR( vk::PresentInfoKHR(
+          waitSemaphoreData.size( ), waitSemaphoreData.data( ),
+          swapchainData.size( ), swapchainData.data( ),
+          imageIndices.data( ) ) );
+        //return results;
       }
-    }*/
+      //_presQueue->present( { signalSemaphore } )
+    }
+    catch ( vk::OutOfDateKHRError )
+    {
+      recreateSwapchain( );
+      presentResult = vk::Result::eSuccess;
+    }
+    catch ( std::exception e )
+    {
+      std::cout << e.what( ) << std::endl;
+    }
+    if ( presentResult == vk::Result::eSuboptimalKHR )
+    {
+      recreateSwapchain( );
+    }
+    else if ( presentResult != vk::Result::eSuccess )
+    {
+      throw "Failed to present swap chain image.";
+    }
 
-    _defaultFramebuffer->present( _gfxQueue, _renderComplete );
+    vulkanInstance( )->presentQueued( this );
+    _presQueue->waitIdle( ); // TODO: Neccesary??
+    
+    if ( _continuousAnimation )
+    {
+      requestUpdate( );
+    }
   }
-
-  void QVulkanWindow::frameReady( void )
+  
+  void QtVulkanWindow::frameReady( void )
   {
+    // TODO: Check only called by main thread std::this_thread::
     if ( QThread::currentThread( ) != QApplication::instance( )->thread( ) )
     {
       std::cerr << "You only can called this in main thread" << std::endl;
       return;
     }
-    // TODO: Check only called by main thread std::this_thread::
     if ( !_framePending )
     {
       throw "framePending() called without calling nextFrame( )";
@@ -193,132 +326,35 @@ namespace lava
 
     endFrame( );
   }
-  
-  std::shared_ptr<CommandBuffer> QVulkanWindow::currentCommandBuffer( void ) const
+
+  QImage QtVulkanWindow::grab( void )
   {
-    return imageRes[ _defaultFramebuffer->index( ) ].commandBuffer;
-  }
-
-  bool QVulkanWindow::setupRenderPass( void )
-  {
-    const bool msaa = sampleCount > vk::SampleCountFlagBits::e1;
-
-    // TODO: Add MSAA
-    std::vector< vk::AttachmentDescription > attDesc =
+    if ( !_dfbFramebuffer->swapchain( ) )
     {
-      vk::AttachmentDescription( // attachment 0 (color render target)
-        { }, _colorFormat, vk::SampleCountFlagBits::e1,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // color
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
-        vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
-      ),
-      vk::AttachmentDescription( // attachment 1 (depth render target)
-        { }, _dsFormat, sampleCount,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // depth
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // stencil
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal
-      )
-    };
-
-    if ( msaa )
+      qWarning( "Attempted to call grab() without swapchain" );
+      return QImage( );
+    }
+    if ( _framePending )
     {
-      attDesc.push_back( vk::AttachmentDescription( // attachment 2 (msaa render target)
-        { }, _colorFormat, sampleCount,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal
-      ) );
+      qWarning( "Attempted to call grab() while a frame is still pending" );
+      return QImage( );
+    }
+    if ( !supportGrab( ) )
+    {
+      qWarning( "Attempted to call grab() with swapchain that doesn't support usage as transfer source" );
+      return QImage( );
     }
 
-    vk::AttachmentReference colorRef( 0, 
-      vk::ImageLayout::eColorAttachmentOptimal );
-    vk::AttachmentReference depthRef( 1, 
-      vk::ImageLayout::eDepthStencilAttachmentOptimal );
+    _frameGrabbing = true;
+    beginFrame( );
 
-    vk::AttachmentReference resolveRef( 0, 
-      vk::ImageLayout::eColorAttachmentOptimal );
-
-
-    vk::SubpassDescription subPassDesc(
-      vk::SubpassDescriptionFlags( ),
-      vk::PipelineBindPoint::eGraphics,
-      0, nullptr,           // input attachments ( count, data )
-      1, &colorRef,         // color attachments ( count, data )
-      nullptr,              // resolve attachments ( data )
-      &depthRef,            // depth attachment ( data )
-      0, nullptr            // preserve attachments ( count, data )
-    );
-
-    if ( msaa )
-    {
-      colorRef.attachment = 2;
-      subPassDesc.pResolveAttachments = &resolveRef;
-    }
-
-    _renderPass = _device->createRenderPass( attDesc, subPassDesc, { } );
-
-    return true;
+    return _frameGrabTargetImage;
   }
 
-  bool QVulkanWindow::setupFramebuffer( void )
-  {
-    _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
-    _defaultFramebuffer.reset( new qt::DefaultFramebuffer( _device, _surface,
-      _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
-    return true;
-  }
-
-  bool QVulkanWindow::setupPipelineCache( void )
-  {
-    return true;
-  }
-  std::shared_ptr<PhysicalDevice> QVulkanWindow::physicalDevice( void ) const
-  {
-    return _physicalDevice;
-  }
-  const vk::PhysicalDeviceProperties QVulkanWindow::physicalDeviceProperties( void ) const
-  {
-    return physicalDevice( )->getDeviceProperties( );
-  }
-  std::shared_ptr<Device> QVulkanWindow::device( void ) const
-  {
-    return _device;
-  }
-  std::shared_ptr<Queue> QVulkanWindow::gfxQueue( void ) const
-  {
-    return _gfxQueue;
-  }
-  std::shared_ptr<CommandPool> QVulkanWindow::gfxCommandPool( void ) const
-  {
-    return _cmdPool;
-  }
-  std::shared_ptr<RenderPass> QVulkanWindow::defaultRenderPass( void ) const
-  {
-    return _renderPass;
-  }
-  vk::Format QVulkanWindow::colorFormat( void ) const
-  {
-    return _colorFormat;
-  }
-  vk::Format QVulkanWindow::depthStencilFormat( void ) const
-  {
-    return _dsFormat;
-  }
-  QVulkanWindowRenderer * QVulkanWindow::createRenderer( void )
-  {
-    return nullptr;
-  }
-
-  vk::SampleCountFlagBits QVulkanWindow::sampleCountFlagBits( void ) const
-  {
-    return sampleCount;
-  }
-  
   static struct {
     vk::SampleCountFlagBits mask;
     int count;
-  } sampleCounts[] = {
-    // keep this sorted by 'count'
+  } sampleCounts[ ] = {
     // keep this sorted by 'count'
     { vk::SampleCountFlagBits::e1, 1 },
     { vk::SampleCountFlagBits::e2, 2 },
@@ -329,9 +365,9 @@ namespace lava
     { vk::SampleCountFlagBits::e64, 64 }
   };
 
-  void QVulkanWindow::setSampleCountFlagBits( int sampleCount_ )
+  void QtVulkanWindow::setSampleCountFlagBits( int sampleCount_ )
   {
-    for ( uint32_t i = 0, l = sizeof( sampleCounts ) / 
+    for ( uint32_t i = 0, l = sizeof( sampleCounts ) /
       sizeof( sampleCounts[ 0 ] ); i < l; ++i )
     {
       if ( sampleCounts[ i ].count == sampleCount_ )
@@ -342,7 +378,7 @@ namespace lava
     }
   }
 
-  std::vector<int> QVulkanWindow::supportedSampleCounts( void )
+  std::vector<int> QtVulkanWindow::supportedSampleCounts( void )
   {
     auto limits = physicalDevice( )->getDeviceProperties( ).limits;
     vk::SampleCountFlags color = limits.framebufferColorSampleCounts;
@@ -351,7 +387,7 @@ namespace lava
 
     std::vector< int > result;
 
-    for ( uint32_t i = 0, l = sizeof( sampleCounts ) / sizeof(sampleCounts[ 0 ] );
+    for ( uint32_t i = 0, l = sizeof( sampleCounts ) / sizeof( sampleCounts[ 0 ] );
       i < l; ++i )
     {
       if ( ( color & sampleCounts[ i ].mask )
@@ -364,53 +400,95 @@ namespace lava
     return result;
   }
   
-  /*void QVulkanWindow::setVulkanInstance( 
-    const std::shared_ptr< Instance > instance )
+  bool QtVulkanWindow::event( QEvent * ev )
   {
-    _instance = instance;
-  }*/
+    switch ( ev->type( ) )
+    {
+    case QEvent::UpdateRequest:
+      beginFrame( );
+      break;
+    case QEvent::PlatformSurface:
+    {
+      auto surfEv = ( ( QPlatformSurfaceEvent * ) ( ev ) )->surfaceEventType( );
+      if ( surfEv == QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed )
+      {
+        if ( renderer )
+        {
+          renderer->releaseSwapchainResources( );
+        }
+        cleanupVulkan( );
+      }
+      break;
+    }
+    default:
+      break;
+    }
 
-  void QVulkanWindow::setQVulkanInstance( const std::shared_ptr< Instance > instance )
+    return QWindow::event( ev );
+  }
+  
+  void QtVulkanWindow::exposeEvent( QExposeEvent * ev )
   {
-    _instance = instance;
+    if ( isExposed( ) )
+    {
+      if ( !_initialized )
+      {
+        initVulkan( );
+        if ( renderer )
+        {
+          renderer->initSwapchainResources( );
+        }
+      }
+      requestUpdate( );
+    }
 
-    VkInstance vki = static_cast< VkInstance >( static_cast< vk::Instance >( *instance ) );
-    _qInstance = new QVulkanInstance( );
-    _qInstance->setVkInstance( vki );
-    if ( _qInstance->create( ) )
-    {
-      setVulkanInstance( _qInstance );
-    }
-    else
-    {
-      std::cerr << "Error: Can't create QVulkanInstance!" << std::endl;
-      exit( -1 );
-    }
+    QWindow::exposeEvent( ev );
+  }
+  
+  void QtVulkanWindow::resizeEvent( QResizeEvent * ev )
+  {
   }
 
-  void QVulkanWindow::init( void )
+  bool QtVulkanWindow::checkDeviceLost( vk::Result err )
   {
-    if ( !_instance )
+    if ( err == vk::Result::eErrorDeviceLost )
     {
-      throw "Instance don't exist";
+      qWarning( "Device lost" );
+      /*if ( renderer )
+      {
+        renderer->logicalDeviceLost( );
+      }
+      qWarning( "Releasing all resources due to device lost" );
+      releaseSwapchain( );
+      reset( );
+      qWarning( "Restarting" );
+      ensureStarted( );*/
+      return true;
     }
+    return false;
+  }
 
-    if ( !renderer )
-    {
-      renderer = createRenderer( );
-    }
+  void QtVulkanWindow::addReadback( void )
+  {
+    /*std::shared_ptr< lava::Image > frameGrabImage = 
+      _device->createImage( vk::ImageCreateFlagBits( ), vk::ImageType::e2D, 
+        vk::Format::eR8G8B8A8Unorm, 
+        vk::Extent3D( 
+          _frameGrabTargetImage.width( ), _frameGrabTargetImage.height( ), 1
+        ), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, 
+        vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode( ), { }, 
+        vk::ImageLayout::ePreinitialized, nullptr );
 
-    // Find a physical device with presentation support
-    assert( _instance->getPhysicalDeviceCount( ) != 0 );
-    _physicalDevice = _instance->getPhysicalDevice( 0 );
+    auto cmd = cmds[ imageIdx ];*/
+  }
 
-    if ( !_physicalDevice )
-    {
-      LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
-    }
+  void QtVulkanWindow::finishBlockingReadback( void )
+  {
+    // TODO
+  }
 
-
-    _surface = createSurfaceKHR( );
+  void QtVulkanWindow::getSurfaceFormats( void )
+  {
     auto surfaceFormats = _physicalDevice->getSurfaceFormats( _surface );
     assert( !surfaceFormats.empty( ) );
     uint32_t numFormats = surfaceFormats.size( );
@@ -420,16 +498,9 @@ namespace lava
     if ( ( numFormats == 1 )
       && ( surfaceFormats[ 0 ].format == vk::Format::eUndefined ) )
     {
-      if ( gamma )
-      {
-        _colorFormat = vk::Format::eR8G8B8A8Srgb;
-      }
-      else
-      {
-        _colorFormat = vk::Format::eB8G8R8A8Unorm;
-      }
+      _surfaceFormat.format = gamma ? vk::Format::eR8G8B8A8Srgb : vk::Format::eB8G8R8A8Unorm;
 
-      _colorSpace = surfaceFormats[0].colorSpace;
+      _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
     }
     else
     {
@@ -449,15 +520,7 @@ namespace lava
         vk::Format::eB8G8R8Srgb
       };
 
-      std::vector<vk::Format> wantedFormats;
-      if ( gamma )
-      {
-        wantedFormats = wantedFormatsSRGB;
-      }
-      else
-      {
-        wantedFormats = wantedFormatsUNORM;
-      }
+      std::vector<vk::Format> wantedFormats = gamma ? wantedFormatsSRGB : wantedFormatsUNORM;
 
       for ( const auto& wantedFormat : wantedFormats )
       {
@@ -465,8 +528,8 @@ namespace lava
         {
           if ( surfFormat.format == wantedFormat )
           {
-            _colorFormat = surfFormat.format;
-            _colorSpace = surfFormat.colorSpace;
+            _surfaceFormat.format = surfFormat.format;
+            _surfaceFormat.colorSpace = surfFormat.colorSpace;
 
             foundFormat = true;
             break;
@@ -485,8 +548,8 @@ namespace lava
       // If we haven't found anything, fall back to first available
       if ( !foundFormat )
       {
-        _colorFormat = surfaceFormats[ 0 ].format;
-        _colorSpace = surfaceFormats[0].colorSpace;
+        _surfaceFormat.format = surfaceFormats[ 0 ].format;
+        _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
 
         if ( gamma )
         {
@@ -494,13 +557,12 @@ namespace lava
         }
       }
     }
-    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat( 
-      _physicalDevice, _dsFormat );
-    assert( validDepthFormat );
+  }
 
+  void QtVulkanWindow::createQueues( void )
+  {
     // Search for a graphics queue and a present queue in the array of 
     //    queue families, try to find one that supports both
-
     std::vector<vk::QueueFamilyProperties> queueFamilyIndices =
       _physicalDevice->getQueueFamilyProperties( );
     assert( !queueFamilyIndices.empty( ) );
@@ -508,29 +570,35 @@ namespace lava
     _gfxQueueFamilyIdx = uint32_t( -1 );
     _presQueueFamilyIdx = uint32_t( -1 );
 
-    auto phyDev = static_cast< vk::PhysicalDevice >( *_physicalDevice );
+    VkBool32 presentSupport = VK_FALSE;
     for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
     {
-      VkBool32 presentSupport = phyDev.getSurfaceSupportKHR( i, *_surface );
+      presentSupport = _physicalDevice->supportSurfaceKHR( i, _surface );
 
-      /*printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n", 
-        queueFamilyIndices[ i ].queueFlags, queueFamilyIndices[ i ].queueCount,
-        presentSupport == VK_TRUE ? 1 : 0 );*/
+      printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n",
+        i,
+        static_cast< VkQueueFlags >( queueFamilyIndices[ i ].queueFlags ),
+        queueFamilyIndices[ i ].queueCount,
+        presentSupport == VK_TRUE ? 1 : 0
+      );
 
-      if ( _gfxQueueFamilyIdx == uint32_t( -1 ) && 
-        ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) 
+      if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
+        ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics )
         && presentSupport )
       {
         _gfxQueueFamilyIdx = i;
+        break;
       }
     }
 
-    if ( _gfxQueueFamilyIdx != uint32_t(-1))
+    if ( _gfxQueueFamilyIdx != uint32_t( -1 ) )
     {
       _presQueueFamilyIdx = _gfxQueueFamilyIdx;
     }
-    else {
-      std::cerr << "No queue with graphics+present; trying separate queues" << std::endl;
+    else
+    {
+      std::cerr << "No queue with graphics + present; trying separate queues"
+        << std::endl;
       for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
       {
         if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
@@ -539,28 +607,23 @@ namespace lava
           _gfxQueueFamilyIdx = i;
         }
 
-        VkBool32 presentSupport = phyDev.getSurfaceSupportKHR( i, *_surface );
+        presentSupport = _physicalDevice->supportSurfaceKHR( i, _surface );
         if ( _presQueueFamilyIdx == uint32_t( -1 ) && presentSupport )
         {
           _presQueueFamilyIdx = i;
         }
       }
     }
-    if ( _gfxQueueFamilyIdx == uint32_t(-1))
+    if ( _gfxQueueFamilyIdx == uint32_t( -1 ) )
     {
       std::cerr << "ERROR: No graphics queue family found" << std::endl;
       throw;
     }
-    if ( _presQueueFamilyIdx == uint32_t(-1))
+    if ( _presQueueFamilyIdx == uint32_t( -1 ) )
     {
       std::cerr << "ERROR: No present queue family found" << std::endl;
       throw;
     }
-
-    /*std::vector<uint32_t> queueFamilyIndices =
-      _physicalDevice->getGraphicsPresentQueueFamilyIndices( _surface );
-    assert( !queueFamilyIndices.empty( ) );
-    _gfxQueueFamilyIdx = queueFamilyIndices[ 0 ];*/
 
     // Create a new device with the VK_KHR_SWAPCHAIN_EXTENSION enabled.
     std::vector<std::string> enabledLayerNames;
@@ -568,7 +631,7 @@ namespace lava
     std::vector<std::string> enabledExtensionNames;
 
     _requestedDeviceExts.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-    
+
     for ( const auto& ext : _requestedDeviceExts )
     {
       if ( _physicalDevice->extensionSupported( ext ) )
@@ -585,8 +648,8 @@ namespace lava
     dqci.setPQueuePriorities( &queuePriority );
     std::vector< vk::DeviceQueueCreateInfo > queueCreateInfos;
     queueCreateInfos.push_back( dqci );
-    
-    
+
+
     if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
     {
       vk::DeviceQueueCreateInfo dqci2;
@@ -597,8 +660,8 @@ namespace lava
       queueCreateInfos.push_back( dqci2 );
     }
 
-    _device = _physicalDevice->createDevice( 
-      queueCreateInfos, 
+    _device = _physicalDevice->createDevice(
+      queueCreateInfos,
       enabledLayerNames,
       enabledExtensionNames,
       _physicalDevice->getDeviceFeatures( )
@@ -614,119 +677,101 @@ namespace lava
     {
       _presQueue = _device->getQueue( _presQueueFamilyIdx, 0 );
     }
+  }
+  
+  bool QtVulkanWindow::setupPipelineCache( void )
+  {
+    _pipelineCache = nullptr;
+    return true;
+  }
 
-    _cmdPool = _device->createCommandPool(
-      { }, //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
-      _gfxQueueFamilyIdx );
-
-    if( !setupRenderPass( ) )
+  void QtVulkanWindow::initVulkan( void )
+  {
+    if ( !_instance )
     {
-      return;
+      throw "Instance don't exist";
     }
 
-    _renderComplete = _device->createSemaphore( );
-    //createPipelineCache( );
+    if ( !renderer )
+    {
+      renderer = createRenderer( );
+    }
 
-    setupFramebuffer( );
+    if ( !_physicalDevice )
+    {
+      LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
+    }
+
+    _surface = std::make_shared< lava::Surface >( _instance, 
+      vk::SurfaceKHR( QVulkanInstance::surfaceForWindow( this ) ), false );
+
+    getSurfaceFormats( );
+
+    createQueues( );
+
+    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat(
+      _physicalDevice, _dsFormat );
+    assert( validDepthFormat );
+
+    _dfbFramebuffer = new DefaultFramebuffer( _device, _surface, 
+      swapchainImageSize( ), _dsFormat, sampleCount );
+
+    _cmdPool = _device->createCommandPool(
+      vk::CommandPoolCreateFlagBits( ),
+      //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
+      _gfxQueueFamilyIdx );
+
+    size_t numImages = _dfbFramebuffer->swapchain( )->count( );
+    cmds.reserve( numImages );
+    for ( size_t i = 0; i < numImages; ++i )
+    {
+      cmds.push_back( _cmdPool->allocateCommandBuffer( ) );
+    }
 
     setupPipelineCache( );
-
-    /* TODO _window->_callbackResize = [&]( int w, int h )
-    {
-      device( )->waitIdle( );
-      resize( w, h );
-    };*/
 
     if ( renderer )
     {
       renderer->initResources( );
     }
 
-    initialized = true;
-  }
+    _renderComplete = _device->createSemaphore( );
 
-  void QVulkanWindow::reset( void )
+    _initialized = true;
+  }
+  
+  void QtVulkanWindow::cleanupVulkan( void )
   {
-    if ( !_device ) return;
+    if ( !_initialized ) return;
+
     _device->waitIdle( );
 
     if ( renderer )
     {
       renderer->releaseResources( );
       _device->waitIdle( );
+
+      delete renderer;
+
+      renderer = nullptr;
     }
 
-    if ( _renderPass )
+    cmds.clear( );
+
+    delete _dfbFramebuffer;
+    _dfbFramebuffer = nullptr;
+
+    if ( _renderComplete )
     {
-      _renderPass.reset();
+      _renderComplete.reset( );
+      _renderComplete = nullptr;
     }
 
-    if ( _cmdPool )
-    {
-      _cmdPool.reset( );
-    }
-
-
-
-
-    if ( _device )
-    {
-      _device.reset( );
-    }
+    _initialized = false;
   }
-
-  void QVulkanWindow::exposeEvent( QExposeEvent* )
+  
+  void QtVulkanWindow::recreateSwapchain( void )
   {
-    if( isExposed( ) )
-    {
-      if ( !initialized )
-      {
-        init( );
-      }
-      requestUpdate( );
-    }
+    _dfbFramebuffer->recreate( );
   }
-
-  void QVulkanWindow::resizeEvent( QResizeEvent* )
-  {
-    std::cout << "Resize" << std::endl;
-    if ( _defaultFramebuffer )
-    {
-      _defaultFramebuffer.reset( );    // need to be reset, before creating a new one!!
-      _defaultFramebuffer.reset( new qt::DefaultFramebuffer( _device, _surface,
-        _colorFormat, _colorSpace, _dsFormat, _renderPass ) );
-    }
-  }
-
-  bool QVulkanWindow::event( QEvent* ev )
-  {
-    QEvent::Type type = ev->type( );
-    switch( type )
-    {
-      case QEvent::UpdateRequest:
-        beginFrame( );
-        break;
-      case QEvent::PlatformSurface:
-        /*if (static_cast<QPlatformSurfaceEvent *>(ev)->surfaceEventType() ==
-            QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed) {
-          //releaseSwapChain();
-          reset( );
-        }*/
-        //init( );
-        break;
-      default:
-        break;
-    }
-    return QWindow::event( ev );
-  }
-
-  vk::Offset2D QVulkanWindow::swapChainImageSize( void ) const
-  {
-    QSize _size = size( );
-    return vk::Offset2D{
-      _size.width( ),
-      _size.height( ),
-    };
-  }
-
 }

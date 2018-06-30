@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -370,6 +370,14 @@ namespace lava
     std::shared_ptr<Framebuffer> _framebuffer;
     std::vector<::vk::DescriptorSet> _bindDescriptorSets;
     std::vector<::vk::Buffer> _bindVertexBuffers;
+
+  public:
+    LAVA_API
+    void pushDescriptorSetKHR( vk::PipelineBindPoint bindpoint, 
+      std::shared_ptr<PipelineLayout> pipLayout, uint32_t set, 
+      vk::ArrayProxy<WriteDescriptorSet> descriptorWrites );
+  protected:
+    PFN_vkCmdPushDescriptorSetKHR vkCmdPushDescriptorSetKHR = nullptr;
   };
   template<typename T>
   inline void CommandBuffer::pushConstants( vk::PipelineLayout layout, 

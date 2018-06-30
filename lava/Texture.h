@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -40,6 +40,17 @@ namespace lava
     virtual ~Texture( void );
     LAVA_API
     void updateDescriptor( void );
+
+    bool operator==( const Texture& rhs ) const
+    {
+      return image == rhs.image && view == rhs.view && sampler == rhs.sampler;
+    }
+    bool operator!=( const Texture& rhs ) const
+    {
+      return image != rhs.image
+        || view != rhs.view
+        || sampler != rhs.sampler;
+    }
 
     std::shared_ptr<Image> image;
     std::shared_ptr<ImageView> view;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -65,8 +65,8 @@ namespace lava
       totalSize += size;
 
       auto deviceProps = _device->getPhysicalDevice( )->getDeviceProperties( );
-      if ( static_cast< int >( deviceProps.limits.maxImageDimensionCube ) < width ||
-        static_cast< int >( deviceProps.limits.maxImageDimensionCube ) < height )
+      if ( static_cast< uint32_t >( deviceProps.limits.maxImageDimensionCube ) < textureWidth ||
+        static_cast< uint32_t >( deviceProps.limits.maxImageDimensionCube ) < textureHeight )
       {
         printf( "%s is too big (%dx%d), max supported size is %dx%d.\n", 
           filePaths[ i ].c_str( ), textureWidth, textureHeight,
@@ -280,7 +280,7 @@ namespace lava
     sampler = _device->createSampler( vk::Filter::eLinear, vk::Filter::eLinear,
       vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge,
       vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
-      0.0f, true, 0.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+      0.0f, true, 1.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
       vk::BorderColor::eFloatOpaqueWhite, false );
 
     // Create image view

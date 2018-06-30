@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -34,46 +34,94 @@ namespace lava
 
 namespace lava
 {
-  class Swapchain : public VulkanResource
+  class Swapchain: public VulkanResource
   {
   public:
     LAVA_API
-    Swapchain( const std::shared_ptr<Device>& device, 
-      const std::shared_ptr< Surface >& surface,
-      uint32_t numImageCount, vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
-      const vk::Extent2D& imageExtent, uint32_t imageArrayLayers,
-      vk::ImageUsageFlags imageUsage, vk::SharingMode imageSharingMode,
-      const std::vector< uint32_t >& queueFamilyIndices,
-      vk::SurfaceTransformFlagBitsKHR preTransform,
-      vk::CompositeAlphaFlagBitsKHR compAlpha, vk::PresentModeKHR presentMode,
-      bool clipped, const std::shared_ptr< Swapchain >& oldSwapchain );
-    LAVA_API
-    virtual ~Swapchain( void );
+    Swapchain( const std::shared_ptr< lava::Device >& device,
+      const std::shared_ptr< lava::Surface >& surface, 
+      const vk::Extent2D& desiredExtent );
 
     LAVA_API
-    const std::vector< std::shared_ptr< Image > >& 
-      getImages( void ) const;
-    LAVA_API
-    const std::vector< std::shared_ptr< Semaphore > >& 
-      getPresentCompleteSemaphores( void ) const
-    {
-      return _presentCompleteSemaphores;
-    }
+    ~Swapchain( void );
 
+    LAVA_API
     inline operator vk::SwapchainKHR( void ) const
     {
       return _swapchain;
     }
 
     LAVA_API
-    uint32_t acquireNextImage( uint64_t timeout = UINT64_MAX,
+    void resize( const vk::Extent2D& extent );
+
+    LAVA_API
+    const vk::Extent2D& extent( void ) const
+    {
+      return desired_extent;
+    }
+
+    LAVA_API
+    const vk::Format colorFormat( void ) const
+    {
+      return _format;
+    }
+
+    LAVA_API
+    vk::ResultValue<uint32_t> acquireNextImage( uint64_t timeout = UINT64_MAX,
       const std::shared_ptr< Fence >& fence = { } );
 
+    LAVA_API
+    const std::vector< std::shared_ptr< Semaphore > >&
+      getPresentCompleteSemaphores( void ) const
+    {
+      return _presentCompleteSemaphores;
+    }
+
+    LAVA_API
+    const std::vector< std::shared_ptr< Image > >& images( void ) const
+    {
+      return this->_images;
+    }
+    
+    LAVA_API
+    const std::vector< std::shared_ptr< ImageView> >& imageViews( void ) const
+    {
+      return this->_imageViews;
+    }
+    
+    LAVA_API
+    const size_t count( void ) const
+    {
+      return this->_images.size( );
+    }
+    
+    LAVA_API
+    void recreate( void );
+
+    LAVA_API
+    const bool swapchainSupportsReadBack( void ) const
+    {
+      return _swapchainSupportsReadBack;
+    }
+  private:
+    void createSwapchain( void );
+    
+    void createImageViews( void );
+    
+    void cleanup( bool destroySwapchain );
   protected:
-    std::vector<std::shared_ptr<Image>> _images;
-    std::vector<std::shared_ptr<Semaphore>> _presentCompleteSemaphores;
+    std::shared_ptr< lava::Surface > _surface;
+    
     vk::SwapchainKHR _swapchain;
-    std::shared_ptr<Semaphore> _freeSemaphore;
+    vk::Extent2D desired_extent;
+    vk::Format _format;
+    bool _swapchainSupportsReadBack;
+
+    std::vector< std::shared_ptr< Image > > _images;
+    std::vector< std::shared_ptr< ImageView > > _imageViews;
+
+    std::vector< std::shared_ptr< lava::Semaphore > > _presentCompleteSemaphores;
+    std::shared_ptr< lava::Semaphore > _freeSemaphore;
   };
 }
 

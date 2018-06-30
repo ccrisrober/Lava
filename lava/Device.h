@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -45,6 +45,7 @@ namespace lava
   class Sampler;
   class Swapchain;
   class Queue;
+  class QueryPool;
 
   class UniformBuffer;
   class StorageBuffer;
@@ -52,6 +53,7 @@ namespace lava
   class VertexBuffer;
   class IndexBuffer;
   class Texture2D;
+  class Texture2DArray;
   class TextureCubemap;
 
   class DescriptorSetLayout;
@@ -212,7 +214,7 @@ namespace lava
     std::shared_ptr<BufferView> createBufferView( std::shared_ptr<Buffer> buf,
       vk::Format format, vk::DeviceSize offset, vk::DeviceSize size );
 
-    LAVA_API
+    /*LAVA_API
     std::shared_ptr<Swapchain> createSwapchain( 
       const std::shared_ptr<Surface>& surface, uint32_t numImageCount, 
       vk::Format imageFormat, vk::ColorSpaceKHR colorSpace,
@@ -222,7 +224,7 @@ namespace lava
       vk::SurfaceTransformFlagBitsKHR preTransform,
       vk::CompositeAlphaFlagBitsKHR compositeAlpha,
       vk::PresentModeKHR presentMode, bool clipped,
-      const std::shared_ptr<Swapchain>& oldSwapchain );
+      const std::shared_ptr<Swapchain>& oldSwapchain );*/
 
     LAVA_API
     std::shared_ptr<DescriptorSet> allocateDescriptorSet(
@@ -321,17 +323,28 @@ namespace lava
     std::shared_ptr< Texture2D > createTexture2D( const std::string& textureSrc,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
         vk::Format format );
-    /*LAVA_API
+    LAVA_API
     std::shared_ptr< Texture2DArray > createTexture2DArray(
     std::vector< std::string >& textureSrcs,
     std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
-    vk::Format format );*/
+    vk::Format format );
     LAVA_API
     std::shared_ptr< TextureCubemap > createTextureCubemap(
       std::array< std::string, 6 >& cubeImages,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
       vk::Format format );
 #endif
+    LAVA_API
+    std::shared_ptr<QueryPool> createQuery( vk::QueryPoolCreateFlags flags, 
+      vk::QueryType queryType, uint32_t entryCount, 
+      vk::QueryPipelineStatisticFlags pipelineStatistics );
+
+    LAVA_API
+    std::shared_ptr<QueryPool> createOcclusionQuery( uint32_t entryCount );
+
+    LAVA_API
+    std::shared_ptr<QueryPool> createPipelineStatisticsQuery(
+      uint32_t entryCount, vk::QueryPipelineStatisticFlags flags );
   protected:
     Device( const std::shared_ptr<PhysicalDevice>& phyDev );
     void init(

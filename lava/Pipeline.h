@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -293,6 +293,13 @@ namespace lava
       const std::shared_ptr<RenderPass>& renderPass,
       uint32_t subpass, const std::shared_ptr<Pipeline>& basePipelineHandle,
       uint32_t basePipelineIndex );
+    LAVA_API
+    inline bool isBlendingEnabled( void ) const
+    {
+      return _blendingEnabled;
+    }
+  protected:
+    bool _blendingEnabled = false;
   };
 }
 

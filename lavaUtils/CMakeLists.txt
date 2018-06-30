@@ -8,7 +8,8 @@ set( LAVAUTILS_PUBLIC_HEADERS
 	CustomMaterial.h
 	ThreadPool.h
 	###Glsl2SPV.h
-	CustomFramebuffer.h
+	#CustomFramebuffer.h
+	CustomPingPong.h
 )
 
 set( LAVAUTILS_SOURCES
@@ -19,7 +20,7 @@ set( LAVAUTILS_SOURCES
 	CustomMaterial.cpp
 	ThreadPool.cpp
 	###Glsl2SPV.cpp
-	CustomFramebuffer.cpp
+	#CustomFramebuffer.cpp
 )
 
 set( LAVAUTILS_HEADERS

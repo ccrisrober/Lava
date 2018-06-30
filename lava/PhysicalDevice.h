@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -67,6 +67,9 @@ namespace lava
     LAVA_API
     std::vector<vk::SurfaceFormatKHR> getSurfaceFormats(
       const std::shared_ptr<Surface>& surface ) const;
+    LAVA_API
+    std::vector<vk::SurfaceFormatKHR> getSurfaceFormats(
+      const vk::SurfaceKHR& surface ) const;
 
     LAVA_API
     bool supportSurfaceKHR( size_t queueFamilyIdx,
@@ -82,6 +85,10 @@ namespace lava
     LAVA_API
     vk::SurfaceCapabilitiesKHR getSurfaceCapabilities(
       const std::shared_ptr<Surface>& surface ) const;
+
+    LAVA_API
+    const std::vector< vk::PresentModeKHR >
+      getSurfacePresentModes( const std::shared_ptr<Surface>& surface ) const;
 
     LAVA_API
     vk::FormatProperties getFormatProperties( vk::Format format ) const

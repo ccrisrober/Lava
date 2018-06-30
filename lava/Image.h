@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -66,6 +66,19 @@ namespace lava
     {
       return _format;
     }
+    LAVA_API
+    inline vk::Extent3D extent( void ) const
+    {
+      return _extent;
+    }
+    bool operator==( const Image& rhs ) const
+    {
+      return _image == rhs._image && _format == rhs._format;
+    }
+    bool operator!=( const Image& rhs ) const
+    {
+      return _image != rhs._image || _format != rhs._format;
+    }
   private:
     friend class ImageView;
     const std::shared_ptr<Device>& getDevice( void )
@@ -103,6 +116,14 @@ namespace lava
     inline operator vk::ImageView( void )
     {
       return _imageView;
+    }
+    bool operator==( const ImageView& rhs ) const
+    {
+      return _imageView == rhs._imageView;
+    }
+    bool operator!=( const ImageView& rhs ) const
+    {
+      return _imageView != rhs._imageView;
     }
   protected:
     std::shared_ptr<Image> _image;

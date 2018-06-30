@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -41,6 +41,11 @@ namespace lava
     private NonCopyable<Instance>
   {
   public:
+    Instance( const vk::Instance& i );
+    LAVA_API
+    static std::shared_ptr< Instance > createFromVkInstance( const vk::Instance& i );
+    LAVA_API
+    static std::shared_ptr< Instance > createDefault( const std::string& appName );
     LAVA_API
     static std::shared_ptr<Instance> create( const std::string& appName );
     LAVA_API

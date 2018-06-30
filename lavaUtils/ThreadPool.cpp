@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,18 @@
  **/
 
 #include "ThreadPool.h"
+
+namespace std
+{
+#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+
+#else
+  template<typename T, typename... Args>
+  std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+#endif
+}
 
 namespace lava
 {
@@ -83,12 +95,11 @@ namespace lava
     void ThreadPool::setThreadCount( uint32_t count )
     {
       workers.clear( );
-      for ( auto i = 0; i < count; ++i )
+      for ( uint32_t i = 0; i < count; ++i )
       {
-        workers.push_back( std::make_unique<Thread>( ) );
+        workers.push_back( std::make_unique< Thread >( ) );
       }
     }
-
     void ThreadPool::wait( void )
     {
       for ( auto &w : workers )

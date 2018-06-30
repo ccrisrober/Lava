@@ -3,7 +3,6 @@ source_group(\\ FILES CMakeLists.txt)
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
   noncopyable.hpp
-  Clock.h
   
   Buffer.h
   CommandBuffer.h
@@ -31,6 +30,7 @@ set( LAVA_PUBLIC_HEADERS
   Texture2DArray.h
   #Texture3D.h
   Queue.h
+  QueryPool.h
   Framebuffer.h
   Pipeline.h
 
@@ -49,7 +49,6 @@ set( LAVA_PUBLIC_HEADERS
 )
 
 set( LAVA_SOURCES
-  Clock.cpp
   Buffer.cpp
   CommandBuffer.cpp
   Descriptor.cpp
@@ -73,6 +72,7 @@ set( LAVA_SOURCES
   Texture2DArray.cpp
   #Texture3D.cpp
   Queue.cpp
+  QueryPool.cpp
   Framebuffer.cpp
   Pipeline.cpp
 

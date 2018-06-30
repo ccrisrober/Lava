@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 #include <lava/Pipeline.h>
 #include <lava/PhysicalDevice.h>
 #include <lava/Queue.h>
+#include <lava/QueryPool.h>
 #include <lava/RenderPass.h>
 #include <lava/Semaphore.h>
 #include <lava/Swapchain.h>
@@ -232,7 +233,7 @@ namespace lava
     return std::make_shared<BufferView>( buffer, format, offset, size );
   }
 
-  std::shared_ptr<Swapchain> Device::createSwapchain( 
+  /*std::shared_ptr<Swapchain> Device::createSwapchain( 
     const std::shared_ptr<Surface>& surface, uint32_t numImageCount, 
     vk::Format imageFormat, vk::ColorSpaceKHR colorSpace, 
     const vk::Extent2D& imageExtent, uint32_t imageArrayLayers, 
@@ -246,7 +247,7 @@ namespace lava
       numImageCount, imageFormat, colorSpace, imageExtent, imageArrayLayers,
       imageUsage, imageSharingMode, queueFamilyIndices, preTransform,
       compAlpha, presentMode, clipped, oldSwapchain );
-  }
+  }*/
   std::shared_ptr<DescriptorSet> Device::allocateDescriptorSet(
     const std::shared_ptr<DescriptorPool>& pool,
     const std::shared_ptr<DescriptorSetLayout>& layout )
@@ -292,7 +293,7 @@ namespace lava
       if ( w.texelBufferView )
       {
         auto bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
-        auto bb = static_cast< VkBufferView >( bufferView );
+        // TODO (LINUX FAILED) auto bb = static_cast< VkBufferView >( bufferView );
         write.setPTexelBufferView( &bufferView );
       }
 
@@ -453,14 +454,14 @@ namespace lava
     return std::make_shared<Texture2D>( shared_from_this( ), textureSrc,
       cmdPool, queue, format );
   }
-  /*std::shared_ptr<Texture2DArray> Device::createTexture2DArray(
+  std::shared_ptr<Texture2DArray> Device::createTexture2DArray(
     std::vector<std::string>& textureSrcs,
     std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue,
     vk::Format format )
   {
     return std::make_shared<Texture2DArray>( shared_from_this( ), textureSrcs,
       cmdPool, queue, format );
-  }*/
+  }
   std::shared_ptr<TextureCubemap> Device::createTextureCubemap(
     std::array<std::string, 6>& cubeImages, std::shared_ptr<CommandPool> cmdPool,
     std::shared_ptr<Queue> queue, vk::Format format )
@@ -469,6 +470,26 @@ namespace lava
       cmdPool, queue, format );
   }
 #endif
+  std::shared_ptr<QueryPool> Device::createQuery( vk::QueryPoolCreateFlags flags,
+    vk::QueryType queryType, uint32_t entryCount,
+    vk::QueryPipelineStatisticFlags pipelineStatistics )
+  {
+    return std::make_shared<QueryPool>( shared_from_this( ),
+      flags, queryType, entryCount, pipelineStatistics );
+  }
+  std::shared_ptr<QueryPool> Device::createOcclusionQuery( uint32_t entryCount )
+  {
+    return createQuery( vk::QueryPoolCreateFlags( ),
+      vk::QueryType::eOcclusion, entryCount, 
+      vk::QueryPipelineStatisticFlags( ) );
+  }
+
+  std::shared_ptr<QueryPool> Device::createPipelineStatisticsQuery(
+    uint32_t entryCount, vk::QueryPipelineStatisticFlags flags )
+  {
+    return createQuery( vk::QueryPoolCreateFlags( ), 
+      vk::QueryType::ePipelineStatistics, entryCount, flags );
+  }
 
   Device::Device( const std::shared_ptr<PhysicalDevice>& phyDev )
     : _physicalDevice( phyDev )

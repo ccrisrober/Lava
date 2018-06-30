@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -443,6 +443,7 @@ namespace lava
   void CommandBuffer::reset( vk::CommandBufferResetFlagBits flags )
   {
     _commandBuffer.reset( flags );
+    _state = State::Ready; // TODO ?
   }
 
   void CommandBuffer::bindVertexBuffer( uint32_t startBinding,
@@ -562,5 +563,73 @@ namespace lava
   void CommandBuffer::bindComputePipeline( const std::shared_ptr<Pipeline>& p )
   {
     _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *p );
+  }
+
+  void CommandBuffer::pushDescriptorSetKHR( vk::PipelineBindPoint bindpoint,
+    std::shared_ptr<PipelineLayout> pipLayout, uint32_t set,
+    vk::ArrayProxy<WriteDescriptorSet> descriptorWrites )
+  {
+    if ( !vkCmdPushDescriptorSetKHR )
+    {
+      VkDevice device = static_cast< VkDevice >
+        ( static_cast<vk::Device>( *_commandPool->getDevice( ) ) );
+      vkCmdPushDescriptorSetKHR =
+        ( PFN_vkCmdPushDescriptorSetKHR ) vkGetDeviceProcAddr(
+          device, "vkCmdPushDescriptorSetKHR" );
+    }
+    if ( !vkCmdPushDescriptorSetKHR )
+    {
+      throw;
+    }
+    std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
+    diis.reserve( descriptorWrites.size( ) );
+
+    std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> dbis;
+    dbis.reserve( descriptorWrites.size( ) );
+
+    std::vector<vk::WriteDescriptorSet> writes;
+    writes.reserve( descriptorWrites.size( ) );
+    for ( const auto& w : descriptorWrites )
+    {
+      diis.push_back( std::unique_ptr<vk::DescriptorImageInfo>(
+        w.imageInfo ? new vk::DescriptorImageInfo(
+          w.imageInfo->sampler ?
+          static_cast<vk::Sampler>( *w.imageInfo->sampler ) : nullptr,
+          w.imageInfo->imageView ?
+          static_cast<vk::ImageView>( *w.imageInfo->imageView ) : nullptr,
+          w.imageInfo->imageLayout ) : nullptr ) );
+      dbis.push_back( std::unique_ptr<vk::DescriptorBufferInfo>(
+        w.bufferInfo ? new vk::DescriptorBufferInfo( w.bufferInfo->buffer ?
+          static_cast<vk::Buffer>( *w.bufferInfo->buffer ) : nullptr,
+          w.bufferInfo->offset, w.bufferInfo->range ) : nullptr ) );
+      vk::WriteDescriptorSet write(
+        nullptr,
+        w.dstBinding,
+        w.dstArrayElement,
+        w.descriptorCount,
+        w.descriptorType,
+        diis.back( ).get( ),
+        dbis.back( ).get( )
+      );
+
+      if ( w.texelBufferView )
+      {
+        auto bufferView = static_cast< vk::BufferView >( *w.texelBufferView );
+        // TODO (LINUX FAILED) auto bb = static_cast< VkBufferView >( bufferView );
+        write.setPTexelBufferView( &bufferView );
+      }
+
+      writes.push_back( std::move( write ) );
+    }
+    VkCommandBuffer m_commandBuffer = static_cast< VkCommandBuffer >( _commandBuffer );
+    vk::PipelineLayout layout = *pipLayout;
+    std::vector<VkWriteDescriptorSet> vkwds( descriptorWrites.size( ) );
+    vkwds[ 0 ] = static_cast< VkWriteDescriptorSet >( writes.at( 0 ) );
+    vkwds[ 1 ] = static_cast< VkWriteDescriptorSet >( writes.at( 1 ) );
+    vkCmdPushDescriptorSetKHR( m_commandBuffer, 
+      static_cast<VkPipelineBindPoint>( bindpoint ), 
+      static_cast<VkPipelineLayout>( layout ), 
+      set, descriptorWrites.size( ), 
+      vkwds.data( ) );
   }
 }

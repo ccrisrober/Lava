@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -561,6 +561,8 @@ namespace lava
     );
     setPipeline( static_cast<vk::Device>( *_device ).createGraphicsPipeline( 
       pipelineCache ? *pipelineCache : vk::PipelineCache( ), pci ) );
+
+    _blendingEnabled = colorBlendState ? colorBlendState->logicEnable : false;
   }
 
 

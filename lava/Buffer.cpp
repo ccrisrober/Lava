@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -158,6 +158,23 @@ namespace lava
     descriptor.offset = 0;
     descriptor.range = _size;*/
   }
+
+  /*void transfer( vk::DeviceSize offset, vk::DeviceSize size, const void* data, 
+    std::shared_ptr< CommandBuffer > cmdBuffer )
+  {
+    if( size == VK_WHOLE_SIZE ) size = this->size - offset;
+  }
+  void transfer( std::shared_ptr< Buffer > src, vk::DeviceSize srcOffset, 
+    vk::DeviceSize dstOffset, vk::DeviceSize size, 
+    std::shared_ptr< CommandBuffer > cmdBuffer )
+  {
+
+  }
+  void transfer( std::shared_ptr< Image > src,
+    std::shared_ptr< CommandBuffer > cmdBuffer )
+  {
+
+  }*/
 
   BufferView::BufferView( const std::shared_ptr<lava::Buffer>& buffer,
     vk::Format format, vk::DeviceSize offset, vk::DeviceSize range )

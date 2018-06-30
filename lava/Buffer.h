@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -94,6 +94,17 @@ namespace lava
 
     LAVA_API
     inline vk::DeviceSize getSize( void ) const { return _size; }
+
+    /*LAVA_API
+    void transfer( vk::DeviceSize offset, vk::DeviceSize size, const void* data, 
+      std::shared_ptr< CommandBuffer > cmdBuffer );
+    LAVA_API
+    void transfer( std::shared_ptr< Buffer > src, vk::DeviceSize srcOffset, 
+      vk::DeviceSize dstOffset, vk::DeviceSize size, 
+      std::shared_ptr< CommandBuffer > cmdBuffer );
+    LAVA_API
+    void transfer( std::shared_ptr< Image > src,
+      std::shared_ptr< CommandBuffer > cmdBuffer );*/
 
     template <typename T>
     void update( const std::shared_ptr<CommandBuffer>& commandBuffer,

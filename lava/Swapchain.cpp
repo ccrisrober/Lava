@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,67 +19,215 @@
 
 #include "Swapchain.h"
 #include <lava/Surface.h>
+#include <lava/PhysicalDevice.h>
 
 namespace lava
 {
-  Swapchain::Swapchain( const std::shared_ptr<Device>& device,
-    const std::shared_ptr<Surface>& surface, uint32_t numImageCount,
-    vk::Format imageFormat, vk::ColorSpaceKHR colorSpace, 
-    const vk::Extent2D& imageExtent,
-    uint32_t imageArrayLayers, vk::ImageUsageFlags imageUsage,
-    vk::SharingMode imageSharingMode,
-    const std::vector<uint32_t>& queueFamilyIndices,
-    vk::SurfaceTransformFlagBitsKHR preTransform,
-    vk::CompositeAlphaFlagBitsKHR compositeAlpha,
-    vk::PresentModeKHR presentMode, bool clipped,
-    const std::shared_ptr<Swapchain>& oldSwapchain )
+  Swapchain::Swapchain( const std::shared_ptr< lava::Device >& device,
+    const std::shared_ptr< lava::Surface >& surface, 
+    const vk::Extent2D& desiredExtent )
     : VulkanResource( device )
+    , desired_extent( desiredExtent )
   {
-    vk::SwapchainCreateInfoKHR sci( { }, 
-      static_cast< vk::SurfaceKHR >( *surface ),
-      numImageCount, imageFormat, colorSpace, imageExtent, imageArrayLayers, 
-      imageUsage, imageSharingMode, queueFamilyIndices.size( ),
-      queueFamilyIndices.data( ), preTransform, compositeAlpha, presentMode, 
-      clipped,
-      oldSwapchain ? static_cast< vk::SwapchainKHR >( *oldSwapchain ) : nullptr );
+    this->_surface = surface;
 
-    _swapchain = static_cast< vk::Device >( *_device ).createSwapchainKHR( sci );
-
-    std::vector<vk::Image> images =
-      static_cast< vk::Device >( *_device ).getSwapchainImagesKHR( _swapchain );
-    _images.reserve( images.size( ) );
-    _presentCompleteSemaphores.reserve( images.size( ) + 1 );
-    for ( size_t i = 0, l = images.size( ); i < l; ++i )
-    {
-      _images.push_back( std::make_shared<Image>( _device, images[ i ] ) );
-      _presentCompleteSemaphores.push_back( _device->createSemaphore( ) );
-    }
-    _freeSemaphore = _device->createSemaphore( );
+    createSwapchain( );
+    createImageViews( );
   }
+
   Swapchain::~Swapchain( void )
   {
-    _presentCompleteSemaphores.clear( );
-    _images.clear( );
-    static_cast< vk::Device >( *_device ).destroySwapchainKHR( _swapchain );
-  }
-  std::vector< std::shared_ptr< Image > > const& 
-    Swapchain::getImages( void ) const
-  {
-    return _images;
+    cleanup( true );
   }
 
-  uint32_t Swapchain::acquireNextImage( uint64_t timeout,
-    const std::shared_ptr<Fence>& fence )
+  void Swapchain::resize( const vk::Extent2D& extent )
+  {
+    this->desired_extent = extent;
+    recreate( );
+  }
+
+  vk::ResultValue<uint32_t> Swapchain::acquireNextImage( uint64_t timeout,
+    const std::shared_ptr< Fence >& fence )
   {
     vk::ResultValue<uint32_t> result = static_cast< vk::Device >( *_device )
       .acquireNextImageKHR( _swapchain, timeout, *_freeSemaphore,
         fence ? static_cast< vk::Fence >( *fence ) : nullptr );
     assert( result.result == vk::Result::eSuccess );  // need to handle timeout, 
                                                       // not ready, and suboptimal
-                            // put the semaphore at the correct index and use the 
-                            // semaphore from the new index as next free semaphore
+                                                      // put the semaphore at the correct index and use the 
+                                                      // semaphore from the new index as next free semaphore
     std::swap( _freeSemaphore, _presentCompleteSemaphores[ result.value ] );
-    return result.value;
+    return result;
+  }
 
+  void Swapchain::recreate( void )
+  {
+    _device->waitIdle( );
+    cleanup( false );
+    createSwapchain( );
+    createImageViews( );
+  }
+
+  void Swapchain::createSwapchain( void )
+  {
+    auto physicalDevice = _device->getPhysicalDevice( );
+    auto surfaceCaps = physicalDevice->getSurfaceCapabilities( _surface );
+    auto surfaceFormats = physicalDevice->getSurfaceFormats( _surface );
+    auto surfacePresentModes = physicalDevice->getSurfacePresentModes( _surface );
+
+    vk::Extent2D extent;
+    // If width/height is 0xFFFFFFFF, we can manually specify width, height
+    if ( surfaceCaps.currentExtent.width != std::numeric_limits<uint32_t>::max( ) )
+    {
+      extent = surfaceCaps.currentExtent;
+    }
+    else
+    {
+      vk::Extent2D actualExtent = { 1, 1 };
+
+      actualExtent.width = std::max( surfaceCaps.minImageExtent.width,
+        std::min( surfaceCaps.maxImageExtent.width, actualExtent.width ) );
+      actualExtent.height = std::max( surfaceCaps.minImageExtent.height,
+        std::min( surfaceCaps.maxImageExtent.height, actualExtent.height ) );
+
+      extent = actualExtent;
+    }
+
+    desired_extent = extent; // TODO ??
+
+                             // Find present mode
+    auto presentModes = vk::PhysicalDevice(
+      *_device->getPhysicalDevice( ) ).getSurfacePresentModesKHR( *_surface );
+    vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
+
+    auto imageCount = surfaceCaps.minImageCount + 1;
+    if ( surfaceCaps.maxImageCount > 0 && imageCount > surfaceCaps.maxImageCount )
+    {
+      imageCount = surfaceCaps.maxImageCount;
+    }
+    vk::SurfaceTransformFlagBitsKHR surfaceTransform =
+      ( surfaceCaps.supportedTransforms &
+        vk::SurfaceTransformFlagBitsKHR::eIdentity ) ?
+      vk::SurfaceTransformFlagBitsKHR::eIdentity :
+      surfaceCaps.currentTransform;
+
+    // Find a supported composite alpha format (not all devices support alpha opaque)
+    vk::CompositeAlphaFlagBitsKHR compositeAlpha =
+      vk::CompositeAlphaFlagBitsKHR::eOpaque;
+    // Simply select the first composite alpha format available
+    std::vector<vk::CompositeAlphaFlagBitsKHR> compositeAlphaFlags =
+    {
+      vk::CompositeAlphaFlagBitsKHR::eOpaque,
+      vk::CompositeAlphaFlagBitsKHR::ePreMultiplied,
+      vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
+      vk::CompositeAlphaFlagBitsKHR::eInherit,
+    };
+    for ( auto& compositeAlphaFlag : compositeAlphaFlags )
+    {
+      if ( surfaceCaps.supportedCompositeAlpha & compositeAlphaFlag )
+      {
+        compositeAlpha = compositeAlphaFlag;
+        break;
+      };
+    }
+
+    vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+
+    _swapchainSupportsReadBack = !!( surfaceCaps.supportedUsageFlags &
+      vk::ImageUsageFlagBits::eTransferSrc );
+
+    if ( _swapchainSupportsReadBack )
+    {
+      usage |= vk::ImageUsageFlagBits::eTransferSrc;
+    }
+
+    vk::SwapchainKHR oldSwapchain = _swapchain;
+
+    vk::SurfaceFormatKHR surfaceFormat = surfaceFormats[ 0 ];
+
+    auto sci = vk::SwapchainCreateInfoKHR( )
+      .setSurface( *_surface )
+      .setMinImageCount( imageCount )
+      .setImageFormat( surfaceFormat.format )
+      .setImageColorSpace( surfaceFormat.colorSpace )
+      .setImageExtent( extent )
+      .setImageArrayLayers( 1 )
+      .setImageUsage( usage );
+
+    // todo. sharing mode
+    sci.setImageSharingMode( vk::SharingMode::eExclusive )
+      .setCompositeAlpha( compositeAlpha )
+      .setPresentMode( presentMode )
+      .setClipped( VK_TRUE )
+      .setPreTransform( surfaceTransform )
+      .setOldSwapchain( oldSwapchain );
+
+    _swapchain = static_cast< vk::Device >( *_device ).createSwapchainKHR( sci );
+
+    if ( oldSwapchain )
+    {
+      static_cast< vk::Device >( *_device ).destroySwapchainKHR( oldSwapchain );
+    }
+    
+    _images.clear( );
+    _presentCompleteSemaphores.clear( );
+    std::vector<vk::Image> images =
+      static_cast< vk::Device >( *_device ).getSwapchainImagesKHR( _swapchain );
+
+    size_t numImages = images.size( );
+    _images.reserve( numImages );
+    _presentCompleteSemaphores.reserve( numImages + 1 );
+    for ( size_t i = 0; i < numImages; ++i )
+    {
+      _images.push_back( std::make_shared<Image>( _device, images[ i ] ) );
+      _presentCompleteSemaphores.push_back( _device->createSemaphore( ) );
+    }
+
+    _freeSemaphore = _device->createSemaphore( );
+
+    _format = surfaceFormat.format;
+  }
+  
+  void Swapchain::createImageViews( void )
+  {
+    uint32_t l = _images.size( );
+    _imageViews.resize( l );
+    for ( uint32_t i = 0; i < l; ++i )
+    {
+      _imageViews[ i ] = _images[ i ]->createImageView(
+        vk::ImageViewType::e2D,
+        _format,
+        {
+          vk::ComponentSwizzle::eR,
+          vk::ComponentSwizzle::eG,
+          vk::ComponentSwizzle::eB,
+          vk::ComponentSwizzle::eA
+        },
+        { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+      );
+    }
+  }
+  
+  void Swapchain::cleanup( bool destroySwapchain )
+  {
+    std::cout << "Destroying image views" << std::endl;
+    for ( auto& iv : _imageViews )
+    {
+      iv.reset( );
+    }
+    _imageViews.clear( );
+    for ( auto& sem : _presentCompleteSemaphores )
+    {
+      sem.reset( );
+    }
+    _presentCompleteSemaphores.clear( );
+    _freeSemaphore.reset( );
+
+    if ( destroySwapchain )
+    {
+      std::cout << "Destroying swap chain" << std::endl;
+      static_cast< vk::Device >( *_device ).destroySwapchainKHR( _swapchain );
+      _swapchain = nullptr;
+    }
   }
 }

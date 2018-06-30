@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,9 @@ namespace lava
       LOG_LEVEL_DEBUG = 5,    // errors, warnings, informative messages and debug
       LOG_LEVEL_ALL = 99      // all messages are output
     };
+    LAVA_API
     static int getLevel( void ) { return _level; }
+    LAVA_API
     static void setLevel( int level ) { _level = level; }
   private:
     static int _level;
@@ -54,36 +56,37 @@ namespace lava
     template<typename ... Args>
     static void error( const std::string& msg, Args && ...args )
     {
-      print(LogLevel::LOG_LEVEL_ERROR, "E", msg, std::forward< Args >(args)...);
+      print( LogLevel::LOG_LEVEL_ERROR, "E", msg, std::forward< Args >( args )... );
     }
     template<typename ... Args>
     static void warning( const std::string& msg, Args && ...args )
     {
-      print(LogLevel::LOG_LEVEL_WARNING, "W", msg, std::forward< Args >(args)...);
+      print( LogLevel::LOG_LEVEL_WARNING, "W", msg, std::forward< Args >( args )... );
     }
     template<typename ... Args>
     static void info( const std::string& msg, Args && ...args )
     {
-      print(LogLevel::LOG_LEVEL_INFO, "I", msg, std::forward< Args >(args)...);
+      print( LogLevel::LOG_LEVEL_INFO, "I", msg, std::forward< Args >( args )... );
     }
     template<typename ... Args>
     static void debug( const std::string& msg, Args && ...args )
     {
-      print(LogLevel::LOG_LEVEL_DEBUG, "D", msg, std::forward< Args >(args)...);
+      print( LogLevel::LOG_LEVEL_DEBUG, "D", msg, std::forward< Args >( args )... );
     }
     template< typename ... Args >
     static void print( int level, const std::string& levelStr,
-      std::string const &TAG, Args &&... args)
+      std::string const &TAG, Args &&... args )
     {
       if ( getLevel( ) >= level && _outputHandler != nullptr )
       {
-        auto tp = std::chrono::system_clock::now();
-        auto s = std::chrono::duration_cast< std::chrono::microseconds >(tp.time_since_epoch());
-        auto t = (time_t)(s.count());
+        auto tp = std::chrono::system_clock::now( );
+        auto s = std::chrono::duration_cast< std::chrono::microseconds >( 
+          tp.time_since_epoch( ) );
+        auto t = ( time_t )( s.count( ) );
 
         auto str = StringUtils::toString("[", t, "] ",
           levelStr, "/", TAG,// " - ",
-          std::forward< Args >(args)...);
+          std::forward< Args >( args )...);
 
         _outputHandler->print( str );
       }
@@ -92,18 +95,18 @@ namespace lava
     public:
       class OutputHandler
       {
-        public:
-          LAVA_API
-          virtual ~OutputHandler(void) { }
-          virtual void print( const std::string& src ) = 0;
+      public:
+        LAVA_API
+        virtual ~OutputHandler( void ) { }
+        virtual void print( const std::string& src ) = 0;
       };
       class ConsoleOutputHandler : public OutputHandler
       {
       public:
         LAVA_API
-        ConsoleOutputHandler(void) { }
+        ConsoleOutputHandler( void ) { }
         LAVA_API
-        virtual ~ConsoleOutputHandler(void) { }
+        virtual ~ConsoleOutputHandler( void ) { }
 
         LAVA_API
         virtual void print( const std::string& src ) override;
@@ -112,10 +115,10 @@ namespace lava
       {
       public:
         LAVA_API
-        FileOutputHandler(std::string const &path) 
-          : _out(path, std::ios::out) { }
+        FileOutputHandler( const std::string& path ) 
+          : _out( path, std::ios::out ) { }
         LAVA_API
-        virtual ~FileOutputHandler(void) { }
+        virtual ~FileOutputHandler( void ) { }
 
         LAVA_API
         virtual void print( const std::string& src ) override;
@@ -126,19 +129,19 @@ namespace lava
       {
       public:
         LAVA_API
-        NullOutputHandler(void) { }
+        NullOutputHandler( void ) { }
         LAVA_API
-        virtual ~NullOutputHandler(void) { }
+        virtual ~NullOutputHandler( void ) { }
 
         LAVA_API
         virtual void print( const std::string& ) override;
       };
      
       template< class T, typename ... Args >
-      static void setOutputHandler(Args &&... args)
+      static void setOutputHandler( Args &&... args )
       {
         _outputHandler = std::move(
-          std::unique_ptr< T >(new T(std::forward< Args >(args)...)));
+          std::unique_ptr< T >( new T( std::forward< Args >( args )... ) ) );
       }
   private:
     static std::unique_ptr< OutputHandler > _outputHandler;

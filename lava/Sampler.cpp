@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ namespace lava
     if ( anisotropyEnable && maxAnisotropy <= 0.0f )
     {
       std::cerr << "Can't create a sampler with enabled anisotropy and" <<
-        " 0.0f for max value" << std::endl;
+        " 0.0f for max value. Disabling anisotropy" << std::endl;
       maxAnisotropy = false;
     }
 

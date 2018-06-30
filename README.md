@@ -8,13 +8,12 @@ Lava is a library built to facilitate the use of Vulkan features.
 
 * Required dependencies:
     * Vulkan
-    * GLFW3 for window system
-    * GLM for mathematics
     * STBI for texture reading
-    * ASSIMP for mesh loading
 
-* Optional dependencies:
-	* GLSLANG
+* Optional dependencies
+    * GLFW3/Qt for window system
+    * GLM for mathematics
+    * ASSIMP for mesh loading
 
 ## Building
 

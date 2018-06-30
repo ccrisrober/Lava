@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -24,13 +24,17 @@
 namespace lava
 {
   Surface::Surface( const std::shared_ptr< Instance >& instance, 
-    const vk::SurfaceKHR& surface )
+    const vk::SurfaceKHR& surface, bool selfDestroy )
     : _instance( instance )
     , _surface( surface )
+    , _selfDestroy( selfDestroy )
   {
   }
   Surface::~Surface( void )
   {
-    static_cast< vk::Instance > ( *_instance ).destroySurfaceKHR( _surface );
+    if ( _selfDestroy )
+    {
+      static_cast< vk::Instance > ( *_instance ).destroySurfaceKHR( _surface );
+    }
   }
 }

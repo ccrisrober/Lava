@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -32,6 +32,8 @@ namespace lava
     class CustomMaterial: public lava::VulkanResource
     {
     public:
+      LAVAUTILS_API
+      virtual ~CustomMaterial( void ) { }
       LAVAUTILS_API
       virtual void configure( const std::string& sourceDir,
         std::shared_ptr< Device > device, std::shared_ptr< RenderPass > renderPass,

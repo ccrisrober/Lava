@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include <queue>
 #include <functional>
 #include <mutex>
+#include <condition_variable>
 
 #include <lavaUtils/api.h>
 

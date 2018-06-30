@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 1.2.0 )
-set( lava_VERSION_ABI 2)
+project( lava VERSION 2.0.0 )
+set( lava_VERSION_ABI 3)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
@@ -28,12 +28,17 @@ set( LAVA_DESCRIPTION "LAVA" )
 include(Common)
 
 # Allow warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
 option( LAVA_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
 option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
+option( LAVAENGINE_WITH_COMPONENTS "LAVA with components" ON )
+
+if ( LAVAENGINE_WITH_COMPONENTS )
+  list(APPEND COMMON_FIND_PACKAGE_DEFINES LAVAENGINE_HASCOMPONENTS)
+endif( )
 
 if ( LAVA_WITH_DEVICE_BUILDERS )
   list(APPEND COMMON_FIND_PACKAGE_DEFINES LAVA_DEVICE_BUILDERS )
@@ -51,6 +56,10 @@ common_find_package( GLFW3 SYSTEM )
 common_find_package( Qt5Core SYSTEM )
 common_find_package( Qt5Widgets SYSTEM )
 
+
+#include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/vma/src")
+
+
 list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
 
 IF (NOT WIN32)
@@ -62,7 +71,7 @@ common_find_package_post( )
 add_subdirectory( lava )
 
 if( GLFW3_FOUND )
-  add_subdirectory( lavaRenderer )
+  add_subdirectory( glfwLava )
 endif( )
 
 if( QT5CORE_FOUND )
@@ -70,7 +79,9 @@ if( QT5CORE_FOUND )
 endif( )
 
 add_subdirectory( lavaUtils )
-add_subdirectory( examples )
+# add_subdirectory( lavaEngine )
+
+add_subdirectory( demos )
 
 configure_file(
   CMake/glsl2spv.cmake

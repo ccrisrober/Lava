@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ namespace lava
   public:
     LAVA_API
     Surface( const std::shared_ptr< Instance >& instance, 
-      const vk::SurfaceKHR& surface );
+      const vk::SurfaceKHR& surface, bool selfDestroy = true );
     Surface( const Surface& ) = delete;
 
     Surface& operator=( const Surface& ) = delete;
@@ -48,6 +48,7 @@ namespace lava
   private:
     std::shared_ptr< Instance > _instance;
     vk::SurfaceKHR _surface;
+    bool _selfDestroy;
   };
 }
 

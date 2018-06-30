@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -44,9 +44,24 @@ namespace lava
     LAVA_API
     virtual ~QueryPool( void );
 
-    LAVA_API
-    std::vector< uint8_t > getResults( uint32_t startQuery, uint32_t queryCount, 
-      size_t dataSize, vk::DeviceSize stride, vk::QueryResultFlags flags );
+    template< typename T >
+    std::vector< T > getResults( uint32_t startQuery, uint32_t queryCount,
+      size_t dataSize, vk::DeviceSize stride, vk::QueryResultFlags flags )
+    {
+      std::vector<T> data( dataSize );
+      static_cast<vk::Device>( *_device )
+        .getQueryPoolResults< T >( _query, startQuery, queryCount, data,
+          stride, flags );
+      return data;
+    }
+
+    template< typename T >
+    T getResult( uint32_t startQuery, size_t dataSize,
+      vk::QueryResultFlags flags )
+    {
+      auto data = getResults<T>( startQuery, 1, dataSize, 0, flags );
+      return data.at( 0 );
+    }
 
     LAVA_API
     inline operator vk::QueryPool( void ) const

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -49,6 +49,15 @@ namespace lava
 
     Sampler( Sampler const& rhs ) = delete;
     Sampler & operator=( Sampler const& rhs ) = delete;
+
+    bool operator==( const Sampler& rhs ) const
+    {
+      return _sampler == rhs._sampler;
+    }
+    bool operator!=( const Sampler& rhs ) const
+    {
+      return _sampler != rhs._sampler;
+    }
 
   private:
     vk::Sampler _sampler;

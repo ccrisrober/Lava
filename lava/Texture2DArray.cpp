@@ -1,21 +1,21 @@
 /**
- * Copyright (c) 2017, Lava
- * All rights reserved.
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- **/
+* Copyright (c) 2017 - 2018, Lava
+* All rights reserved.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+**/
 
 #include "Texture2DArray.h"
 
@@ -28,10 +28,10 @@ namespace lava
 {
   Texture2DArray::Texture2DArray( const std::shared_ptr<Device>& device_,
     std::vector<std::string>& filePaths,
-      const std::shared_ptr<CommandPool>& cmdPool,
-      const std::shared_ptr<Queue>& queue, vk::Format format,
-      vk::ImageUsageFlags imageUsageFlags,
-      vk::ImageLayout imageLayout_, bool forceLinear )
+    const std::shared_ptr<CommandPool>& cmdPool,
+    const std::shared_ptr<Queue>& queue, vk::Format format,
+    vk::ImageUsageFlags imageUsageFlags,
+    vk::ImageLayout imageLayout_, bool forceLinear )
     : Texture( device_ )
   {
     uint32_t textureWidth = 0;
@@ -54,7 +54,7 @@ namespace lava
     for ( uint32_t i = 0; i < layerCount; ++i )
     {
       unsigned char* pixels = lava::utils::loadImageTexture(
-        filePaths[ i ].c_str( ), textureWidth, textureHeight, textureChannels);
+        filePaths[ i ].c_str( ), textureWidth, textureHeight, textureChannels );
 
       // The load function returns the original channel count, 
       // but it was forced to 4 because of the last parameter
@@ -101,7 +101,7 @@ namespace lava
         vk::MemoryPropertyFlagBits::eHostVisible |
         vk::MemoryPropertyFlagBits::eHostCoherent );
       stagingBuffer->writeData( 0, totalSize, pixels );
-      
+
       free( pixels );
 
       // TODO: Generate MipLevels
@@ -139,7 +139,7 @@ namespace lava
           bic.imageSubresource.layerCount = 1;
           bic.imageExtent = vk::Extent3D( textureWidth, textureHeight, 1 );
           bic.bufferOffset = offset;
-          
+
           bufferCopyRegions.push_back( bic );
           offset += images[ face ].size;
         }
@@ -239,7 +239,7 @@ namespace lava
 
       std::shared_ptr<CommandBuffer> copyCmd = cmdPool->allocateCommandBuffer( );
       copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
-      
+
       // Setup image memory barrier
       utils::transitionImageLayout(
         copyCmd,
@@ -258,11 +258,11 @@ namespace lava
     sampler = _device->createSampler( vk::Filter::eLinear, vk::Filter::eLinear,
       vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge,
       vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
-      0.0f, true, 0.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+      0.0f, true, 1.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
       vk::BorderColor::eFloatOpaqueWhite, false );
 
     // Create image view
-    view = image->createImageView( vk::ImageViewType::e2D, format );
+    view = image->createImageView( vk::ImageViewType::e2DArray, format );
 
     updateDescriptor( );
   }

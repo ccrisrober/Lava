@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Lava
+ * Copyright (c) 2017 - 2018, Lava
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -48,6 +48,10 @@ namespace lava
     size_t, int32_t msgCode, const char* pLayerPrefix,
     const char* pMsg, void* )
   {
+    std::cerr << "vulkan: " << pMsg << std::endl;
+    return VK_FALSE;
+
+    /**
     std::stringstream message;
 
     // Determine prefix
@@ -102,7 +106,83 @@ namespace lava
     assert( !message );
 
     // Abort calls that caused a validation message
-    return VK_TRUE;
+    return VK_FALSE;
+    /**/
+  }
+
+  Instance::Instance( const vk::Instance& i )
+  {
+    _instance = i;
+    _physicalDevices = _instance.enumeratePhysicalDevices( );
+    _physicalDevicesCache.resize( _physicalDevices.size( ) );
+
+    static bool initialized = false;
+    if ( !initialized )
+    {
+      pfnVkCreateDebugReportCallbackEXT = reinterpret_cast
+        < PFN_vkCreateDebugReportCallbackEXT >(
+          _instance.getProcAddr( "vkCreateDebugReportCallbackEXT" ) );
+      pfnVkDestroyDebugReportCallbackEXT = reinterpret_cast
+        < PFN_vkDestroyDebugReportCallbackEXT >(
+          _instance.getProcAddr( "vkDestroyDebugReportCallbackEXT" ) );
+      initialized = true;
+    }
+  }
+
+  std::shared_ptr< Instance > Instance::createFromVkInstance( const vk::Instance& i )
+  {
+    return std::make_shared< Instance >( i );
+  }
+
+  std::shared_ptr<Instance> Instance::createDefault( const std::string& appName )
+  {
+    vk::ApplicationInfo appInfo(
+      appName.c_str( ),
+      VK_MAKE_VERSION(
+        LAVA_VERSION_MAJOR,
+        LAVA_VERSION_MINOR,
+        LAVA_VERSION_PATCH
+      ),
+      "LavaEngine",
+      VK_MAKE_VERSION(
+        LAVA_VERSION_MAJOR,
+        LAVA_VERSION_MINOR,
+        LAVA_VERSION_PATCH
+      ),
+      VK_API_VERSION_1_0
+    );
+
+    std::vector<const char*> layers =
+    {
+#ifndef NDEBUG
+#ifndef __ANDROID__
+      "VK_LAYER_LUNARG_standard_validation"
+#else
+      "VK_LAYER_GOOGLE_threading",
+      "VK_LAYER_LUNARG_parameter_validation",
+      "VK_LAYER_LUNARG_object_tracker",
+      "VK_LAYER_LUNARG_core_validation",
+      "VK_LAYER_LUNARG_swapchain",
+      "VK_LAYER_GOOGLE_unique_objects"
+#endif
+#endif
+    };
+    std::vector<const char*> extensions =
+    {
+      VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
+      LAVA_KHR_EXT, // OS specific surface extension
+      VK_EXT_DEBUG_REPORT_EXTENSION_NAME
+    };
+
+    vk::InstanceCreateInfo ci(
+      vk::InstanceCreateFlags( ),
+      &appInfo,
+      layers.size( ),
+      layers.data( ),
+      extensions.size( ),
+      extensions.data( )
+    );
+    return std::make_shared<Instance>( ci );
   }
 
   std::shared_ptr<Instance> Instance::create( const std::string& appName )
@@ -132,13 +212,14 @@ namespace lava
     );
     return std::make_shared<Instance>( ci );
   }
+  
   std::shared_ptr<Instance> Instance::create( const vk::InstanceCreateInfo& ci )
   {
     return std::make_shared<Instance>( ci );
   }
+
   Instance::Instance( const vk::InstanceCreateInfo& ci )
   {
-
     _instance = vk::createInstance( ci );
     _physicalDevices = _instance.enumeratePhysicalDevices( );
     _physicalDevicesCache.resize( _physicalDevices.size( ) );
