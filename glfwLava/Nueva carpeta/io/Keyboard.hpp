@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVARENDERER_KEYBOARD__
-#define __LAVARENDERER_KEYBOARD__
+#ifndef __GLFWLAVA_KEYBOARD__
+#define __GLFWLAVA_KEYBOARD__
 
 #include <glfwLava/api.h>
 #include <bitset>
@@ -127,4 +127,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVARENDERER_KEYBOARD__ */
+#endif /* __GLFWLAVA_KEYBOARD__ */

@@ -17,10 +17,10 @@
  *
  **/
 
-#ifndef __LAVARENDERER_INCLUDES__
-#define __LAVARENDERER_INCLUDES__
+#ifndef __GLFWLAVA_INCLUDES__
+#define __GLFWLAVA_INCLUDES__
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#endif /* __LAVARENDERER_INCLUDES__ */
+#endif /* __GLFWLAVA_INCLUDES__ */

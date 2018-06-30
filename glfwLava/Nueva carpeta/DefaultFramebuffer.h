@@ -17,8 +17,8 @@
 *
 **/
 
-#ifndef __LAVARENDERER_DEFAULTFRAMEBUFFER__
-#define __LAVARENDERER_DEFAULTFRAMEBUFFER__
+#ifndef __GLFWLAVA_DEFAULTFRAMEBUFFER__
+#define __GLFWLAVA_DEFAULTFRAMEBUFFER__
 
 #include <lava/lava.h>
 #include <glfwLava/api.h>
@@ -123,4 +123,4 @@ namespace lava
   }
 }
 
-#endif /* __LAVARENDERER_DEFAULTFRAMEBUFFER__ */
+#endif /* __GLFWLAVA_DEFAULTFRAMEBUFFER__ */

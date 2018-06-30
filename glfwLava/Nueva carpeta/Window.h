@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVARENDERER_WINDOW__
-#define __LAVARENDERER_WINDOW__
+#ifndef __GLFWLAVA_WINDOW__
+#define __GLFWLAVA_WINDOW__
 
 #include <glfwLava/api.h>
 #include <functional>
@@ -73,4 +73,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVARENDERER_WINDOW__ */
+#endif /* __GLFWLAVA_WINDOW__ */

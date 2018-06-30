@@ -206,6 +206,7 @@ namespace lava
       createRenderPasses( );
       createFramebuffers( );
     }
+    
     QTLAVA_API
     ~DefaultFramebuffer( void )
     {
@@ -215,27 +216,32 @@ namespace lava
       _depthImage.reset( );
       _swapchain.reset( );
     }
+    
     QTLAVA_API
     const vk::Extent2D& extent( void ) const
     {
       return _swapchain->extent( );
     }
+    
     QTLAVA_API
     const std::shared_ptr< Swapchain > swapchain( void ) const
     {
       return _swapchain;
     }
+    
     QTLAVA_API
     const std::shared_ptr< RenderPass > renderPass( void ) const
     {
       return _renderPass;
     }
+    
     QTLAVA_API
     const std::shared_ptr< Framebuffer > framebuffer( short idx ) const
     {
       return _framebuffers.at( idx );
     }
-    QTLAVA_API
+    
+    /*QTLAVA_API
     const std::shared_ptr< Framebuffer > framebuffer( void ) const
     {
       static short currentIdx = 0;
@@ -243,7 +249,8 @@ namespace lava
       ++currentIdx;
       currentIdx = currentIdx % _framebuffers.size( );
       return fbo;
-    }
+    }*/
+    
     QTLAVA_API
     void recreate( void )
     {
@@ -345,7 +352,7 @@ namespace lava
     std::shared_ptr< lava::PhysicalDevice > _physicalDevice = nullptr;
     std::shared_ptr< lava::Device > _device = nullptr;
     
-    std::shared_ptr< lava::Surface > surface;
+    std::shared_ptr< lava::Surface > _surface;
     //vk::SurfaceKHR _surface = nullptr;
 
 
@@ -375,8 +382,6 @@ namespace lava
 
     vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
 
-    //std::shared_ptr<lava::Semaphore> imageAvailableSem = nullptr;
-    //std::shared_ptr<lava::Semaphore> renderFinishedSem = nullptr;
     std::shared_ptr< lava::Semaphore > _renderComplete = nullptr;
   protected:
     QtVulkanWindowRenderer* renderer = nullptr;
@@ -404,11 +409,12 @@ namespace lava
     {
       return _pipelineCache;
     }
-
-    QTLAVA_API
+  protected:
+    //QTLAVA_API
     void beginFrame( void );
-    QTLAVA_API
+    //QTLAVA_API
     void endFrame( void );
+  public:
     QTLAVA_API
     void frameReady( void );
 
@@ -433,11 +439,14 @@ namespace lava
     }
 
     QTLAVA_API
-    vk::SampleCountFlagBits sampleCountFlagBits( void ) const;
+    vk::SampleCountFlagBits sampleCountFlagBits( void ) const
+    {
+      return sampleCount;
+    }
     QTLAVA_API
     void setSampleCountFlagBits( int sampleCount );
     QTLAVA_API
-    std::vector<int> supportedSampleCounts( void );
+    std::vector< int > supportedSampleCounts( void );
 
     const bool isContinuosRendering( void ) const
     {

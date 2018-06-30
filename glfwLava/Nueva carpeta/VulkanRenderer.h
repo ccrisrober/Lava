@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVARENDERER_VULKAN_RENDERER__
-#define __LAVARENDERER_VULKAN_RENDERER__
+#ifndef __GLFWLAVA_VULKAN_RENDERER__
+#define __GLFWLAVA_VULKAN_RENDERER__
 
 #include <lava/lava.h>
 #include <glfwLava/api.h>
@@ -312,4 +312,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVARENDERER_VULKAN_RENDERER__ */
+#endif /* __GLFWLAVA_VULKAN_RENDERER__ */

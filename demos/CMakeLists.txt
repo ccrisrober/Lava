@@ -25,8 +25,9 @@ if( LAVA_WITH_EXAMPLES )
     add_subdirectory( qtStencilOutline )
   endif( )
 
-  #if( GLFW3_FOUND )
-  #  add_subdirectory( glfwRender )
-  #endif( )
+  if( GLFW3_FOUND )
+    add_subdirectory( glfwRender )
+    add_subdirectory( glfwEarth )
+  endif( )
 
 endif( )

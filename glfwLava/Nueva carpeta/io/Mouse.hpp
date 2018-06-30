@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVARENDERER_MOUSE__
-#define __LAVARENDERER_MOUSE__
+#ifndef __GLFWLAVA_MOUSE__
+#define __GLFWLAVA_MOUSE__
 
 #include <glfwLava/api.h>
 #include <cstring>
@@ -103,4 +103,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVARENDERER_MOUSE__ */
+#endif /* __GLFWLAVA_MOUSE__ */

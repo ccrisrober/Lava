@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVARENDERER_INPUT__
-#define __LAVARENDERER_INPUT__
+#ifndef __GLFWLAVA_INPUT__
+#define __GLFWLAVA_INPUT__
 
 #include <glfwLava/api.h>
 
@@ -95,4 +95,4 @@ namespace lava
   };
 }
 
-#endif /* __LAVARENDERER_INPUT__ */
+#endif /* __GLFWLAVA_INPUT__ */

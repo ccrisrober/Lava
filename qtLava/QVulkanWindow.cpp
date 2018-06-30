@@ -351,11 +351,6 @@ namespace lava
     return _frameGrabTargetImage;
   }
 
-  vk::SampleCountFlagBits QtVulkanWindow::sampleCountFlagBits( void ) const
-  {
-    return sampleCount;
-  }
-
   static struct {
     vk::SampleCountFlagBits mask;
     int count;
@@ -494,7 +489,7 @@ namespace lava
 
   void QtVulkanWindow::getSurfaceFormats( void )
   {
-    auto surfaceFormats = _physicalDevice->getSurfaceFormats( surface );
+    auto surfaceFormats = _physicalDevice->getSurfaceFormats( _surface );
     assert( !surfaceFormats.empty( ) );
     uint32_t numFormats = surfaceFormats.size( );
 
@@ -578,7 +573,7 @@ namespace lava
     VkBool32 presentSupport = VK_FALSE;
     for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
     {
-      presentSupport = _physicalDevice->supportSurfaceKHR( i, surface );
+      presentSupport = _physicalDevice->supportSurfaceKHR( i, _surface );
 
       printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n",
         i,
@@ -612,7 +607,7 @@ namespace lava
           _gfxQueueFamilyIdx = i;
         }
 
-        presentSupport = _physicalDevice->supportSurfaceKHR( i, surface );
+        presentSupport = _physicalDevice->supportSurfaceKHR( i, _surface );
         if ( _presQueueFamilyIdx == uint32_t( -1 ) && presentSupport )
         {
           _presQueueFamilyIdx = i;
@@ -707,7 +702,7 @@ namespace lava
       LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
     }
 
-    surface = std::make_shared< lava::Surface >( _instance, 
+    _surface = std::make_shared< lava::Surface >( _instance, 
       vk::SurfaceKHR( QVulkanInstance::surfaceForWindow( this ) ), false );
 
     getSurfaceFormats( );
@@ -718,7 +713,7 @@ namespace lava
       _physicalDevice, _dsFormat );
     assert( validDepthFormat );
 
-    _dfbFramebuffer = new DefaultFramebuffer( _device, surface, 
+    _dfbFramebuffer = new DefaultFramebuffer( _device, _surface, 
       swapchainImageSize( ), _dsFormat, sampleCount );
 
     _cmdPool = _device->createCommandPool(

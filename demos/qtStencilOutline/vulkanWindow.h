@@ -197,7 +197,7 @@ public:
 
   void releaseResources( void ) override
   {
-    geometry.reset( );
+    /*geometry.reset( );
 
     uMVP.reset( );
     uBufferOutline.reset( );
@@ -212,7 +212,7 @@ public:
     pipelines.outline.reset( );
 
     descriptorSets.solid.reset( );
-    descriptorSets.outline.reset( );
+    descriptorSets.outline.reset( );*/
   }
 
   void updateUniforms( void )

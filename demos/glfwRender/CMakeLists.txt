@@ -5,6 +5,6 @@ set( LAVAGLFWRENDER_SOURCES
 )
 set( LAVAGLFWRENDER_LINK_LIBRARIES
 	lava
-	lavaRenderer
+	glfwLava
 )
 common_application( lavaGLFWRender )

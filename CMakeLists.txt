@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 1.5.1 )
-set( lava_VERSION_ABI 2)
+project( lava VERSION 2.0.0 )
+set( lava_VERSION_ABI 3)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
@@ -71,7 +71,7 @@ common_find_package_post( )
 add_subdirectory( lava )
 
 if( GLFW3_FOUND )
-#  add_subdirectory( glfwLava )
+  add_subdirectory( glfwLava )
 endif( )
 
 if( QT5CORE_FOUND )
