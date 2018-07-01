@@ -158,7 +158,13 @@ namespace lava
       vk::PipelineCacheCreateFlags flags, size_t initialSize, 
       void const* initialData );
     LAVA_API
-    ~PipelineCache( );
+    ~PipelineCache( void );
+
+    LAVA_API
+    void loadFromFile( const std::string& filename );
+    LAVA_API
+    void loadFromFile( vk::PipelineCacheCreateFlags flags, size_t initialSize,
+      void const* initialData );
 
     LAVA_API
     std::vector<uint8_t> getData( void ) const;

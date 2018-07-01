@@ -1,0 +1,10 @@
+set( LAVAGLFWPLANARREFLECTION_HEADERS
+)
+set( LAVAGLFWPLANARREFLECTION_SOURCES
+	main.cpp
+)
+set( LAVAGLFWPLANARREFLECTION_LINK_LIBRARIES
+	lava
+	glfwLava
+)
+common_application( lavaGLFWPlanarReflection )

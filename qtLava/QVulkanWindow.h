@@ -377,13 +377,12 @@ namespace lava
     bool _frameGrabbing = false;
     QImage _frameGrabTargetImage;
     std::shared_ptr< lava::Image > frameGrabImage = nullptr;
-
+  protected:
     std::shared_ptr< PipelineCache > _pipelineCache;
-
+  private:
     vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
 
     std::shared_ptr< lava::Semaphore > _renderComplete = nullptr;
-  protected:
     QtVulkanWindowRenderer* renderer = nullptr;
   protected:
     virtual QtVulkanWindowRenderer* createRenderer( void );

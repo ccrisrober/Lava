@@ -3,7 +3,6 @@
 #include <qtLava/qtLava.h>
 
 #include <QApplication>
-#include <QVulkanInstance>
 
 #include "mainwindow.h"
 

@@ -338,6 +338,7 @@ class VulkanWindow : public lava::QtVulkanWindow
 {
   Q_OBJECT
 private:
+  StencilOutlineRenderer* _renderer;
 public:
   VulkanWindow( QWindow* parent = nullptr )
     : lava::QtVulkanWindow( parent )
@@ -346,7 +347,8 @@ public:
   }
   virtual lava::QtVulkanWindowRenderer* createRenderer( void )
   {
-    return new StencilOutlineRenderer( this );
+    _renderer = new StencilOutlineRenderer( this );
+    return _renderer;
   }
 protected:
   bool event( QEvent* ev ) override
@@ -361,13 +363,11 @@ protected:
       }
       else if ( key->key( ) == Qt::Key_Z )
       {
-        ( ( StencilOutlineRenderer* ) ( renderer ) )
-          ->updateOutlineWidth( -0.005f );
+        _renderer->updateOutlineWidth( -0.005f );
       }
       else if ( key->key( ) == Qt::Key_X )
       {
-        ( ( StencilOutlineRenderer* ) ( renderer ) )
-          ->updateOutlineWidth( +0.005f );
+        _renderer->updateOutlineWidth( +0.005f );
       }
       else
       {

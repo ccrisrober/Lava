@@ -363,6 +363,117 @@ namespace lava
   {
     static_cast< vk::Device >( *_device ).destroyPipelineCache( _pipelineCache );
   }
+  void PipelineCache::loadFromFile( const std::string& filePath )
+  {
+    std::ifstream file( filePath, std::ios::ate | std::ios::binary );
+
+    std::shared_ptr<PipelineCache> pipelineCache;
+    size_t startCacheSize = 0;
+    char* startCacheData = nullptr;
+    if ( !file.is_open( ) )
+    {
+      std::cerr << "File " << filePath << " don't opened. "
+        << "Creating empty pipeline_cache" << std::endl;
+    }
+    else
+    {
+      startCacheSize = ( size_t ) file.tellg( );
+      startCacheData = new char[ startCacheSize ];
+
+      file.seekg( 0 );
+      file.read( startCacheData, startCacheSize );
+
+      file.close( );
+
+      std::cout << "  Pipeline cache HIT!\n";
+      std::cout << "  cacheData loaded from " << filePath << std::endl;
+
+      // clang-format on
+      uint32_t headerLength = 0;
+      uint32_t cacheHeaderVersion = 0;
+      uint32_t vendorID = 0;
+      uint32_t deviceID = 0;
+      uint8_t pipelineCacheUUID[ VK_UUID_SIZE ] = { };
+
+      memcpy( &headerLength, ( uint8_t * ) startCacheData + 0, 4 );
+      memcpy( &cacheHeaderVersion, ( uint8_t * ) startCacheData + 4, 4 );
+      memcpy( &vendorID, ( uint8_t * ) startCacheData + 8, 4 );
+      memcpy( &deviceID, ( uint8_t * ) startCacheData + 12, 4 );
+      memcpy( pipelineCacheUUID, ( uint8_t * ) startCacheData + 16, VK_UUID_SIZE );
+
+
+      // Check each field and report bad values before freeing existing cache
+      bool badCache = false;
+
+      if ( headerLength <= 0 )
+      {
+        badCache = true;
+        printf( "  Bad header length in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", headerLength );
+      }
+
+      if ( cacheHeaderVersion != VK_PIPELINE_CACHE_HEADER_VERSION_ONE )
+      {
+        badCache = true;
+        printf( "  Unsupported cache header version in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", cacheHeaderVersion );
+      }
+      auto props = _device->getPhysicalDevice( )->getDeviceProperties( );
+
+      if ( vendorID != props.vendorID )
+      {
+        badCache = true;
+        printf( "  Vendor ID mismatch in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", vendorID );
+        printf( "    Driver expects: 0x%.8x\n", props.vendorID );
+      }
+
+      if ( deviceID != props.deviceID )
+      {
+        badCache = true;
+        printf( "  Device ID mismatch in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: 0x%.8x\n", deviceID );
+        printf( "    Driver expects: 0x%.8x\n", props.deviceID );
+      }
+
+      if ( memcmp( pipelineCacheUUID, props.pipelineCacheUUID,
+        sizeof( pipelineCacheUUID ) ) != 0 )
+      {
+        badCache = true;
+        printf( "  UUID mismatch in %s.\n", filePath.c_str( ) );
+        printf( "    Cache contains: " );
+        print_UUID( pipelineCacheUUID );
+        printf( "\n" );
+        printf( "    Driver expects: " );
+        print_UUID( props.pipelineCacheUUID );
+        printf( "\n" );
+      }
+
+      if ( badCache )
+      {
+        // Don't submit initial cache data if any version info is incorrect
+        free( startCacheData );
+        startCacheSize = 0;
+        startCacheData = nullptr;
+
+        // And clear out the old cache file for use in next run
+        printf( "  Deleting cache entry %s to repopulate.\n", filePath.c_str( ) );
+        if ( remove( filePath.c_str( ) ) != 0 ) {
+          fputs( "Reading error", stderr );
+          exit( EXIT_FAILURE );
+        }
+      }
+    }
+    vk::PipelineCacheCreateInfo createInfo{ { }, startCacheSize, startCacheData };
+    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+  }
+
+  void PipelineCache::loadFromFile( vk::PipelineCacheCreateFlags flags,
+    size_t initialSize, void const* initialData )
+  {
+    vk::PipelineCacheCreateInfo createInfo{ flags, initialSize, initialData };
+    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+  }
 
   std::vector<uint8_t>  PipelineCache::getData( ) const
   {

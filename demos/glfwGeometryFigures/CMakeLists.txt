@@ -1,0 +1,10 @@
+set( LAVAGLFWGEOMETRYFIGURES_HEADERS
+)
+set( LAVAGLFWGEOMETRYFIGURES_SOURCES
+	main.cpp
+)
+set( LAVAGLFWGEOMETRYFIGURES_LINK_LIBRARIES
+	lava
+	glfwLava
+)
+common_application( lavaGLFWGeometryFigures )

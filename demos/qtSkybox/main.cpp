@@ -4,16 +4,17 @@
 
 #include <QApplication>
 
-#include "vulkanWindow.h"
+#include "mainwindow.h"
+#include "vulkanwindow.h"
 
 int main( int argc, char** argv )
 {
   QApplication app( argc, argv );
 
-  VulkanWindow vw;
-  vw.setWidth( 640 );
-  vw.setHeight( 480 );
-  vw.show( );
+  VulkanWindow* vw = new VulkanWindow( );
+  MainWindow w ( vw );
+  w.resize( 1024, 768 );
+  w.show( );
 
   return app.exec( );
 }

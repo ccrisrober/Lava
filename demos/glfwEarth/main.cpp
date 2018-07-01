@@ -455,6 +455,8 @@ public:
 
 class VulkanWindow : public lava::GLFWVulkanWindow
 {
+protected:
+  MainWindowRenderer* _renderer;
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
@@ -467,21 +469,22 @@ public:
     {
       if ( key == GLFW_KEY_A )
       {
-        (( MainWindowRenderer* )(renderer))->diffuse.pc.normalScale -= 0.1f;
+        _renderer->diffuse.pc.normalScale -= 0.1f;
       }
       else if ( key == GLFW_KEY_S )
       {
-        ( ( MainWindowRenderer* ) ( renderer ) )->diffuse.pc.normalScale += 0.1f;
+        _renderer->diffuse.pc.normalScale += 0.1f;
       }
     }
   }
   virtual void mouseEvent( double xPos, double yPos ) override
   {
-    ( ( MainWindowRenderer* ) ( renderer ) )->mouseEvent( xPos, yPos );
+    _renderer->mouseEvent( xPos, yPos );
   }
   virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
   {
-    return new MainWindowRenderer( this );
+    _renderer = new MainWindowRenderer( this );
+    return _renderer;
   }
 };
 

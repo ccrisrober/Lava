@@ -64,7 +64,7 @@ namespace lava
     {
       layers = {
   #ifndef NDEBUG
-    #ifndef __ANDROID__
+    #ifndef Q_OS_ANDROID
         "VK_LAYER_LUNARG_standard_validation"
     #else
         "VK_LAYER_GOOGLE_threading",

@@ -55,11 +55,6 @@ public:
   {
 
   }
-  /*VulkanWindow( int w, int h, const char* title, bool enableLayers )
-    : lava::GLFWVulkanWindow( w, h, title, enableLayers )
-  {
-
-  }*/
   virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
