@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <iostream>
 
 #include <glfwLava/glfwLava.h>
@@ -94,7 +113,7 @@ public:
     // Image will be sampled in the fragment shader and used as storage target in the compute shader
     auto usageFlags = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eStorage;
 
-    vk::Device dev = static_cast<vk::Device>( *device );
+    //vk::Device dev = static_cast<vk::Device>( *device );
 
     tex->image = device->createImage( { }, vk::ImageType::e2D, format,
       vk::Extent3D( tex->width, tex->height, 1 ), 1, 1,
@@ -548,7 +567,7 @@ public:
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 500, 500, "Cube with computed fractal", true );
   app.show( );

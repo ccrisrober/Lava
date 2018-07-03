@@ -48,10 +48,9 @@ namespace lava
     size_t, int32_t msgCode, const char* pLayerPrefix,
     const char* pMsg, void* )
   {
-    std::cerr << "vulkan: " << pMsg << std::endl;
-    return VK_FALSE;
+    //std::cerr << "vulkan: " << pMsg << std::endl;
+    //return VK_FALSE;
 
-    /**
     std::stringstream message;
 
     // Determine prefix
@@ -107,7 +106,6 @@ namespace lava
 
     // Abort calls that caused a validation message
     return VK_FALSE;
-    /**/
   }
 
   Instance::Instance( const vk::Instance& i )

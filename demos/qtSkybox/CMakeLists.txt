@@ -1,10 +1,10 @@
 set( LAVAQTSKYBOX_HEADERS
-	vulkanWindow.h
+	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
 set( LAVAQTSKYBOX_SOURCES
-	vulkanWindow.cpp
+	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp

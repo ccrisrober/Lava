@@ -21,14 +21,14 @@
 
 namespace std
 {
-#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
-
-#else
+//#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+//
+//#else
   template<typename T, typename... Args>
   std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
   }
-#endif
+//#endif
 }
 
 namespace lava

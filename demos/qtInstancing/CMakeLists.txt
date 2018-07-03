@@ -1,10 +1,10 @@
 set( LAVAQTINSTANCING_HEADERS
-	vulkanWindow.h
+	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
 set( LAVAQTINSTANCING_SOURCES
-	vulkanWindow.cpp
+	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp

@@ -53,8 +53,8 @@ common_find_package( STBI REQUIRED SYSTEM )
 common_find_package( GLM SYSTEM )
 common_find_package( ASSIMP SYSTEM )
 common_find_package( GLFW3 SYSTEM )
-common_find_package( Qt5Core SYSTEM )
-common_find_package( Qt5Widgets SYSTEM )
+common_find_package( Qt5Core SYSTEM 5.10 )
+common_find_package( Qt5Widgets SYSTEM 5.10 )
 
 
 #include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/vma/src")

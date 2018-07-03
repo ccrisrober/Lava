@@ -136,7 +136,7 @@ int main( void )
     std::vector<float> hostDataB( bufferElements );
 
     std::vector<float> cpuResult( bufferElements );
-    int i = 0;
+    size_t i = 0;
     for ( float& n : hostDataB )
     {
       n = min + ( max - min ) * ( ( ( ( float ) rand( ) ) / ( float ) RAND_MAX ) ) + min;
