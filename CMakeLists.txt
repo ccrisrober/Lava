@@ -79,7 +79,7 @@ if( QT5CORE_FOUND )
 endif( )
 
 add_subdirectory( lavaUtils )
-# add_subdirectory( lavaEngine )
+#add_subdirectory( lavaEngine )
 
 add_subdirectory( demos )
 

@@ -1,0 +1,10 @@
+set( LAVAGLFWDEFERREDSUBPASS_HEADERS
+)
+set( LAVAGLFWDEFERREDSUBPASS_SOURCES
+	main.cpp
+)
+set( LAVAGLFWDEFERREDSUBPASS_LINK_LIBRARIES
+	lava
+	glfwLava
+)
+common_application( lavaGLFWDeferredSubpass )

@@ -60,6 +60,7 @@ namespace lava
     vk::ImageSubresourceRange subresourceRange;
   };
   class CommandBuffer;
+  
   class CommandPool :
     public VulkanResource,
     public std::enable_shared_from_this<CommandPool>
@@ -70,16 +71,22 @@ namespace lava
       vk::CommandPoolCreateFlags flags = { }, uint32_t familyIndex = 0 );
     LAVA_API
     virtual ~CommandPool( void );
-
+    LAVA_API
+    void reset( vk::CommandPoolResetFlags flags );
+#if !defined(NDEBUG)
+    LAVA_API
+    uint32_t getFamilyIndex( void ) const;
+    LAVA_API
+    bool individuallyResetCommandBuffers( void ) const;
+    LAVA_API
+    bool shortLivedCommandBuffers( void ) const;
     LAVA_API
     bool supportsCompute( void ) const;
-
     LAVA_API
     bool supportsGraphics( void ) const;
-
     LAVA_API
     bool supportsTransfer( void ) const;
-
+#endif
     inline operator vk::CommandPool( void ) const
     {
       return _commandPool;
@@ -93,11 +100,15 @@ namespace lava
       vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary );
   protected:
     vk::CommandPool _commandPool;
-    std::vector<CommandBuffer*> _commandBuffers;
+#if !defined(NDEBUG)
+    std::vector<lava::CommandBuffer*> _commandBuffers;
+    vk::CommandPoolCreateFlags _createFlags;
     uint32_t _familyIndex;
+#endif
   };
 
-  class CommandBuffer
+  class CommandBuffer:
+    public std::enable_shared_from_this<CommandBuffer>
   {
     enum class State
     {
@@ -130,12 +141,29 @@ namespace lava
       return _commandBuffer;
     }
 
-    /*
-    We need to create a custom CommandBufferInheritanceInfo struct using 
-    lava::RenderPass and Framebuffer
+#if !defined(NDEBUG)
     LAVA_API
-    void begin( vk::CommandBufferUsageFlags flags = { },
-      vk::CommandBufferInheritanceInfo* inheritInfo = nullptr );*/
+    std::shared_ptr< lava::CommandBuffer > getPrimaryCommandBuffer( void ) const
+    {
+      return _primaryCommandBuffer.lock( );
+    }
+    LAVA_API
+    bool isOneTimeSubmit( void ) const
+    {
+      return !!( _flags & vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+    }
+    LAVA_API
+    bool isRecording( void ) const
+    {
+      return _isRecording;
+    }
+    LAVA_API
+    bool isSimultaneousUsageAllowed( void ) const
+    {
+      return !!( _flags & vk::CommandBufferUsageFlagBits::eSimultaneousUse );
+    }
+#endif
+
     LAVA_API
     void begin( vk::CommandBufferUsageFlags flags = { },
       const std::shared_ptr<RenderPass>& renderPass = { },
@@ -163,6 +191,9 @@ namespace lava
     );
     #pragma endregion
 
+    LAVA_API
+    void beginRenderPass( const vk::RenderPassBeginInfo& beginInfo, 
+      vk::SubpassContents contents );
     LAVA_API
     void beginRenderPass( const std::shared_ptr<RenderPass>& renderPass,
       const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
@@ -265,11 +296,11 @@ namespace lava
       vk::DeviceSize offset, uint32_t count, uint32_t stride );
     #pragma endregion
 
-    LAVA_API
+    /*LAVA_API
     inline bool isRecording( void ) const
     {
       return _state == State::Recording;
-    }
+    }*/
 
     LAVA_API
     void fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
@@ -358,18 +389,47 @@ namespace lava
     {
       return _framebuffer;
     }
-
+#if !defined(NDEBUG)
+  private:
+    void setPrimaryCommandBuffer(
+      const std::shared_ptr<lava::CommandBuffer>& primaryCommandBuffer )
+    {
+      _primaryCommandBuffer = primaryCommandBuffer;
+    }
+#endif
   protected:
-    std::shared_ptr<CommandPool> _commandPool;
-    vk::CommandBufferLevel _level;
-
-    State _state;
+    friend class CommandPool;
+    LAVA_API
+    void onReset( void );
+  private:
+    std::shared_ptr< lava::CommandPool > _commandPool;
+    //State _state;
 
     vk::CommandBuffer _commandBuffer;
     std::shared_ptr<RenderPass> _renderPass;
     std::shared_ptr<Framebuffer> _framebuffer;
+    std::vector< std::shared_ptr< lava::CommandBuffer > > _secondaryCommandBuffers;
+
     std::vector<::vk::DescriptorSet> _bindDescriptorSets;
     std::vector<::vk::Buffer> _bindVertexBuffers;
+
+#if !defined(NDEBUG)
+    struct QueryInfo
+    {
+      bool active;
+      bool contained;
+      vk::QueryControlFlags flags;
+    };
+    vk::CommandBufferUsageFlags _flags;
+    bool _inRenderPass;
+    bool _isRecording;
+    bool _isResetFromCommandPool;
+    vk::CommandBufferLevel _level;
+    vk::Bool32 _occlusionQueryEnable;
+    std::weak_ptr<lava::CommandBuffer> _primaryCommandBuffer;
+    QueryInfo _queryInfo[ VK_QUERY_TYPE_RANGE_SIZE ];
+    vk::PipelineStageFlags _stageFlags;
+#endif
 
   public:
     LAVA_API
@@ -379,6 +439,7 @@ namespace lava
   protected:
     PFN_vkCmdPushDescriptorSetKHR vkCmdPushDescriptorSetKHR = nullptr;
   };
+  
   template<typename T>
   inline void CommandBuffer::pushConstants( vk::PipelineLayout layout, 
     vk::ShaderStageFlags stageFlags, uint32_t start, 

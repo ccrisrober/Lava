@@ -1,0 +1,11 @@
+set( LAVAGLFWSPECIALIZATIONCONSTANTS_HEADERS
+)
+set( LAVAGLFWSPECIALIZATIONCONSTANTS_SOURCES
+	main.cpp
+)
+set( LAVAGLFWSPECIALIZATIONCONSTANTS_LINK_LIBRARIES
+	lava
+	glfwLava
+	lavaUtils
+)
+common_application( lavaGLFWSpecializationConstants )

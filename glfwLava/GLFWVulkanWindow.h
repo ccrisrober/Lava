@@ -318,6 +318,11 @@ namespace lava
   {
   protected:
     GLFWLAVA_API
+    virtual void setupFramebuffer( void ) { }
+    GLFWLAVA_API
+    virtual void setupRenderPass( void ) { }
+
+    GLFWLAVA_API
     virtual bool setupPipelineCache( void );
   private:
     GLFWwindow* window;

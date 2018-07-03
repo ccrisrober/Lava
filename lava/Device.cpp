@@ -335,6 +335,15 @@ namespace lava
     return std::make_shared<RenderPass>( shared_from_this( ), attachments,
       subpasses, dependencies );
   }
+  size_t Device::getQueueCount( uint32_t familyIndex ) const
+  {
+    auto it = _queues.find( familyIndex );
+    return it != _queues.end( ) ? it->second.size( ) : 0;
+  }
+  size_t Device::getQueueFamilyCount( void ) const
+  {
+    return _queues.size( );
+  }
   std::shared_ptr<Queue> Device::getQueue( uint32_t familyIndex, 
     uint32_t queueIndex )
   {

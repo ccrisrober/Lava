@@ -1,0 +1,11 @@
+set( LAVAGLFWMULTISETDESCRIPTOR_HEADERS
+)
+set( LAVAGLFWMULTISETDESCRIPTOR_SOURCES
+	main.cpp
+)
+set( LAVAGLFWMULTISETDESCRIPTOR_LINK_LIBRARIES
+	lava
+	glfwLava
+	lavaUtils
+)
+common_application( lavaGLFWMultiSetDescriptor )

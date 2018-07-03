@@ -1,43 +1,26 @@
-/**
-* Copyright (c) 2017 - 2018, Lava
-* All rights reserved.
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-**/
+#include <iostream>
 
-#include <lava/lava.h>
-#include <lavaRenderer/lavaRenderer.h>
+#include <glfwLava/glfwLava.h>
 using namespace lava;
 
 #include <routes.h>
-#include "utils/Camera.h"
+
+#include "../utils/Camera.h"
 
 const unsigned int SCR_WIDTH = 500;
 const unsigned int SCR_HEIGHT = 500;
 
 #define PI 3.14159
 
-class CustomRenderer : public VulkanWindowRenderer
+class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
 {
+private:
+  lava::GLFWVulkanWindow* _window;
 public:
-  CustomRenderer( lava::VulkanWindow *w )
-    : VulkanWindowRenderer( )
-    , _window( w )
+  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+    : _window( window )
   {
-    _window->setWindowTitle( "ClipPlanes" );
-    camera = Camera( glm::vec3( 0.0f, 1.0f, 25.5f ) );
+    camera = Camera( glm::vec3( 0.0f, 0.0f, 25.5f ) );
   }
 
   // camera
@@ -45,10 +28,6 @@ public:
   // timing
   float deltaTime = 0.0f; // time between current frame and last frame
   float lastFrame = 0.0f;
-
-  float lastX = SCR_WIDTH * 0.5f;
-  float lastY = SCR_HEIGHT * 0.5f;
-  bool firstMouse = true;
 
   struct
   {
@@ -220,10 +199,10 @@ public:
       offsetof( Vertex, pos )
       ) }
     );
-    vk::PipelineInputAssemblyStateCreateInfo assembly( {},
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
       vk::PrimitiveTopology::eTriangleList, VK_FALSE );
     PipelineViewportStateCreateInfo viewport( 1, 1 );
-    vk::PipelineRasterizationStateCreateInfo rasterization( {}, true,
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
       false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone,
       vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
     PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
@@ -231,7 +210,7 @@ public:
     vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
       vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
       0, 0, 0 );
-    vk::PipelineDepthStencilStateCreateInfo depthStencil( {}, true, true,
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
       vk::CompareOp::eLessOrEqual, false, false, stencilOpState, stencilOpState,
       0.0f, 0.0f );
     vk::PipelineColorBlendAttachmentState colorBlendAttachment( false,
@@ -246,10 +225,10 @@ public:
     } );
 
     pipelines.solid = device->createGraphicsPipeline(
-      _window->pipelineCache, {}, { vertexStage, geomStage, fragmentStage },
+      _window->pipelineCache( ), { }, { vertexStage, geomStage, fragmentStage },
       vertexInput, assembly, nullptr, viewport, rasterization, multisample,
       depthStencil, colorBlend, dynamic, pipelineLayout,
-      _window->defaultRenderPass( ) );
+      _window->renderPass( ) );
 
     // Wireframe rendering pipeline
     if ( _window->physicalDevice( )->getDeviceFeatures( ).fillModeNonSolid )
@@ -260,10 +239,10 @@ public:
       rasterization.cullMode = vk::CullModeFlagBits::eNone;
 
       pipelines.wireframe = device->createGraphicsPipeline(
-        _window->pipelineCache, {}, { vertexStage, geomStage, fragmentStage },
+        _window->pipelineCache( ), { }, { vertexStage, geomStage, fragmentStage },
         vertexInput, assembly, nullptr, viewport, rasterization, multisample,
         depthStencil, colorBlend, dynamic, pipelineLayout,
-        _window->defaultRenderPass( ) );
+        _window->renderPass( ) );
     }
 
     // Init descriptor set
@@ -276,14 +255,12 @@ public:
       DescriptorBufferInfo( uboUniform, 0, sizeof( ubo ) )
       )
     };
-    device->updateDescriptorSets( wdss, {} );
+    device->updateDescriptorSets( wdss, { } );
   }
 
   void updateMVP( void )
   {
-    auto size = _window->getExtent( );
-
-    uint32_t width = size.width, height = size.height;
+    auto size = _window->swapchainImageSize( );
 
     static auto startTime = std::chrono::high_resolution_clock::now( );
 
@@ -299,7 +276,8 @@ public:
     ubo.model = glm::scale( ubo.model, glm::vec3( 0.05f ) );
     ubo.model = glm::rotate( glm::mat4( 1.0f ), time * 0.25f * glm::radians( 90.0f ), glm::vec3( 0.0f, 0.0f, 1.0f ) );
     ubo.view = camera.GetViewMatrix( );
-    ubo.proj = glm::perspective( glm::radians( camera.Zoom ), ( float ) width / ( float ) height, 0.1f, 100.0f );
+    ubo.proj = glm::perspective( glm::radians( camera.Zoom ), 
+      ( float ) size.width / ( float ) size.height, 0.1f, 100.0f );
     ubo.proj[ 1 ][ 1 ] *= -1;
 
     ubo.clipPlane.z = 7.0f * sin( time );
@@ -311,49 +289,16 @@ public:
 
   void nextFrame( void ) override
   {
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
-    {
-      _window->_window->close( );
-    }
-
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
+    /*if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
     {
       enable_wire = false;
     }
     else if ( Input::isKeyPressed( lava::Keyboard::Key::X ) )
     {
       enable_wire = true;
-    }
+    }*/
 
-
-    const auto size = _window->swapChainImageSize( );
-
-    // Mouse event
-    {
-      if ( Input::MouseButtonPress( MouseButton::Left ) )
-      {
-        int xPos = Input::MouseX( );
-        int yPos = Input::MouseY( );
-        if ( firstMouse )
-        {
-          lastX = xPos;
-          lastY = yPos;
-          firstMouse = false;
-        }
-
-        float xoffset = xPos - lastX;
-        float yoffset = lastY - yPos; // reversed since y-coordinates go from bottom to top
-
-        lastX = xPos;
-        lastY = yPos;
-
-        camera.ProcessMouseMovement( xoffset, yoffset );
-      }
-      else if ( Input::MouseButtonRelease( MouseButton::Left ) )
-      {
-        firstMouse = true;
-      }
-    }
+    const auto size = _window->swapchainImageSize( );
 
     updateMVP( );
 
@@ -364,11 +309,10 @@ public:
 
     auto cmd = _window->currentCommandBuffer( );
     vk::Rect2D rect;
-    rect.extent.width = size.x;
-    rect.extent.height = size.y;
+    rect.extent = size;
     cmd->beginRenderPass(
-      _window->defaultRenderPass( ),
-      _window->currentFramebuffer( ),
+      _window->renderPass( ),
+      _window->framebuffer( ),
       rect, clearValues, vk::SubpassContents::eInline
     );
 
@@ -378,20 +322,17 @@ public:
       pipelineLayout, 0, { descriptorSet }, nullptr );
     cmd->bindVertexBuffer( 0, vertexBuffer, 0 );
     cmd->bindIndexBuffer( indexBuffer, 0, vk::IndexType::eUint16 );
-    cmd->setViewportScissors( _window->getExtent( ) );
+    cmd->setViewportScissors( size );
 
     cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
 
     cmd->endRenderPass( );
 
-    _window->requestUpdate( );
+    _window->frameReady( );
   }
-
-private:
-  VulkanWindow *_window;
-
   bool enable_wire = false;
 
+private:
   std::shared_ptr<Buffer> vertexBuffer;
   std::shared_ptr<Buffer> indexBuffer;
 
@@ -406,57 +347,41 @@ private:
   std::shared_ptr<Buffer> uboUniform;
 };
 
-class CustomVkWindow : public VulkanWindow
+class VulkanWindow : public lava::GLFWVulkanWindow
 {
+protected:
+  MainWindowRenderer* _renderer;
 public:
-  VulkanWindowRenderer* createRenderer( void ) override
+  explicit VulkanWindow( int width, int height,
+    const std::string& title, bool enableLayers )
+    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
   {
-    return new CustomRenderer( this );
+  }
+  virtual void keyEvent( int key, int act ) override
+  {
+    if ( act == GLFW_PRESS )
+    {
+      if ( key == GLFW_KEY_Z )
+      {
+        _renderer->enable_wire = false;
+      }
+      else if ( key == GLFW_KEY_X )
+      {
+        _renderer->enable_wire = true;
+      }
+    }
+  }
+  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  {
+    _renderer = new MainWindowRenderer( this );
+    return _renderer;
   }
 };
 
-int main( void )
+
+int main( int argc, char** argv )
 {
-  std::shared_ptr<Instance> instance;
-
-  // Create instance
-  vk::ApplicationInfo appInfo(
-    "App Name",
-    VK_MAKE_VERSION( 1, 0, 0 ),
-    "FooEngine",
-    VK_MAKE_VERSION( 1, 0, 0 ),
-    VK_API_VERSION_1_0
-  );
-
-
-  std::vector<const char*> layers =
-  {
-#ifndef NDEBUG
-    "VK_LAYER_LUNARG_standard_validation",
-#endif
-  };
-  std::vector<const char*> extensions =
-  {
-    VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
-    VK_EXT_DEBUG_REPORT_EXTENSION_NAME
-  };
-
-
-  instance = Instance::create( vk::InstanceCreateInfo(
-    { },
-    &appInfo,
-    layers.size( ),
-    layers.data( ),
-    extensions.size( ),
-    extensions.data( )
-  ) );
-
-  CustomVkWindow w;
-  w.setVulkanInstance( instance );
-  w.resize( SCR_WIDTH, SCR_HEIGHT );
-
-  w.show( );
-
-  return 0;
+  VulkanWindow app( SCR_WIDTH, SCR_HEIGHT, "Clip planes", true );
+  app.show( );
+  return EXIT_SUCCESS;
 }

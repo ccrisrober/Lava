@@ -304,49 +304,6 @@ public:
 
   void nextFrame( void ) override
   {
-    /*if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
-    {
-      _window->_window->close( );
-    }
-
-    if ( Input::isKeyPressed( lava::Keyboard::Key::A ) )
-    {
-      diffuse.pc.normalScale -= 0.1f;
-    }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::S ) )
-    {
-      diffuse.pc.normalScale += 0.1f;
-    }*/
-
-    //std::cout << "NORMAL SCALE: " << pc.normalScale << std::endl;
-
-    // Mouse event
-    /*{
-      if ( Input::MouseButtonPress( MouseButton::Left ) )
-      {
-        int xPos = Input::MouseX( );
-        int yPos = Input::MouseY( );
-        if ( firstMouse )
-        {
-          lastX = xPos;
-          lastY = yPos;
-          firstMouse = false;
-        }
-
-        float xoffset = xPos - lastX;
-        float yoffset = lastY - yPos; // reversed since y-coordinates go from bottom to top
-
-        lastX = xPos;
-        lastY = yPos;
-
-        camera.ProcessMouseMovement( xoffset, yoffset );
-      }
-      else if ( Input::MouseButtonRelease( MouseButton::Left ) )
-      {
-        firstMouse = true;
-      }
-    }*/
-
     updateMVP( );
 
     std::array<vk::ClearValue, 2 > clearValues;

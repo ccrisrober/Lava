@@ -225,50 +225,33 @@ public:
   {
     auto device = _window->device( );
 
+    auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
+    cmd->begin( );
     // Vertex buffer
     {
       uint32_t vertexBufferSize = vertices.size( ) * sizeof( Vertex );
-      auto stagingBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | 
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, vertexBufferSize, vertices.data( ) );
 
       graphics.vertexBuffer = device->createBuffer( vertexBufferSize,
-        vk::BufferUsageFlagBits::eVertexBuffer | 
+        vk::BufferUsageFlagBits::eVertexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
-      cmd->begin( );
-        stagingBuffer->copy( cmd, graphics.vertexBuffer, 0, 0, vertexBufferSize );
-      cmd->end( );
-
-      _window->gfxQueue( )->submitAndWait( cmd );
+      graphics.vertexBuffer->update<Vertex>( cmd, 0, { uint32_t( vertices.size( ) ),
+        vertices.data( ) } );
     }
 
     // Index buffer
     {
       uint32_t indexBufferSize = indices.size( ) * sizeof( uint32_t );
 
-      auto stagingBuffer = device->createBuffer( indexBufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent );
-      stagingBuffer->writeData( 0, indexBufferSize, indices.data( ) );
-
       graphics.indexBuffer = device->createBuffer( indexBufferSize,
         vk::BufferUsageFlagBits::eIndexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
         vk::MemoryPropertyFlagBits::eDeviceLocal );
-
-      auto cmd = _window->gfxCommandPool( )->allocateCommandBuffer( );
-      cmd->begin( );
-        stagingBuffer->copy( cmd, graphics.indexBuffer, 0, 0, indexBufferSize );
-      cmd->end( );
-
-      _window->gfxQueue( )->submitAndWait( cmd );
+      graphics.indexBuffer->update<uint16_t>( cmd, 0, { uint32_t( indices.size( ) ),
+        indices.data( ) } );
     }
+    cmd->end( );
+    _window->gfxQueue( )->submitAndWait( cmd );
   
     // Uniform buffers
     {

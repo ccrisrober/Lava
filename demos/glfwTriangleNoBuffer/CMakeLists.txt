@@ -1,0 +1,10 @@
+set( LAVAGLFWTRIANGLENOBUFFER_HEADERS
+)
+set( LAVAGLFWTRIANGLENOBUFFER_SOURCES
+	main.cpp
+)
+set( LAVAGLFWTRIANGLENOBUFFER_LINK_LIBRARIES
+	lava
+	glfwLava
+)
+common_application( lavaGLFWTriangleNoBuffer )

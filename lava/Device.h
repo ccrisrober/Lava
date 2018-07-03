@@ -247,6 +247,10 @@ namespace lava
       vk::ArrayProxy<const vk::SubpassDependency> dependencies );
 
     LAVA_API
+    size_t getQueueCount( uint32_t familyIndex ) const;
+    LAVA_API
+    size_t getQueueFamilyCount( void ) const;
+    LAVA_API
     std::shared_ptr<Queue> getQueue( uint32_t familyIndex, uint32_t queueIdx );
 
     LAVA_API

@@ -857,9 +857,13 @@ namespace lava
     }
 
     imageIdx = res.value;
-    cmds[ imageIdx ] = _cmdPool->allocateCommandBuffer( );
+    if ( !cmds[ imageIdx ] )
+    {
+      cmds[ imageIdx ] = _cmdPool->allocateCommandBuffer( );
+    }
 
     auto cmd = cmds[ imageIdx ];
+    cmd->reset( );
     cmd->begin( );
 
     if ( _frameGrabbing )
@@ -1092,8 +1096,8 @@ namespace lava
       swapchainImageSize( ), _dsFormat, sampleCount );
 
     _cmdPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits( ),
-      //vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
+      //vk::CommandPoolCreateFlagBits( ),
+      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
       _gfxQueueFamilyIdx );
 
     size_t numImages = _dfbFramebuffer->swapchain( )->count( );

@@ -73,23 +73,59 @@ namespace lava
   CommandPool::CommandPool( const std::shared_ptr<Device>& device,
     vk::CommandPoolCreateFlags flags, uint32_t familyIndex )
     : VulkanResource( device )
+#if !defined(NDEBUG)
+    , _createFlags( flags )
     , _familyIndex( familyIndex )
+#endif
   {
+    //assert( familyIndex < device->getQueueFamilyCount( ) );
+    
     vk::CommandPoolCreateInfo cci( flags, familyIndex );
     _commandPool = static_cast< vk::Device >( *_device )
       .createCommandPool( cci );
   }
   CommandPool::~CommandPool( void )
   {
+    assert( _commandBuffers.empty( ) );   // due to our ref-counting, this CommandPool can only go when all its CommandBuffers are already gone!
+                                           // that, means, none of the CommandBuffers are pending execution !!
     static_cast< vk::Device >( *_device ).destroyCommandPool( _commandPool );
   }
+  void CommandPool::reset( vk::CommandPoolResetFlags flags )
+  {
+#if !defined(NDEBUG)
+    for ( std::vector<lava::CommandBuffer*>::iterator it =
+      _commandBuffers.begin( ); it != _commandBuffers.end( ); ++it )
+    {
+      ( *it )->onReset( );
+    }
+#endif
+    static_cast< vk::Device >( *_device ).resetCommandPool( _commandPool, flags );
+  }
+
   std::shared_ptr<CommandBuffer> CommandPool::allocateCommandBuffer(
     vk::CommandBufferLevel level )
   {
-    std::shared_ptr<CommandBuffer> commandBuffer =
+    std::shared_ptr<lava::CommandBuffer> commandBuffer = 
       std::make_shared<CommandBuffer>( shared_from_this( ), level );
+#if !defined(NDEBUG)
     _commandBuffers.push_back( commandBuffer.get( ) );
+#endif
     return( commandBuffer );
+  }
+#if !defined(NDEBUG)
+  uint32_t CommandPool::getFamilyIndex( ) const
+  {
+    return _familyIndex;
+  }
+
+  bool CommandPool::individuallyResetCommandBuffers( void ) const
+  {
+    return !!( _createFlags & vk::CommandPoolCreateFlagBits::eResetCommandBuffer );
+  }
+
+  bool CommandPool::shortLivedCommandBuffers( void ) const
+  {
+    return !!( _createFlags & vk::CommandPoolCreateFlagBits::eTransient );
   }
 
   bool CommandPool::supportsCompute( void ) const
@@ -112,45 +148,45 @@ namespace lava
       getQueueFamilyProperties( )[ _familyIndex ]
       .queueFlags & vk::QueueFlagBits::eTransfer );
   }
+#endif
+
   CommandBuffer::CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool,
     vk::CommandBufferLevel level )
     : _commandPool( cmdPool )
+#if !defined(NDEBUG)
+    , _inRenderPass( false )
+    , _isRecording( false )
+    , _isResetFromCommandPool( true )
     , _level( level )
-    , _state( State::Ready )
+//    , _state( State::Ready )
+#endif
   {
+#if !defined(NDEBUG)
+    for ( size_t i = 0; i <= VK_QUERY_TYPE_RANGE_SIZE; ++i )
+    {
+      _queryInfo[ i ].active = false;
+    }
+#endif
+    vk::Device dev( *_commandPool->getDevice( ) );
     vk::CommandBufferAllocateInfo info( *_commandPool, level, 1 );
-    std::vector<vk::CommandBuffer> commandBuffers =
-      static_cast< vk::Device >( *_commandPool->getDevice( ) )
-      .allocateCommandBuffers( info );
+    auto commandBuffers = dev.allocateCommandBuffers( info );
     assert( !commandBuffers.empty( ) );
     _commandBuffer = commandBuffers[ 0 ];
   }
 
   CommandBuffer::~CommandBuffer( void )
   {
-    if ( _state == State::Submitted )
+    /*if ( _state == State::Submitted )
     {
       // TODO: Wait for finish
     }
     else if ( _state != State::Ready )
     {
 
-    }
-    static_cast<vk::Device>( *_commandPool->getDevice( ) )
-      .freeCommandBuffers( *_commandPool, _commandBuffer );
+    }*/
+    vk::Device dev( *_commandPool->getDevice( ) );
+    dev.freeCommandBuffers( *_commandPool, _commandBuffer );
   }
-
-  /*void CommandBuffer::begin( vk::CommandBufferUsageFlags flags, 
-    vk::CommandBufferInheritanceInfo * inheritInfo )
-  {
-    assert( !_isRecording );
-    _renderPass = inheritInfo->renderPass;
-    _framebuffer = inheritInfo->framebuffer;
-    vk::CommandBufferBeginInfo cbbi( flags, inheritInfo );
-
-    _commandBuffer.begin( cbbi );
-    _isRecording = true;
-  }*/
 
   void CommandBuffer::begin( vk::CommandBufferUsageFlags flags,
     const std::shared_ptr<RenderPass>& renderPass, uint32_t subpass,
@@ -158,7 +194,57 @@ namespace lava
     vk::Bool32 occlusionQueryEnable, vk::QueryControlFlags queryFlags,
     vk::QueryPipelineStatisticFlags pipelineStatistics )
   {
-    assert( _state == State::Ready );
+    //assert( _state == State::Ready );
+
+#if !defined(NDEBUG)
+    // TBD: should we introduce some FirstLevelCommandBuffer and SecondLevelCommandBuffer, where FirstLevel can have a much simpler begin function?
+    //      renderPass and subPass are meaningless for FirstLevelCommandBuffer
+    //      occlusionQueryEnable, queryFlags, and pipelineStatistics are ignored for FirstLevelCommandBuffer
+    assert( !_isRecording );
+    assert( _commandPool->individuallyResetCommandBuffers( ) || _isResetFromCommandPool );
+    // From the spec:
+    //    If commandBuffer is a secondary command buffer and either the occlusionQueryEnable member of 
+    //    pBeginInfo is VK_FALSE, or the precise occlusion queries feature is not enabled, the queryFlags member
+    //    of pBeginInfo must not contain VK_QUERY_CONTROL_PRECISE_BIT
+    // -> what's "precise occlusion queries feature" ??
+    assert( !renderPass || ( ( _level == vk::CommandBufferLevel::eSecondary ) && 
+      ( flags & vk::CommandBufferUsageFlagBits::eRenderPassContinue ) ) );
+    // From the spec:
+    //    subpass is the index of the subpass within renderPass that the VkCommandBuffer will be rendering against if
+    //    this is a secondary command buffer that was allocated with the VK_COMMAND_BUFFER_USAGE_RENDER_
+    //    PASS_CONTINUE_BIT set.
+    // -> where's the subpass within renderPass ??
+    assert( !framebuffer || ( flags & vk::CommandBufferUsageFlagBits::eRenderPassContinue ) );
+    assert( !( renderPass && framebuffer ) || ( renderPass->getDevice( ) == framebuffer->getDevice( ) ) );
+    // From the spec:
+    //    If the inherited queries feature is not enabled, occlusionQueryEnable must be VK_FALSE
+    //    If the inherited queries feature is enabled, queryFlags must be a valid combination of VkQueryControlFlagBits values
+    // -> where's that inherited queries feature? The VkPhysicalDeviceFeatures I currently have doesn't have that entry
+    // From the spec:
+    //    If flags contains VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, renderpass
+    //    must not be VK_NULL_HANDLE, and must be compatible with the render pass for the render pass instance
+    //    which this secondary command buffer will be executed in - see Section 8.2
+    // -> just check first half, as the compatibility statement needs some extra knowledge (?)
+    assert( !( flags & vk::CommandBufferUsageFlagBits::eRenderPassContinue ) || renderPass );
+    // From the spec:
+    //    If flags contains VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, and
+    //    framebuffer is not VK_NULL_HANDLE, framebuffer must match the VkFramebuffer that is specified
+    //    by vkCmdBeginRenderPass for the render pass instance which this secondary command buffer will be
+    //    executed in
+    // -> needs a check in beginRenderPass ?
+    /*assert( !( ( flags & vk::CommandBufferUsageFlagBits::eRenderPassContinue ) && 
+      framebuffer ) || ( renderPass && framebuffer->get<RenderPass>( )->isCompatible( renderPass ) ) );*/
+    // From the spec:
+    //    If renderPass is not VK_NULL_HANDLE, subpass must refer to a valid subpass index within
+    //    renderPass, specifically the index of the subpass which this secondary command buffer will be executed in
+    //  -> VkRenderPass has no subpass index ?!?
+
+    _flags = flags;
+    _isRecording = true;
+    _isResetFromCommandPool = false;
+    _occlusionQueryEnable = occlusionQueryEnable;
+    _stageFlags = vk::PipelineStageFlags( );
+#endif
 
     _renderPass = renderPass;
     _framebuffer = framebuffer;
@@ -166,39 +252,65 @@ namespace lava
     vk::CommandBufferInheritanceInfo inheritanceInfo;
     vk::CommandBufferBeginInfo beginInfo( flags, &inheritanceInfo );
 
-    inheritanceInfo.renderPass = renderPass ?
-      *renderPass : vk::RenderPass( );
+    inheritanceInfo.renderPass = renderPass ? *renderPass : vk::RenderPass( );
     inheritanceInfo.subpass = subpass;
-    inheritanceInfo.framebuffer = framebuffer ?
-      *framebuffer : vk::Framebuffer( );
+    inheritanceInfo.framebuffer = framebuffer ? *framebuffer : vk::Framebuffer( );
     inheritanceInfo.occlusionQueryEnable = occlusionQueryEnable;
     inheritanceInfo.queryFlags = queryFlags;
     inheritanceInfo.pipelineStatistics = pipelineStatistics;
 
     _commandBuffer.begin( beginInfo );
 
-    _state = State::Recording;
+    //_state = State::Recording;
   }
 
 
   void CommandBuffer::end( void )
   {
-    assert( _state == State::Recording );
+#if !defined(NDEBUG)
+    assert( _isRecording );
+    _isRecording = false;
+    // From the spec:
+    //    vkEndCommandBuffer must not be called inside a render pass instance
+    //    All queries made active during the recording of commandBuffer must have been made inactive
+#endif
+    //assert( _state == State::Recording );
 
     _commandBuffer.end( );
 
-    _state = State::RecordingDone;
+    //_state = State::RecordingDone;
   }
 
   void CommandBuffer::resetEvent( const std::shared_ptr<Event>& ev, 
     vk::PipelineStageFlags stageMask )
   {
+    assert( !!stageMask );
+    assert( _isRecording );
+    assert( _commandPool->supportsGraphics( ) || _commandPool->supportsCompute( ) );
+    assert( !_inRenderPass );
+    assert( _commandPool->getDevice( ) == ev->getDevice( ) );
+    // From the spec:
+    //    If the geometry shaders feature is not enabled, stageMask must not contain VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT
+    //    If the tessellation shaders feature is not enabled, stageMask must not contain VK_PIPELINE_STAGE_
+    //    TESSELLATION_CONTROL_SHADER_BIT or VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
     _commandBuffer.resetEvent( *ev, stageMask );
   }
 
   void CommandBuffer::setEvent( const std::shared_ptr<Event>& ev, 
     vk::PipelineStageFlags stageMask )
   {
+    assert( !!stageMask );
+    assert( _isRecording );
+    assert( _commandPool->supportsGraphics( ) || _commandPool->supportsCompute( ) );
+    assert( !_inRenderPass );
+    assert( _commandPool->getDevice( ) == ev->getDevice( ) );
+    // From the spec:
+    //    If the geometry shaders feature is not enabled, stageMask must not contain VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT
+    //    If the tessellation shaders feature is not enabled, stageMask must not contain VK_PIPELINE_STAGE_
+    //    TESSELLATION_CONTROL_SHADER_BIT or VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
+#if !defined(NDEBUG)
+    _stageFlags |= stageMask;
+#endif
     _commandBuffer.setEvent( *ev, stageMask );
   }
 
@@ -210,9 +322,35 @@ namespace lava
     vk::ArrayProxy<const vk::ImageMemoryBarrier> imageMemoryBarriers
   )
   {
+    assert( !!srcStageMask );
+    assert( !!dstStageMask );
+    assert( _isRecording );
+    assert( _commandPool->supportsGraphics( ) || _commandPool->supportsCompute( ) );
+    assert( !events.empty( ) );
+    assert( _stageFlags == srcStageMask );
+
+    // From the spec:
+    //    If vkSetEvent was used to signal any of the events in pEvents, srcStageMask must include the VK_
+    //    PIPELINE_STAGE_HOST_BIT flag
+    // -> is there any constraint on when that vkSetEvent had happened?? would need to add VK_PIPELINE_STAGE_HOST_BIT to _stageFlags
+    // From the spec:
+    //    If the geometry shaders feature is not enabled, srcStageMask must not contain VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT
+    //    If the geometry shaders feature is not enabled, dstStageMask must not contain VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT
+    //    If the tessellation shaders feature is not enabled, srcStageMask must not contain VK_PIPELINE_STAGE_
+    //    TESSELLATION_CONTROL_SHADER_BIT or VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
+    //    If the tessellation shaders feature is not enabled, dstStageMask must not contain VK_PIPELINE_STAGE_
+    //    TESSELLATION_CONTROL_SHADER_BIT or VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
+    // From the spec:
+    //    If the value of memoryBarrierCount is not 0, any given element of ppMemoryBarriers must point to a
+    //    valid vk::MemoryBarrier, vk::BufferMemoryBarrier or vk::ImageMemoryBarrier structure
+    // From the spec:
+    //    If pEvents includes one or more events that will be signaled by vkSetEvent after commandBuffer has
+    //    been submitted to a queue, then vkCmdWaitEvents must not be called inside a render pass instance
+
     std::vector<vk::Event> evts;
     for ( const auto& e : events )
     {
+      assert( _commandPool->getDevice( ) == e->getDevice( ) );
       evts.push_back( *e );
     }
 
@@ -222,12 +360,25 @@ namespace lava
     );
   }
 
+  void CommandBuffer::beginRenderPass( const vk::RenderPassBeginInfo& beginInfo, 
+    vk::SubpassContents contents )
+  {
+#if !defined(NDEBUG)
+    assert( _level == vk::CommandBufferLevel::ePrimary );
+    _inRenderPass = true;
+#endif
+    _commandBuffer.beginRenderPass( beginInfo, contents );
+  }
+
   void CommandBuffer::beginRenderPass( const std::shared_ptr<RenderPass>& rp,
     const std::shared_ptr<Framebuffer>& framebuffer, const vk::Rect2D& area,
     vk::ArrayProxy<const vk::ClearValue> clearValues, vk::SubpassContents cnts )
   {
-    assert( _state == State::Recording );
-
+    //assert( _state == State::Recording );
+#if !defined(NDEBUG)
+    assert( _level == vk::CommandBufferLevel::ePrimary );
+    _inRenderPass = true;
+#endif
     _renderPass = rp;
     _framebuffer = framebuffer;
 
@@ -236,13 +387,12 @@ namespace lava
     renderPassBeginInfo.renderPass = *rp;
     renderPassBeginInfo.framebuffer = *framebuffer;
     renderPassBeginInfo.renderArea = area;
-    renderPassBeginInfo.clearValueCount = clearValues.size( );
-    renderPassBeginInfo.pClearValues =
-      reinterpret_cast< vk::ClearValue const* >( clearValues.data( ) );
+    renderPassBeginInfo.clearValueCount = static_cast<uint32_t>( clearValues.size( ) );
+    renderPassBeginInfo.pClearValues = reinterpret_cast<vk::ClearValue const*>( clearValues.data( ) );
 
     _commandBuffer.beginRenderPass( renderPassBeginInfo, cnts );
 
-    _state = State::RecordingRenderPass;
+    //_state = State::RecordingRenderPass;
   }
 
   void CommandBuffer::fillBuffer( const std::shared_ptr<lava::Buffer>& dstBuffer,
@@ -259,26 +409,67 @@ namespace lava
 
   void CommandBuffer::endRenderPass( void )
   {
-    assert( _state == State::RecordingRenderPass );
+    //assert( _state == State::RecordingRenderPass );
 
+#if !defined(NDEBUG)
+    assert( _level == vk::CommandBufferLevel::ePrimary );
+    _inRenderPass = false;
+#endif
+    // TODO actually a commandBuffer should keep a std::vector for those
     _renderPass.reset( );
     _framebuffer.reset( );
 
     _commandBuffer.endRenderPass( );
 
-    _state = State::Recording;
+    //_state = State::Recording;
   }
 
   void CommandBuffer::executeCommands(
     const std::vector<std::shared_ptr<lava::CommandBuffer>>& secondaryCmds )
   {
-    std::vector< vk::CommandBuffer > v;
-    v.reserve( secondaryCmds.size( ) );
-    for ( const auto& cmd : secondaryCmds )
+    assert( _isRecording );
+    assert( _commandPool->supportsCompute( ) || _commandPool->supportsGraphics( ) || _commandPool->supportsTransfer( ) );
+    assert( _level == vk::CommandBufferLevel::ePrimary );
+    assert( !secondaryCmds.empty( ) );
+    // From the Spec:
+    //    If the inherited queries feature is not enabled, commandBuffer must not have any queries active
+    // -> where's that inherited queries feature? The VkPhysicalDeviceFeatures I currently have doesn't have that entry
+
+    _secondaryCommandBuffers.insert( 
+      _secondaryCommandBuffers.end( ), secondaryCmds.begin( ), secondaryCmds.end( ) );
+
+    std::vector<vk::CommandBuffer> commands;
+    for ( auto const& it : secondaryCmds )
     {
-      v.push_back( *cmd );
+      assert( _commandPool->getDevice( ) == it->_commandPool->getDevice( ) );
+      assert( it->_level == vk::CommandBufferLevel::eSecondary );
+      assert( ( it->_flags & vk::CommandBufferUsageFlagBits::eSimultaneousUse ) || 
+        ( std::count( _secondaryCommandBuffers.begin( ), _secondaryCommandBuffers.end( ), it ) == 1 ) );
+      assert( !it->getPrimaryCommandBuffer( ) );
+      assert( !it->isRecording( ) );
+      assert( !_inRenderPass || ( it->_flags & 
+        vk::CommandBufferUsageFlagBits::eRenderPassContinue ) );
+      assert( !_queryInfo[ VK_QUERY_TYPE_OCCLUSION ].active || 
+        ( it->_occlusionQueryEnable && 
+        ( it->_queryInfo[ VK_QUERY_TYPE_OCCLUSION ].flags == 
+          _queryInfo[ VK_QUERY_TYPE_OCCLUSION ].flags ) ) );
+      assert( !_queryInfo[ VK_QUERY_TYPE_PIPELINE_STATISTICS ].active || 
+        ( it->_queryInfo[ VK_QUERY_TYPE_PIPELINE_STATISTICS ].flags == 
+          _queryInfo[ VK_QUERY_TYPE_PIPELINE_STATISTICS ].flags ) );
+#if !defined(NDEBUG)
+      for ( size_t i = 0; i<VK_QUERY_TYPE_RANGE_SIZE; i++ )
+      {
+        assert( !_queryInfo[ i ].active || !it->_queryInfo[ i ].contained );
+      }
+#endif
+
+      commands.push_back( *it );
+
+#if !defined(NDEBUG)
+      it->setPrimaryCommandBuffer( shared_from_this( ) );
+#endif
     }
-    _commandBuffer.executeCommands( v );
+    _commandBuffer.executeCommands( commands );
   }
 
 
@@ -318,6 +509,13 @@ namespace lava
     const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t slot,
     vk::QueryControlFlags flags )
   {
+#if !defined(NDEBUG)
+    int queryInfoIndex = int( queryPool->getQueryType( ) ) - VK_QUERY_TYPE_BEGIN_RANGE;
+    assert( !_queryInfo[ queryInfoIndex ].active );
+    _queryInfo[ queryInfoIndex ].active = true;
+    _queryInfo[ queryInfoIndex ].contained = true;
+    _queryInfo[ queryInfoIndex ].flags = flags;
+#endif
     _commandBuffer.beginQuery( *queryPool, slot, flags );
   }
 
@@ -334,6 +532,12 @@ namespace lava
   void CommandBuffer::endQuery(
     const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t slot )
   {
+#if !defined(NDEBUG)
+    assert( _queryInfo[ int( queryPool->getQueryType( ) ) - 
+      VK_QUERY_TYPE_BEGIN_RANGE ].active );
+    _queryInfo[ int( queryPool->getQueryType( ) ) - 
+      VK_QUERY_TYPE_BEGIN_RANGE ].active = false;
+#endif
     _commandBuffer.endQuery( *queryPool, slot );
   }
 
@@ -442,8 +646,17 @@ namespace lava
 
   void CommandBuffer::reset( vk::CommandBufferResetFlagBits flags )
   {
+    assert( _commandPool->individuallyResetCommandBuffers( ) );
+    assert( !isRecording( ) );
     _commandBuffer.reset( flags );
-    _state = State::Ready; // TODO ?
+    
+    _renderPass.reset( );
+    _framebuffer.reset( );
+    _secondaryCommandBuffers.clear( );
+#if !defined(NDEBUG)
+    _stageFlags = vk::PipelineStageFlags( );
+#endif
+    //_state = State::Ready; // TODO ?
   }
 
   void CommandBuffer::bindVertexBuffer( uint32_t startBinding,
@@ -533,6 +746,17 @@ namespace lava
 
     _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, depFlags,
       barriers, bufferMemoryBarriers, imbs );
+  }
+
+  void CommandBuffer::onReset( void )
+  {
+    _renderPass.reset( );
+    _framebuffer.reset( );
+    _secondaryCommandBuffers.clear( );
+
+#if !defined(NDEBUG)
+    _isResetFromCommandPool = true;
+#endif
   }
 
   void CommandBuffer::bindDescriptorSets(
