@@ -7,21 +7,21 @@ using namespace lava;
 
 #include "../utils/Camera.h"
 
-const unsigned int SCR_WIDTH = 500;
-const unsigned int SCR_HEIGHT = 500;
-
 #define PI 3.14159
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
     camera = Camera( glm::vec3( 0.0f, 0.0f, 25.5f ) );
   }
+
+  std::shared_ptr<lava::QueryPool> queryPool;
+  std::shared_ptr<lava::Buffer> queryResultBuffer;
 
   // camera
   Camera camera;
@@ -103,9 +103,29 @@ public:
     }
   }
 
+  // Passed query samples
+  std::vector<uint64_t> passedSamples;
+
+  void setupQueryPool( void )
+  {
+    auto device = _window->device( );
+
+    queryPool = device->createOcclusionQuery( 1 );
+
+    passedSamples.reserve( 1 );
+    passedSamples.resize( 1 );
+  }
+
   void initResources( void ) override
   {
     auto device = _window->device( );
+
+    setupQueryPool( );
+    queryResultBuffer = device->createBuffer( 1 * sizeof( uint64_t ), 
+      vk::BufferUsageFlagBits::eUniformBuffer | 
+      vk::BufferUsageFlagBits::eTransferDst, 
+      vk::MemoryPropertyFlagBits::eHostVisible | 
+      vk::MemoryPropertyFlagBits::eHostCoherent );
 
     CreateTorus( 8.0f, 2.0f, 40, 10 );
 
@@ -285,8 +305,6 @@ public:
     uboUniform->set( &ubo );
   }
 
-  bool modeReflect = true;
-
   void nextFrame( void ) override
   {
     /*if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
@@ -308,6 +326,11 @@ public:
     clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
 
     auto cmd = _window->currentCommandBuffer( );
+
+    // Reset query pool
+    // Must be done outside of render pass
+    cmd->resetQueryPool( queryPool, 0 /*startQuery*/, 2 /*queryCount*/ );
+
     vk::Rect2D rect;
     rect.extent = size;
     cmd->beginRenderPass(
@@ -324,11 +347,39 @@ public:
     cmd->bindIndexBuffer( indexBuffer, 0, vk::IndexType::eUint16 );
     cmd->setViewportScissors( size );
 
+    cmd->beginQuery( queryPool, 0, { } );
     cmd->drawIndexed( indices.size( ), 1, 0, 0, 1 );
 
     cmd->endRenderPass( );
+    cmd->endQuery( queryPool, 0 );
+    
+    cmd->copyQueryPoolResults( queryPool, 0, 1,
+      queryResultBuffer, 0, 1 * sizeof( uint64_t ),
+      vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait );
 
     _window->frameReady( );
+
+    // Read query results for displaying in next frame
+    getQueryResults( );
+  }
+  void getQueryResults( void )
+  {
+    passedSamples = queryPool->getResults<uint64_t>( 
+      0, 1, passedSamples.size( ), sizeof( uint64_t ),
+      // Store results a 64 bit values and wait until the results have been finished
+      // If you don't want to wait, you can use VK_QUERY_RESULT_WITH_AVAILABILITY_BIT
+      // which also returns the state of the result (ready) in the result
+      vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait );
+    std::cout << "vkGetQueryPoolResults data" << "\n";
+    std::cout << "samples_passed = " << passedSamples[ 0 ] << "\n";
+
+    // Read back query result from buffer
+    uint64_t samples_passed_ptr[ 1 ];
+    queryResultBuffer->read( &samples_passed_ptr );
+    std::cout << "vkCmdCopyQueryPoolResults data" << "\n";
+    std::cout << "samples_passed = " << samples_passed_ptr[ 0 ] << std::endl;
+
+    assert( passedSamples[ 0 ] == samples_passed_ptr[ 0 ] );
   }
   bool enable_wire = false;
 
@@ -347,14 +398,14 @@ private:
   std::shared_ptr<Buffer> uboUniform;
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 protected:
   MainWindowRenderer* _renderer;
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
   }
   virtual void keyEvent( int key, int act ) override
@@ -371,7 +422,7 @@ public:
       }
     }
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     _renderer = new MainWindowRenderer( this );
     return _renderer;
@@ -379,9 +430,9 @@ public:
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
-  VulkanWindow app( SCR_WIDTH, SCR_HEIGHT, "Clip planes", true );
+  VulkanWindow app( 500, 500, "Clip planes", true );
   app.show( );
   return EXIT_SUCCESS;
 }

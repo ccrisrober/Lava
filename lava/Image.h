@@ -53,6 +53,9 @@ namespace lava
       return _image;
     }
     LAVA_API
+    std::shared_ptr<ImageView> createImageView( uint32_t mipLevelCount, 
+      vk::ImageAspectFlagBits aspect, vk::ComponentMapping swizzle );
+    LAVA_API
     std::shared_ptr<ImageView> createImageView( vk::ImageViewType viewType, 
       vk::Format format, vk::ComponentMapping components = { 
         vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, 
@@ -61,6 +64,9 @@ namespace lava
         vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
       }
     );
+    LAVA_API
+    std::shared_ptr<ImageView> createImageView( vk::ImageViewType viewType,
+      vk::Format format, vk::ImageAspectFlags aspect );
     LAVA_API
     inline vk::Format format( void ) const
     {
@@ -85,7 +91,10 @@ namespace lava
     {
       return _device;
     }
+  public:
+    vk::ImageLayout layout; // TODO: MOVE
   protected:
+    vk::ImageCreateFlags _createFlags;
     uint32_t _arrayLayers;
     vk::Extent3D _extent;
     vk::Format _format;
@@ -100,6 +109,34 @@ namespace lava
     vk::ImageType _type;
   public:
     vk::DeviceMemory imageMemory;
+
+  private:
+    bool depth( const vk::Format& format ) const noexcept
+    {
+      switch ( format )
+      {
+        case vk::Format::eD16Unorm:
+        case vk::Format::eD32Sfloat:
+        case vk::Format::eD16UnormS8Uint:
+        case vk::Format::eD24UnormS8Uint:
+        case vk::Format::eD32SfloatS8Uint:
+          return true;
+        default:
+          return false;
+      }
+    }
+    bool depthStencil( const vk::Format& format ) const noexcept
+    {
+      switch ( format )
+      {
+        case vk::Format::eD16UnormS8Uint:
+        case vk::Format::eD24UnormS8Uint:
+        case vk::Format::eD32SfloatS8Uint:
+          return true;
+        default:
+          return false;
+      }
+    }
   };
 
   class ImageView : private NonCopyable<ImageView>

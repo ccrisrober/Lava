@@ -9,12 +9,12 @@ using namespace lava;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -49,10 +49,10 @@ public:
     std::vector<WriteDescriptorSet> wdss =
     {
       WriteDescriptorSet( descriptorSets.basic, 0, 0,
-      vk::DescriptorType::eUniformBuffer, 1, nullptr,
-      DescriptorBufferInfo(
-        uniformBufferMVP, 0, sizeof( ubo )
-      )
+        vk::DescriptorType::eUniformBuffer, 1, nullptr,
+        DescriptorBufferInfo(
+          uniformBufferMVP, 0, sizeof( ubo )
+        )
       ),
       WriteDescriptorSet( descriptorSet, 0, 0,
         vk::DescriptorType::eCombinedImageSampler, 1,
@@ -303,23 +303,23 @@ private:
   std::shared_ptr<DescriptorPool> descriptorPool;
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
 
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 1024, 768, "Multidescriptor", true );
   app.show( );

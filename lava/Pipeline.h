@@ -63,8 +63,8 @@ namespace lava
   {
     LAVA_API
     PipelineVertexInputStateCreateInfo(
-      vk::ArrayProxy<const vk::VertexInputBindingDescription> vertexBindingDescriptions,
-      vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttrirDescriptions );
+      vk::ArrayProxy<const vk::VertexInputBindingDescription> vertexBindingDescriptions = { },
+      vk::ArrayProxy<const vk::VertexInputAttributeDescription> vertexAttrirDescriptions = { } );
     LAVA_API
     PipelineVertexInputStateCreateInfo( const PipelineVertexInputStateCreateInfo& rhs );
     LAVA_API
@@ -87,6 +87,12 @@ namespace lava
       const PipelineDynamicStateCreateInfo& rhs );
 
     std::vector<vk::DynamicState> dynamicStates;
+  };
+
+  struct ScissorsViewportDynamicPipelineState : public PipelineDynamicStateCreateInfo
+  {
+    LAVA_API
+    ScissorsViewportDynamicPipelineState( void );
   };
 
   struct PipelineViewportStateCreateInfo
@@ -248,6 +254,7 @@ namespace lava
     std::vector<vk::SpecializationMapEntry> mapEntries;
     const void*                             data;
   };
+  
   struct PipelineShaderStageCreateInfo
   {
     LAVA_API
@@ -264,6 +271,7 @@ namespace lava
     std::string                         name;
     std::unique_ptr<SpecializationInfo> specializationInfo;
   };
+
   class ComputePipeline : public Pipeline
   {
   public:

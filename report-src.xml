@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<results version="2">
+    <cppcheck version="1.72"/>
+    <errors>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;ImageMemoryBarrier::srcQueueFamilyIndex&apos; is not initialized in the constructor." verbose="Member variable &apos;ImageMemoryBarrier::srcQueueFamilyIndex&apos; is not initialized in the constructor.">
+            <location file="lava/CommandBuffer.cpp" line="51"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;ImageMemoryBarrier::dstQueueFamilyIndex&apos; is not initialized in the constructor." verbose="Member variable &apos;ImageMemoryBarrier::dstQueueFamilyIndex&apos; is not initialized in the constructor.">
+            <location file="lava/CommandBuffer.cpp" line="51"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_commandBuffer&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_commandBuffer&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/CommandBuffer.cpp" line="196"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;DescriptorSetLayoutBinding::binding&apos; is not initialized in the constructor." verbose="Member variable &apos;DescriptorSetLayoutBinding::binding&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="38"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;WriteDescriptorSet::dstBinding&apos; is not initialized in the constructor." verbose="Member variable &apos;WriteDescriptorSet::dstBinding&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="253"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;WriteDescriptorSet::dstArrayElement&apos; is not initialized in the constructor." verbose="Member variable &apos;WriteDescriptorSet::dstArrayElement&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="253"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;WriteDescriptorSet::descriptorCount&apos; is not initialized in the constructor." verbose="Member variable &apos;WriteDescriptorSet::descriptorCount&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="253"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;CopyDescriptorSet::srcBinding&apos; is not initialized in the constructor." verbose="Member variable &apos;CopyDescriptorSet::srcBinding&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="292"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;CopyDescriptorSet::srcArrayElement&apos; is not initialized in the constructor." verbose="Member variable &apos;CopyDescriptorSet::srcArrayElement&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="292"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;CopyDescriptorSet::dstBinding&apos; is not initialized in the constructor." verbose="Member variable &apos;CopyDescriptorSet::dstBinding&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="292"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;CopyDescriptorSet::dstArrayElement&apos; is not initialized in the constructor." verbose="Member variable &apos;CopyDescriptorSet::dstArrayElement&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="292"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;CopyDescriptorSet::descriptorCount&apos; is not initialized in the constructor." verbose="Member variable &apos;CopyDescriptorSet::descriptorCount&apos; is not initialized in the constructor.">
+            <location file="lava/Descriptor.cpp" line="292"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;physicalDevice&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;physicalDevice&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Display.cpp" line="36"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_event&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_event&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Event.cpp" line="28"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;Image::_arrayLayers&apos; is not initialized in the constructor." verbose="Member variable &apos;Image::_arrayLayers&apos; is not initialized in the constructor.">
+            <location file="lava/Image.cpp" line="27"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;Image::_mipLevels&apos; is not initialized in the constructor." verbose="Member variable &apos;Image::_mipLevels&apos; is not initialized in the constructor.">
+            <location file="lava/Image.cpp" line="27"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_instance&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_instance&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Instance.cpp" line="113"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_instance&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_instance&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Instance.cpp" line="221"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;PipelineColorBlendStateCreateInfo::logicEnable&apos; is not initialized in the constructor." verbose="Member variable &apos;PipelineColorBlendStateCreateInfo::logicEnable&apos; is not initialized in the constructor.">
+            <location file="lava/Pipeline.cpp" line="200"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;PipelineMultisampleStateCreateInfo::sampleShadingEnable&apos; is not initialized in the constructor." verbose="Member variable &apos;PipelineMultisampleStateCreateInfo::sampleShadingEnable&apos; is not initialized in the constructor.">
+            <location file="lava/Pipeline.cpp" line="234"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;PipelineMultisampleStateCreateInfo::minSampleShading&apos; is not initialized in the constructor." verbose="Member variable &apos;PipelineMultisampleStateCreateInfo::minSampleShading&apos; is not initialized in the constructor.">
+            <location file="lava/Pipeline.cpp" line="234"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;PipelineMultisampleStateCreateInfo::alphaToCoverageEnable&apos; is not initialized in the constructor." verbose="Member variable &apos;PipelineMultisampleStateCreateInfo::alphaToCoverageEnable&apos; is not initialized in the constructor.">
+            <location file="lava/Pipeline.cpp" line="234"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;PipelineMultisampleStateCreateInfo::alphaToOneEnable&apos; is not initialized in the constructor." verbose="Member variable &apos;PipelineMultisampleStateCreateInfo::alphaToOneEnable&apos; is not initialized in the constructor.">
+            <location file="lava/Pipeline.cpp" line="234"/>
+        </error>
+        <error id="uninitMemberVar" severity="warning" msg="Member variable &apos;SpecializationInfo::data&apos; is not initialized in the constructor." verbose="Member variable &apos;SpecializationInfo::data&apos; is not initialized in the constructor.">
+            <location file="lava/Pipeline.cpp" line="734"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_pipelineCache&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_pipelineCache&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Pipeline.cpp" line="369"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_query&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_query&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/QueryPool.cpp" line="38"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_semaphore&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_semaphore&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Semaphore.cpp" line="27"/>
+        </error>
+        <error id="useInitializationList" severity="performance" msg="Variable &apos;_surface&apos; is assigned in constructor body. Consider performing initialization in initialization list." verbose="When an object of a class is created, the constructors of all member variables are called consecutively in the order the variables are declared, even if you don&apos;t explicitly write them to the initialization list. You could avoid assigning &apos;_surface&apos; a value by passing the value to the constructor in the initialization list.">
+            <location file="lava/Swapchain.cpp" line="33"/>
+        </error>

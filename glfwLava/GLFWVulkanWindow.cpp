@@ -1,1158 +1,944 @@
-#include "GLFWVulkanWindow.h"
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
 
-#include "Engine.h"
+#include "GLFWVulkanWindow.h"
 
 #include <thread>
 
 namespace lava
 {
-  std::thread::id main_thread_id = std::this_thread::get_id( );
-  /*void GLFWVulkanWindow::OnWindowResized( GLFWwindow * window, int width, int height )
+  namespace glfw
   {
-  }
-  void GLFWVulkanWindow::InitVulkan( bool enableLayers )
-  {
-    lava::Engine::CreateInfo ci;
-    ci.appInfo = "QtRender";
-    ci.enableValidationLayers = enableLayers;
+    std::thread::id main_thread_id = std::this_thread::get_id( );
 
-    unsigned int glfw_extensions_count;
-    const char **glfw_extensions = glfwGetRequiredInstanceExtensions( &glfw_extensions_count );
-
-    for ( unsigned int i = 0; i < glfw_extensions_count; ++i )
+    VulkanWindow::Engine::Engine( const CreateInfo &info_ )
+      : info( info_ )
     {
-      ci.requiredInstanceExtensions.insert( std::string( glfw_extensions[ i ] ) );
+      createInstance( );
     }
 
-    ci.requiredDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-
-    Engine e( ci );
-    _instance = lava::Instance::createFromVkInstance( e.GetVkInstance( ) );
-
-
-
-    if ( !_instance )
+    VulkanWindow::Engine::~Engine( void )
     {
-      throw "Instance don't exist";
+      //instance.destroy( nullptr );
     }
 
-    if ( !renderer )
+    void VulkanWindow::Engine::createInstance( void )
     {
-      renderer = createRenderer( );
-    }
+      vk::ApplicationInfo appInfo(
+        info.appInfo.c_str( ),
+        VK_MAKE_VERSION( 1, 0, 0 ),
+        "LavaEngine",
+        VK_MAKE_VERSION( 1, 0, 0 ),
+        VK_API_VERSION_1_0
+      );
 
-    assert( _instance->getPhysicalDeviceCount( ) != 0 );
-    _physicalDevice = _instance->getPhysicalDevice( 0 );
+      vk::InstanceCreateInfo ici;
+      ici.setPApplicationInfo( &appInfo );
 
-    if ( !_physicalDevice )
-    {
-      LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
-    }
+      // Extensions
 
-    createSurface( );
-
-    auto surfaceFormats = _physicalDevice->getSurfaceFormats( _surface );
-    assert( !surfaceFormats.empty( ) );
-    uint32_t numFormats = surfaceFormats.size( );
-
-    bool gamma = false;
-    // If there is no preferred format, use standard RGBA
-    if ( ( numFormats == 1 )
-      && ( surfaceFormats[ 0 ].format == vk::Format::eUndefined ) )
-    {
-      _surfaceFormat.format = gamma ? vk::Format::eR8G8B8A8Srgb : vk::Format::eB8G8R8A8Unorm;
-
-      _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
-    }
-    else
-    {
-      bool foundFormat = false;
-
-      std::vector<vk::Format> wantedFormatsUNORM =
+      auto extensionsdExts = vk::enumerateInstanceExtensionProperties( );
+      std::cout << "Available Extensions:" << std::endl;
+      for ( const auto &extension : extensionsdExts )
       {
-        vk::Format::eR8G8B8A8Unorm,
-        vk::Format::eA8B8G8R8UnormPack32,
-        vk::Format::eB8G8R8Unorm
-      };
+        std::cout << "\t" << extension.extensionName << std::endl;
+      }
 
-      std::vector<vk::Format> wantedFormatsSRGB =
+      std::vector<const char *> requiredExts;
       {
-        vk::Format::eB8G8R8A8Srgb,
-        vk::Format::eA8B8G8R8SrgbPack32,
-        vk::Format::eB8G8R8Srgb
-      };
-
-      std::vector<vk::Format> wantedFormats = gamma ? wantedFormatsSRGB : wantedFormatsUNORM;
-
-      for ( const auto& wantedFormat : wantedFormats )
-      {
-        for ( const auto& surfFormat : surfaceFormats )
+        for ( const auto &extension : info.requiredInstanceExtensions )
         {
-          if ( surfFormat.format == wantedFormat )
-          {
-            _surfaceFormat.format = surfFormat.format;
-            _surfaceFormat.colorSpace = surfFormat.colorSpace;
+          requiredExts.push_back( extension.c_str( ) );
+        }
 
-            foundFormat = true;
+        if ( info.enableValidationLayers )
+        {
+          requiredExts.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
+        }
+      }
+
+      ici.setEnabledExtensionCount( static_cast< uint32_t >( requiredExts.size( ) ) );
+      ici.setPpEnabledExtensionNames( requiredExts.data( ) );
+
+      std::vector<const char* > layers;
+      {
+        layers = {
+  #ifndef NDEBUG
+  #ifndef __ANDROID__
+          "VK_LAYER_LUNARG_standard_validation"
+  #else
+          "VK_LAYER_GOOGLE_threading",
+          "VK_LAYER_LUNARG_parameter_validation",
+          "VK_LAYER_LUNARG_object_tracker",
+          "VK_LAYER_LUNARG_core_validation",
+          "VK_LAYER_LUNARG_swapchain",
+          "VK_LAYER_GOOGLE_unique_objects"
+  #endif
+  #endif
+        };
+        if ( info.enableRenderdoc )
+        {
+          // TODO
+        }
+      }
+      ici.setEnabledLayerCount( static_cast< uint32_t >( layers.size( ) ) );
+      ici.setPpEnabledLayerNames( layers.data( ) );
+
+      instance = vk::createInstance( ici );
+    }
+
+    VulkanWindow::VulkanWindow( int width, int height,
+      const std::string & title, bool enableLayers )
+      : _initialized( false )
+    {
+      // GLFW initialization
+      glfwInit( );
+
+      glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+      glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
+
+      window = glfwCreateWindow( width, height, title.c_str( ), nullptr, nullptr );
+
+      glfwSetWindowUserPointer( window, this );
+
+      glfwSetKeyCallback( window, [ ] ( GLFWwindow* w, int key, int, int action, int )
+      {
+        static_cast< VulkanWindow* >( glfwGetWindowUserPointer( w ) )
+          ->keyEvent( key, action );
+      } );
+      glfwSetCursorPosCallback( window, [ ] ( GLFWwindow* w,
+        double xpos, double ypos )
+      {
+        static_cast< VulkanWindow* >( glfwGetWindowUserPointer( w ) )
+          ->mouseEvent( xpos, ypos );
+      } );
+      glfwSetScrollCallback( window, [ ] ( GLFWwindow* w,
+        double xoffset, double yoffset )
+      {
+        static_cast< VulkanWindow* >( glfwGetWindowUserPointer( w ) )
+          ->scrollEvent( xoffset, yoffset );
+      } );
+      //glfwSetWindowSizeCallback( window, VulkanWindow::OnWindowResized );
+
+      // Vulkan initialization
+      Engine::CreateInfo ci;
+      ci.appInfo = "GLFWRender";
+      ci.enableValidationLayers = enableLayers;
+
+      unsigned int glfw_exts_count;
+      const char** glfw_exts = glfwGetRequiredInstanceExtensions( &glfw_exts_count );
+      for ( unsigned int i = 0; i < glfw_exts_count; ++i )
+      {
+        ci.requiredInstanceExtensions.insert( std::string( glfw_exts[ i ] ) );
+      }
+      ci.requiredDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+      Engine e( ci );
+      _instance = Instance::createFromVkInstance( e.GetVkInstance( ) );
+
+      if ( !_instance )
+      {
+        throw "Instance don't exist";
+      }
+
+      assert( _instance->getPhysicalDeviceCount( ) != 0 );
+
+      _physicalDevice = _instance->getPhysicalDevice( 0 );
+
+      // Store properties (including limits), features and memory properties of the phyiscal 
+      //	device (so that examples can check against them)
+      deviceFeatures = _physicalDevice->getDeviceFeatures( );
+    }
+    VulkanWindow::~VulkanWindow( void )
+    {
+      cleanupVulkan( );
+    }
+
+    bool VulkanWindow::checkDeviceLost( vk::Result err )
+    {
+      if ( err == vk::Result::eErrorDeviceLost )
+      {
+        /*Log::error*/printf( "Device lost" );
+        /*if ( renderer )
+        {
+        renderer->logicalDeviceLost( );
+        }
+        qWarning( "Releasing all resources due to device lost" );
+        releaseSwapchain( );
+        reset( );
+        qWarning( "Restarting" );
+        ensureStarted( );*/
+        return true;
+      }
+      return false;
+    }
+    void VulkanWindow::addReadback( void )
+    {
+      /*std::shared_ptr< Image > frameGrabImage =
+      _device->createImage( vk::ImageCreateFlagBits( ), vk::ImageType::e2D,
+      vk::Format::eR8G8B8A8Unorm,
+      vk::Extent3D(
+      _frameGrabTargetImage.width( ), _frameGrabTargetImage.height( ), 1
+      ), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear,
+      vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode( ), { },
+      vk::ImageLayout::ePreinitialized, nullptr );
+
+      auto cmd = cmds[ imageIdx ];*/
+    }
+    void VulkanWindow::finishBlockingReadback( void )
+    {
+      // TODO
+    }
+    void VulkanWindow::getSurfaceFormats( void )
+    {
+      auto surfaceFormats = _physicalDevice->getSurfaceFormats( surface );
+      assert( !surfaceFormats.empty( ) );
+      uint32_t numFormats = surfaceFormats.size( );
+
+      bool gamma = false;
+      // If there is no preferred format, use standard RGBA
+      if ( ( numFormats == 1 )
+        && ( surfaceFormats[ 0 ].format == vk::Format::eUndefined ) )
+      {
+        _surfaceFormat.format = gamma ? vk::Format::eR8G8B8A8Srgb : vk::Format::eB8G8R8A8Unorm;
+
+        _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
+      }
+      else
+      {
+        bool foundFormat = false;
+
+        std::vector<vk::Format> wantedFormatsUNORM =
+        {
+          vk::Format::eR8G8B8A8Unorm,
+          vk::Format::eA8B8G8R8UnormPack32,
+          vk::Format::eB8G8R8Unorm
+        };
+
+        std::vector<vk::Format> wantedFormatsSRGB =
+        {
+          vk::Format::eB8G8R8A8Srgb,
+          vk::Format::eA8B8G8R8SrgbPack32,
+          vk::Format::eB8G8R8Srgb
+        };
+
+        std::vector<vk::Format> wantedFormats = gamma ? wantedFormatsSRGB : wantedFormatsUNORM;
+
+        for ( const auto& wantedFormat : wantedFormats )
+        {
+          for ( const auto& surfFormat : surfaceFormats )
+          {
+            if ( surfFormat.format == wantedFormat )
+            {
+              _surfaceFormat.format = surfFormat.format;
+              _surfaceFormat.colorSpace = surfFormat.colorSpace;
+
+              foundFormat = true;
+              break;
+            }
+          }
+          if ( foundFormat )
+          {
             break;
           }
         }
-        if ( foundFormat )
+
+        wantedFormatsSRGB.clear( );
+        wantedFormatsUNORM.clear( );
+        wantedFormats.clear( );
+
+        // If we haven't found anything, fall back to first available
+        if ( !foundFormat )
         {
-          break;
-        }
-      }
+          _surfaceFormat.format = surfaceFormats[ 0 ].format;
+          _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
 
-      wantedFormatsSRGB.clear( );
-      wantedFormatsUNORM.clear( );
-      wantedFormats.clear( );
-
-      // If we haven't found anything, fall back to first available
-      if ( !foundFormat )
-      {
-        _surfaceFormat.format = surfaceFormats[ 0 ].format;
-        _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
-
-        if ( gamma )
-        {
-          throw new std::runtime_error( R"(Cannot find a valid sRGB format for a render window surface, falling back to a default format.)" );
-        }
-      }
-    }
-
-
-    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat(
-      _physicalDevice, _dsFormat );
-    assert( validDepthFormat );
-
-    // Search for a graphics queue and a present queue in the array of 
-    //    queue families, try to find one that supports both
-
-    std::vector<vk::QueueFamilyProperties> queueFamilyIndices =
-      _physicalDevice->getQueueFamilyProperties( );
-    assert( !queueFamilyIndices.empty( ) );
-
-    _gfxQueueFamilyIdx = uint32_t( -1 );
-    _presQueueFamilyIdx = uint32_t( -1 );
-
-    auto phyDev = static_cast< vk::PhysicalDevice >( *_physicalDevice );
-    for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
-    {
-      VkBool32 presentSupport = phyDev.getSurfaceSupportKHR( i, _surface );
-
-      printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n",
-        i,
-        static_cast< VkQueueFlags >( queueFamilyIndices[ i ].queueFlags ),
-        queueFamilyIndices[ i ].queueCount,
-        presentSupport == VK_TRUE ? 1 : 0
-      );
-
-      if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
-        ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics )
-        && presentSupport )
-      {
-        _gfxQueueFamilyIdx = i;
-        //break;
-      }
-    }
-
-    if ( _gfxQueueFamilyIdx != uint32_t( -1 ) )
-    {
-      _presQueueFamilyIdx = _gfxQueueFamilyIdx;
-    }
-    else
-    {
-      std::cerr << "No queue with graphics+present; trying separate queues" << std::endl;
-      for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
-      {
-        if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
-          ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) )
-        {
-          _gfxQueueFamilyIdx = i;
-        }
-
-        VkBool32 presentSupport = phyDev.getSurfaceSupportKHR( i, _surface );
-        if ( _presQueueFamilyIdx == uint32_t( -1 ) && presentSupport )
-        {
-          _presQueueFamilyIdx = i;
-        }
-      }
-    }
-    if ( _gfxQueueFamilyIdx == uint32_t( -1 ) )
-    {
-      std::cerr << "ERROR: No graphics queue family found" << std::endl;
-      throw;
-    }
-    if ( _presQueueFamilyIdx == uint32_t( -1 ) )
-    {
-      std::cerr << "ERROR: No present queue family found" << std::endl;
-      throw;
-    }
-
-    // Create a new device with the VK_KHR_SWAPCHAIN_EXTENSION enabled.
-    std::vector<std::string> enabledLayerNames;
-
-    std::vector<std::string> enabledExtensionNames;
-
-    _requestedDeviceExts.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-
-    for ( const auto& ext : _requestedDeviceExts )
-    {
-      if ( _physicalDevice->extensionSupported( ext ) )
-      {
-        enabledExtensionNames.push_back( ext );
-      }
-    }
-
-    vk::DeviceQueueCreateInfo dqci;
-    dqci.setQueueFamilyIndex( _gfxQueueFamilyIdx );
-
-    const float queuePriority = 0.0f;
-    dqci.setQueueCount( 1 );
-    dqci.setPQueuePriorities( &queuePriority );
-    std::vector< vk::DeviceQueueCreateInfo > queueCreateInfos;
-    queueCreateInfos.push_back( dqci );
-
-
-    if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
-    {
-      vk::DeviceQueueCreateInfo dqci2;
-      dqci2.setQueueFamilyIndex( _presQueueFamilyIdx );
-      dqci2.setQueueCount( 1 );
-      dqci2.setPQueuePriorities( &queuePriority );
-
-      queueCreateInfos.push_back( dqci2 );
-    }
-
-    _device = _physicalDevice->createDevice(
-      queueCreateInfos,
-      enabledLayerNames,
-      enabledExtensionNames,
-      _physicalDevice->getDeviceFeatures( )
-    );
-
-    _gfxQueue = _device->getQueue( _gfxQueueFamilyIdx, 0 );
-
-    if ( _gfxQueueFamilyIdx == _presQueueFamilyIdx )
-    {
-      _presQueue = _gfxQueue;
-    }
-    else
-    {
-      _presQueue = _device->getQueue( _presQueueFamilyIdx, 0 );
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-    int width, height;
-    glfwGetWindowSize( window, &width, &height );
-    vk::Extent2D extent( width, height );
-
-
-
-
-
-
-    //_swapchain = std::make_shared< SwapChain >( _device, _surface, _presQueueFamilyIdx, extent );
-    _dfbFramebuffer = new DefaultFramebuffer( _device, _surface,
-      _presQueueFamilyIdx, extent, _dsFormat );
-
-    _cmdPool = _device->createCommandPool(
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
-      _gfxQueueFamilyIdx );
-
-
-    cmd = _cmdPool->allocateCommandBuffer( );
-
-
-
-    if ( renderer )
-    {
-      renderer->initResources( );
-    }
-
-    imageAvailableSem = _device->createSemaphore( );
-    renderFinishedSem = _device->createSemaphore( );
-  }
-  void GLFWVulkanWindow::InitWindow( int width, int height, const std::string & title )
-  {
-    glfwInit( );
-
-    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-    glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
-
-    window = glfwCreateWindow( width, height, title.c_str( ), nullptr, nullptr );
-
-    glfwSetWindowUserPointer( window, this );
-    glfwSetWindowSizeCallback( window, GLFWVulkanWindow::OnWindowResized );
-  }
-  void GLFWVulkanWindow::OnWindowResized( int width, int height )
-  {
-  }
-  void GLFWVulkanWindow::createSurface( void )
-  {
-    VkSurfaceKHR c_surface;
-
-    VkResult result = glfwCreateWindowSurface( 
-      VkInstance( static_cast< vk::Instance >( *_instance ) ), window, nullptr, 
-      &c_surface );
-
-    if ( result != VK_SUCCESS )
-    {
-      throw std::runtime_error( "failed to create window surface!" );
-    }
-
-    _surface = vk::SurfaceKHR( c_surface );
-  }
-  void GLFWVulkanWindow::recreateSwapchain( void )
-  {
-    _dfbFramebuffer->recreate( );
-  }
-  void GLFWVulkanWindow::cleanup( )
-  {
-    _device->waitIdle( );
-    delete _dfbFramebuffer;
-
-    imageAvailableSem.reset( );
-    renderFinishedSem.reset( );
-
-    glfwDestroyWindow( window );
-    glfwTerminate( );
-  }
-  GLFWVulkanWindowRenderer * GLFWVulkanWindow::createRenderer( void )
-  {
-    return nullptr;
-  }
-  GLFWVulkanWindow::GLFWVulkanWindow( int width, int height, const std::string & title, bool enableLayers )
-  {
-    InitWindow( width, height, title );
-    InitVulkan( enableLayers );
-  }
-  GLFWVulkanWindow::~GLFWVulkanWindow( void )
-  {
-    cleanup( );
-  }
-  void GLFWVulkanWindow::beginFrame( void )
-  {
-  }
-  void GLFWVulkanWindow::update( void )
-  {
-    glfwPollEvents( );
-  }
-  void GLFWVulkanWindow::endFrame( void )
-  {
-    _device->waitIdle( );
-  }
-
-  void GLFWVulkanWindow::render( void )
-  {
-    int width, height;
-    glfwGetWindowSize( window, &width, &height );
-    vk::Extent2D extent( width, height );
-    vk::Extent2D extent2 = _dfbFramebuffer->extent( );
-    if ( extent != extent2 )
-    {
-      recreateSwapchain( );
-      return;
-    }
-
-    vk::Device device = *_device;
-    auto image_index_result = device.acquireNextImageKHR( *_dfbFramebuffer->swapchain( ), UINT64_MAX, *imageAvailableSem, vk::Fence( ) );
-
-    if ( image_index_result.result == vk::Result::eErrorOutOfDateKHR )
-    {
-      recreateSwapchain( );
-      return;
-    }
-    else if ( image_index_result.result != vk::Result::eSuccess && image_index_result.result != vk::Result::eSuboptimalKHR )
-    {
-      throw std::runtime_error( "failed to acquire swap chain image!" );
-    }
-
-    uint32_t image_index = image_index_result.value;
-
-
-    drawFrame(
-      image_index,
-      { *imageAvailableSem },
-      { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-      { *renderFinishedSem }
-    );
-
-    vk::Semaphore signalSem[ ] = { *renderFinishedSem };
-    vk::Result presentResult;
-    vk::Queue presentQueue = *_presQueue;
-    try
-    {
-      vk::SwapchainKHR sc = *_dfbFramebuffer->swapchain( );
-      presentResult = presentQueue.presentKHR(
-        vk::PresentInfoKHR( )
-        .setWaitSemaphoreCount( 1 )
-        .setPWaitSemaphores( signalSem )
-        .setSwapchainCount( 1 )
-        .setPSwapchains( &sc )
-        .setPImageIndices( &image_index ));
-    }
-    catch ( vk::OutOfDateKHRError )
-    {
-      recreateSwapchain( );
-      presentResult = vk::Result::eSuccess;
-    }
-
-    if ( presentResult == vk::Result::eSuboptimalKHR )
-    {
-      recreateSwapchain( );
-    }
-    else if ( presentResult != vk::Result::eSuccess )
-    {
-      throw std::runtime_error( "failed to present swap chain image!" );
-    }
-
-    presentQueue.waitIdle( );
-  }
-  void GLFWVulkanWindow::drawFrame( std::uint32_t imageIdx,
-    std::vector<vk::Semaphore> wait_semaphores, 
-    std::vector<vk::PipelineStageFlags> wait_stages, 
-    std::vector<vk::Semaphore> signal_semaphores )
-  {
-    cmd->reset( );
-    cmd->begin( );
-
-
-    static auto startTime = std::chrono::high_resolution_clock::now( );
-
-    auto currentTime = std::chrono::high_resolution_clock::now( );
-    float time = std::chrono::duration_cast< std::chrono::milliseconds >(
-      currentTime - startTime ).count( ) / 1000.0f;
-
-    float _red = sin( time ) * 0.5f + 0.5f;
-    float _blue = cos( time ) * 0.5f + 0.5f;
-
-    std::array<vk::ClearValue, 2 > clearValues;
-    std::array<float, 4> ccv = { _red, 0.0f, _blue, 1.0f };
-
-    clearValues[ 0 ].color = vk::ClearColorValue( ccv );
-    clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
-
-    vk::Extent2D extent = _dfbFramebuffer->extent( );
-
-    cmd->beginRenderPass( _dfbFramebuffer->renderPass( ),
-      _dfbFramebuffer->framebuffer( imageIdx ),
-      vk::Rect2D( { 0, 0 }, extent ), clearValues,
-      vk::SubpassContents::eInline );
-
-    cmd->endRenderPass( );
-    cmd->end( );
-
-
-    vk::CommandBuffer render_command_buffer = *cmd;
-    vk::Queue gq = *_gfxQueue;
-    gq.submit(
-      vk::SubmitInfo( )
-      .setWaitSemaphoreCount( static_cast<uint32_t>( wait_semaphores.size( ) ) )
-      .setPWaitSemaphores( wait_semaphores.data( ) )
-      .setPWaitDstStageMask( wait_stages.data( ) )
-      .setCommandBufferCount( 1 )
-      .setPCommandBuffers( &render_command_buffer )
-      .setSignalSemaphoreCount( static_cast<uint32_t>( signal_semaphores.size( ) ) )
-      .setPSignalSemaphores( signal_semaphores.data( ) ),
-      nullptr );
-  }*/
-
-  GLFWVulkanWindow::GLFWVulkanWindow( int width, int height, 
-    const std::string & title, bool enableLayers )
-    : _initialized( false )
-  {
-    // GLFW initialization
-    glfwInit( );
-
-    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-    glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
-
-    window = glfwCreateWindow( width, height, title.c_str( ), nullptr, nullptr );
-
-    glfwSetWindowUserPointer( window, this );
-
-    glfwSetKeyCallback( window, [ ]( GLFWwindow* w, int key, int, int action, int )
-    {
-      static_cast<GLFWVulkanWindow*>( glfwGetWindowUserPointer( w ) )
-        ->keyEvent( key, action );
-    } );
-    glfwSetCursorPosCallback( window, [ ]( GLFWwindow* w,
-      double xpos, double ypos )
-    {
-      static_cast< GLFWVulkanWindow* >( glfwGetWindowUserPointer( w ) )
-        ->mouseEvent( xpos, ypos );
-    } );
-    glfwSetScrollCallback( window, [ ]( GLFWwindow* w,
-      double xoffset, double yoffset )
-    {
-      static_cast< GLFWVulkanWindow* >( glfwGetWindowUserPointer( w ) )
-        ->scrollEvent( xoffset, yoffset );
-    } );
-    //glfwSetWindowSizeCallback( window, GLFWVulkanWindow::OnWindowResized );
-
-    // Vulkan initialization
-    lava::Engine::CreateInfo ci;
-    ci.appInfo = "GLFWRender";
-    ci.enableValidationLayers = enableLayers;
-
-    unsigned int glfw_exts_count;
-    const char** glfw_exts = glfwGetRequiredInstanceExtensions( &glfw_exts_count );
-    for ( unsigned int i = 0; i < glfw_exts_count; ++i )
-    {
-      ci.requiredInstanceExtensions.insert( std::string( glfw_exts[ i ] ) );
-    }
-    ci.requiredDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-
-    Engine e( ci );
-    _instance = lava::Instance::createFromVkInstance( e.GetVkInstance( ) );
-
-    if ( !_instance )
-    {
-      throw "Instance don't exist";
-    }
-
-    assert( _instance->getPhysicalDeviceCount( ) != 0 );
-    _physicalDevice = _instance->getPhysicalDevice( 0 );
-  }
-  GLFWVulkanWindow::~GLFWVulkanWindow( void )
-  {
-    cleanupVulkan( );
-  }
-
-  bool GLFWVulkanWindow::checkDeviceLost( vk::Result err )
-  {
-    if ( err == vk::Result::eErrorDeviceLost )
-    {
-      std::cerr << "Device lost" << std::endl;
-      /*if ( renderer )
-      {
-      renderer->logicalDeviceLost( );
-      }
-      qWarning( "Releasing all resources due to device lost" );
-      releaseSwapchain( );
-      reset( );
-      qWarning( "Restarting" );
-      ensureStarted( );*/
-      return true;
-    }
-    return false;
-  }
-  void GLFWVulkanWindow::addReadback( void )
-  {
-    /*std::shared_ptr< lava::Image > frameGrabImage =
-    _device->createImage( vk::ImageCreateFlagBits( ), vk::ImageType::e2D,
-    vk::Format::eR8G8B8A8Unorm,
-    vk::Extent3D(
-    _frameGrabTargetImage.width( ), _frameGrabTargetImage.height( ), 1
-    ), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear,
-    vk::ImageUsageFlagBits::eTransferDst, vk::SharingMode( ), { },
-    vk::ImageLayout::ePreinitialized, nullptr );
-
-    auto cmd = cmds[ imageIdx ];*/
-  }
-  void GLFWVulkanWindow::finishBlockingReadback( void )
-  {
-    // TODO
-  }
-  void GLFWVulkanWindow::getSurfaceFormats( void )
-  {
-    auto surfaceFormats = _physicalDevice->getSurfaceFormats( surface );
-    assert( !surfaceFormats.empty( ) );
-    uint32_t numFormats = surfaceFormats.size( );
-
-    bool gamma = false;
-    // If there is no preferred format, use standard RGBA
-    if ( ( numFormats == 1 )
-      && ( surfaceFormats[ 0 ].format == vk::Format::eUndefined ) )
-    {
-      _surfaceFormat.format = gamma ? vk::Format::eR8G8B8A8Srgb : vk::Format::eB8G8R8A8Unorm;
-
-      _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
-    }
-    else
-    {
-      bool foundFormat = false;
-
-      std::vector<vk::Format> wantedFormatsUNORM =
-      {
-        vk::Format::eR8G8B8A8Unorm,
-        vk::Format::eA8B8G8R8UnormPack32,
-        vk::Format::eB8G8R8Unorm
-      };
-
-      std::vector<vk::Format> wantedFormatsSRGB =
-      {
-        vk::Format::eB8G8R8A8Srgb,
-        vk::Format::eA8B8G8R8SrgbPack32,
-        vk::Format::eB8G8R8Srgb
-      };
-
-      std::vector<vk::Format> wantedFormats = gamma ? wantedFormatsSRGB : wantedFormatsUNORM;
-
-      for ( const auto& wantedFormat : wantedFormats )
-      {
-        for ( const auto& surfFormat : surfaceFormats )
-        {
-          if ( surfFormat.format == wantedFormat )
+          if ( gamma )
           {
-            _surfaceFormat.format = surfFormat.format;
-            _surfaceFormat.colorSpace = surfFormat.colorSpace;
-
-            foundFormat = true;
-            break;
+            throw new std::runtime_error( R"(Cannot find a valid sRGB format for a render window surface, falling back to a default format.)" );
           }
         }
-        if ( foundFormat )
-        {
-          break;
-        }
-      }
-
-      wantedFormatsSRGB.clear( );
-      wantedFormatsUNORM.clear( );
-      wantedFormats.clear( );
-
-      // If we haven't found anything, fall back to first available
-      if ( !foundFormat )
-      {
-        _surfaceFormat.format = surfaceFormats[ 0 ].format;
-        _surfaceFormat.colorSpace = surfaceFormats[ 0 ].colorSpace;
-
-        if ( gamma )
-        {
-          throw new std::runtime_error( R"(Cannot find a valid sRGB format for a render window surface, falling back to a default format.)" );
-        }
       }
     }
-  }
-  void GLFWVulkanWindow::createQueues( void )
-  {
-    // Search for a graphics queue and a present queue in the array of 
-    //    queue families, try to find one that supports both
-    std::vector<vk::QueueFamilyProperties> queueFamilyIndices =
-      _physicalDevice->getQueueFamilyProperties( );
-    assert( !queueFamilyIndices.empty( ) );
-
-    _gfxQueueFamilyIdx = uint32_t( -1 );
-    _presQueueFamilyIdx = uint32_t( -1 );
-
-    VkBool32 presentSupport = VK_FALSE;
-    for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
+    void VulkanWindow::createQueues( void )
     {
-      presentSupport = _physicalDevice->supportSurfaceKHR( i, surface );
+      // Search for a graphics queue and a present queue in the array of 
+      //    queue families, try to find one that supports both
+      std::vector<vk::QueueFamilyProperties> queueFamilyIndices =
+        _physicalDevice->getQueueFamilyProperties( );
+      assert( !queueFamilyIndices.empty( ) );
 
-      printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n",
-        i,
-        static_cast< VkQueueFlags >( queueFamilyIndices[ i ].queueFlags ),
-        queueFamilyIndices[ i ].queueCount,
-        presentSupport == VK_TRUE ? 1 : 0
-      );
+      _gfxQueueFamilyIdx = uint32_t( -1 );
+      _presQueueFamilyIdx = uint32_t( -1 );
 
-      if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
-        ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics )
-        && presentSupport )
-      {
-        _gfxQueueFamilyIdx = i;
-        break;
-      }
-    }
-
-    if ( _gfxQueueFamilyIdx != uint32_t( -1 ) )
-    {
-      _presQueueFamilyIdx = _gfxQueueFamilyIdx;
-    }
-    else
-    {
-      std::cerr << "No queue with graphics + present; trying separate queues"
-        << std::endl;
+      VkBool32 presentSupport = VK_FALSE;
       for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
       {
-        if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
-          ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) )
-        {
-          _gfxQueueFamilyIdx = i;
-        }
-
         presentSupport = _physicalDevice->supportSurfaceKHR( i, surface );
-        if ( _presQueueFamilyIdx == uint32_t( -1 ) && presentSupport )
+
+        printf( "queue family %d: flags=0x%x count=%d supportsPresent=%d\n",
+          i,
+          static_cast< VkQueueFlags >( queueFamilyIndices[ i ].queueFlags ),
+          queueFamilyIndices[ i ].queueCount,
+          presentSupport == VK_TRUE ? 1 : 0
+        );
+
+        if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
+          ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics )
+          && presentSupport )
         {
-          _presQueueFamilyIdx = i;
+          _gfxQueueFamilyIdx = i;
+          break;
+        }
+      }
+
+      if ( _gfxQueueFamilyIdx != uint32_t( -1 ) )
+      {
+        _presQueueFamilyIdx = _gfxQueueFamilyIdx;
+      }
+      else
+      {
+        /*Log::error*/printf( "No queue with graphics + present; trying separate queues" );
+        for ( uint32_t i = 0, l = queueFamilyIndices.size( ); i < l; ++i )
+        {
+          if ( _gfxQueueFamilyIdx == uint32_t( -1 ) &&
+            ( queueFamilyIndices[ i ].queueFlags & vk::QueueFlagBits::eGraphics ) )
+          {
+            _gfxQueueFamilyIdx = i;
+          }
+
+          presentSupport = _physicalDevice->supportSurfaceKHR( i, surface );
+          if ( _presQueueFamilyIdx == uint32_t( -1 ) && presentSupport )
+          {
+            _presQueueFamilyIdx = i;
+          }
+        }
+      }
+      if ( _gfxQueueFamilyIdx == uint32_t( -1 ) )
+      {
+        /*Log::error*/printf( "No graphics queue family found" );
+        throw;
+      }
+      if ( _presQueueFamilyIdx == uint32_t( -1 ) )
+      {
+        /*Log::error*/printf( "No present queue family found" );
+        throw;
+      }
+
+      // Create a new device with the VK_KHR_SWAPCHAIN_EXTENSION enabled.
+      std::vector<std::string> enabledLayerNames;
+
+      std::vector<std::string> enabledExtensionNames;
+
+      _requestedDeviceExts.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+
+      for ( const auto& ext : _requestedDeviceExts )
+      {
+        if ( _physicalDevice->extensionSupported( ext ) )
+        {
+          enabledExtensionNames.push_back( ext );
+        }
+      }
+
+      vk::DeviceQueueCreateInfo dqci;
+      dqci.setQueueFamilyIndex( _gfxQueueFamilyIdx );
+
+      const float queuePriority = 0.0f;
+      dqci.setQueueCount( 1 );
+      dqci.setPQueuePriorities( &queuePriority );
+      std::vector< vk::DeviceQueueCreateInfo > queueCreateInfos;
+      queueCreateInfos.push_back( dqci );
+
+
+      if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
+      {
+        vk::DeviceQueueCreateInfo dqci2;
+        dqci2.setQueueFamilyIndex( _presQueueFamilyIdx );
+        dqci2.setQueueCount( 1 );
+        dqci2.setPQueuePriorities( &queuePriority );
+
+        queueCreateInfos.push_back( dqci2 );
+      }
+
+      getEnabledFeatures( );
+
+      _device = _physicalDevice->createDevice(
+        queueCreateInfos,
+        enabledLayerNames,
+        enabledExtensionNames,
+        deviceFeatures
+      );
+
+      _gfxQueue = _device->getQueue( _gfxQueueFamilyIdx, 0 );
+
+      if ( _gfxQueueFamilyIdx == _presQueueFamilyIdx )
+      {
+        _presQueue = _gfxQueue;
+      }
+      else
+      {
+        _presQueue = _device->getQueue( _presQueueFamilyIdx, 0 );
+      }
+    }
+
+    void VulkanWindow::show( void )
+    {
+      if ( !_initialized )
+      {
+        initVulkan( );
+
+        if ( renderer )
+        {
+          renderer->initSwapChainResources( );
+        }
+      }
+
+      while ( !glfwWindowShouldClose( window ) )
+      {
+        beginFrame( );
+
+        // Very crude method to prevent your GPU from overheating.
+        std::this_thread::sleep_for( std::chrono::milliseconds( 16 ) );
+
+        requestUpdate( );
+      }
+    }
+
+    void VulkanWindow::setupDepthStencilTarget( void )
+    {
+      // depth/stencil buffer
+      // assert that a depth and/or stencil format is requested
+      vk::FormatProperties formatProps =
+        _device->getPhysicalDevice( )->getFormatProperties( _dsFormat );
+      assert( ( formatProps.linearTilingFeatures &
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
+        ( formatProps.optimalTilingFeatures &
+          vk::FormatFeatureFlagBits::eDepthStencilAttachment ) );
+
+      vk::ImageTiling tiling = ( formatProps.optimalTilingFeatures
+        & vk::FormatFeatureFlagBits::eDepthStencilAttachment )
+        ? vk::ImageTiling::eOptimal : vk::ImageTiling::eLinear;
+
+      auto extent = _swapchain->extent( );
+
+      _depthImage = _device->createImage(
+        vk::ImageCreateFlagBits( ), vk::ImageType::e2D, _dsFormat,
+        vk::Extent3D( extent.width, extent.height, 1 ), 1, 1,
+        sampleCount, tiling,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+        vk::SharingMode::eExclusive, { },
+        vk::ImageLayout::eUndefined, { } );
+
+      // determine ImageAspect based on format
+      vk::ImageAspectFlags aspectFlags;
+      if ( _dsFormat != vk::Format::eS8Uint )
+      {
+        aspectFlags |= vk::ImageAspectFlagBits::eDepth;
+      }
+
+      // add eStencil if image contains stencil
+      static std::initializer_list<vk::Format> const stencilFormats{
+        vk::Format::eD16UnormS8Uint, vk::Format::eD24UnormS8Uint,
+        vk::Format::eD32SfloatS8Uint, vk::Format::eS8Uint };
+      if ( std::find( stencilFormats.begin( ), stencilFormats.end( ),
+        _dsFormat ) != stencilFormats.end( ) )
+      {
+        aspectFlags |= vk::ImageAspectFlagBits::eStencil;
+      }
+
+      _depthView = _depthImage->createImageView(
+        vk::ImageViewType::e2D, _dsFormat,
+        vk::ComponentMapping(
+          vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
+          vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA ),
+        vk::ImageSubresourceRange( aspectFlags, 0, 1, 0, 1 ) );
+    }
+
+    static struct
+    {
+      vk::SampleCountFlagBits mask;
+      int count;
+    } sampleCounts[ ] = {
+      // keep this sorted by 'count'
+      { vk::SampleCountFlagBits::e1, 1 },
+      { vk::SampleCountFlagBits::e2, 2 },
+      { vk::SampleCountFlagBits::e4, 4 },
+      { vk::SampleCountFlagBits::e8, 8 },
+      { vk::SampleCountFlagBits::e16, 16 },
+      { vk::SampleCountFlagBits::e32, 32 },
+      { vk::SampleCountFlagBits::e64, 64 }
+    };
+
+    void VulkanWindow::setSampleCountFlagBits( int sampleCount_ )
+    {
+      for ( uint32_t i = 0, l = sizeof( sampleCounts ) /
+        sizeof( sampleCounts[ 0 ] ); i < l; ++i )
+      {
+        if ( sampleCounts[ i ].count == sampleCount_ )
+        {
+          sampleCount = sampleCounts[ i ].mask;
+          return;
         }
       }
     }
-    if ( _gfxQueueFamilyIdx == uint32_t( -1 ) )
+    std::vector<int> VulkanWindow::supportedSampleCounts( void )
     {
-      std::cerr << "ERROR: No graphics queue family found" << std::endl;
-      throw;
-    }
-    if ( _presQueueFamilyIdx == uint32_t( -1 ) )
-    {
-      std::cerr << "ERROR: No present queue family found" << std::endl;
-      throw;
-    }
+      auto limits = physicalDevice( )->getDeviceProperties( ).limits;
+      vk::SampleCountFlags color = limits.framebufferColorSampleCounts;
+      vk::SampleCountFlags depth = limits.framebufferDepthSampleCounts;
+      vk::SampleCountFlags stencil = limits.framebufferStencilSampleCounts;
 
-    // Create a new device with the VK_KHR_SWAPCHAIN_EXTENSION enabled.
-    std::vector<std::string> enabledLayerNames;
+      std::vector< int > result;
 
-    std::vector<std::string> enabledExtensionNames;
-
-    _requestedDeviceExts.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-
-    for ( const auto& ext : _requestedDeviceExts )
-    {
-      if ( _physicalDevice->extensionSupported( ext ) )
+      for ( uint32_t i = 0, l = sizeof( sampleCounts ) / sizeof( sampleCounts[ 0 ] );
+        i < l; ++i )
       {
-        enabledExtensionNames.push_back( ext );
+        if ( ( color & sampleCounts[ i ].mask )
+          && ( depth & sampleCounts[ i ].mask )
+          && ( stencil & sampleCounts[ i ].mask ) )
+        {
+          result.push_back( sampleCounts[ i ].count );
+        }
       }
+      return result;
     }
-
-    vk::DeviceQueueCreateInfo dqci;
-    dqci.setQueueFamilyIndex( _gfxQueueFamilyIdx );
-
-    const float queuePriority = 0.0f;
-    dqci.setQueueCount( 1 );
-    dqci.setPQueuePriorities( &queuePriority );
-    std::vector< vk::DeviceQueueCreateInfo > queueCreateInfos;
-    queueCreateInfos.push_back( dqci );
-
-
-    if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
+    void VulkanWindow::beginFrame( void )
     {
-      vk::DeviceQueueCreateInfo dqci2;
-      dqci2.setQueueFamilyIndex( _presQueueFamilyIdx );
-      dqci2.setQueueCount( 1 );
-      dqci2.setPQueuePriorities( &queuePriority );
+      if ( !_swapchain || _framePending ) return;
 
-      queueCreateInfos.push_back( dqci2 );
-    }
-
-    _device = _physicalDevice->createDevice(
-      queueCreateInfos,
-      enabledLayerNames,
-      enabledExtensionNames,
-      _physicalDevice->getDeviceFeatures( )
-    );
-
-    _gfxQueue = _device->getQueue( _gfxQueueFamilyIdx, 0 );
-
-    if ( _gfxQueueFamilyIdx == _presQueueFamilyIdx )
-    {
-      _presQueue = _gfxQueue;
-    }
-    else
-    {
-      _presQueue = _device->getQueue( _presQueueFamilyIdx, 0 );
-    }
-  }
-
-  void GLFWVulkanWindow::show( void )
-  {
-    if ( !_initialized )
-    {
-      initVulkan( );
-    }
-
-    while ( !glfwWindowShouldClose( window ) )
-    {
-      beginFrame( );
-
-      // Very crude method to prevent your GPU from overheating.
-      std::this_thread::sleep_for( std::chrono::milliseconds( 16 ) );
-
-      requestUpdate( );
-    }
-  }
-
-  static struct {
-    vk::SampleCountFlagBits mask;
-    int count;
-  } sampleCounts[ ] = {
-    // keep this sorted by 'count'
-    { vk::SampleCountFlagBits::e1, 1 },
-    { vk::SampleCountFlagBits::e2, 2 },
-    { vk::SampleCountFlagBits::e4, 4 },
-    { vk::SampleCountFlagBits::e8, 8 },
-    { vk::SampleCountFlagBits::e16, 16 },
-    { vk::SampleCountFlagBits::e32, 32 },
-    { vk::SampleCountFlagBits::e64, 64 }
-  };
-
-  void GLFWVulkanWindow::setSampleCountFlagBits( int sampleCount_ )
-  {
-    for ( uint32_t i = 0, l = sizeof( sampleCounts ) /
-      sizeof( sampleCounts[ 0 ] ); i < l; ++i )
-    {
-      if ( sampleCounts[ i ].count == sampleCount_ )
+      if ( _swapchain->extent( ) != swapchainImageSize( ) )
       {
-        sampleCount = sampleCounts[ i ].mask;
+        recreateSwapchain( );
+        if ( !_swapchain )
+        {
+          return;
+        }
+      }
+
+      // move on to next swapchain image
+      auto res = _swapchain->acquireNextImage( );
+
+      if ( res.result == vk::Result::eErrorOutOfDateKHR )
+      {
+        /*Log::error*/printf( "Swapchain out of date" );
+        // swapchain is out of date (e.g. the window was resized) and
+        // must be recreated:
+        recreateSwapchain( );
         return;
       }
-    }
-  }
-  std::vector<int> GLFWVulkanWindow::supportedSampleCounts( void )
-  {
-    auto limits = physicalDevice( )->getDeviceProperties( ).limits;
-    vk::SampleCountFlags color = limits.framebufferColorSampleCounts;
-    vk::SampleCountFlags depth = limits.framebufferDepthSampleCounts;
-    vk::SampleCountFlags stencil = limits.framebufferStencilSampleCounts;
-
-    std::vector< int > result;
-
-    for ( uint32_t i = 0, l = sizeof( sampleCounts ) / sizeof( sampleCounts[ 0 ] );
-      i < l; ++i )
-    {
-      if ( ( color & sampleCounts[ i ].mask )
-        && ( depth & sampleCounts[ i ].mask )
-        && ( stencil & sampleCounts[ i ].mask ) )
+      else if ( res.result != vk::Result::eSuccess &&
+        res.result != vk::Result::eSuboptimalKHR )
       {
-        result.push_back( sampleCounts[ i ].count );
+        /*Log::error*/printf( "Swapchain SUBOPTIMAL" );
+        // swapchain is not as optimal as it could be, but the platform's
+        // presentation engine will still present the image correctly.
+        throw std::runtime_error( "Failed to acquire swapchain image" );
+      }
+
+      imageIdx = res.value;
+      if ( !cmds[ imageIdx ] )
+      {
+        cmds[ imageIdx ] = _cmdPool->allocateCommandBuffer( );
+      }
+
+      auto cmd = cmds[ imageIdx ];
+      cmd->reset( );
+      cmd->begin( );
+
+      if ( _frameGrabbing )
+      {
+        // TODO _frameGrabTargetImage = QImage( size( ), QImage::Format_RGBA8888 );
+      }
+
+      if ( renderer )
+      {
+        _framePending = true;
+        renderer->nextFrame( );
+        // renderer call to frameReady( ) who calls endFrame( )
+      }
+      else
+      {
+        std::array<vk::ClearValue, 2 > clearValues;
+        std::array<float, 4> ccv = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+        clearValues[ 0 ].color = vk::ClearColorValue( ccv );
+        clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
+
+        cmd->beginRenderPass( _renderPass,
+          _framebuffers.at( imageIdx ),
+          vk::Rect2D( { 0, 0 }, swapchainImageSize( ) ), clearValues,
+          vk::SubpassContents::eInline );
+
+        cmd->endRenderPass( );
+
+        endFrame( nullptr );
       }
     }
-    return result;
-  }
-  void GLFWVulkanWindow::beginFrame( void )
-  {
-    if ( !_dfbFramebuffer || !_dfbFramebuffer->swapchain( ) || _framePending ) return;
-
-    vk::Extent2D extent = _dfbFramebuffer->extent( );
-    if ( _dfbFramebuffer->extent( ) != swapchainImageSize( ) )
+    void VulkanWindow::endFrame( std::shared_ptr<Semaphore> sem )
     {
-      recreateSwapchain( );
-      if ( !_dfbFramebuffer->swapchain( ) )
+      // RENDER
       {
+        try
+        {
+          auto cmd = cmds[ imageIdx ];
+
+          if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx && !_frameGrabbing )
+          {
+            // Add swapchain image release to the command buffer that will be
+            // submitted to the graphics queue.
+            ImageMemoryBarrier presTrans(
+              vk::AccessFlagBits( ), vk::AccessFlagBits::eColorAttachmentWrite,
+              vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::ePresentSrcKHR,
+              _gfxQueueFamilyIdx, _presQueueFamilyIdx,
+              nullptr, // TODO: IMAGE
+              vk::ImageSubresourceRange( )
+              .setAspectMask( vk::ImageAspectFlagBits::eColor )
+              .setLevelCount( 1 )
+              .setLayerCount( 1 )
+            );
+
+            cmd->pipelineBarrier( vk::PipelineStageFlagBits::eColorAttachmentOutput,
+              vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlagBits( ),
+              { }, { }, presTrans );
+          }
+
+          // When grabbing a frame, add a readback at the end and skip presenting.
+          if ( _frameGrabbing )
+          {
+            addReadback( );
+          }
+
+          cmd->end( );
+
+          /*vk::Result res = */_gfxQueue->submit( SubmitInfo{
+            sem ? sem : _swapchain->getPresentCompleteSemaphores( )[ imageIdx ],
+            { vk::PipelineStageFlagBits::eColorAttachmentOutput },
+            cmd,
+            _renderComplete
+          } );
+        }
+        catch ( std::exception e )
+        {
+          /*Log::error*//*printf*/ std::cout << ( e.what( ) ) << std::endl;
+        }
+      }
+
+      // block and then bail out when grabbing
+      if ( _frameGrabbing )
+      {
+        finishBlockingReadback( );
+        _frameGrabbing = false;
+        // Leave frame.imageAcquired set to true.
+        // Don't change currentFrame.
+        //emit frameGrabbed( frameGrabTargetImage );
         return;
       }
-    }
 
-    // move on to next swapchain image
-    auto res = _dfbFramebuffer->swapchain( )->acquireNextImage( );
+      if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
+      {
+        /*// Submit the swapchain image acquire to the present queue.
+        submitInfo.pWaitSemaphores = &frame.drawSem;
+        submitInfo.pSignalSemaphores = &frame.presTransSem;
+        submitInfo.pCommandBuffers = &image.presTransCmdBuf; // must be USAGE_SIMULTANEOUS
+        err = devFuncs->vkQueueSubmit( presQueue, 1, &submitInfo, VK_NULL_HANDLE );
+        if ( err != vk::Result::eSuccess )
+        {
+        if ( !checkDeviceLost( err ) )
+        {
+        qWarning( "QVulkanWindow: Failed to submit to present queue: %d", err );
+        }
+        return;
+        }*/
+      }
 
-    if ( res.result == vk::Result::eErrorOutOfDateKHR )
-    {
-      std::cerr << "Swapchain out of date" << std::endl;
-      // swapchain is out of date (e.g. the window was resized) and
-      // must be recreated:
-      recreateSwapchain( );
-      return;
-    }
-    else if ( res.result != vk::Result::eSuccess &&
-      res.result != vk::Result::eSuboptimalKHR )
-    {
-      std::cerr << "Swapchain SUBOPTIMAL" << std::endl;
-      // swapchain is not as optimal as it could be, but the platform's
-      // presentation engine will still present the image correctly.
-      throw std::runtime_error( "Failed to acquire swapchain image" );
-    }
 
-    imageIdx = res.value;
-    if ( !cmds[ imageIdx ] )
-    {
-      cmds[ imageIdx ] = _cmdPool->allocateCommandBuffer( );
-    }
 
-    auto cmd = cmds[ imageIdx ];
-    cmd->reset( );
-    cmd->begin( );
 
-    if ( _frameGrabbing )
-    {
-      // TODO _frameGrabTargetImage = QImage( size( ), QImage::Format_RGBA8888 );
-    }
 
-    if ( renderer )
-    {
-      _framePending = true;
-      renderer->nextFrame( );
-      // renderer call to frameReady( ) who calls endFrame( )
-    }
-    else
-    {
-      std::array<vk::ClearValue, 2 > clearValues;
-      std::array<float, 4> ccv = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-      clearValues[ 0 ].color = vk::ClearColorValue( ccv );
-      clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
-
-      cmd->beginRenderPass( _dfbFramebuffer->renderPass( ),
-        _dfbFramebuffer->framebuffer( imageIdx ),
-        vk::Rect2D( { 0, 0 }, swapchainImageSize( ) ), clearValues,
-        vk::SubpassContents::eInline );
-
-      cmd->endRenderPass( );
-
-      endFrame( );
-    }
-  }
-  void GLFWVulkanWindow::endFrame( void )
-  {
-    // RENDER
-    {
+      vk::Result presentResult = vk::Result::eSuccess;
       try
       {
-        auto cmd = cmds[ imageIdx ];
-
-        if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx && !_frameGrabbing )
+        auto waitSemaphores = { _renderComplete };
+        auto swapchains = { _swapchain };
+        std::vector<uint32_t> imageIndices = { imageIdx };
+        vk::Queue _queue = *_presQueue;
         {
-          // Add swapchain image release to the command buffer that will be
-          // submitted to the graphics queue.
-          lava::ImageMemoryBarrier presTrans(
-            vk::AccessFlagBits( ), vk::AccessFlagBits::eColorAttachmentWrite,
-            vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::ePresentSrcKHR,
-            _gfxQueueFamilyIdx, _presQueueFamilyIdx,
-            nullptr, // TODO: IMAGE
-            vk::ImageSubresourceRange( )
-            .setAspectMask( vk::ImageAspectFlagBits::eColor )
-            .setLevelCount( 1 )
-            .setLayerCount( 1 )
-          );
+          std::vector<vk::Semaphore> waitSemaphoreData;
+          waitSemaphoreData.reserve( waitSemaphores.size( ) );
+          for ( auto const& s : waitSemaphores )
+          {
+            waitSemaphoreData.push_back( *s );
+          }
 
-          cmd->pipelineBarrier( vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlagBits( ),
-            { }, { }, presTrans );
+          std::vector<vk::SwapchainKHR> swapchainData;
+          swapchainData.reserve( swapchains.size( ) );
+          for ( auto const& s : swapchains )
+          {
+            swapchainData.push_back( static_cast< vk::SwapchainKHR >( *s ) );
+          }
+
+          presentResult = _queue.presentKHR( vk::PresentInfoKHR(
+            waitSemaphoreData.size( ), waitSemaphoreData.data( ),
+            swapchainData.size( ), swapchainData.data( ),
+            imageIndices.data( ) ) );
+          //return results;
         }
-
-        // When grabbing a frame, add a readback at the end and skip presenting.
-        if ( _frameGrabbing )
-        {
-          addReadback( );
-        }
-
-        cmd->end( );
-
-        vk::Result res = _gfxQueue->submit( SubmitInfo{
-          _dfbFramebuffer->swapchain( )->getPresentCompleteSemaphores( )[ imageIdx ],
-          { vk::PipelineStageFlagBits::eColorAttachmentOutput },
-          cmd,
-          _renderComplete
-        } );
+        //_presQueue->present( { signalSemaphore } )
+      }
+      catch ( vk::OutOfDateKHRError )
+      {
+        recreateSwapchain( );
+        presentResult = vk::Result::eSuccess;
       }
       catch ( std::exception e )
       {
-        std::cerr << e.what( ) << std::endl;
+        std::cout << e.what( ) << std::endl;
       }
-    }
-
-    // block and then bail out when grabbing
-    if ( _frameGrabbing )
-    {
-      finishBlockingReadback( );
-      _frameGrabbing = false;
-      // Leave frame.imageAcquired set to true.
-      // Don't change currentFrame.
-      //emit frameGrabbed( frameGrabTargetImage );
-      return;
-    }
-
-    if ( _gfxQueueFamilyIdx != _presQueueFamilyIdx )
-    {
-      /*// Submit the swapchain image acquire to the present queue.
-      submitInfo.pWaitSemaphores = &frame.drawSem;
-      submitInfo.pSignalSemaphores = &frame.presTransSem;
-      submitInfo.pCommandBuffers = &image.presTransCmdBuf; // must be USAGE_SIMULTANEOUS
-      err = devFuncs->vkQueueSubmit( presQueue, 1, &submitInfo, VK_NULL_HANDLE );
-      if ( err != vk::Result::eSuccess )
+      if ( presentResult == vk::Result::eSuboptimalKHR )
       {
-      if ( !checkDeviceLost( err ) )
-      {
-      qWarning( "QVulkanWindow: Failed to submit to present queue: %d", err );
+        recreateSwapchain( );
       }
-      return;
-      }*/
+      else if ( presentResult != vk::Result::eSuccess )
+      {
+        throw "Failed to present swap chain image.";
+      }
+
+      // TODO: REVISAR
+      _presQueue->waitIdle( );
+    }
+    void VulkanWindow::frameReady( std::shared_ptr<Semaphore> sem )
+    {
+      if ( main_thread_id != std::this_thread::get_id( ) )
+      {
+        /*Log::error*/printf( "You only can called this in main thread" );
+        return;
+      }
+      // TODO: Check only called by main thread std::this_thread::
+      if ( !_framePending )
+      {
+        throw "framePending() called without calling nextFrame( )";
+      }
+      _framePending = false;
+
+      endFrame( sem );
     }
 
-
-
-
-
-    vk::Result presentResult = vk::Result::eSuccess;
-    try
+    void VulkanWindow::setupRenderPass( void )
     {
-      auto waitSemaphores = { _renderComplete };
-      auto swapchains = { _dfbFramebuffer->swapchain( ) };
-      std::vector<uint32_t> imageIndices = { imageIdx };
-      vk::Queue _queue = *_presQueue;
+      // Creating renderpass
+      std::vector< vk::AttachmentDescription > attDesc =
       {
-        std::vector<vk::Semaphore> waitSemaphoreData;
-        waitSemaphoreData.reserve( waitSemaphores.size( ) );
-        for ( auto const& s : waitSemaphores )
+        vk::AttachmentDescription( // attachment 0 (color render target)
+          vk::AttachmentDescriptionFlagBits( ),
+          _swapchain->colorFormat( ), vk::SampleCountFlagBits::e1,
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // color
+          vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
+          vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
+        ),
+        vk::AttachmentDescription( // attachment 1 (depth render target)
+          vk::AttachmentDescriptionFlagBits( ),
+          _dsFormat, sampleCount,
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // depth
+          vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // stencil
+          vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal
+        )
+      };
+
+      vk::AttachmentReference colorRef( 0,
+        vk::ImageLayout::eColorAttachmentOptimal );
+      vk::AttachmentReference depthRef( 1,
+        vk::ImageLayout::eDepthStencilAttachmentOptimal );
+
+      vk::AttachmentReference resolveRef( 0,
+        vk::ImageLayout::eColorAttachmentOptimal );
+
+
+      vk::SubpassDescription subPassDesc(
+        vk::SubpassDescriptionFlags( ),
+        vk::PipelineBindPoint::eGraphics,
+        0, nullptr,           // input attachments ( count, data )
+        1, &colorRef,         // color attachments ( count, data )
+        nullptr,              // resolve attachments ( data )
+        &depthRef,            // depth attachment ( data )
+        0, nullptr            // preserve attachments ( count, data )
+      );
+
+      _renderPass = _device->createRenderPass( attDesc, subPassDesc, { } );
+    }
+
+    void VulkanWindow::setupFramebuffer( void )
+    {
+      // TODO: Unnecesary ? _framebuffers.clear( );
+      vk::Extent2D extent = _swapchain->extent( );
+
+      _framebuffers.reserve( _swapchain->imageViews( ).size( ) );
+      for ( size_t i = 0, l = _swapchain->imageViews( ).size( ); i < l; ++i )
+      {
+        _framebuffers.push_back( _device->createFramebuffer( _renderPass,
+        { _swapchain->imageViews( )[ i ], _depthView },
+          extent, 1 ) );
+      }
+
+      std::cout << "Framebuffer Swapchain OK" << std::endl;
+    }
+
+    bool VulkanWindow::setupPipelineCache( void )
+    {
+      _pipelineCache = nullptr;
+      return false;
+    }
+    void VulkanWindow::OnWindowResized( GLFWwindow* /*window*/,
+      int /*width*/, int /*height*/ )
+    {
+    }
+    void VulkanWindow::initVulkan( void )
+    {
+      if ( !_instance )
+      {
+        throw "Instance don't exist";
+      }
+
+      if ( !renderer )
+      {
+        renderer = createRenderer( );
+      }
+
+      if ( !_physicalDevice )
+      {
+        LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
+      }
+
+      {
+        VkSurfaceKHR c_surface;
+
+        VkResult result = glfwCreateWindowSurface(
+          VkInstance( static_cast< vk::Instance >( *_instance ) ), window, nullptr,
+          &c_surface );
+
+        if ( result != VK_SUCCESS )
         {
-          waitSemaphoreData.push_back( *s );
+          throw std::runtime_error( "failed to create window surface!" );
         }
 
-        std::vector<vk::SwapchainKHR> swapchainData;
-        swapchainData.reserve( swapchains.size( ) );
-        for ( auto const& s : swapchains )
-        {
-          swapchainData.push_back( static_cast< vk::SwapchainKHR >( *s ) );
-        }
-
-        presentResult = _queue.presentKHR( vk::PresentInfoKHR(
-          waitSemaphoreData.size( ), waitSemaphoreData.data( ),
-          swapchainData.size( ), swapchainData.data( ),
-          imageIndices.data( ) ) );
-        //return results;
+        surface = std::make_shared< Surface >( _instance,
+          vk::SurfaceKHR( c_surface ), true );
       }
-      //_presQueue->present( { signalSemaphore } )
-    }
-    catch ( vk::OutOfDateKHRError )
-    {
-      recreateSwapchain( );
-      presentResult = vk::Result::eSuccess;
-    }
-    catch ( std::exception e )
-    {
-      std::cout << e.what( ) << std::endl;
-    }
-    if ( presentResult == vk::Result::eSuboptimalKHR )
-    {
-      recreateSwapchain( );
-    }
-    else if ( presentResult != vk::Result::eSuccess )
-    {
-      throw "Failed to present swap chain image.";
-    }
-    
-    // TODO: REVISAR
-    _presQueue->waitIdle( );
-  }
-  void GLFWVulkanWindow::frameReady( void )
-  {
-    if ( main_thread_id != std::this_thread::get_id( ) )
-    {
-      std::cerr << "You only can called this in main thread" << std::endl;
-      return;
-    }
-    // TODO: Check only called by main thread std::this_thread::
-    if ( !_framePending )
-    {
-      throw "framePending() called without calling nextFrame( )";
-    }
-    _framePending = false;
 
-    endFrame( );
-  }
-  bool GLFWVulkanWindow::setupPipelineCache( void )
-  {
-    _pipelineCache = nullptr;
-    return false;
-  }
-  void GLFWVulkanWindow::OnWindowResized( GLFWwindow * window, int width, int height )
-  {
-  }
-  void GLFWVulkanWindow::initVulkan( void )
-  {
-    if ( !_instance )
-    {
-      throw "Instance don't exist";
-    }
+      getSurfaceFormats( );
 
-    if ( !renderer )
-    {
-      renderer = createRenderer( );
-    }
+      createQueues( );
 
-    if ( !_physicalDevice )
-    {
-      LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
-    }
+      VkBool32 validDepthFormat = utils::getSupportedDepthFormat(
+        _physicalDevice, _dsFormat );
+      assert( validDepthFormat );
 
-    {
-      VkSurfaceKHR c_surface;
+      _swapchain = std::make_shared< Swapchain >( _device, surface, swapchainImageSize( ) );
 
-      VkResult result = glfwCreateWindowSurface(
-        VkInstance( static_cast< vk::Instance >( *_instance ) ), window, nullptr,
-        &c_surface );
+      setupDepthStencilTarget( );
+      setupRenderPass( );
+      setupFramebuffer( );
 
-      if ( result != VK_SUCCESS )
+      _cmdPool = _device->createCommandPool(
+        //vk::CommandPoolCreateFlagBits( ),
+        vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        _gfxQueueFamilyIdx );
+
+      size_t numImages = _swapchain->count( );
+      cmds.reserve( numImages );
+      for ( size_t i = 0; i < numImages; ++i )
       {
-        throw std::runtime_error( "failed to create window surface!" );
+        cmds.push_back( _cmdPool->allocateCommandBuffer( ) );
       }
 
-      surface = std::make_shared< lava::Surface >( _instance,
-        vk::SurfaceKHR( c_surface ), true );
+      setupPipelineCache( );
+
+      if ( renderer )
+      {
+        renderer->initResources( );
+      }
+
+      _renderComplete = _device->createSemaphore( );
+
+      _initialized = true;
     }
-
-    getSurfaceFormats( );
-
-    createQueues( );
-
-    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat(
-      _physicalDevice, _dsFormat );
-    assert( validDepthFormat );
-
-    _dfbFramebuffer = new DefaultFramebuffer( _device, surface,
-      swapchainImageSize( ), _dsFormat, sampleCount );
-
-    _cmdPool = _device->createCommandPool(
-      //vk::CommandPoolCreateFlagBits( ),
-      vk::CommandPoolCreateFlagBits::eResetCommandBuffer, 
-      _gfxQueueFamilyIdx );
-
-    size_t numImages = _dfbFramebuffer->swapchain( )->count( );
-    cmds.reserve( numImages );
-    for ( size_t i = 0; i < numImages; ++i )
+    void VulkanWindow::cleanupVulkan( void )
     {
-      cmds.push_back( _cmdPool->allocateCommandBuffer( ) );
-    }
+      if ( !_initialized ) return;
 
-    setupPipelineCache( );
-
-    if ( renderer )
-    {
-      renderer->initResources( );
-    }
-
-    _renderComplete = _device->createSemaphore( );
-
-    _initialized = true;
-  }
-  void GLFWVulkanWindow::cleanupVulkan( void )
-  {
-    if ( !_initialized ) return;
-
-    _device->waitIdle( );
-
-    if ( renderer )
-    {
-      renderer->releaseResources( );
       _device->waitIdle( );
 
-      delete renderer;
+      if ( renderer )
+      {
+        renderer->releaseResources( );
+        _device->waitIdle( );
 
-      renderer = nullptr;
+        delete renderer;
+
+        renderer = nullptr;
+      }
+
+      cmds.clear( );
+
+      _swapchain.reset( );
+      _swapchain = nullptr;
+
+      if ( _renderComplete )
+      {
+        _renderComplete.reset( );
+        _renderComplete = nullptr;
+      }
+
+      _initialized = false;
     }
-
-    cmds.clear( );
-
-    delete _dfbFramebuffer;
-    _dfbFramebuffer = nullptr;
-
-    if ( _renderComplete )
+    void VulkanWindow::recreateSwapchain( void )
     {
-      _renderComplete.reset( );
-      _renderComplete = nullptr;
-    }
+      // recreateSwapchain( )
+      {
+        _swapchain->recreate( );
+      }
 
-    _initialized = false;
-  }
-  void GLFWVulkanWindow::recreateSwapchain( void )
-  {
-    _dfbFramebuffer->recreate( );
-  }
-  GLFWVulkanWindowRenderer * GLFWVulkanWindow::createRenderer( void )
-  {
-    return nullptr;
+      // cleanupFramebuffers( )
+      {
+        for ( auto& fb : _framebuffers )
+        {
+          fb.reset( );
+        }
+        _framebuffers.clear( );
+      }
+
+      // cleanupDepth
+      {
+        _depthView.reset( );
+        _depthImage.reset( );
+      }
+
+      setupDepthStencilTarget( );
+      setupFramebuffer( );
+
+      if ( renderer )
+      {
+        renderer->initSwapChainResources( );
+      }
+    }
+    VulkanWindowRenderer * VulkanWindow::createRenderer( void )
+    {
+      return nullptr;
+    }
   }
 }

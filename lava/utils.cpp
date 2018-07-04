@@ -18,6 +18,7 @@
  **/
 
 #include "utils.hpp"
+#include "Log.h"
 
 #include <sstream>
 #include <fstream>
@@ -126,8 +127,8 @@ namespace lava
     if ( !( formatProps.optimalTilingFeatures & 
       vk::FormatFeatureFlagBits::eBlitSrc ) )
     {
-      std::cerr << "Device doesn't support blitting from optimal tiled images, "
-        << "using copy instead of blit!" << std::endl;
+      Log::error( "Device doesn't support blitting to linear tiled images, "
+        "using copy instead of blit!" );
       supportsBlit = false;
     }
 
@@ -137,8 +138,8 @@ namespace lava
     if ( !( formatProps.linearTilingFeatures &
       vk::FormatFeatureFlagBits::eBlitDst ) )
     {
-      std::cerr << "Device doesn't support blitting to linear tiled images, "
-        << "using copy instead of blit!" << std::endl;
+      Log::error( "Device doesn't support blitting to linear tiled images, "
+        "using copy instead of blit!" );
       supportsBlit = false;
     }
 
@@ -325,7 +326,7 @@ namespace lava
     }
     file.close( );
 
-    std::cout << "Screenshot saved to disk" << std::endl;
+    Log::info( "Screenshot saved to disk" );
   }
   
   unsigned char* utils::loadImageTexture( const std::string& fileName,
@@ -337,7 +338,7 @@ namespace lava
     if ( pixels == nullptr )
     {
       const std::string reason( stbi_failure_reason( ) );
-      printf( "%s failed to load. stb_image's reason: %s\n", fileName.c_str( ), 
+      Log::error( "%s failed to load. stb_image's reason: %s\n", fileName.c_str( ), 
         reason.c_str( ) );
 
       throw std::runtime_error( "failed to load texture image!" );
@@ -486,14 +487,7 @@ namespace lava
     vk::PipelineStageFlags srcStageMask,
     vk::PipelineStageFlags dstStageMask )
   {
-    // Create an image barrier object
-    vk::ImageMemoryBarrier imageMemoryBarrier;
-    imageMemoryBarrier.oldLayout = oldImageLayout;
-    imageMemoryBarrier.newLayout = newImageLayout;
-    imageMemoryBarrier.image = *image;
-    imageMemoryBarrier.subresourceRange = subresourceRange;
-    imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    vk::AccessFlags srcAccessMask, dstAccessMask;
 
     // Source layouts (old)
     // Source access mask controls actions that have to be finished
@@ -504,46 +498,44 @@ namespace lava
         // Image layout is undefined (or doesn't matter)
         // Only valid as initial layout
         // No flags required, listed only for completeness
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlags( );
+        srcAccessMask = { };
         break;
 
       case vk::ImageLayout::ePreinitialized:
         // Image is preinitialized
         // Only valid as initial layout for linear images, preserves memory contents
         // Make sure host writes have been finished
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eHostWrite;
+        srcAccessMask = vk::AccessFlagBits::eHostWrite;
         break;
 
       case vk::ImageLayout::eColorAttachmentOptimal:
         // Image is a color attachment
         // Make sure any writes to the color buffer have been finished
-        imageMemoryBarrier.srcAccessMask = 
-          vk::AccessFlagBits::eColorAttachmentWrite;
+        srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
         break;
 
       case vk::ImageLayout::eDepthStencilAttachmentOptimal:
         // Image is a depth/stencil attachment
         // Make sure any writes to the depth/stencil buffer have been finished
-        imageMemoryBarrier.srcAccessMask = 
-          vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+        srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
         break;
 
       case vk::ImageLayout::eTransferSrcOptimal:
         // Image is a transfer source 
         // Make sure any reads from the image have been finished
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        srcAccessMask = vk::AccessFlagBits::eTransferRead;
         break;
 
       case vk::ImageLayout::eTransferDstOptimal:
         // Image is a transfer destination
         // Make sure any writes to the image have been finished
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        srcAccessMask = vk::AccessFlagBits::eTransferWrite;
         break;
 
       case vk::ImageLayout::eShaderReadOnlyOptimal:
         // Image is read by a shader
         // Make sure any shader reads from the image have been finished
-        imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+        srcAccessMask = vk::AccessFlagBits::eShaderRead;
         break;
       default:
         // Other source layouts aren't handled (yet)
@@ -557,50 +549,53 @@ namespace lava
       case vk::ImageLayout::eTransferDstOptimal:
         // Image will be used as a transfer destination
         // Make sure any writes to the image have been finished
-        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+        dstAccessMask = vk::AccessFlagBits::eTransferWrite;
         break;
 
       case vk::ImageLayout::eTransferSrcOptimal:
         // Image will be used as a transfer source
         // Make sure any reads from the image have been finished
-        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+        dstAccessMask = vk::AccessFlagBits::eTransferRead;
         break;
 
       case vk::ImageLayout::eColorAttachmentOptimal:
         // Image will be used as a color attachment
         // Make sure any writes to the color buffer have been finished
-        imageMemoryBarrier.dstAccessMask = 
+        dstAccessMask = 
           vk::AccessFlagBits::eColorAttachmentWrite;
         break;
 
       case vk::ImageLayout::eDepthStencilAttachmentOptimal:
         // Image layout will be used as a depth/stencil attachment
         // Make sure any writes to depth/stencil buffer have been finished
-        imageMemoryBarrier.dstAccessMask = imageMemoryBarrier.dstAccessMask |
+        dstAccessMask = dstAccessMask |
           vk::AccessFlagBits::eDepthStencilAttachmentWrite;
         break;
 
       case vk::ImageLayout::eShaderReadOnlyOptimal:
         // Image will be read in a shader (sampler, input attachment)
         // Make sure any writes to the image have been finished
-        if ( imageMemoryBarrier.srcAccessMask == vk::AccessFlags( ) )
+        if ( srcAccessMask == vk::AccessFlags( ) )
         {
-          imageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eHostWrite |
+          srcAccessMask = vk::AccessFlagBits::eHostWrite |
             vk::AccessFlagBits::eTransferWrite;
         }
-        imageMemoryBarrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        dstAccessMask = vk::AccessFlagBits::eShaderRead;
         break;
       default:
         // Other source layouts aren't handled (yet)
         break;
     }
-    static_cast< vk::CommandBuffer >( *cmd ).pipelineBarrier(
-      srcStageMask,
-      dstStageMask,
-      { },
-      { },
-      { },
-      imageMemoryBarrier
-    );
+
+    // Create an image barrier object
+    ImageMemoryBarrier imageMemoryBarrier(
+      srcAccessMask, dstAccessMask,
+      oldImageLayout, newImageLayout,
+      VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+      image, subresourceRange );
+
+    cmd->pipelineBarrier( 
+      srcStageMask, dstStageMask, { }, { }, { },
+      imageMemoryBarrier );
   }
 }

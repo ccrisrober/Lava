@@ -93,7 +93,7 @@ namespace lava
   void CommandPool::reset( vk::CommandPoolResetFlags flags )
   {
 #if !defined(NDEBUG)
-    for ( std::vector<lava::CommandBuffer*>::iterator it =
+    for ( std::vector<std::shared_ptr<CommandBuffer>>::iterator it =
       _commandBuffers.begin( ); it != _commandBuffers.end( ); ++it )
     {
       ( *it )->onReset( );
@@ -108,12 +108,37 @@ namespace lava
     std::shared_ptr<lava::CommandBuffer> commandBuffer = 
       std::make_shared<CommandBuffer>( shared_from_this( ), level );
 #if !defined(NDEBUG)
-    _commandBuffers.push_back( commandBuffer.get( ) );
+    _commandBuffers.push_back( commandBuffer );
 #endif
-    return( commandBuffer );
+    return commandBuffer;
   }
+
+  std::vector< std::shared_ptr<CommandBuffer> > 
+    CommandPool::allocateCommandBuffers(
+    uint32_t count, vk::CommandBufferLevel level )
+  {
+	std::vector<std::shared_ptr<CommandBuffer>> cmdBuffs;
+
+	vk::Device dev(*getDevice());
+	vk::CommandBufferAllocateInfo info(_commandPool, level, count );
+	std::vector<vk::CommandBuffer> commandBuffers =
+		dev.allocateCommandBuffers(info);
+	assert(!commandBuffers.empty());
+
+	for (const auto& cmd : commandBuffers)
+	{
+      auto commandBuffer = std::shared_ptr<CommandBuffer>(
+		  new CommandBuffer( cmd, shared_from_this(), level ) );
+	  cmdBuffs.push_back( commandBuffer );
 #if !defined(NDEBUG)
-  uint32_t CommandPool::getFamilyIndex( ) const
+	  _commandBuffers.push_back(commandBuffer);
+#endif
+	}
+	return cmdBuffs;
+  }
+  
+#if !defined(NDEBUG)
+  uint32_t CommandPool::getFamilyIndex( void ) const
   {
     return _familyIndex;
   }
@@ -150,6 +175,26 @@ namespace lava
   }
 #endif
 
+  CommandBuffer::CommandBuffer(const vk::CommandBuffer& cmd,
+	  const std::shared_ptr<CommandPool>& cmdPool,
+	  vk::CommandBufferLevel level)
+    : _commandPool(cmdPool)
+#if !defined(NDEBUG)
+	, _inRenderPass(false)
+	, _isRecording(false)
+	, _isResetFromCommandPool(true)
+	, _level(level)
+//    , _state( State::Ready )
+#endif
+  {
+#if !defined(NDEBUG)
+	for (size_t i = 0; i <= VK_QUERY_TYPE_RANGE_SIZE; ++i)
+	{
+	  _queryInfo[i].active = false;
+	}
+#endif
+	_commandBuffer = cmd;
+  }
   CommandBuffer::CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool,
     vk::CommandBufferLevel level )
     : _commandPool( cmdPool )
@@ -169,7 +214,8 @@ namespace lava
 #endif
     vk::Device dev( *_commandPool->getDevice( ) );
     vk::CommandBufferAllocateInfo info( *_commandPool, level, 1 );
-    auto commandBuffers = dev.allocateCommandBuffers( info );
+    std::vector<vk::CommandBuffer> commandBuffers = 
+		dev.allocateCommandBuffers( info );
     assert( !commandBuffers.empty( ) );
     _commandBuffer = commandBuffers[ 0 ];
   }
@@ -441,7 +487,7 @@ namespace lava
     std::vector<vk::CommandBuffer> commands;
     for ( auto const& it : secondaryCmds )
     {
-      assert( _commandPool->getDevice( ) == it->_commandPool->getDevice( ) );
+      /*assert( _commandPool->getDevice( ) == it->_commandPool->getDevice( ) );
       assert( it->_level == vk::CommandBufferLevel::eSecondary );
       assert( ( it->_flags & vk::CommandBufferUsageFlagBits::eSimultaneousUse ) || 
         ( std::count( _secondaryCommandBuffers.begin( ), _secondaryCommandBuffers.end( ), it ) == 1 ) );
@@ -461,13 +507,13 @@ namespace lava
       {
         assert( !_queryInfo[ i ].active || !it->_queryInfo[ i ].contained );
       }
-#endif
+#endif*/
 
       commands.push_back( *it );
 
-#if !defined(NDEBUG)
+/*#if !defined(NDEBUG)
       it->setPrimaryCommandBuffer( shared_from_this( ) );
-#endif
+#endif*/
     }
     _commandBuffer.executeCommands( commands );
   }
@@ -496,6 +542,16 @@ namespace lava
       ranges );
   }
 
+  void CommandBuffer::resolveImage( const std::shared_ptr<Image>& srcImage, 
+    const std::shared_ptr<Image>& dstImage,
+    const vk::ImageResolve& region )
+  {
+	  _commandBuffer.resolveImage(
+		  *srcImage, srcImage->layout, 
+		  *dstImage, dstImage->layout, 
+		  region);
+  }
+
   void CommandBuffer::blitImage( const std::shared_ptr<Image>& srcImage,
     vk::ImageLayout srcImageLayout, const std::shared_ptr<Image>& dstImage,
     vk::ImageLayout dstImageLayout, vk::ArrayProxy<const vk::ImageBlit> regions,
@@ -509,6 +565,24 @@ namespace lava
     const std::shared_ptr<lava::QueryPool>& queryPool, uint32_t slot,
     vk::QueryControlFlags flags )
   {
+#if !defined(NDEBUG)
+    int queryInfoIndex = int( queryPool->getQueryType( ) ) - VK_QUERY_TYPE_BEGIN_RANGE;
+    assert( !_queryInfo[ queryInfoIndex ].active );
+    _queryInfo[ queryInfoIndex ].active = true;
+    _queryInfo[ queryInfoIndex ].contained = true;
+    _queryInfo[ queryInfoIndex ].flags = flags;
+#endif
+    _commandBuffer.beginQuery( *queryPool, slot, flags );
+  }
+
+  void CommandBuffer::beginQuery( const std::shared_ptr<lava::QueryPool>& queryPool,
+    uint32_t slot, bool precise )
+  {
+    vk::QueryControlFlags flags;
+    if (precise)
+    {
+      flags |= vk::QueryControlFlagBits::ePrecise;
+    }
 #if !defined(NDEBUG)
     int queryInfoIndex = int( queryPool->getQueryType( ) ) - VK_QUERY_TYPE_BEGIN_RANGE;
     assert( !_queryInfo[ queryInfoIndex ].active );
@@ -569,10 +643,18 @@ namespace lava
   {
     _commandBuffer.setScissor( first, scissors );
   }
+  void CommandBuffer::setScissor( const vk::Rect2D scissor )
+  {
+	this->setScissor( 0, scissor );
+  }
   void CommandBuffer::setViewport( uint32_t first,
     vk::ArrayProxy<const vk::Viewport> viewports )
   {
     _commandBuffer.setViewport( first, viewports );
+  }
+  void CommandBuffer::setViewport( const vk::Viewport viewport )
+  {
+	this->setViewport( 0, viewport);
   }
   void CommandBuffer::setDepthBias( float depthBias, float depthBiasClamp,
     float slopeScaledDepthBias )
@@ -644,6 +726,16 @@ namespace lava
     _commandBuffer.drawIndexedIndirect( *buffer, offset, count, stride );
   }
 
+  void CommandBuffer::draw( int vertexCount )
+  {
+    this->draw( vertexCount, 1, 0, 0 );
+  }
+
+  void CommandBuffer::drawIndexed( int indexCount )
+  {
+    this->drawIndexed( indexCount, 1, 0, 0, 0 );
+  }
+
   void CommandBuffer::reset( vk::CommandBufferResetFlagBits flags )
   {
     assert( _commandPool->individuallyResetCommandBuffers( ) );
@@ -657,6 +749,13 @@ namespace lava
     _stageFlags = vk::PipelineStageFlags( );
 #endif
     //_state = State::Ready; // TODO ?
+  }
+
+  void CommandBuffer::pushConstant( 
+    const std::shared_ptr<PipelineLayout>& layout,
+    vk::ShaderStageFlagBits stageFlags, void * data )
+  {
+    _commandBuffer.pushConstants( *layout, stageFlags, 0, sizeof( data ), data );
   }
 
   void CommandBuffer::bindVertexBuffer( uint32_t startBinding,
@@ -748,6 +847,52 @@ namespace lava
       barriers, bufferMemoryBarriers, imbs );
   }
 
+  void CommandBuffer::pipelineBarrier(
+    vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags destStageMask,
+    const vk::ArrayProxy< std::shared_ptr< Buffer > >& buffers, 
+    const vk::BufferMemoryBarrier& barrier, vk::DependencyFlags dependencyFlags )
+  {
+    std::vector< vk::BufferMemoryBarrier > bmbs;
+    bmbs.reserve( buffers.size( ) );
+    for( auto buff: buffers )
+    {
+      vk::BufferMemoryBarrier bmb;
+      bmb.srcAccessMask = barrier.srcAccessMask;
+      bmb.dstAccessMask = barrier.dstAccessMask;
+      bmb.srcQueueFamilyIndex = barrier.srcQueueFamilyIndex;
+      bmb.dstQueueFamilyIndex = barrier.dstQueueFamilyIndex;
+      bmb.srcAccessMask = barrier.srcAccessMask;
+      bmb.buffer = static_cast< vk::Buffer >( *buff );
+      bmb.offset = barrier.offset;
+      bmb.size = buff->getSize( );
+      bmbs.push_back( bmb );
+    }
+
+    _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
+      { }, bmbs, { } );
+  }
+
+  void CommandBuffer::pipelineBarrier(
+    vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags destStageMask,
+    const vk::ArrayProxy< std::shared_ptr< Image > >& images, 
+    const ImageMemoryBarrier& imb, vk::DependencyFlags dependencyFlags )
+  {
+    std::vector<vk::ImageMemoryBarrier> imbs;
+    imbs.reserve( images.size( ) );
+    for ( auto const& image : images )
+    {
+      imbs.push_back( vk::ImageMemoryBarrier(
+        imb.srcAccessMask, imb.dstAccessMask,
+        imb.oldLayout, imb.newLayout,
+        imb.srcQueueFamilyIndex, imb.dstQueueFamilyIndex,
+        imb.image ? static_cast<vk::Image>( *image ) : nullptr,
+        imb.subresourceRange ) );
+    }
+
+    _commandBuffer.pipelineBarrier( srcStageMask, destStageMask, dependencyFlags,
+      { }, { }, imbs );
+  }
+
   void CommandBuffer::onReset( void )
   {
     _renderPass.reset( );
@@ -763,7 +908,7 @@ namespace lava
     vk::PipelineBindPoint pipelineBindPoint,
     const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
     vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets,
-    vk::ArrayProxy<const uint32_t> dynamicOffsets )
+	  vk::ArrayProxy<const uint32_t> dynamicOffsets)
   {
     _bindDescriptorSets.clear( );
     for ( auto& descriptor : descriptorSets )

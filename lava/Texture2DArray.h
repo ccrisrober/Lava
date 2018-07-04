@@ -33,6 +33,21 @@ namespace lava
   class Sampler;
   class CommandPool;
 
+  class Texture1DArray : public Texture
+  {
+  public:
+	LAVA_API
+	// All images on filePaths as same dimensions
+	Texture1DArray(const std::shared_ptr<Device>& device,
+	  std::vector< std::string >& filePaths,
+	  const std::shared_ptr<CommandPool>& cmdPool,
+	  const std::shared_ptr<Queue>& queue,
+	  vk::Format format,
+	  vk::ImageUsageFlags imageUsageFlags = vk::ImageUsageFlagBits::eSampled,
+	  vk::ImageLayout imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+	  bool forceLinear = false);
+  };
+
   class Texture2DArray : public Texture
   {
   public:

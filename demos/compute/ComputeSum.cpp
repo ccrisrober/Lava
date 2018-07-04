@@ -136,7 +136,7 @@ int main( void )
     std::vector<float> hostDataB( bufferElements );
 
     std::vector<float> cpuResult( bufferElements );
-    int i = 0;
+    size_t i = 0;
     for ( float& n : hostDataB )
     {
       n = min + ( max - min ) * ( ( ( ( float ) rand( ) ) / ( float ) RAND_MAX ) ) + min;
@@ -158,8 +158,14 @@ int main( void )
 
   std::cout << "Run computations...";
 
+  // Now create an event and wait for it on the GPU
+  auto ev = device->createEvent( );
+
   auto commandBuffer = commandPool->allocateCommandBuffer( );
   commandBuffer->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+
+  commandBuffer->setEvent( ev, vk::PipelineStageFlagBits::eBottomOfPipe );
+
   commandBuffer->bindComputePipeline( pipeline );
   commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eCompute, 
     pipelineLayout, 0, { descriptorSet }, { } );
@@ -168,7 +174,22 @@ int main( void )
 
   auto queue = device->getQueue( queueFamilyIndex, 0 );
 
+  // Look for the event on the CPU. It should be RESET since we haven't sent
+  // the command buffer yet.
+  auto res = ev->getStatus( );
+  assert( res == vk::Result::eEventReset );
+
+  // Send the command buffer and loop waiting for the event
   queue->submit( commandBuffer );
+
+  int polls = 0;
+  do
+  {
+    res = ev->getStatus( );
+    ++polls;
+  } while ( res != vk::Result::eEventSet );
+  printf( "%d polls to find the event set\n", polls );
+
   queue->waitIdle( );
 
   std::cout << "OK" << std::endl;

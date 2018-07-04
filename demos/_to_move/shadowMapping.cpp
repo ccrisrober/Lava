@@ -32,7 +32,7 @@ using namespace lava;
 class CustomRenderer : public VulkanWindowRenderer
 {
 public:
-  CustomRenderer( lava::VulkanWindow *w )
+  CustomRenderer( glfw::VulkanWindow *w )
     : VulkanWindowRenderer( )
     , _window( w )
   {

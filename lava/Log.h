@@ -143,7 +143,8 @@ namespace lava
         _outputHandler = std::move(
           std::unique_ptr< T >( new T( std::forward< Args >( args )... ) ) );
       }
-  private:
+  //protected:
+  //private:
     static std::unique_ptr< OutputHandler > _outputHandler;
   };
 }

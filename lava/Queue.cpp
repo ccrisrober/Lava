@@ -125,10 +125,26 @@ namespace lava
     submit( SubmitInfo( nullptr, nullptr, commandBuffer, nullptr ), fence );
   }
 
+
+  std::vector<vk::Result> Queue::presentToDisplay(
+    vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores,
+    vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
+    vk::ArrayProxy<const uint32_t> imageIndices,
+    const vk::Rect2D& srcRect, const vk::Rect2D& dstRect,
+    bool persistent )
+  {
+    vk::DisplayPresentInfoKHR displayPresentInfo;
+    displayPresentInfo.srcRect = srcRect;
+    displayPresentInfo.dstRect = dstRect;
+    displayPresentInfo.persistent = persistent ? VK_TRUE : VK_FALSE;
+    return present( waitSemaphores, swapchains, imageIndices, &displayPresentInfo );
+  }
+
   std::vector<vk::Result> Queue::present(
     vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores,
     vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
-    vk::ArrayProxy<const uint32_t> imageIndices )
+    vk::ArrayProxy<const uint32_t> imageIndices,
+    const vk::DisplayPresentInfoKHR* displayPresentInfo )
   {
     assert( swapchains.size( ) == imageIndices.size( ) );
 
@@ -147,10 +163,12 @@ namespace lava
     }
 
     std::vector<vk::Result> results( swapchains.size( ) );
-    _queue.presentKHR( vk::PresentInfoKHR(
+    vk::PresentInfoKHR info(
       waitSemaphoreData.size( ), waitSemaphoreData.data( ),
       swapchainData.size( ), swapchainData.data( ),
-      imageIndices.data( ), results.data( ) ) );
+      imageIndices.data( ), results.data( ) );
+    info.pNext = displayPresentInfo;
+    _queue.presentKHR( info );
     return results;
   }
 

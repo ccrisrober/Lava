@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <iostream>
 
 #include <glfwLava/glfwLava.h>
@@ -7,12 +26,12 @@ using namespace lava;
 
 #include <routes.h>
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -154,7 +173,7 @@ public:
     cmd->bindVertexBuffer( 0, vertexBuffer, 0 );
 
     cmd->setViewportScissors( size );
-    cmd->pushConstants<PushConstant>( *pipelineLayout, 
+    cmd->pushConstants<PushConstant>( pipelineLayout, 
       vk::ShaderStageFlagBits::eVertex, 0, pc );
     cmd->draw( vertices.size( ), 1, 0, 0 );
     cmd->endRenderPass( );
@@ -184,28 +203,28 @@ private:
   std::shared_ptr<PipelineLayout> pipelineLayout;
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
 
   }
   /*VulkanWindow( int w, int h, const char* title, bool enableLayers )
-    : lava::GLFWVulkanWindow( w, h, title, enableLayers )
+    : glfw::VulkanWindow( w, h, title, enableLayers )
   {
 
   }*/
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 500, 500, "Geometry Figures", true );
   app.show( );

@@ -144,7 +144,7 @@ class CustomRenderer : public VulkanWindowRenderer
     std::endl;
   }
 public:
-  CustomRenderer( lava::VulkanWindow *w )
+  CustomRenderer( glfw::VulkanWindow *w )
     : VulkanWindowRenderer( )
     , _window( w )
   {

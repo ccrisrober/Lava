@@ -90,11 +90,11 @@ std::shared_ptr<lava::DescriptorSetLayout> descriptorSetLayout;
 std::shared_ptr<lava::utility::CustomFramebuffer> customFbo;
 #include <routes.h>
 
-class CustomRenderer : public lava::VulkanWindowRenderer
+class CustomRenderer : public glfw::VulkanWindowRenderer
 {
 public:
-  CustomRenderer( lava::VulkanWindow *w )
-    : lava::VulkanWindowRenderer( )
+  CustomRenderer( glfw::VulkanWindow *w )
+    : glfw::VulkanWindowRenderer( )
     , _window( w )
   {
     _window->setWindowTitle( "Clear Screen" );
@@ -168,16 +168,16 @@ public:
     _window->requestUpdate( );
   }
 private:
-  lava::VulkanWindow *_window;
+  glfw::VulkanWindow *_window;
   float _red = 0.0f;
   float _blue = 0.0f;
 };
 
 
-class CustomVkWindow : public lava::VulkanWindow
+class CustomVkWindow : public glfw::VulkanWindow
 {
 public:
-  lava::VulkanWindowRenderer* createRenderer( void ) override
+  glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new CustomRenderer( this );
   }

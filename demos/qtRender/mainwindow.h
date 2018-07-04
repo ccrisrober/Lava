@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #ifndef __LAVA_QTRENDER_MAINWINDOW_H__
 #define __LAVA_QTRENDER_MAINWINDOW_H__
 
@@ -21,12 +40,12 @@
 
 #include <qtLava/qtLava.h>
 
-class MainWindowRenderer : public lava::QtVulkanWindowRenderer
+class MainWindowRenderer : public lava::qt::VulkanWindowRenderer
 {
 private:
-  lava::QtVulkanWindow* _window;
+  lava::qt::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::QtVulkanWindow* window )
+  MainWindowRenderer( lava::qt::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -63,16 +82,16 @@ public:
   }
 };
 
-class VulkanWindow : public lava::QtVulkanWindow
+class VulkanWindow : public lava::qt::VulkanWindow
 {
   Q_OBJECT
 private:
 public:
   VulkanWindow( QWindow* parent = nullptr )
-    : lava::QtVulkanWindow( parent )
+    : lava::qt::VulkanWindow( parent )
   {
   }
-  virtual lava::QtVulkanWindowRenderer* createRenderer( void )
+  virtual lava::qt::VulkanWindowRenderer* createRenderer( void )
   {
     return new MainWindowRenderer( this );
   }

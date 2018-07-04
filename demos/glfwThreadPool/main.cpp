@@ -11,10 +11,10 @@ using namespace lava;
 
 #include <routes.h>
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 
   lava::utility::ThreadPool threadPool;
   struct PerThreadData
@@ -23,7 +23,7 @@ private:
     std::vector< std::shared_ptr< lava::CommandBuffer > > cmdBuffers;
   } perThreadData[ 8 ];
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -400,23 +400,23 @@ private:
   std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
 
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 500, 500, "ThreadPool", true );
   app.show( );

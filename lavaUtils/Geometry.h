@@ -20,6 +20,8 @@
 #ifndef __LAVAUTILS_GEOMETRY__
 #define __LAVAUTILS_GEOMETRY__
 
+#ifdef LAVA_USE_ASSIMP
+
 #include <memory>
 
 #include <lava/lava.h>
@@ -37,11 +39,12 @@ namespace lava
     {
     public:
       LAVAUTILS_API
-      Geometry( const std::shared_ptr<Device>& device, const std::string& path );
+      Geometry( const std::shared_ptr<Device>& device, const std::string& path, 
+        bool adjancency = false );
       LAVAUTILS_API
       Geometry( const std::shared_ptr<Device>& device, 
-        const std::shared_ptr<CommandPool> cmdPool, 
-        const std::shared_ptr<Queue> queue, const std::string& path );
+        const std::shared_ptr<CommandPool>& cmdPool, 
+        const std::shared_ptr<Queue>& queue, const std::string& path );
       LAVAUTILS_API
       void render( std::shared_ptr<CommandBuffer> cmd, uint32_t numInstances = 1 );
     protected:
@@ -51,5 +54,7 @@ namespace lava
     };
   }
 }
+
+#endif
 
 #endif /* __LAVAUTILS_GEOMETRY__ */

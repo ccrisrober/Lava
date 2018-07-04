@@ -1,0 +1,48 @@
+#version 450
+layout( quad, equal_spacing, cw ) in;
+
+layout( binding = 0 ) uniform PatchTesselationFactors
+{
+	mat4 mvp;
+};
+
+layout( location = 0 ) in vec3 bezpatch;
+layout( location = 0 ) out vec3 outColor;
+
+vec4 bernsteinBasis(float t)
+{
+	float invT = 1.0 - t;
+	return vec4(invT * invT * invT,	// (1-t)3
+		3.0 * t * invT * invT,			// 3t(1-t)2
+		3.0 * t * t * invT,			// 3t2(1-t)
+		t * t * t);						// t3
+}
+
+vec3 evaluateBezier(vec4 basisU, vec4 basisV)
+{
+	vec3 value = vec3( 0.0 );
+	value = basisV.x * (bezpatch[0].pos * basisU.x + bezpatch[1].pos * basisU.y + bezpatch[2].pos * basisU.z + bezpatch[3].pos * basisU.w);
+	value += basisV.y * (bezpatch[4].pos * basisU.x + bezpatch[5].pos * basisU.y + bezpatch[6].pos * basisU.z + bezpatch[7].pos * basisU.w);
+	value += basisV.z * (bezpatch[8].pos * basisU.x + bezpatch[9].pos * basisU.y + bezpatch[10].pos * basisU.z + bezpatch[11].pos * basisU.w);
+	value += basisV.w * (bezpatch[12].pos * basisU.x + bezpatch[13].pos * basisU.y + bezpatch[14].pos * basisU.z + bezpatch[15].pos * basisU.w);
+
+	return value;
+}
+
+void main( )
+{
+	vec2 domain( gl_TessCoord.x, gl_TessCoord.y );
+
+	// Evaluate the basic functions at (u, v)
+	vec4 basicU = bernsteinBasic( domain.x );
+	vec4 basicV = bernsteinBasic( domain.y );
+
+	// Evaluate the surface position for this vertex
+	vec3 localPos = evaluateBezier( basisU, basisV );
+
+	mat4 transform = patchTransforms[gl_PrimitiveID].transform;
+	vec4 localPosTransformed = vec4( localPos, 1.0 ) * transform;
+
+	gl_Position = mvp * localPosTransformed;
+	outColor = patchColors[gl_PrimitiveID].color;
+}

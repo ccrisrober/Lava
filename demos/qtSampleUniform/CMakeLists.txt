@@ -1,10 +1,10 @@
 set( LAVAQTSAMPLEUNIFORM_HEADERS
-	vulkanWindow.h
+	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
 set( LAVAQTSAMPLEUNIFORM_SOURCES
-	vulkanWindow.cpp
+	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp

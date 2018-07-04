@@ -19,17 +19,23 @@
 
 #include "Geometry.h"
 #include "ModelImporter.h"
+#ifdef LAVA_USE_ASSIMP
 
 namespace lava
 {
   namespace utility
   {
     Geometry::Geometry( const std::shared_ptr<Device>& device, 
-      const std::string& path )
+      const std::string& path, bool adjancency )
       : VulkanResource( device )
     {
       lava::utility::ModelImporter mi( path );
       lava::utility::Mesh mesh = mi._meshes[ 0 ];
+
+      if ( adjancency )
+      {
+        mesh.convertFacesToAdjancencyFormat( );
+      }
 
       _numIndices = mesh.numIndices;
 
@@ -56,8 +62,8 @@ namespace lava
       }
     }
     Geometry::Geometry( const std::shared_ptr<Device>& device, 
-      const std::shared_ptr<CommandPool> cmdPool, 
-      const std::shared_ptr<Queue> queue, const std::string & path )
+      const std::shared_ptr<CommandPool>& cmdPool, 
+      const std::shared_ptr<Queue>& queue, const std::string& path )
       : VulkanResource( device )
     {
       lava::utility::ModelImporter mi( path );
@@ -101,3 +107,4 @@ namespace lava
     }
   }
 }
+#endif

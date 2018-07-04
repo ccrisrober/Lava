@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+#include <lava/lava.h>
+
 #ifdef LAVA_USE_ASSIMP
 
 namespace lava
@@ -50,8 +52,8 @@ namespace lava
 
       if ( scene == nullptr )
       {
-        std::cerr << "Mesh " << path << " undefined" << std::endl;
-        throw std::runtime_error( path + " does not opened" );
+        //Log::error( "Mesh %s undefined", path );
+        throw std::runtime_error( path + " doesn't opened" );
       }
 
       for ( uint32_t i = 0; i < scene->mNumMeshes; ++i )

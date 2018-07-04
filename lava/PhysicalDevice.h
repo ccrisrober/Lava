@@ -42,6 +42,10 @@ namespace lava
     {
       return _physicalDevice;
     }
+    LAVA_API
+    vk::ImageFormatProperties getImageFormatProperties( vk::Format format,
+      vk::ImageType imageType, bool optimalTiling, vk::ImageUsageFlags usage,
+      vk::ImageCreateFlags flags = { } ) const;
     // Returns a set of properties describing the physical device.
     LAVA_API
     const vk::PhysicalDeviceProperties& getDeviceProperties( void ) const
@@ -115,6 +119,12 @@ namespace lava
 
     LAVA_API
     std::vector<uint32_t> getComputeQueueFamilyIndices( void );
+
+	LAVA_API
+	std::shared_ptr<Instance> getInstance(void) const
+	{
+		return _instance;
+	}
 
   private:
     std::shared_ptr<Instance> _instance;

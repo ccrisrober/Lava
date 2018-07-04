@@ -88,6 +88,23 @@ namespace lava
       // TODO: Generate MipLevels
       mipLevels = 1;
 
+      this->width = width_;
+      this->height = height_;
+
+      /*{
+        // calculate num of mip maps
+        // numLevels = 1 + floor(log2(max(w, h, d)))
+        // Calculated as log2(max(width, height, depth))c + 1 (see specs)
+        mipLevels = floor( log2( std::max( width, height ) ) ) + 1;
+
+        // Get device properites for the requested texture format
+        auto formatProperties = _device->getPhysicalDevice( )->getFormatProperties( format_ );
+
+        // Mip-chain generation requires support for blit source and destination
+        assert( formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc );
+        assert( formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst );
+      }*/
+
       // Create Image
       auto usageFlags = imageUsageFlags_;
 

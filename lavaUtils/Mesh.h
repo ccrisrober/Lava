@@ -43,6 +43,9 @@ namespace lava
     public:
       LAVAUTILS_API
       Mesh( const aiMesh *mesh );
+
+      LAVAUTILS_API
+      void convertFacesToAdjancencyFormat( void );
     public:
       uint32_t numVertices;
       uint32_t numIndices;

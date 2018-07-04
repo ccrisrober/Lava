@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #pragma once
 
 #include <qtLava/qtLava.h>
@@ -11,7 +30,7 @@ using namespace lava;
 
 #include <unordered_map>
 
-class Renderer: public lava::QtVulkanWindowRenderer
+class Renderer: public lava::qt::VulkanWindowRenderer
 {
 public:
 	Renderer( VulkanWindow* w );
@@ -345,13 +364,19 @@ protected:
 
     static auto startTime = std::chrono::high_resolution_clock::now( );
 
-    auto currentTime = std::chrono::high_resolution_clock::now( );
+    /*auto currentTime = std::chrono::high_resolution_clock::now( );
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(
       currentTime - startTime ).count( ) / 1000.0f;
 
     float currentFrame = time;
     deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
+    lastFrame = currentFrame;*/
+
+    static float time = 0.0f;
+    if ( _window->isContinuosRendering( ) )
+    {
+      time += 0.0025f;
+    }
 
     uboVS.model = glm::rotate( glm::mat4( 1.0f ), time * glm::radians( 25.0f ),
       glm::vec3( 0.0f, 1.0f, 0.0f ) );
@@ -368,26 +393,6 @@ protected:
 
   void nextFrame( void ) override
   {
-    /*const auto size = _window->swapChainImageSize( );
-
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
-    {
-      modeReflect = false;
-    }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::X ) )
-    {
-      modeReflect = true;
-    }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Space ) )
-    {
-      lava::utils::saveScreenshot( _window->device( ), "file.ppm",
-        size.x, size.y, _window->colorFormat( ),
-        // Source for the copy is the last rendered swapchain image
-        _window->defaultFramebuffer( )->getLastImage( ),
-        _window->gfxCommandPool( ), _window->gfxQueue( )
-      );
-    }*/
-
     updateMVP( );
 
     std::array<vk::ClearValue, 2 > clearValues;

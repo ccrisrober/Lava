@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <iostream>
 
 #include <glfwLava/glfwLava.h>
@@ -15,10 +34,10 @@ using namespace lava;
 
 const std::string pipCacheFile = LAVA_EXAMPLES_ROUTE + std::string( "pipCache.bin" );
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
   std::shared_ptr< Texture2D > tex;
   std::shared_ptr< DescriptorSetLayout > descriptorSetLayout;
   std::shared_ptr< DescriptorSet > descriptorSet;
@@ -34,7 +53,7 @@ private:
   std::shared_ptr< Buffer > vertexBuffer;
   std::shared_ptr< UniformBuffer > mvpBuffer;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -340,8 +359,6 @@ public:
     cmd->setViewportScissors( sc );
 
     cmd->bindVertexBuffer( 0, vertexBuffer, 0 );
-    
-    vk::PipelineLayout pipl = *pipelineLayout;
 
     static auto startTime = std::chrono::high_resolution_clock::now( );
 
@@ -355,9 +372,9 @@ public:
       );
 
       pushConstants.color = glm::vec3( 1.0f, 1.0f, 1.0f );
-      cmd->pushConstants<PushConstants>( pipl,
+      cmd->pushConstants<PushConstants>( pipelineLayout,
         vk::ShaderStageFlagBits::eVertex, 0, pushConstants
-        );
+      );
 
       cmd->bindGraphicsPipeline( pipelines.cube );
       cmd->draw( 36, 1, 0, 0 );
@@ -379,7 +396,7 @@ public:
         glm::vec3( 1.0f, 1.0f, -1.0f )
       );
       pushConstants.color = glm::vec3( 0.3f, 0.3f, 0.3f );
-      cmd->pushConstants<PushConstants>( pipl,
+      cmd->pushConstants<PushConstants>( pipelineLayout,
         vk::ShaderStageFlagBits::eVertex, 0, pushConstants
       );
       cmd->bindGraphicsPipeline( pipelines.reflection );
@@ -394,15 +411,15 @@ public:
   }
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }
@@ -414,7 +431,7 @@ public:
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 1024, 768, "Planar reflection", true );
   app.show( );

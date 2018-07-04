@@ -20,6 +20,7 @@
 #include "Descriptor.h"
 
 #include "Device.h"
+#include "PhysicalDevice.h"
 
 namespace lava
 {
@@ -155,6 +156,39 @@ namespace lava
   void DescriptorPool::reset( void )
   {
     static_cast< vk::Device >( *_device ).resetDescriptorPool( _descriptorPool );
+  }
+
+  uint32_t DescriptorPool::max_elem( const std::shared_ptr<Device>& device, 
+    vk::DescriptorType type )
+  {
+    auto limits = device->getPhysicalDevice( )->getDeviceProperties( ).limits;
+    switch ( type )
+    {
+      case vk::DescriptorType::eUniformBuffer:
+        return limits.maxPerStageDescriptorUniformBuffers;
+      case vk::DescriptorType::eUniformBufferDynamic:
+        return std::min( limits.maxDescriptorSetUniformBuffersDynamic,
+          limits.maxPerStageDescriptorUniformBuffers );
+
+      case vk::DescriptorType::eStorageBuffer:
+        return limits.maxPerStageDescriptorStorageBuffers;
+      case vk::DescriptorType::eStorageBufferDynamic:
+        return std::min( limits.maxDescriptorSetStorageBuffersDynamic,
+          limits.maxPerStageDescriptorStorageBuffers );
+
+      case vk::DescriptorType::eCombinedImageSampler:
+      case vk::DescriptorType::eSampledImage:
+      case vk::DescriptorType::eUniformTexelBuffer:
+        return limits.maxPerStageDescriptorSampledImages;
+
+      case vk::DescriptorType::eStorageTexelBuffer:
+      case vk::DescriptorType::eStorageImage:
+        return limits.maxPerStageDescriptorStorageImages;
+
+      default:
+        break;
+    };
+    throw "Invalid binding type." ;
   }
 
   DescriptorSet::DescriptorSet( const std::shared_ptr<Device>& device, 

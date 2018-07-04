@@ -1,9 +1,17 @@
+option(LAVA_IMPLEMENT_VMA "Compile implementation of Vulkan Memory Allocator." ON)
+
+if(LAVA_IMPLEMENT_VMA)
+  add_definitions(-DLAVA_IMPLEMENT_VMA)
+endif()
+
 source_group(\\ FILES CMakeLists.txt)
 
 set( LAVA_PUBLIC_HEADERS
   includes.hpp
   noncopyable.hpp
   
+  Display.h
+
   Buffer.h
   CommandBuffer.h
   Descriptor.h
@@ -28,7 +36,7 @@ set( LAVA_PUBLIC_HEADERS
   Texture2D.h
   TextureCubemap.h
   Texture2DArray.h
-  #Texture3D.h
+  Texture3D.h
   Queue.h
   QueryPool.h
   Framebuffer.h
@@ -49,6 +57,8 @@ set( LAVA_PUBLIC_HEADERS
 )
 
 set( LAVA_SOURCES
+  Display.cpp
+  
   Buffer.cpp
   CommandBuffer.cpp
   Descriptor.cpp
@@ -70,7 +80,7 @@ set( LAVA_SOURCES
   Texture2D.cpp
   TextureCubemap.cpp
   Texture2DArray.cpp
-  #Texture3D.cpp
+  Texture3D.cpp
   Queue.cpp
   QueryPool.cpp
   Framebuffer.cpp

@@ -1,0 +1,29 @@
+#version 450
+layout( binding = 1 ) uniform PatchTesselationFactors
+{
+	//float edge;
+	//float inside;
+	vec2 tessFactors;
+}
+ 
+#define ID gl_InvocationID
+#define edge tessFactors.x
+#define inside tessFactors.y
+
+layout( location = 0 ) out vec3 tcPosition[ ];
+
+void main( )
+{
+	if (ID == 0)
+	{
+		gl_TessLevelInner[0] = inside;
+		gl_TessLevelInner[1] = inside;
+		gl_TessLevelOuter[0] = edge;
+		gl_TessLevelOuter[1] = edge;
+		gl_TessLevelOuter[2] = edge;
+		gl_TessLevelOuter[3] = edge;
+	}
+
+	gl_out[ID].gl_Position =  gl_in[ID].gl_Position;
+    tcPosition [ID] = gl_in[ID].gl_Position;
+}

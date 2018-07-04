@@ -33,6 +33,11 @@ namespace lava
     static_cast< vk::Device >( *_device ).destroyEvent( _event );
   }
 
+  vk::Result Event::getStatus( void )
+  {
+    return static_cast< vk::Device >( *_device ).getEventStatus( _event );
+  }
+
   bool Event::isSignaled( void ) const
   {
     vk::Result result = static_cast< vk::Device >( *_device )

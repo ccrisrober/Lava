@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #include <iostream>
 
 #include <glfwLava/glfwLava.h>
@@ -12,12 +31,12 @@ using namespace lava;
 const unsigned int SCR_WIDTH = 500;
 const unsigned int SCR_HEIGHT = 500;
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
     camera = Camera( glm::vec3( 0.0f, 0.0f, 3.5f ) );
@@ -36,6 +55,53 @@ public:
   void initResources( void ) override
   {
     auto device = _window->device( );
+
+
+    // TODO: BORRAR!!!!
+    vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1;
+    lava::utility::RenderPassBuilder renderPass;
+    renderPass.setAttachment( vk::Format::eR16G16B16A16Sfloat, samples, 
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
+    renderPass.setAttachment( vk::Format::eR32G32B32A32Sfloat, samples, 
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
+    renderPass.setAttachment( vk::Format::eR16G16B16A16Sfloat, samples, 
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
+    renderPass.setAttachment( vk::Format::eR16G16B16A16Sfloat, samples, 
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
+    renderPass.setAttachment( vk::Format::eR16G16B16A16Sfloat, samples, 
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
+    renderPass.setAttachment( vk::Format::eD32Sfloat, samples, 
+      vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
+    renderPass.addColorAttachmentReference( 0, vk::ImageLayout::eColorAttachmentOptimal );
+    renderPass.addColorAttachmentReference( 1, vk::ImageLayout::eColorAttachmentOptimal );
+    renderPass.addColorAttachmentReference( 2, vk::ImageLayout::eColorAttachmentOptimal );
+    renderPass.addColorAttachmentReference( 3, vk::ImageLayout::eColorAttachmentOptimal );
+    renderPass.addColorAttachmentReference( 4, vk::ImageLayout::eColorAttachmentOptimal );
+    renderPass.addDepthAttachmentReference( 5, vk::ImageLayout::eDepthStencilAttachmentOptimal );
+    renderPass.setSubpassDependency( VK_SUBPASS_EXTERNAL, 0,
+      vk::PipelineStageFlagBits::eBottomOfPipe,
+      vk::PipelineStageFlagBits::eColorAttachmentOutput,
+      vk::AccessFlagBits::eMemoryRead,
+      vk::AccessFlagBits::eColorAttachmentRead |
+      vk::AccessFlagBits::eColorAttachmentWrite,
+      vk::DependencyFlagBits::eByRegion );
+    renderPass.setSubpassDependency( 0, VK_SUBPASS_EXTERNAL,
+      vk::PipelineStageFlagBits::eColorAttachmentOutput,
+      vk::PipelineStageFlagBits::eBottomOfPipe,
+      vk::AccessFlagBits::eColorAttachmentRead |
+      vk::AccessFlagBits::eColorAttachmentWrite,
+      vk::AccessFlagBits::eMemoryRead,
+      vk::DependencyFlagBits::eByRegion );
+    renderPass.createSubpass( );
+    auto rp = renderPass.createRenderPass( device );
+
+
 
     geometry = std::make_shared<lava::utility::Geometry>( device,
       LAVA_EXAMPLES_MESHES_ROUTE + std::string( "sphere.obj_" ) );
@@ -96,7 +162,9 @@ public:
 
       diffuse.pipelineLayout = device->createPipelineLayout( diffuse.descriptorSetLayout, pushConstantRange );
 
-      vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+      lava::utility::VertexInput vi( lava::utility::VertexLayout::POS_NORMAL_UV );
+
+      /*vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
         vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
@@ -112,7 +180,8 @@ public:
           2, 0, vk::Format::eR32G32Sfloat,
           offsetof( lava::utility::Vertex, texCoord )
         )
-      } );
+      } );*/
+      PipelineVertexInputStateCreateInfo vertexInput = vi.getPipelineVertexInput( );
 
       vk::PipelineInputAssemblyStateCreateInfo assembly( { },
         vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -328,7 +397,7 @@ public:
       cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
         diffuse.pipelineLayout, 0, { diffuse.descriptorSet }, { } );
 
-      cmd->pushConstants<Diffuse::PushConstant>( *diffuse.pipelineLayout,
+      cmd->pushConstants<Diffuse::PushConstant>( diffuse.pipelineLayout,
         vk::ShaderStageFlagBits::eVertex, 0, diffuse.pc );
       geometry->render( cmd, 1 );
     }
@@ -410,14 +479,14 @@ public:
   }
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 protected:
   MainWindowRenderer* _renderer;
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
   }
   virtual void keyEvent( int key, int act ) override
@@ -438,7 +507,7 @@ public:
   {
     _renderer->mouseEvent( xPos, yPos );
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     _renderer = new MainWindowRenderer( this );
     return _renderer;
@@ -446,7 +515,7 @@ public:
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( SCR_WIDTH, SCR_HEIGHT, "Earth with Clouds Atmosphere", true );
   app.show( );

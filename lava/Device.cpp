@@ -19,6 +19,8 @@
 
 #include "Device.h"
 
+#include <lava/Log.h>
+
 #include <lava/Buffer.h>
 #include <lava/CommandBuffer.h>
 #include <lava/Descriptor.h>
@@ -37,6 +39,7 @@
 #include <lava/Texture2D.h>
 #include <lava/Texture2DArray.h>
 #include <lava/TextureCubemap.h>
+#include <lava/Texture3D.h>
 
 namespace lava
 {
@@ -45,7 +48,7 @@ namespace lava
   {
     for ( uint32_t i = 0; i < memProps.memoryTypeCount; ++i )
     {
-      if ( requirementBits & ( 1 << i ) )
+      if ( requirementBits & ( 1u << i ) )
       {
         if ( ( memProps.memoryTypes[ i ].propertyFlags &
           wantedFlags ) == wantedFlags )
@@ -53,6 +56,32 @@ namespace lava
       }
     }
     return -1;
+  }
+
+  uint32_t findMemoryTypeFromRequirementsWithFallback(
+    const vk::PhysicalDeviceMemoryProperties& memProps,
+    uint32_t requirementBits, vk::MemoryPropertyFlags wantedFlags )
+  {
+    for ( uint32_t i = 0; i < memProps.memoryTypeCount; ++i )
+    {
+      if ( requirementBits & ( 1u << i ) )
+      {
+        if ( ( memProps.memoryTypes[ i ].propertyFlags &
+          wantedFlags ) == wantedFlags )
+          return i;
+      }
+    }
+
+    // If we cannot find the particular memory type we're looking for,
+    //    just pick the first one available.
+    if ( wantedFlags != vk::MemoryPropertyFlagBits( ) )
+    {
+      return findMemoryType( memProps, requirementBits, { } );
+    }
+    else
+    {
+      abort( );
+    }
   }
 
   std::shared_ptr<Device> Device::create(
@@ -159,6 +188,10 @@ namespace lava
       mipmapMode, addressModeU, addressModeV, addressModeW, mipLodBias,
       anisotropyEnable, maxAnisotropy, compareEnable, compareOp, minLod, maxLod,
       borderColor, unnormalizedCoordinates );
+  }
+  std::shared_ptr<Sampler> Device::createSampler(const vk::SamplerCreateInfo& ci)
+  {
+	  return std::make_shared<Sampler>(shared_from_this(), ci);
   }
   std::shared_ptr<CommandPool> Device::createCommandPool(
     vk::CommandPoolCreateFlags flags, uint32_t famIdx )
@@ -321,7 +354,7 @@ namespace lava
   }
   std::shared_ptr<Framebuffer> Device::createFramebuffer(
     const std::shared_ptr<RenderPass>& renderPass,
-    const std::vector<std::shared_ptr<ImageView>>& attachments,
+    vk::ArrayProxy<const std::shared_ptr<ImageView>> attachments,
     const vk::Extent2D & extent, uint32_t layers )
   {
     return std::make_shared<Framebuffer>( shared_from_this( ), renderPass,
@@ -390,7 +423,7 @@ namespace lava
       basePipelineHandle, basePipelineIndex );
   }
 
-  std::shared_ptr<Pipeline> Device::createComputePipeline(
+  std::shared_ptr<ComputePipeline> Device::createComputePipeline(
     const std::shared_ptr<PipelineCache>& pipelineCache,
     vk::PipelineCreateFlags flags,
     const PipelineShaderStageCreateInfo& stage,
@@ -432,6 +465,42 @@ namespace lava
     auto shaderModule = createShaderModule( spvFile, stage );
     return PipelineShaderStageCreateInfo( stage, shaderModule, "main", specInfo );
   }
+  const PipelineShaderStageCreateInfo Device::createVertexShaderStage( 
+    const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return createShaderPipelineShaderStage( spvFile, 
+      vk::ShaderStageFlagBits::eVertex, specInfo );
+  }
+  const PipelineShaderStageCreateInfo Device::createFragmentShaderStage( 
+    const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return createShaderPipelineShaderStage( spvFile,
+      vk::ShaderStageFlagBits::eFragment, specInfo );
+  }
+  const PipelineShaderStageCreateInfo Device::createTesselationControlShaderStage( 
+    const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return createShaderPipelineShaderStage( spvFile,
+      vk::ShaderStageFlagBits::eTessellationControl, specInfo );
+  }
+  const PipelineShaderStageCreateInfo Device::createTesselationEvaluationShaderStage( 
+    const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return createShaderPipelineShaderStage( spvFile,
+      vk::ShaderStageFlagBits::eTessellationEvaluation, specInfo );
+  }
+  const PipelineShaderStageCreateInfo Device::createGeometryShaderStage( 
+    const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return createShaderPipelineShaderStage( spvFile,
+      vk::ShaderStageFlagBits::eGeometry, specInfo );
+  }
+  const PipelineShaderStageCreateInfo Device::createComputeShaderStage( 
+    const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return createShaderPipelineShaderStage( spvFile,
+      vk::ShaderStageFlagBits::eCompute, specInfo );
+  }
 #ifdef LAVA_DEVICE_BUILDERS
   std::shared_ptr<UniformBuffer> Device::createUniformBuffer( vk::DeviceSize size )
   {
@@ -440,6 +509,11 @@ namespace lava
   std::shared_ptr<StorageBuffer> Device::createStorageBuffer( vk::DeviceSize size )
   {
     return std::make_shared<StorageBuffer>( shared_from_this( ), size );
+  }
+  std::shared_ptr<StorageTexelBuffer> Device::Device::createStorageTexelBuffer( 
+    vk::DeviceSize size )
+  {
+    return std::make_shared<StorageTexelBuffer>( shared_from_this( ), size );
   }
   std::shared_ptr<UniformTexelBuffer> Device::Device::createUniformTexelBuffer( 
     vk::DeviceSize size )
@@ -455,6 +529,11 @@ namespace lava
     vk::IndexType type, vk::DeviceSize size )
   {
     return std::make_shared<IndexBuffer>( shared_from_this( ), type, size );
+  }
+  std::shared_ptr<UniformDynamicBuffer> Device::createUniformDynamicBuffer( 
+    vk::DeviceSize size, uint32_t count )
+  {
+    return std::make_shared<UniformDynamicBuffer>( shared_from_this( ), size, count );
   }
   std::shared_ptr<Texture2D> Device::createTexture2D(
     const std::string& textureSrc, std::shared_ptr<CommandPool> cmdPool,
@@ -477,6 +556,15 @@ namespace lava
   {
     return std::make_shared<TextureCubemap>( shared_from_this( ), cubeImages,
       cmdPool, queue, format );
+  }
+
+  std::shared_ptr< Texture3D > Device::createTexture3D( 
+    uint32_t width, uint32_t height, uint32_t depth, const void* src, uint32_t size,
+    const std::shared_ptr<CommandPool>& cmdPool,
+    const std::shared_ptr<Queue>& queue, vk::Format format )
+  {
+    return std::make_shared<Texture3D>( shared_from_this( ), width, height, 
+      depth, src, size, cmdPool, queue, format );
   }
 #endif
   std::shared_ptr<QueryPool> Device::createQuery( vk::QueryPoolCreateFlags flags,
@@ -553,6 +641,6 @@ namespace lava
       auto it = _queues.emplace( ci.queueFamilyIndex, std::move( queues ) );
       assert( it.second && "duplicate queueFamilyIndex" );
     }
-    std::cout << "Device OK" << std::endl;
+    Log::info( "Device OK" );
   }
 }

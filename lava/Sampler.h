@@ -38,6 +38,8 @@ namespace lava
       bool anisotropyEnable, float maxAnisotropy, bool compareEnable,
       vk::CompareOp compareOp, float minLod, float maxLod, 
       vk::BorderColor borderColor, bool unnormalizedCoordinates );
+	LAVA_API
+	Sampler(const std::shared_ptr<Device>& device, const vk::SamplerCreateInfo& ci);
     LAVA_API
     ~Sampler( void );
 

@@ -44,6 +44,9 @@ namespace lava
     virtual ~Event( void );
 
     LAVA_API
+    vk::Result getStatus( void );
+
+    LAVA_API
     bool isSignaled( void ) const;
     LAVA_API
     void reset( void );

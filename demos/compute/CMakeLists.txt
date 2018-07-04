@@ -5,6 +5,7 @@ set( LAVACOMPUTECOPY_SOURCES
 )
 set( LAVACOMPUTECOPY_LINK_LIBRARIES
 	lava
+	lavaUtils
 )
 common_application( lavaComputeCopy )
 
@@ -16,5 +17,6 @@ set( LAVACOMPUTESUM_SOURCES
 )
 set( LAVACOMPUTESUM_LINK_LIBRARIES
 	lava
+	lavaUtils
 )
 common_application( lavaComputeSum )

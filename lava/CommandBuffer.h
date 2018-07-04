@@ -39,6 +39,8 @@ namespace lava
   struct ImageMemoryBarrier
   {
     LAVA_API
+    ImageMemoryBarrier( void ) { };
+    LAVA_API
     ImageMemoryBarrier(
       vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask,
       vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
@@ -98,10 +100,13 @@ namespace lava
     LAVA_API
     std::shared_ptr<CommandBuffer> allocateCommandBuffer(
       vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary );
+    LAVA_API
+    std::vector< std::shared_ptr<CommandBuffer > > allocateCommandBuffers(
+      uint32_t count, vk::CommandBufferLevel level );
   protected:
     vk::CommandPool _commandPool;
 #if !defined(NDEBUG)
-    std::vector<lava::CommandBuffer*> _commandBuffers;
+    std::vector<std::shared_ptr<CommandBuffer>> _commandBuffers;
     vk::CommandPoolCreateFlags _createFlags;
     uint32_t _familyIndex;
 #endif
@@ -123,6 +128,11 @@ namespace lava
       // Buffer is done recording and is currently submitted on a queue.
       Submitted
     };
+    friend class CommandPool;
+  private:
+	CommandBuffer(const vk::CommandBuffer& cmd, 
+      const std::shared_ptr<CommandPool>& cmdPool,
+	  vk::CommandBufferLevel level );
   public:
     LAVA_API
     CommandBuffer( const std::shared_ptr<CommandPool>& cmdPool,
@@ -225,12 +235,19 @@ namespace lava
     void clearDepthStencilImage( const std::shared_ptr<Image>& image,
       vk::ImageLayout imageLayout, float depth, uint32_t stencil,
       vk::ArrayProxy<const vk::ImageSubresourceRange> ranges );
+    LAVA_API
+    void resolveImage( const std::shared_ptr<Image>& srcImage, 
+      const std::shared_ptr<Image>& dstImage,
+      const vk::ImageResolve& region );
     #pragma endregion
 
     #pragma region QueryCommands
     LAVA_API
     void beginQuery( const std::shared_ptr<lava::QueryPool>& queryPool,
       uint32_t slot, vk::QueryControlFlags flags );
+    LAVA_API
+    void beginQuery( const std::shared_ptr<lava::QueryPool>& queryPool,
+      uint32_t slot, bool precise );
     LAVA_API
     void copyQueryPoolResults( const std::shared_ptr<lava::QueryPool>& queryPool,
       uint32_t startQuery, uint32_t queryCount,
@@ -256,8 +273,12 @@ namespace lava
     void setScissor( uint32_t first,
       vk::ArrayProxy<const vk::Rect2D> scissors );
     LAVA_API
+    void setScissor( const vk::Rect2D scissor );
+    LAVA_API
     void setViewport( uint32_t first,
       vk::ArrayProxy<const vk::Viewport> viewports );
+    LAVA_API
+    void setViewport( const vk::Viewport viewport );
     LAVA_API
     void setDepthBias( float depthBias, float depthBiasClamp,
       float slopeScaledDepthBias );
@@ -294,6 +315,11 @@ namespace lava
     LAVA_API
     void drawIndexedIndirect( const std::shared_ptr<Buffer>& buffer,
       vk::DeviceSize offset, uint32_t count, uint32_t stride );
+
+    LAVA_API
+    void draw( int vertexCount );
+    LAVA_API
+    void drawIndexed( int indexCount );
     #pragma endregion
 
     /*LAVA_API
@@ -315,29 +341,34 @@ namespace lava
     LAVA_API
     void reset( vk::CommandBufferResetFlagBits flags = { } );
 
-    template <typename T> void pushConstants( vk::PipelineLayout layout,
+    LAVA_API
+    void pushConstant( const std::shared_ptr<PipelineLayout>& layout, 
+      vk::ShaderStageFlagBits stageFlags, void* data );
+
+    template <typename T>
+    void pushConstants( const std::shared_ptr<PipelineLayout>& layout,
       vk::ShaderStageFlags stageFlags, uint32_t start,
       vk::ArrayProxy<const T> values );
 
     #pragma region BindCommands
     LAVA_API
     void bindVertexBuffer( uint32_t startBinding,
-      const std::shared_ptr<Buffer>& buffer, vk::DeviceSize offset );
+      const std::shared_ptr<Buffer>& buffer, vk::DeviceSize offset = 0 );
     LAVA_API
     void bindIndexBuffer( const std::shared_ptr<Buffer>& buffer,
       vk::DeviceSize offset, vk::IndexType indexType );
     LAVA_API
     void bindIndexBuffer( const std::shared_ptr<IndexBuffer>& buffer,
-      vk::DeviceSize offset = { } );
+      vk::DeviceSize offset = 0 );
     LAVA_API
     void bindVertexBuffers( uint32_t startBinding,
       vk::ArrayProxy<const std::shared_ptr<Buffer>> buffers,
-      vk::ArrayProxy<const vk::DeviceSize> offsets );
+      vk::ArrayProxy<const vk::DeviceSize> offsets = { } );
     LAVA_API
     void bindDescriptorSets( vk::PipelineBindPoint pipelineBindPoint,
       const std::shared_ptr<PipelineLayout>& pipelineLayout, uint32_t firstSet,
       vk::ArrayProxy<const std::shared_ptr<DescriptorSet>> descriptorSets,
-      vk::ArrayProxy<const uint32_t> dynamicOffsets );
+      vk::ArrayProxy<const uint32_t> dynamicOffsets = {});
     LAVA_API
     void bindPipeline( vk::PipelineBindPoint bindingPoint,
       const std::shared_ptr<Pipeline>& pipeline );
@@ -378,6 +409,18 @@ namespace lava
       vk::ArrayProxy<const vk::BufferMemoryBarrier> bufferMemoryBarriers,
       vk::ArrayProxy<const ImageMemoryBarrier> imageMemoryBarriers
     );
+
+    LAVA_API
+    void pipelineBarrier(
+      vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags destStageMask,
+      const vk::ArrayProxy< std::shared_ptr< Buffer > >& buffers, 
+      const vk::BufferMemoryBarrier& barrier, vk::DependencyFlags dependencyFlags );
+
+    LAVA_API
+    void pipelineBarrier(
+      vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags destStageMask,
+      const vk::ArrayProxy< std::shared_ptr< Image > >& images, 
+      const ImageMemoryBarrier& barrier, vk::DependencyFlags dependencyFlags );
 
     LAVA_API
     inline std::shared_ptr<lava::RenderPass> getRenderPass( void ) const
@@ -441,11 +484,12 @@ namespace lava
   };
   
   template<typename T>
-  inline void CommandBuffer::pushConstants( vk::PipelineLayout layout, 
+  inline void CommandBuffer::pushConstants( 
+    const std::shared_ptr<PipelineLayout>& layout,
     vk::ShaderStageFlags stageFlags, uint32_t start, 
     vk::ArrayProxy<const T> values )
   {
-    _commandBuffer.pushConstants<T>( layout, stageFlags, start, values );
+    _commandBuffer.pushConstants<T>( *layout, stageFlags, start, values );
   }
   template<typename T>
   inline void CommandBuffer::updateBuffer(

@@ -27,6 +27,8 @@
 
 #include <lava/Fence.h>
 
+#include "utils.hpp"
+
 namespace lava
 {
   class Surface;
@@ -34,7 +36,7 @@ namespace lava
 
 namespace lava
 {
-  class Swapchain: public VulkanResource
+  class Swapchain: public VulkanResource, public utils::NonCopyable
   {
   public:
     LAVA_API
@@ -61,7 +63,7 @@ namespace lava
     }
 
     LAVA_API
-    const vk::Format colorFormat( void ) const
+    vk::Format colorFormat( void ) const
     {
       return _format;
     }
@@ -90,7 +92,7 @@ namespace lava
     }
     
     LAVA_API
-    const size_t count( void ) const
+    size_t count( void ) const
     {
       return this->_images.size( );
     }
@@ -99,7 +101,7 @@ namespace lava
     void recreate( void );
 
     LAVA_API
-    const bool swapchainSupportsReadBack( void ) const
+    bool swapchainSupportsReadBack( void ) const
     {
       return _swapchainSupportsReadBack;
     }

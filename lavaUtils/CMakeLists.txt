@@ -1,5 +1,8 @@
 #source_group(\\ FILES CMakeLists.txt)
 # if( ASSIMP_FOUND )
+
+#file(GLOB BASE_SRC "*.cpp" "../thirdparty/imgui/imgui.cpp" "../thirdparty/imgui/imgui_draw.cpp")
+
 set( LAVAUTILS_PUBLIC_HEADERS
 	Mesh.h
 	Material.h
@@ -8,8 +11,17 @@ set( LAVAUTILS_PUBLIC_HEADERS
 	CustomMaterial.h
 	ThreadPool.h
 	###Glsl2SPV.h
-	#CustomFramebuffer.h
+	CustomFramebuffer.h
 	CustomPingPong.h
+
+	Wrappers.h
+
+	##../thirdparty/imgui/imgui.h
+	##VulkanUI.h
+
+	glmConfig.h
+
+	States.h
 )
 
 set( LAVAUTILS_SOURCES
@@ -20,7 +32,16 @@ set( LAVAUTILS_SOURCES
 	CustomMaterial.cpp
 	ThreadPool.cpp
 	###Glsl2SPV.cpp
-	#CustomFramebuffer.cpp
+	CustomFramebuffer.cpp
+
+	Wrappers.cpp
+
+	##../thirdparty/imgui/imgui.cpp
+	##../thirdparty/imgui/imgui_draw.cpp
+
+	##VulkanUI.cpp
+
+	States.cpp
 )
 
 set( LAVAUTILS_HEADERS

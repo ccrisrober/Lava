@@ -1,0 +1,10 @@
+set( LAVAGLFWRENDERTOTEXTURE_HEADERS
+)
+set( LAVAGLFWRENDERTOTEXTURE_SOURCES
+	main.cpp
+)
+set( LAVAGLFWRENDERTOTEXTURE_LINK_LIBRARIES
+	lava
+	glfwLava
+)
+common_application( lavaGLFWRenderToTexture )

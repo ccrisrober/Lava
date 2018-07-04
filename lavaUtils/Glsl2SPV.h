@@ -24,7 +24,7 @@
 #include <lavaUtils/api.h>
 #include <vector>
 
-#include <glslang/SPIRV/GlslangToSpv.h>
+#include <thirdparty/glslang/SPIRV/GlslangToSpv.h>
 
 namespace lava
 {

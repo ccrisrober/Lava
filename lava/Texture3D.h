@@ -38,17 +38,16 @@ namespace lava
   class Texture3D : public Texture
   {
   public:
-    LAVA_API
     Texture3D( const std::shared_ptr<Device>& device, uint32_t width, uint32_t height, 
-      uint32_t depth, const void* src,
+      uint32_t depth, const void* src, uint32_t size,
       const std::shared_ptr<CommandPool>& cmdPool,
       const std::shared_ptr<Queue>& queue, vk::Format format );
 
-    LAVA_API
+    /*LAVA_API
     void updateData( uint32_t width, uint32_t height, uint32_t depth,
       uint32_t numChannels, const void * data, 
       const std::shared_ptr<CommandPool>& cmdPool,
-      const std::shared_ptr<Queue>& queue );
+      const std::shared_ptr<Queue>& queue );*/
     
     uint32_t depth;
   };

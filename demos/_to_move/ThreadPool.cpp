@@ -38,7 +38,7 @@ class CustomRenderer : public VulkanWindowRenderer
     std::vector < std::shared_ptr<lava::CommandBuffer>> cmdBuffers;
   } perThreadData[ 8 ];
 public:
-  CustomRenderer( lava::VulkanWindow *w )
+  CustomRenderer( glfw::VulkanWindow *w )
     : VulkanWindowRenderer( )
     , _window( w )
   {

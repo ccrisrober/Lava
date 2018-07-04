@@ -111,6 +111,7 @@ namespace lava
       return false;
     }
 
+    LAVA_API
     static unsigned char* loadImageTexture( const std::string& fileName,
       uint32_t& width, uint32_t& height, uint32_t& numChannels );
     static std::vector<char> readBinaryile( const std::string& fileName );
@@ -151,6 +152,22 @@ namespace lava
       vk::PipelineStageFlags srcStageMask, vk::PipelineStageFlags dstStageMask,
       vk::ImageSubresourceRange subresourceRange
      );
+    LAVA_API
+    static vk::ClearValue getClearValueColor( float r = 0.0f, 
+      float g = 0.0f, float b = 0.0f )
+    {
+      vk::ClearValue clearValues;
+      std::array<float, 4> ccv = { r, g, b, 1.0f };
+      clearValues.color = ccv;
+      return clearValues;
+    }
+    LAVA_API
+    static vk::ClearValue getClearValueDepth( void )
+    {
+      vk::ClearValue clearValues;
+      clearValues.depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
+      return clearValues;
+    }
 	};
 }
 

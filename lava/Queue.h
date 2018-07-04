@@ -75,7 +75,16 @@ namespace lava
     std::vector<vk::Result> present(
       vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores,
       vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
-      vk::ArrayProxy<const uint32_t> imageIndices );
+      vk::ArrayProxy<const uint32_t> imageIndices,
+      const vk::DisplayPresentInfoKHR* displayPresentInfo = nullptr );
+
+    LAVA_API
+    std::vector<vk::Result> presentToDisplay(
+      vk::ArrayProxy<const std::shared_ptr<Semaphore>> waitSemaphores,
+      vk::ArrayProxy<const std::shared_ptr<Swapchain>> swapchains,
+      vk::ArrayProxy<const uint32_t> imageIndices,
+      const vk::Rect2D& srcRect, const vk::Rect2D& dstRect, 
+      bool persistent );
 
     LAVA_API
     void waitIdle( void );

@@ -1,0 +1,10 @@
+set( LAVAGLFWCOMPUTECULLLOD_HEADERS
+)
+set( LAVAGLFWCOMPUTECULLLOD_SOURCES
+	main.cpp
+)
+set( LAVAGLFWCOMPUTECULLLOD_LINK_LIBRARIES
+	lava
+	glfwLava
+)
+common_application( lavaGLFWComputeCullLOD )

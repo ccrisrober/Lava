@@ -9,12 +9,12 @@ using namespace lava;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -26,8 +26,6 @@ public:
     glm::mat4 proj;
     glm::vec3 viewPos;
   } uboVS;
-
-
 
   void initResources( void ) override
   {
@@ -273,23 +271,23 @@ private:
   std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public glfw::VulkanWindow
 {
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
   {
 
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 1024, 768, "Pipeline Derivation with SpecializationInfo", true );
   app.show( );

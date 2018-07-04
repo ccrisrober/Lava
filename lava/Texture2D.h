@@ -55,6 +55,28 @@ namespace lava
       vk::ImageUsageFlags imageUsageFlags, vk::ImageLayout imageLayout,
       bool forceLinear );
   };
+  class ColorAttachment2D: public Texture
+  {
+  public:
+    ColorAttachment2D( const std::shared_ptr<Device>& device, 
+      vk::Format colorFormat, const vk::Extent2D& extent,
+      uint32_t mipLevels, uint32_t samples,
+      bool sampled = true );
+    /*
+    Image2D(std::move(device), colorFormat, extent, mipLevels, samples,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | (sampled ? VK_IMAGE_USAGE_SAMPLED_BIT : 0),)*/
+  };
+  class DepthStencilAttachment2D : public Texture
+  {
+  public:
+    DepthStencilAttachment2D( const std::shared_ptr<Device>& device,
+      vk::Format dsFormat, const vk::Extent2D& extent,
+      uint32_t mipLevels, uint32_t samples,
+      bool sampled = false );
+    /*
+    Image2D(std::move(device), depthStencilFormat, extent, mipLevels, samples,
+    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | (sampled ? VK_IMAGE_USAGE_SAMPLED_BIT : 0),)*/
+  };
 }
 
 #endif /* __LAVA_TEXTURE2D__ */

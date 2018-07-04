@@ -49,10 +49,13 @@ namespace lava
 
   class UniformBuffer;
   class StorageBuffer;
+  class StorageTexelBuffer;
   class UniformTexelBuffer;
+  class UniformDynamicBuffer;
   class VertexBuffer;
   class IndexBuffer;
   class Texture2D;
+  class Texture3D;
   class Texture2DArray;
   class TextureCubemap;
 
@@ -65,6 +68,7 @@ namespace lava
   struct CopyDescriptorSet;
 
   class Pipeline;
+  class ComputePipeline;
   class PipelineLayout;
 
   class PipelineCache;
@@ -83,6 +87,9 @@ namespace lava
 namespace lava
 {
   uint32_t findMemoryType( const vk::PhysicalDeviceMemoryProperties& memProps,
+    uint32_t reqBits, vk::MemoryPropertyFlags wantedFlags );
+  uint32_t findMemoryTypeFromRequirementsWithFallback( 
+    const vk::PhysicalDeviceMemoryProperties& memProps,
     uint32_t reqBits, vk::MemoryPropertyFlags wantedFlags );
   class Device :
     private NonCopyable<Device>,
@@ -152,14 +159,16 @@ namespace lava
 
     LAVA_API
     std::shared_ptr<Fence> createFence( bool signaled );
-    LAVA_API
-    std::shared_ptr<Sampler> createSampler( vk::Filter magFilter,
-      vk::Filter minFilter, vk::SamplerMipmapMode mipmapMode,
-      vk::SamplerAddressMode addressModeU, vk::SamplerAddressMode addressModeV,
-      vk::SamplerAddressMode addressModeW, float mipLodBias,
-      bool anisotropyEnable, float maxAnisotropy, bool compareEnable,
-      vk::CompareOp compareOp, float minLod, float maxLod,
-      vk::BorderColor borderColor, bool unnormalizedCoordinates );
+	LAVA_API
+	std::shared_ptr<Sampler> createSampler(vk::Filter magFilter,
+		vk::Filter minFilter, vk::SamplerMipmapMode mipmapMode,
+		vk::SamplerAddressMode addressModeU, vk::SamplerAddressMode addressModeV,
+		vk::SamplerAddressMode addressModeW, float mipLodBias,
+		bool anisotropyEnable, float maxAnisotropy, bool compareEnable,
+		vk::CompareOp compareOp, float minLod, float maxLod,
+		vk::BorderColor borderColor, bool unnormalizedCoordinates);
+	LAVA_API
+	std::shared_ptr<Sampler> createSampler(const vk::SamplerCreateInfo& ci);
 
     LAVA_API
     std::shared_ptr<CommandPool> createCommandPool( 
@@ -237,7 +246,7 @@ namespace lava
     LAVA_API
     std::shared_ptr<Framebuffer> createFramebuffer( 
       const std::shared_ptr<RenderPass>& renderPass,
-      const std::vector<std::shared_ptr<ImageView>>& attachments, 
+      vk::ArrayProxy<const std::shared_ptr<ImageView>> attachments,
       const vk::Extent2D& extent, uint32_t layers );
 
     LAVA_API
@@ -280,7 +289,7 @@ namespace lava
       uint32_t basePipelineIndex = 0 );
 
     LAVA_API
-    std::shared_ptr<Pipeline> createComputePipeline(
+    std::shared_ptr<ComputePipeline> createComputePipeline(
       const std::shared_ptr<PipelineCache>& pipelineCache,
       vk::PipelineCreateFlags flags,
       const PipelineShaderStageCreateInfo& stage,
@@ -312,9 +321,35 @@ namespace lava
 
 #ifdef LAVA_DEVICE_BUILDERS
     LAVA_API
+    const PipelineShaderStageCreateInfo createVertexShaderStage(
+      const std::string& spvFile,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+    LAVA_API
+    const PipelineShaderStageCreateInfo createFragmentShaderStage(
+      const std::string& spvFile,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+    LAVA_API
+    const PipelineShaderStageCreateInfo createTesselationControlShaderStage(
+      const std::string& spvFile,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+    LAVA_API
+    const PipelineShaderStageCreateInfo createTesselationEvaluationShaderStage(
+      const std::string& spvFile,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+    LAVA_API
+    const PipelineShaderStageCreateInfo createGeometryShaderStage(
+      const std::string& spvFile,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+    LAVA_API
+    const PipelineShaderStageCreateInfo createComputeShaderStage(
+      const std::string& spvFile,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+    LAVA_API
     std::shared_ptr<UniformBuffer> createUniformBuffer( vk::DeviceSize size );
     LAVA_API
     std::shared_ptr<StorageBuffer> createStorageBuffer( vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<StorageTexelBuffer> createStorageTexelBuffer( vk::DeviceSize size );
     LAVA_API
     std::shared_ptr<UniformTexelBuffer> createUniformTexelBuffer( vk::DeviceSize size );
     LAVA_API
@@ -322,6 +357,9 @@ namespace lava
     LAVA_API
     std::shared_ptr<IndexBuffer> createIndexBuffer( vk::IndexType type,
       vk::DeviceSize size );
+    LAVA_API
+    std::shared_ptr<UniformDynamicBuffer> createUniformDynamicBuffer(
+      vk::DeviceSize size, uint32_t count );
 
     LAVA_API
     std::shared_ptr< Texture2D > createTexture2D( const std::string& textureSrc,
@@ -337,6 +375,11 @@ namespace lava
       std::array< std::string, 6 >& cubeImages,
       std::shared_ptr<CommandPool> cmdPool, std::shared_ptr< Queue > queue,
       vk::Format format );
+    LAVA_API
+    std::shared_ptr< Texture3D > createTexture3D( uint32_t width, uint32_t height, 
+      uint32_t depth, const void* src, uint32_t size,
+      const std::shared_ptr<CommandPool>& cmdPool,
+      const std::shared_ptr<Queue>& queue, vk::Format format );
 #endif
     LAVA_API
     std::shared_ptr<QueryPool> createQuery( vk::QueryPoolCreateFlags flags, 

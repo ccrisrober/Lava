@@ -30,7 +30,7 @@ public:
     glm::mat4* model = nullptr;
   } uboDynamicData;
 
-  CustomRenderer( lava::VulkanWindow *w )
+  CustomRenderer( glfw::VulkanWindow *w )
     : VulkanWindowRenderer( )
     , _window( w )
   {

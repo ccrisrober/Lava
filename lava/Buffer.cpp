@@ -18,6 +18,9 @@
  **/
 
 #include "Buffer.h"
+#include "PhysicalDevice.h"
+
+#include "Log.h"
 
 #include "Image.h"
 
@@ -45,14 +48,9 @@ namespace lava
 
   Buffer::~Buffer( void )
   {
-    /*if ( _view )
-    {
-    std::cerr << "Destroy Buffer view" << std::endl;
-    static_cast<vk::Device>( *_device ).destroyBufferView( _view );
-    }*/
-    std::cerr << "Free Buffer memory" << std::endl;
+    Log::info( "Free Buffer memory" );
     _device->freeMemory( _memory );
-    std::cerr << "Destroy Buffer" << std::endl;
+    Log::info( "Destroy Buffer" );
     static_cast< vk::Device >( *_device ).destroyBuffer( _buffer );
   }
 
@@ -259,6 +257,15 @@ namespace lava
       vk::MemoryPropertyFlagBits::eHostCoherent )
   {
   }
+  StorageTexelBuffer::StorageTexelBuffer( const std::shared_ptr<Device>& device,
+    vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eStorageTexelBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
   UniformTexelBuffer::UniformTexelBuffer( const std::shared_ptr<Device>& device,
     vk::DeviceSize size )
     : Buffer( device, vk::BufferCreateFlags( ), size,
@@ -269,9 +276,93 @@ namespace lava
   {
   }
   IndirectBuffer::IndirectBuffer( const std::shared_ptr<Device>& device,
+    uint32_t drawCmdCount )
+    : Buffer( device, vk::BufferCreateFlags( ), sizeof(vk::DrawIndirectCommand) * drawCmdCount,
+      vk::BufferUsageFlagBits::eIndirectBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
+  void IndirectBuffer::writeDrawCommand(uint32_t vertexCount,
+	  uint32_t firstVertex /* 0 */,
+	  uint32_t cmdIndex /* 0 */) noexcept
+  {
+	  const vk::DeviceSize offset = cmdIndex * sizeof(vk::DrawIndirectCommand);
+	  if (void *buffer = this->map(offset, sizeof(vk::DrawIndirectCommand)))
+	  {
+		  vk::DrawIndirectCommand *drawCmd = reinterpret_cast<vk::DrawIndirectCommand *>(buffer);
+		  drawCmd->vertexCount = vertexCount;
+		  drawCmd->instanceCount = 1;
+		  drawCmd->firstVertex = firstVertex;
+		  drawCmd->firstInstance = 0;
+		  this->unmap();
+	  }
+  }
+
+  void IndirectBuffer::writeDrawCommand(uint32_t vertexCount, uint32_t instanceCount, 
+	  uint32_t firstVertex, uint32_t firstInstance, uint32_t cmdIndex /* 0 */) noexcept
+  {
+	  const vk::DeviceSize offset = cmdIndex * sizeof(vk::DrawIndirectCommand);
+	  if (void *buffer = this->map(offset, sizeof(vk::DrawIndirectCommand)))
+	  {
+		  vk::DrawIndirectCommand *drawCmd = reinterpret_cast<vk::DrawIndirectCommand *>(buffer);
+		  drawCmd->vertexCount = vertexCount;
+		  drawCmd->instanceCount = instanceCount;
+		  drawCmd->firstVertex = firstVertex;
+		  drawCmd->firstInstance = firstInstance;
+		  this->unmap();
+	  }
+  }
+
+  void IndirectBuffer::writeDrawCommand(const vk::DrawIndirectCommand& drawCmd,
+	  uint32_t cmdIndex /* 0 */) noexcept
+  {
+	  const vk::DeviceSize offset = cmdIndex * sizeof(vk::DrawIndirectCommand);
+	  if (void *buffer = this->map(offset, sizeof(vk::DrawIndirectCommand)))
+	  {
+		  memcpy(buffer, &drawCmd, sizeof(vk::DrawIndirectCommand));
+		  this->unmap();
+	  }
+  }
+
+  UniformDynamicBuffer::UniformDynamicBuffer( const std::shared_ptr<Device>& device,
+    vk::DeviceSize size, uint32_t count )
+    : Buffer( device, vk::BufferCreateFlags( ), size * count,
+      vk::BufferUsageFlagBits::eUniformBuffer,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+    , _count( count )
+  {
+    // Calculate required alignment based on minimum device offset alignment
+    size_t minUboAlignment = _device->getPhysicalDevice( )->
+      getDeviceProperties( ).limits.minUniformBufferOffsetAlignment;
+    dynamicAlignment = size;
+
+    if ( minUboAlignment > 0 )
+    {
+      dynamicAlignment = ( dynamicAlignment + minUboAlignment - 1 ) & 
+        ~( minUboAlignment - 1 );
+
+      std::cout << "minUniformBufferOffsetAlignment = " << minUboAlignment << std::endl;
+      std::cout << "dynamicAlignment = " << dynamicAlignment << std::endl;
+      // uboDataDynamic.model = (glm::mat4*)alignedAlloc(bufferSize, dynamicAlignment);
+    }
+  }
+  DstTransferBuffer::DstTransferBuffer( const std::shared_ptr<Device>& device,
     vk::DeviceSize size )
     : Buffer( device, vk::BufferCreateFlags( ), size,
-      vk::BufferUsageFlagBits::eIndirectBuffer,
+      vk::BufferUsageFlagBits::eTransferDst,
+      vk::SharingMode::eExclusive, nullptr,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+      vk::MemoryPropertyFlagBits::eHostCoherent )
+  {
+  }
+  SrcTransferBuffer::SrcTransferBuffer( const std::shared_ptr<Device>& device,
+    vk::DeviceSize size )
+    : Buffer( device, vk::BufferCreateFlags( ), size,
+      vk::BufferUsageFlagBits::eTransferSrc,
       vk::SharingMode::eExclusive, nullptr,
       vk::MemoryPropertyFlagBits::eHostVisible |
       vk::MemoryPropertyFlagBits::eHostCoherent )

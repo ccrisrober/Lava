@@ -1,5 +1,5 @@
 set( LAVAQTSTENCILOUTLINE_HEADERS
-	vulkanWindow.h
+	vulkanwindow.h
 )
 set( LAVAQTSTENCILOUTLINE_SOURCES
 	main.cpp

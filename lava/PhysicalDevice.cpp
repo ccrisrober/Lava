@@ -45,46 +45,72 @@ namespace lava
     const char* devTypeStr = "";
     switch ( _deviceProperties.deviceType )
     {
-    case vk::PhysicalDeviceType::eOther:
-      devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_OTHER";
-      break;
-    case vk::PhysicalDeviceType::eIntegratedGpu:
-      devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
-      break;
-    case vk::PhysicalDeviceType::eDiscreteGpu:
-      devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
-      break;
-    case vk::PhysicalDeviceType::eVirtualGpu:
-      devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
-      break;
-    case vk::PhysicalDeviceType::eCpu:
-      devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_CPU";
-      break;
+      case vk::PhysicalDeviceType::eOther:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_OTHER";
+        break;
+      case vk::PhysicalDeviceType::eIntegratedGpu:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU";
+        break;
+      case vk::PhysicalDeviceType::eDiscreteGpu:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU";
+        break;
+      case vk::PhysicalDeviceType::eVirtualGpu:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU";
+        break;
+      case vk::PhysicalDeviceType::eCpu:
+        devTypeStr = "VK_PHYSICAL_DEVICE_TYPE_CPU";
+        break;
     }
 
-    int deviceType = (int)_deviceProperties.deviceType;
-    printf( "Device Name:    %s\n", _deviceProperties.deviceName );
-    printf( "Device ID:      %d\n", _deviceProperties.deviceID );
-    printf( "Device Vendor:  %d\n", _deviceProperties.vendorID );
-    printf( "API Version:    %d.%d.%d\n",
-      // See note below regarding this:
-      ( _deviceProperties.apiVersion >> 22 ) & 0x3FF,
-      ( _deviceProperties.apiVersion >> 12 ) & 0x3FF,
-      ( _deviceProperties.apiVersion & 0xFFF ) );
-    printf( "Driver Version: %d\n", _deviceProperties.driverVersion );
-    printf( "Device Type:    %s(%d)\n", devTypeStr, deviceType );
+    auto vendorName = [ ]( uint32_t vendorId ) -> std::string
+    {
+      switch ( vendorId )
+      {
+      case 0x10DE:
+        return "Nvidia";
+      case 0x1002:
+      case 0x1022:
+        return "AMD";
+      case 0x163C:
+      case 0x8086:
+      case 0x8087:
+        return "Intel";
+      default:
+        return "UNKNOWN";
+      }
+    };
+
+    auto version = [ ]( uint32_t version_ ) -> std::string {
+      return std::to_string( VK_VERSION_MAJOR( version_ ) ) + "." + 
+        std::to_string( VK_VERSION_MINOR( version_ ) ) + "." +
+        std::to_string( VK_VERSION_PATCH( version_ ) );
+    };
+
+    std::cout << "Hardware/software information" << std::endl;
+    std::cout << "=============================" << std::endl;
+    std::cout << "  Vendor:           " << vendorName( _deviceProperties.vendorID )
+      << " (ID: " << _deviceProperties.vendorID << ")" << std::endl;
+    std::cout << "  Device:           " << _deviceProperties.deviceName
+      << " (ID: " << _deviceProperties.deviceID << ")" << std::endl;
+    std::cout << "  Device type:      " << 
+      devTypeStr/*vk::to_string( _deviceProperties.deviceType )*/ << std::endl;
+    std::cout << "  API version:      " << 
+      version( _deviceProperties.apiVersion ) << std::endl;
+    std::cout << "  Driver version:   " << 
+      version( _deviceProperties.driverVersion ) << std::endl;
+    std::cout << std::endl;
 #endif
 
     _deviceFeatures = _physicalDevice.getFeatures( );
     _memoryProperties = _physicalDevice.getMemoryProperties( );
 
 
-    _deviceFeatures.geometryShader = VK_TRUE;
+    /*_deviceFeatures.geometryShader = VK_TRUE;
     _deviceFeatures.tessellationShader = VK_TRUE;
     _deviceFeatures.depthClamp = VK_TRUE;
     _deviceFeatures.fillModeNonSolid = VK_TRUE;
     _deviceFeatures.multiViewport = VK_TRUE;
-    _deviceFeatures.shaderClipDistance = VK_TRUE;
+    _deviceFeatures.shaderClipDistance = VK_TRUE;*/
 
 
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
@@ -99,6 +125,14 @@ namespace lava
   PhysicalDevice::~PhysicalDevice( void )
   {
     // Nothing to do here
+  }
+
+  vk::ImageFormatProperties PhysicalDevice::getImageFormatProperties( 
+    vk::Format format, vk::ImageType imageType, bool optimalTiling, 
+    vk::ImageUsageFlags usage, vk::ImageCreateFlags flags ) const
+  {
+    return _physicalDevice.getImageFormatProperties( format, imageType,
+      optimalTiling ? vk::ImageTiling::eOptimal : vk::ImageTiling::eLinear, usage, flags );
   }
 
   std::vector<vk::SurfaceFormatKHR> PhysicalDevice::getSurfaceFormats( 

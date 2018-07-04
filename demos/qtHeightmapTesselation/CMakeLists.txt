@@ -1,10 +1,10 @@
 set( LAVAQTHEIGHTMAPTESSELATION_HEADERS
-	vulkanWindow.h
+	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
 set( LAVAQTHEIGHTMAPTESSELATION_SOURCES
-	vulkanWindow.cpp
+	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp

@@ -41,6 +41,11 @@ namespace lava
       vk::ImageUsageFlags imageUsageFlags = vk::ImageUsageFlagBits::eSampled,
       vk::ImageLayout imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
       bool forceLinear = false );
+    LAVA_API
+    TextureCubemap( const std::shared_ptr<Device>& device, 
+      uint32_t dimensions, vk::Format format,
+      vk::ImageUsageFlags imageUsageFlags = vk::ImageUsageFlagBits::eSampled,
+      vk::ImageLayout imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal );
   };
 }
 

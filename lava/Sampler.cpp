@@ -18,6 +18,7 @@
  **/
 
 #include "Sampler.h"
+#include "Log.h"
 
 namespace lava
 {
@@ -32,8 +33,8 @@ namespace lava
   {
     if ( anisotropyEnable && maxAnisotropy <= 0.0f )
     {
-      std::cerr << "Can't create a sampler with enabled anisotropy and" <<
-        " 0.0f for max value. Disabling anisotropy" << std::endl;
+      Log::error( "Can't create a sampler with enabled anisotropy and 0.0f "
+        "for max value. Disabling anisotropy" );
       maxAnisotropy = false;
     }
 
@@ -42,6 +43,16 @@ namespace lava
       maxAnisotropy, compareEnable, compareOp, minLod, maxLod,
       borderColor, unnormalizedCoordinates );
     _sampler = static_cast<vk::Device>( *_device ).createSampler( csci );
+  }
+
+  Sampler::Sampler(const std::shared_ptr<Device>& device, 
+	const vk::SamplerCreateInfo& ci)
+	: Sampler( device, ci.magFilter, ci.minFilter, ci.mipmapMode, 
+	  ci.addressModeU, ci.addressModeV, ci.addressModeW,
+	  ci.mipLodBias, ci.anisotropyEnable, ci.maxAnisotropy, ci.compareEnable,
+	  ci.compareOp, ci.minLod, ci.maxLod, ci.borderColor, 
+	  ci.unnormalizedCoordinates)
+  {
   }
 
   Sampler::~Sampler( void )

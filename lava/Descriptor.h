@@ -32,6 +32,86 @@
 
 namespace lava
 {
+  struct Descriptor : public vk::DescriptorPoolSize
+  {
+    Descriptor( vk::DescriptorType type_, 
+      uint32_t descriptorCount_ ) noexcept
+    {
+      this->type = type_;
+      this->descriptorCount = descriptorCount_;
+    }
+  };
+
+  namespace descriptors
+  {
+    struct Sampler : Descriptor
+    {
+      Sampler( uint32_t count ) noexcept: 
+        Descriptor( vk::DescriptorType::eSampler, count ) { }
+    };
+
+    struct CombinedImageSampler : Descriptor
+    {
+      CombinedImageSampler( uint32_t count ) noexcept
+        : Descriptor(vk::DescriptorType::eCombinedImageSampler, count) {}
+    };
+
+    struct SampledImage : Descriptor
+    {
+      SampledImage( uint32_t count ) noexcept
+        : Descriptor(vk::DescriptorType::eSampledImage, count) {}
+    };
+
+    struct StorageImage : Descriptor
+    {
+      StorageImage( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eStorageImage, count ) { }
+    };
+
+    struct UniformTexelBuffer : Descriptor
+    {
+      UniformTexelBuffer( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eUniformTexelBuffer, count ) { }
+    };
+
+    struct StorageTexelBuffer : Descriptor
+    {
+      StorageTexelBuffer( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eStorageTexelBuffer, count ) { }
+    };
+
+    struct UniformBuffer : Descriptor
+    {
+      UniformBuffer( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eUniformBuffer, count ) { }
+    };
+
+    struct StorageBuffer : Descriptor
+    {
+      StorageBuffer( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eStorageBuffer, count ) { }
+    };
+
+    struct DynamicUniformBuffer : Descriptor
+    {
+      DynamicUniformBuffer( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eUniformBufferDynamic, count ) { }
+    };
+
+    struct DynamicStorageBuffer : Descriptor
+    {
+      DynamicStorageBuffer( uint32_t count ) noexcept
+        : Descriptor( vk::DescriptorType::eStorageBufferDynamic, count ) { }
+    };
+
+    struct InputAttachment : Descriptor
+    {
+      InputAttachment( uint32_t count ) noexcept 
+        : Descriptor( vk::DescriptorType::eInputAttachment, count ) { }
+    };
+  }
+
+
   struct DescriptorSetLayoutBinding
   {
     LAVA_API
@@ -89,6 +169,9 @@ namespace lava
       return _descriptorPool;
     }
 
+    LAVA_API
+    static uint32_t max_elem( const std::shared_ptr<Device>& device, 
+      vk::DescriptorType type );
   private:
     vk::DescriptorPool  _descriptorPool;
   };

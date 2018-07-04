@@ -53,11 +53,10 @@ common_find_package( STBI REQUIRED SYSTEM )
 common_find_package( GLM SYSTEM )
 common_find_package( ASSIMP SYSTEM )
 common_find_package( GLFW3 SYSTEM )
-common_find_package( Qt5Core SYSTEM )
-common_find_package( Qt5Widgets SYSTEM )
+common_find_package( Qt5Core SYSTEM 5.10 )
+common_find_package( Qt5Widgets SYSTEM 5.10 )
 
-
-#include_directories("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/vma/src")
+common_find_package( Boost COMPONENTS unit_test_framework )
 
 
 list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
@@ -67,6 +66,10 @@ IF (NOT WIN32)
 endif()
 
 common_find_package_post( )
+
+#option(ENABLE_GLSLANG_BINARIES "Enable GLSLang Binaries" OFF)
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang")
+#SET( ENABLE_HLSL OFF CACHE BOOL "Enables HLSL input support" )
 
 add_subdirectory( lava )
 
@@ -82,6 +85,10 @@ add_subdirectory( lavaUtils )
 #add_subdirectory( lavaEngine )
 
 add_subdirectory( demos )
+
+if(${Boost_FOUND})
+  add_subdirectory(tests)
+endif()
 
 configure_file(
   CMake/glsl2spv.cmake

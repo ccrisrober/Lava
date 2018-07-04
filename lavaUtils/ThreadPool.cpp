@@ -19,17 +19,17 @@
 
 #include "ThreadPool.h"
 
-namespace std
-{
-#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
-
-#else
+//namespace std
+//{
+//#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900)
+//
+//#else
   template<typename T, typename... Args>
   std::unique_ptr<T> make_unique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
   }
-#endif
-}
+//#endif
+//}
 
 namespace lava
 {
@@ -97,7 +97,7 @@ namespace lava
       workers.clear( );
       for ( uint32_t i = 0; i < count; ++i )
       {
-        workers.push_back( std::make_unique< Thread >( ) );
+        workers.push_back( make_unique< Thread >( ) );
       }
     }
     void ThreadPool::wait( void )

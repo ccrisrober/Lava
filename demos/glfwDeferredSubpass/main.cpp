@@ -1,23 +1,42 @@
 #include <iostream>
 
 #include <glfwLava/glfwLava.h>
-
+#include <lavaUtils/lavaUtils.h>
 using namespace lava;
 
 #include <glm/glm.hpp>
 
 #include <random>
 
+#include <routes.h>
+
 #include "../utils/Camera.h"
 
-const size_t NUM_LIGHTS = 64;
+const size_t NUM_LIGHTS = 16;
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+// G-Buffer framebuffer attachments
+struct FramebufferAttachment
+{
+  std::shared_ptr< Image > image;
+  std::shared_ptr< ImageView > view;
+  vk::Format format;
+};
+
+struct
+{
+  FramebufferAttachment position;
+  FramebufferAttachment normal;
+  FramebufferAttachment albedo;
+} attachments;
+
+class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  glfw::VulkanWindow* _window;
 
   Camera camera;
+
+  std::shared_ptr< lava::utility::Geometry > geometry;
 
   struct Light
   {
@@ -35,7 +54,6 @@ private:
   struct
   {
     glm::mat4 projection;
-    glm::mat4 model;
     glm::mat4 view;
   } uboGBuffer;
 
@@ -47,8 +65,14 @@ private:
 
   struct
   {
-    std::shared_ptr< Pipeline > scene;
+    std::shared_ptr< Pipeline > offscreen;
     std::shared_ptr< Pipeline > composition;
+  } pipelines;
+
+  struct
+  {
+    std::shared_ptr< PipelineLayout > offscreen;
+    std::shared_ptr< PipelineLayout > composition;
   } pipelineLayouts;
 
   struct
@@ -62,84 +86,460 @@ private:
     std::shared_ptr< DescriptorSetLayout > scene;
     std::shared_ptr< DescriptorSetLayout > composition;
   } descriptorSetLayouts;
-
-  // G-Buffer framebuffer attachments
-  struct FramebufferAttachment
-  {
-    std::shared_ptr< Image > image;
-    std::shared_ptr< ImageView > view;
-    vk::Format format;
-  };
-
-  struct
-  {
-    FramebufferAttachment position;
-    FramebufferAttachment normal;
-    FramebufferAttachment albedo;
-  } attachments;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( glfw::VulkanWindow* window )
     : _window( window )
   {
   }
-protected:
-  std::vector<std::shared_ptr<Framebuffer> > frameBuffers;
-  virtual void setupFramebuffer( void )// override
+public:
+  void prepareUniformBuffers( )
   {
-    std::vector<std::shared_ptr<lava::ImageView>> attachments;
+    auto device = _window->device( );
+    // Deferred vertex shader
+    uniformBuffers.GBuffer = device->createUniformBuffer( sizeof( uboGBuffer ) );
+    // Composite fragment shader
+    uniformBuffers.lights = device->createUniformBuffer( sizeof( uboLights ) );
 
-    /*VkFramebufferCreateInfo frameBufferCreateInfo = { };
-    frameBufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    frameBufferCreateInfo.pNext = NULL;
-    frameBufferCreateInfo.renderPass = renderPass;
-    frameBufferCreateInfo.attachmentCount = 5;
-    frameBufferCreateInfo.pAttachments = attachments;
-    frameBufferCreateInfo.width = width;
-    frameBufferCreateInfo.height = height;
-    frameBufferCreateInfo.layers = 1;
-
-    // Create frame buffers for every swap chain image
-    frameBuffers.resize( swapChain.imageCount );
-    for ( uint32_t i = 0; i < frameBuffers.size( ); i++ )
-    {
-      //attachments[ 0 ] = swapChain.buffers[ i ].view;
-      attachments[ 1 ] = this->attachments.position.view;
-      attachments[ 2 ] = this->attachments.normal.view;
-      attachments[ 3 ] = this->attachments.albedo.view;
-      attachments[ 4 ] = depthStencil.view;
-      VK_CHECK_RESULT( vkCreateFramebuffer( device, &frameBufferCreateInfo, nullptr, &frameBuffers[ i ] ) );
-    }*/
+    // update
+    updateUniformBufferDeferredMatrices( );
+    updateUniformBufferDeferredLights( );
   }
-  virtual void setupRenderPass( void )// override
+
+  void updateUniformBufferDeferredMatrices( void )
+  {
+    auto size = _window->swapchainImageSize( );
+
+    uint32_t width = size.width, height = size.height;
+
+    uboGBuffer.view = camera.GetViewMatrix( );
+    uboGBuffer.projection = glm::perspective( glm::radians( camera.Zoom ),
+      ( float ) width / ( float ) height, 0.1f, 100.0f );
+    uboGBuffer.projection[ 1 ][ 1 ] *= -1;
+
+    uniformBuffers.GBuffer->set( &uboGBuffer );
+  }
+
+  void updateUniformBufferDeferredLights( void )
+  {
+    // Current view position
+    uboLights.viewPos = glm::vec4( camera.Position, 0.0f ) * glm::vec4( -1.0f, 1.0f, -1.0f, 1.0f );
+
+    uniformBuffers.lights->set( &uboLights );
+  }
+
+  void initLights( void )
+  {
+    std::vector< glm::vec3 > colors = 
+    {
+      glm::vec3( 1.0f, 1.0f, 1.0f ),
+      glm::vec3( 1.0f, 0.0f, 0.0f ),
+      glm::vec3( 0.0f, 1.0f, 0.0f ),
+      glm::vec3( 0.0f, 0.0f, 1.0f ),
+      glm::vec3( 1.0f, 1.0f, 0.0f ),
+    };
+
+    std::default_random_engine rndGen( ( unsigned ) time( nullptr ) );
+    std::uniform_real_distribution<float> rndDist( -1.0f, 1.0f );
+    std::uniform_int_distribution<uint32_t> rndCol( 
+      0, static_cast< uint32_t >( colors.size( ) - 1 ) );
+
+    for ( auto& light : uboLights.lights )
+    {
+      light.position = glm::vec4( 
+        rndDist( rndGen ) * 6.0f, 
+        0.25f + std::abs( rndDist( rndGen ) ) * 4.0f, 
+        rndDist( rndGen ) * 6.0f, 
+        1.0f
+      );
+      light.color = colors[ rndCol( rndGen ) ];
+      light.radius = 1.0f + std::abs( rndDist( rndGen ) );
+    }
+  }
+
+  void prepareCompositionPass( void )
+  {
+    auto device = _window->device( );
+    std::vector<DescriptorSetLayoutBinding> dslb =
+    {
+      // Binding 0: Position input attachment
+      DescriptorSetLayoutBinding( 0, 
+        vk::DescriptorType::eInputAttachment,
+        vk::ShaderStageFlagBits::eFragment
+      ),
+      // Binding 1: Normal input attachment 
+      DescriptorSetLayoutBinding( 1,
+        vk::DescriptorType::eInputAttachment,
+        vk::ShaderStageFlagBits::eFragment
+      ),
+      // Binding 2: Albedo input attachment 
+      DescriptorSetLayoutBinding( 2,
+        vk::DescriptorType::eInputAttachment,
+        vk::ShaderStageFlagBits::eFragment
+      ),
+      // Binding 3: Light positions
+      DescriptorSetLayoutBinding( 3,
+        vk::DescriptorType::eUniformBuffer,
+        vk::ShaderStageFlagBits::eFragment
+      )
+    };
+
+    descriptorSetLayouts.composition = device->createDescriptorSetLayout( dslb );
+
+    pipelineLayouts.composition = device->createPipelineLayout( 
+      descriptorSetLayouts.composition );
+
+    descriptorSets.composition = device->allocateDescriptorSet( descriptorPool, 
+      descriptorSetLayouts.composition );
+
+    // Image descriptor for the offscreen color attachments
+    DescriptorImageInfo texDescriptorPosition(
+      vk::ImageLayout::eShaderReadOnlyOptimal,
+      attachments.position.view, nullptr );
+    DescriptorImageInfo texDescriptorNormal(
+      vk::ImageLayout::eShaderReadOnlyOptimal,
+      attachments.normal.view, nullptr );
+    DescriptorImageInfo texDescriptorAlbedo(
+      vk::ImageLayout::eShaderReadOnlyOptimal,
+      attachments.albedo.view, nullptr );
+
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      // Binding 0: Position texture target
+      WriteDescriptorSet(
+        descriptorSets.composition, 0, 0,
+        vk::DescriptorType::eInputAttachment, 1, texDescriptorPosition, nullptr
+      ),
+      // Binding 1: Normals texture target
+      WriteDescriptorSet(
+        descriptorSets.composition, 1, 0,
+        vk::DescriptorType::eInputAttachment, 1, texDescriptorNormal, nullptr
+      ),
+			// Binding 2: Albedo texture target
+      WriteDescriptorSet(
+        descriptorSets.composition, 2, 0,
+        vk::DescriptorType::eInputAttachment, 1, texDescriptorAlbedo, nullptr
+      ),
+			// Binding 4: Fragment shader lights
+      WriteDescriptorSet(
+        descriptorSets.composition, 3, 0, vk::DescriptorType::eUniformBuffer,
+        1, nullptr, DescriptorBufferInfo( uniformBuffers.lights, 0, sizeof( uboLights ) )
+      )
+    };
+    device->updateDescriptorSets( wdss, { } );
+
+    PipelineVertexInputStateCreateInfo vertexInput( { }, { } );
+
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
+      vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
+      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
+      false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
+      vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
+      0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
+      stencilOpState, 0.0f, 0.0f );
+    depthStencil.depthWriteEnable = false;
+    ;
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp,
+      vk::PipelineColorBlendAttachmentState( false,
+        vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+        vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+      ), { 1.0f, 1.0f, 1.0f, 1.0f }
+    );
+    PipelineDynamicStateCreateInfo dynamic( {
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    } );
+
+    // Specialization constants for number of lights
+    std::vector<vk::SpecializationMapEntry> specMapEntries =
+    {
+      vk::SpecializationMapEntry( 0, 0, sizeof( uint32_t ) )
+    };
+
+    uint32_t specData = NUM_LIGHTS;
+
+    SpecializationInfo specInfo( specMapEntries, &specData );
+
+    auto vertexStage = device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "composition_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    auto fragmentStage = device->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "composition_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment, specInfo
+    );
+
+    pipelines.composition = device->createGraphicsPipeline( 
+      _window->pipelineCache( ), { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+      viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelineLayouts.composition, _window->renderPass( ),
+      // Index of the subpass that this pipeline will be used in
+      1
+    );
+  }
+
+  void setupDescriptorPool( void )
+  {
+    std::vector<vk::DescriptorPoolSize> poolSizes = 
+    {
+      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 2 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 1 ),
+      vk::DescriptorPoolSize( vk::DescriptorType::eInputAttachment, 3),
+    };
+
+    descriptorPool = _window->device( )->createDescriptorPool( 2, poolSizes );
+  }
+
+  void preparePipelines( void )
+  {
+    vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputRate::eVertex );
+
+    PipelineVertexInputStateCreateInfo vertexInput( binding, {
+      vk::VertexInputAttributeDescription(
+        0, 0, vk::Format::eR32G32B32Sfloat,
+        offsetof( lava::utility::Vertex, position )
+      ),
+      vk::VertexInputAttributeDescription(
+        1, 0, vk::Format::eR32G32B32Sfloat,
+        offsetof( lava::utility::Vertex, normal )
+      ),
+      vk::VertexInputAttributeDescription(
+        2, 0, vk::Format::eR32G32Sfloat,
+        offsetof( lava::utility::Vertex, texCoord )
+      )
+    } );
+
+    vk::PipelineInputAssemblyStateCreateInfo assembly( { },
+      vk::PrimitiveTopology::eTriangleList, VK_FALSE );
+    PipelineViewportStateCreateInfo viewport( 1, 1 );
+    vk::PipelineRasterizationStateCreateInfo rasterization( { }, true,
+      false, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack,
+      vk::FrontFace::eCounterClockwise, false, 0.0f, 0.0f, 0.0f, 1.0f );
+    PipelineMultisampleStateCreateInfo multisample( vk::SampleCountFlagBits::e1,
+      false, 0.0f, nullptr, false, false );
+    vk::StencilOpState stencilOpState( vk::StencilOp::eKeep,
+      vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways,
+      0, 0, 0 );
+    vk::PipelineDepthStencilStateCreateInfo depthStencil( { }, true, true,
+      vk::CompareOp::eLessOrEqual, false, false, stencilOpState,
+      stencilOpState, 0.0f, 0.0f );
+    ;
+    vk::PipelineColorBlendAttachmentState blendAttachmentState( false,
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::BlendFactor::eZero, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+    );
+    PipelineColorBlendStateCreateInfo colorBlend( false, vk::LogicOp::eNoOp,
+      { blendAttachmentState, blendAttachmentState, 
+      blendAttachmentState, blendAttachmentState }, { 1.0f, 1.0f, 1.0f, 1.0f }
+    );
+    PipelineDynamicStateCreateInfo dynamic( {
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    } );
+
+    auto vertexStage = _window->device( )->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "gbuffer_vert.spv" ),
+      vk::ShaderStageFlagBits::eVertex
+    );
+    auto fragmentStage = _window->device( )->createShaderPipelineShaderStage(
+      LAVA_EXAMPLES_SPV_ROUTE + std::string( "gbuffer_frag.spv" ),
+      vk::ShaderStageFlagBits::eFragment
+    );
+    pipelines.offscreen = _window->device( )->createGraphicsPipeline( 
+      _window->pipelineCache( ), { },
+      { vertexStage, fragmentStage }, vertexInput, assembly, nullptr,
+      viewport, rasterization, multisample, depthStencil, colorBlend, dynamic,
+      pipelineLayouts.offscreen, _window->renderPass( ),
+      // Index of the subpass that this pipeline will be used in
+      0
+    );
+  }
+
+  void setupDescriptorSet( void )
+  {
+    auto device = _window->device( );
+    descriptorSets.scene = device->allocateDescriptorSet( descriptorPool, 
+      descriptorSetLayouts.scene );
+
+    std::vector<WriteDescriptorSet> wdss =
+    {
+      // Binding 0: Vertex shader uniform buffer
+      WriteDescriptorSet(
+        descriptorSets.scene, 0, 0, vk::DescriptorType::eUniformBuffer,
+        1, nullptr, DescriptorBufferInfo( uniformBuffers.GBuffer, 0, 
+          sizeof( uboGBuffer ) )
+      ),
+      // Binding 1: Fragment shader mesh texture
+      WriteDescriptorSet(
+        descriptorSets.scene, 1, 0, vk::DescriptorType::eCombinedImageSampler, 1,
+        tex->descriptor, nullptr
+      ),
+    };
+
+    device->updateDescriptorSets( wdss, { } );
+  }
+
+  void setupDescriptorSetLayout( void )
+  {
+    auto device = _window->device( );
+    // Deferred shading layout
+    descriptorSetLayouts.scene = device->createDescriptorSetLayout( {
+      // Binding 0: Vertex shader uniform buffer
+      DescriptorSetLayoutBinding( 0, vk::DescriptorType::eUniformBuffer, 
+        vk::ShaderStageFlagBits::eVertex
+      ),
+      // Binding 1: Fragment shader mesh texture
+      DescriptorSetLayoutBinding( 1, vk::DescriptorType::eCombinedImageSampler, 
+        vk::ShaderStageFlagBits::eFragment
+      ),
+    } );
+
+    vk::PushConstantRange pushConstantRange(
+      vk::ShaderStageFlagBits::eVertex,
+      0, sizeof( glm::mat4 )
+    );
+
+    // Offscreen (scene) rendering pipeline layout
+    pipelineLayouts.offscreen = device->createPipelineLayout( 
+      descriptorSetLayouts.scene, pushConstantRange );
+  }
+
+  virtual void initResources( void ) override
+  {
+    geometry = std::make_shared<lava::utility::Geometry>( _window->device( ),
+      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
+
+    tex = _window->device( )->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+      std::string( "earth/earth_diffuse.jpg" ), _window->gfxCommandPool( ),
+      _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
+
+    initLights( );
+    prepareUniformBuffers( );
+    setupDescriptorSetLayout( );
+    preparePipelines( );
+
+    setupDescriptorPool( );
+    setupDescriptorSet( );
+    prepareCompositionPass( );
+  }
+
+  virtual void nextFrame( void )
+  {
+    auto cmd = _window->currentCommandBuffer( );
+
+    std::array<vk::ClearValue, 5 > clearValues;
+    std::array<float, 4> ccv = { 0.0f, 0.0f, 0.0, 1.0f };
+
+    for ( int i = 0; i < 4; ++i )
+    {
+      clearValues[ i ].color = vk::ClearColorValue( ccv );
+    }
+    clearValues[ 4 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
+
+    vk::Extent2D extent = _window->swapchainImageSize( );
+
+    cmd->beginRenderPass( _window->renderPass( ),
+      _window->framebuffer( ),
+      vk::Rect2D( { 0, 0 }, extent ), clearValues,
+      vk::SubpassContents::eInline );
+    cmd->setViewportScissors( extent );
+    
+    // First subpass
+    // Render the components of the scene to the G-Buffer attachments
+    //    DRAW
+      cmd->bindGraphicsPipeline( pipelines.offscreen );
+      cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics, 
+        pipelineLayouts.offscreen, 0, descriptorSets.scene, nullptr );
+      cmd->pushConstants<glm::mat4>( *pipelineLayouts.offscreen, 
+        vk::ShaderStageFlagBits::eVertex, 0, glm::mat4( 1.0f ) );
+      geometry->render( cmd, 1 );
+
+    // Second subpass
+			// This subpass will use the G-Buffer components that have been filled in the first subpass as input attachment for the final compositing
+    cmd->nextSubpass( vk::SubpassContents::eInline );
+    //    DRAW
+      cmd->bindGraphicsPipeline( pipelines.composition );
+      cmd->bindDescriptorSets( vk::PipelineBindPoint::eGraphics,
+        pipelineLayouts.composition, 0, descriptorSets.composition, nullptr );
+      cmd->draw( 4, 1, 0, 0 );  // Empty plane
+    
+    cmd->endRenderPass( );
+
+    _window->frameReady( );
+  }
+protected:
+  std::shared_ptr< lava::DescriptorPool > descriptorPool;
+  std::shared_ptr< lava::Texture > tex;
+};
+
+class VulkanWindow : public glfw::VulkanWindow
+{
+public:
+  explicit VulkanWindow( int width, int height,
+    const std::string& title, bool enableLayers )
+    : glfw::VulkanWindow( width, height, title, enableLayers )
+  {
+  }
+
+  virtual void setupFramebuffer( void ) override
+  {
+    std::vector<std::shared_ptr<lava::ImageView>> attachmentsIV( 5 );
+
+    _framebuffers.resize( _swapchain->count( ) );
+    // Create frame buffers for every swap chain image
+    for ( uint32_t i = 0; i < _framebuffers.size( ); ++i )
+    {
+      attachmentsIV[ 0 ] = _swapchain->imageViews( )[ i ];
+      attachmentsIV[ 1 ] = attachments.position.view;
+      attachmentsIV[ 2 ] = attachments.normal.view;
+      attachmentsIV[ 3 ] = attachments.albedo.view;
+      attachmentsIV[ 4 ] = _depthView;
+
+      _framebuffers[ i ] = device( )->createFramebuffer( renderPass( ), 
+        attachmentsIV, swapchainImageSize( ), 1 );
+    }
+  }
+
+  virtual void setupRenderPass( void ) override
   {
     createGBufferAttachments( );
-    std::array<vk::AttachmentDescription, 5> attachments = {
+    std::array<vk::AttachmentDescription, 5> attachmentsDescription = {
       vk::AttachmentDescription( vk::AttachmentDescriptionFlags( ),
-        _window->colorFormat( ), vk::SampleCountFlagBits::e1,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
+      colorFormat( ), vk::SampleCountFlagBits::e1,
+      vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+      vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+      vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
       ),
       vk::AttachmentDescription( vk::AttachmentDescriptionFlags( ),
-        this->attachments.position.format, vk::SampleCountFlagBits::e1,
-        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal
-      ),
-      vk::AttachmentDescription( vk::AttachmentDescriptionFlags( ),
-        this->attachments.normal.format, vk::SampleCountFlagBits::e1,
+        attachments.position.format, vk::SampleCountFlagBits::e1,
         vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
         vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal
       ),
       vk::AttachmentDescription( vk::AttachmentDescriptionFlags( ),
-        this->attachments.albedo.format, vk::SampleCountFlagBits::e1,
+        attachments.normal.format, vk::SampleCountFlagBits::e1,
         vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
         vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal
       ),
       vk::AttachmentDescription( vk::AttachmentDescriptionFlags( ),
-        _window->depthStencilFormat( ), vk::SampleCountFlagBits::e1,
+        attachments.albedo.format, vk::SampleCountFlagBits::e1,
+        vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+        vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal
+      ),
+      vk::AttachmentDescription( vk::AttachmentDescriptionFlags( ),
+        depthStencilFormat( ), vk::SampleCountFlagBits::e1,
         vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
         vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
         vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal
@@ -148,7 +548,7 @@ protected:
 
     // Two subpasses
     std::array < vk::SubpassDescription, 2 > subpassDescription;
-    
+
     // First subpass: Fill G-Buffer components
     vk::AttachmentReference colorRefs[ 4 ] =
     {
@@ -191,7 +591,7 @@ protected:
     dependencies[ 0 ].srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
     dependencies[ 0 ].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     dependencies[ 0 ].srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-    dependencies[ 0 ].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | 
+    dependencies[ 0 ].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
       vk::AccessFlagBits::eColorAttachmentWrite;
     dependencies[ 0 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
@@ -212,26 +612,27 @@ protected:
     dependencies[ 2 ].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
     dependencies[ 2 ].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
-    auto renderPass = _window->device( )->createRenderPass( attachments, subpassDescription, dependencies );
+    _renderPass = device( )->createRenderPass( 
+      attachmentsDescription, subpassDescription, dependencies );
   }
-public:
+ 
   // Create color attachments for the G-Buffer components
   void createGBufferAttachments( void )
   {
-    auto size = _window->swapchainImageSize( );
+    auto size = swapchainImageSize( );
     uint32_t width = size.width,
-             height = size.height;
+      height = size.height;
     // (World space) Positions
     createAttachment( vk::Format::eR16G16B16A16Sfloat,
-      vk::ImageUsageFlagBits::eColorAttachment, &attachments.position, 
+      vk::ImageUsageFlagBits::eColorAttachment, &attachments.position,
       width, height );
     // (World space) Normals
-    createAttachment( vk::Format::eR16G16B16A16Sfloat, 
-      vk::ImageUsageFlagBits::eColorAttachment, &attachments.normal, 
+    createAttachment( vk::Format::eR16G16B16A16Sfloat,
+      vk::ImageUsageFlagBits::eColorAttachment, &attachments.normal,
       width, height );
     // Albedo (color)
-    createAttachment( vk::Format::eR8G8B8A8Unorm, 
-      vk::ImageUsageFlagBits::eColorAttachment, &attachments.albedo, 
+    createAttachment( vk::Format::eR8G8B8A8Unorm,
+      vk::ImageUsageFlagBits::eColorAttachment, &attachments.albedo,
       width, height );
   }
 
@@ -239,248 +640,54 @@ public:
     FramebufferAttachment* attachment, int width, int height )
   {
     vk::ImageAspectFlags aspectMask;
-    vk::ImageLayout imageLayout;
+    //vk::ImageLayout imageLayout;
 
     attachment->format = format;
 
     if ( usage & vk::ImageUsageFlagBits::eColorAttachment )
     {
       aspectMask = vk::ImageAspectFlagBits::eColor;
-      imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+      //imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
     }
     if ( usage & vk::ImageUsageFlagBits::eDepthStencilAttachment )
     {
-      aspectMask = vk::ImageAspectFlagBits::eDepth | 
+      aspectMask = vk::ImageAspectFlagBits::eDepth |
         vk::ImageAspectFlagBits::eStencil;
-      imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+      //imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
     }
 
     //assert( aspectMask > 0 );
-    
-    auto device = _window->device( );
 
-    attachment->image = device->createImage( vk::ImageCreateFlagBits( ), 
-      vk::ImageType::e2D, format, vk::Extent3D( width, height, 1 ), 1, 1, 
-      vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, 
-      usage | vk::ImageUsageFlagBits::eInputAttachment, vk::SharingMode( ), 
+    attachment->image = device( )->createImage( vk::ImageCreateFlagBits( ),
+      vk::ImageType::e2D, format, vk::Extent3D( width, height, 1 ), 1, 1,
+      vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal,
+      usage | vk::ImageUsageFlagBits::eInputAttachment, vk::SharingMode( ),
       { }, vk::ImageLayout::eUndefined,
       vk::MemoryPropertyFlagBits::eDeviceLocal
     );
 
-    attachment->view = attachment->image->createImageView( vk::ImageViewType::e2D, 
+    attachment->view = attachment->image->createImageView( vk::ImageViewType::e2D,
       format, {
         vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
         vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA
-      }, 
+      },
       vk::ImageSubresourceRange( )
-        .setAspectMask( aspectMask )
-        .setBaseMipLevel( 0 )
-        .setLevelCount( 1 )
-        .setBaseArrayLayer( 0 )
-        .setLayerCount( 1 )
+      .setAspectMask( aspectMask )
+      .setBaseMipLevel( 0 )
+      .setLevelCount( 1 )
+      .setBaseArrayLayer( 0 )
+      .setLayerCount( 1 )
     );
   }
 
-  void prepareUniformBuffers( )
-  {
-    auto device = _window->device( );
-    // Deferred vertex shader
-    uniformBuffers.GBuffer = device->createUniformBuffer( sizeof( uboGBuffer ) );
-    // Deferred fragment shader
-    uniformBuffers.lights = device->createUniformBuffer( sizeof( uboLights ) );
-
-    // update
-    updateUniformBufferDeferredMatrices( );
-    updateUniformBufferDeferredLights( );
-  }
-
-  void updateUniformBufferDeferredMatrices( void )
-  {
-    auto size = _window->swapchainImageSize( );
-
-    uint32_t width = size.width, height = size.height;
-    uboGBuffer.projection = glm::perspective( glm::radians( camera.Zoom ),
-      ( float ) width / ( float ) height, 1.0f, 100.0f );;
-    uboGBuffer.view = camera.GetViewMatrix( );
-    uboGBuffer.model = glm::mat4( 1.0f );
-
-    uniformBuffers.GBuffer->set( &uboGBuffer );
-  }
-
-  void updateUniformBufferDeferredLights( void )
-  {
-    // Current view position
-    uboLights.viewPos = glm::vec4( camera.Position, 0.0f ) * glm::vec4( -1.0f, 1.0f, -1.0f, 1.0f );
-
-    uniformBuffers.lights->set( &uboLights );
-  }
-
-  void initLights( void )
-  {
-    std::vector< glm::vec3 > colors = 
-    {
-      glm::vec3( 1.0f, 1.0f, 1.0f ),
-      glm::vec3( 1.0f, 0.0f, 0.0f ),
-      glm::vec3( 0.0f, 1.0f, 0.0f ),
-      glm::vec3( 0.0f, 0.0f, 1.0f ),
-      glm::vec3( 1.0f, 1.0f, 0.0f ),
-    };
-
-    std::default_random_engine rndGen( ( unsigned ) time( nullptr ) );
-    std::uniform_real_distribution<float> rndDist( -1.0f, 1.0f );
-    std::uniform_int_distribution<uint32_t> rndCol( 
-      0, static_cast< uint32_t >( colors.size( ) - 1 ) );
-
-    for ( auto& light : uboLights.lights )
-    {
-      light.position = glm::vec4( 
-        rndDist( rndGen ) * 6.0f, 
-        0.25f + std::abs( rndDist( rndGen ) ) * 4.0f, 
-        rndDist( rndGen ) * 6.0f, 
-        1.0f
-      );
-      light.color = colors[ rndCol( rndGen ) ];
-      light.radius = 1.0f + std::abs( rndDist( rndGen ) );
-    }
-  }
-
-  void prepareCompositionPass( )
-  {
-    auto device = _window->device( );
-    std::vector<DescriptorSetLayoutBinding> dslb =
-    {
-      // Binding 0: Position input attachment
-      DescriptorSetLayoutBinding( 0, 
-        vk::DescriptorType::eInputAttachment,
-        vk::ShaderStageFlagBits::eFragment
-      ),
-      // Binding 1: Normal input attachment 
-      DescriptorSetLayoutBinding( 1,
-        vk::DescriptorType::eInputAttachment,
-        vk::ShaderStageFlagBits::eFragment
-      ),
-      // Binding 2: Albedo input attachment 
-      DescriptorSetLayoutBinding( 2,
-        vk::DescriptorType::eInputAttachment,
-        vk::ShaderStageFlagBits::eFragment
-      ),
-      // Binding 3: Light positions
-      DescriptorSetLayoutBinding( 3,
-        vk::DescriptorType::eUniformBuffer,
-        vk::ShaderStageFlagBits::eFragment
-      )
-    };
-
-    auto descriptorLayout = device->createDescriptorSetLayout( dslb );
-
-    auto pipLayout = device->createPipelineLayout( descriptorLayout );
-
-
-    auto descriptorSet = device->allocateDescriptorSet( descriptorPool, descriptorLayout );
-
-    std::vector<WriteDescriptorSet> wdss =
-    {
-      // Binding 0: Position texture target
-      WriteDescriptorSet(
-        descriptorSets.composition, 0, 0,
-        vk::DescriptorType::eInputAttachment, 1, texPosition->descriptor, nullptr
-      ),
-      // Binding 1: Normals texture target
-      WriteDescriptorSet(
-        descriptorSets.composition, 1, 0,
-        vk::DescriptorType::eInputAttachment, 1, texNormal->descriptor, nullptr
-      ),
-			// Binding 2: Albedo texture target
-      WriteDescriptorSet(
-        descriptorSets.composition, 2, 0,
-        vk::DescriptorType::eInputAttachment, 1, texAlbedo->descriptor, nullptr
-      ),
-			// Binding 4: Fragment shader lights
-      WriteDescriptorSet(
-        descriptorSets.composition, 3, 0, vk::DescriptorType::eUniformBuffer,
-        1, nullptr, DescriptorBufferInfo( uniformBuffers.lights, 0, sizeof( uboLights ) )
-      )
-    };
-    device->updateDescriptorSets( wdss, { } );
-  }
-
-  void setupDescriptorPool( void )
-  {
-    std::vector<vk::DescriptorPoolSize> poolSizes = 
-    {
-      vk::DescriptorPoolSize( vk::DescriptorType::eUniformBuffer, 4 ),
-      vk::DescriptorPoolSize( vk::DescriptorType::eCombinedImageSampler, 4 ),
-      vk::DescriptorPoolSize( vk::DescriptorType::eInputAttachment, 4),
-    };
-
-    descriptorPool = _window->device( )->createDescriptorPool( 4, poolSizes );
-  }
-
-  virtual void initResources( void ) override
-  {
-    setupRenderPass( );
-
-    initLights( );
-    prepareUniformBuffers( );
-
-
-    prepareCompositionPass( );
-
-    setupDescriptorPool( );
-  }
-
-  virtual void nextFrame( void )
-  {
-    auto cmd = _window->currentCommandBuffer( );
-
-    static auto startTime = std::chrono::high_resolution_clock::now( );
-
-    auto currentTime = std::chrono::high_resolution_clock::now( );
-    float time = std::chrono::duration_cast< std::chrono::milliseconds >(
-      currentTime - startTime ).count( ) / 1000.0f;
-
-    float _red = sin( time ) * 0.5f + 0.5f;
-    float _blue = cos( time ) * 0.5f + 0.5f;
-
-    std::array<vk::ClearValue, 2 > clearValues;
-    std::array<float, 4> ccv = { _red, 0.0f, _blue, 1.0f };
-
-    clearValues[ 0 ].color = vk::ClearColorValue( ccv );
-    clearValues[ 1 ].depthStencil = vk::ClearDepthStencilValue( 1.0f, 0 );
-
-    vk::Extent2D extent = _window->swapchainImageSize( );
-
-    cmd->beginRenderPass( _window->renderPass( ),
-      _window->framebuffer( ),
-      vk::Rect2D( { 0, 0 }, extent ), clearValues,
-      vk::SubpassContents::eInline );
-
-    cmd->endRenderPass( );
-
-    _window->frameReady( );
-  }
-protected:
-  std::shared_ptr< lava::DescriptorPool > descriptorPool;
-  std::shared_ptr< lava::Texture > texPosition, texNormal, texAlbedo;
-};
-
-class VulkanWindow : public lava::GLFWVulkanWindow
-{
-public:
-  explicit VulkanWindow( int width, int height,
-    const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
-  {
-
-  }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual glfw::VulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }
 };
 
 
-int main( int argc, char** argv )
+int main( int, char** )
 {
   VulkanWindow app( 500, 500, "GLFWRenderer", true );
   app.show( );

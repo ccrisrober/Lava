@@ -129,14 +129,14 @@ namespace lava
   {
   public:
     LAVA_API
-      BufferView( const std::shared_ptr<lava::Buffer>& buffer,
-        vk::Format format, vk::DeviceSize offset,
-        vk::DeviceSize range );
+    BufferView( const std::shared_ptr<lava::Buffer>& buffer,
+      vk::Format format, vk::DeviceSize offset,
+      vk::DeviceSize range = VK_WHOLE_SIZE );
     LAVA_API
-      virtual ~BufferView( void );
+    virtual ~BufferView( void );
 
     LAVA_API
-      inline operator vk::BufferView( void ) const
+    inline operator vk::BufferView( void ) const
     {
       return _bufferView;
     }
@@ -230,6 +230,13 @@ namespace lava
     StorageBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
   };
 
+  class StorageTexelBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    StorageTexelBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+  };
+
   class UniformTexelBuffer : public Buffer
   {
   public:
@@ -241,7 +248,50 @@ namespace lava
   {
   public:
     LAVA_API
-    IndirectBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+    IndirectBuffer( const std::shared_ptr<Device>& device, uint32_t drawCmdCount = 1);
+
+	LAVA_API
+	void writeDrawCommand(uint32_t vertexCount,
+		uint32_t firstVertex = 0,
+		uint32_t cmdIndex = 0) noexcept;
+	LAVA_API
+	void writeDrawCommand(uint32_t vertexCount,
+		uint32_t instanceCount,
+		uint32_t firstVertex,
+		uint32_t firstInstance,
+		uint32_t cmdIndex = 0) noexcept;
+	LAVA_API
+	void writeDrawCommand(const vk::DrawIndirectCommand& drawCmd,
+		uint32_t cmdIndex = 0) noexcept;
+	//LAVA_API
+	//void writeDrawCommands(const std::vector<vk::DrawIndirectCommand>& drawCmdList) noexcept;
+  };
+
+  class UniformDynamicBuffer : public Buffer
+  {
+  public:
+    LAVA_API
+    UniformDynamicBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size, 
+      uint32_t count );
+    uint32_t dynamicAlignment;
+  protected:
+    uint32_t _count;
+  };
+
+  /* A buffer that can be used as the destination of a transfer command. */
+  class DstTransferBuffer: public Buffer
+  {
+  public:
+    LAVA_API
+    DstTransferBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
+  };
+
+  /* A buffer that can be used as the source of a transfer command. */
+  class SrcTransferBuffer: public Buffer
+  {
+  public:
+    LAVA_API
+    SrcTransferBuffer( const std::shared_ptr<Device>&, vk::DeviceSize size );
   };
 
 }

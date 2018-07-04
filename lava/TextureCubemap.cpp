@@ -296,4 +296,45 @@ namespace lava
 
     updateDescriptor( );
   }
+
+  TextureCubemap::TextureCubemap( const std::shared_ptr<Device>& device_, 
+    uint32_t dimensions, vk::Format format, vk::ImageUsageFlags imageUsageFlags,
+    vk::ImageLayout imageLayout_ )
+  : Texture( device_ )
+  {
+    width = dimensions;
+    height = dimensions;
+
+    mipLevels = 1;
+
+    this->image = _device->createImage( 
+      // This flag is required for cube map images
+      vk::ImageCreateFlagBits::eCubeCompatible, vk::ImageType::e2D,
+      format, vk::Extent3D( dimensions, dimensions, 1 ), mipLevels,
+      // Cube faces count as array layers in Vulkan
+      6,
+      vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal,
+      imageUsageFlags, vk::SharingMode::eExclusive, { }, 
+      vk::ImageLayout::eUndefined, vk::MemoryPropertyFlagBits::eDeviceLocal );
+
+    this->imageLayout = imageLayout_;
+
+    // Create default sampler
+    this->sampler = _device->createSampler( vk::Filter::eLinear, vk::Filter::eLinear,
+      vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge,
+      vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
+      0.0f, true, 1.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+      vk::BorderColor::eFloatOpaqueWhite, false );
+
+    // Create image view
+    this->view = image->createImageView( vk::ImageViewType::eCube, format,
+      vk::ComponentMapping(
+        vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
+        vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA ),
+      vk::ImageSubresourceRange(
+        // 6 array layers (faces)
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 6
+      )
+    );
+  }
 }

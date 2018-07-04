@@ -23,6 +23,7 @@
 #include "PhysicalDevice.h"
 #include "VulkanResource.h"
 #include "RenderPass.h"
+#include "Log.h"
 
 #include <fstream>
 
@@ -36,7 +37,7 @@ namespace lava
 
     if ( !file.is_open( ) )
     {
-      std::cerr << "File " << filePath << " don't opened" << std::endl;
+      Log::error( "File %s don't opened", filePath );
       throw std::runtime_error( "failed to open file!" );
     }
 
@@ -115,7 +116,8 @@ namespace lava
 
   PipelineVertexInputStateCreateInfo::PipelineVertexInputStateCreateInfo(
     const PipelineVertexInputStateCreateInfo& rhs )
-    : PipelineVertexInputStateCreateInfo( rhs.vertexBindingDescriptions, rhs.vertexAttrirDescriptions )
+    : PipelineVertexInputStateCreateInfo( rhs.vertexBindingDescriptions, 
+      rhs.vertexAttrirDescriptions )
   {
   }
 
@@ -146,6 +148,12 @@ namespace lava
     return *this;
   }
 
+  ScissorsViewportDynamicPipelineState::ScissorsViewportDynamicPipelineState( void )
+    : PipelineDynamicStateCreateInfo( {
+      vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    } )
+  {
+  }
 
   PipelineViewportStateCreateInfo::PipelineViewportStateCreateInfo
     ( uint32_t dummyViews, uint32_t dummySci )
@@ -254,8 +262,8 @@ namespace lava
     char* startCacheData = nullptr;
     if ( !file.is_open( ) )
     {
-      std::cerr << "File " << filePath << " don't opened. "
-        << "Creating empty pipeline_cache" << std::endl;
+      Log::error( "File %s don't opened. Creating empty pipeline_cache", 
+        filePath );
     }
     else
     {
@@ -340,7 +348,8 @@ namespace lava
 
         // And clear out the old cache file for use in next run
         printf( "  Deleting cache entry %s to repopulate.\n", filePath.c_str( ) );
-        if ( remove( filePath.c_str( ) ) != 0 ) {
+        if ( remove( filePath.c_str( ) ) != 0 )
+        {
           fputs( "Reading error", stderr );
           exit( EXIT_FAILURE );
         }
@@ -348,15 +357,17 @@ namespace lava
     }
 
     vk::PipelineCacheCreateInfo createInfo{ {}, startCacheSize, startCacheData };
-    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+    _pipelineCache = static_cast< vk::Device >( *_device )
+      .createPipelineCache( createInfo );
   }
 
-  PipelineCache::PipelineCache( const std::shared_ptr<Device>& device, vk::PipelineCacheCreateFlags flags,
-    size_t initialSize, void const* initialData )
+  PipelineCache::PipelineCache( const std::shared_ptr<Device>& device, 
+    vk::PipelineCacheCreateFlags flags, size_t initialSize, void const* data )
     : VulkanResource( device )
   {
-    vk::PipelineCacheCreateInfo createInfo{ flags, initialSize, initialData };
-    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+    vk::PipelineCacheCreateInfo createInfo{ flags, initialSize, data };
+    _pipelineCache = static_cast< vk::Device >( *_device )
+      .createPipelineCache( createInfo );
   }
 
   PipelineCache::~PipelineCache( void )
@@ -372,8 +383,8 @@ namespace lava
     char* startCacheData = nullptr;
     if ( !file.is_open( ) )
     {
-      std::cerr << "File " << filePath << " don't opened. "
-        << "Creating empty pipeline_cache" << std::endl;
+      Log::error( "File %s don't opened. Creating empty pipeline_cache", 
+        filePath );
     }
     else
     {
@@ -400,7 +411,6 @@ namespace lava
       memcpy( &vendorID, ( uint8_t * ) startCacheData + 8, 4 );
       memcpy( &deviceID, ( uint8_t * ) startCacheData + 12, 4 );
       memcpy( pipelineCacheUUID, ( uint8_t * ) startCacheData + 16, VK_UUID_SIZE );
-
 
       // Check each field and report bad values before freeing existing cache
       bool badCache = false;
@@ -465,22 +475,26 @@ namespace lava
       }
     }
     vk::PipelineCacheCreateInfo createInfo{ { }, startCacheSize, startCacheData };
-    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( 
+      createInfo );
   }
 
   void PipelineCache::loadFromFile( vk::PipelineCacheCreateFlags flags,
     size_t initialSize, void const* initialData )
   {
     vk::PipelineCacheCreateInfo createInfo{ flags, initialSize, initialData };
-    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( createInfo );
+    _pipelineCache = static_cast< vk::Device >( *_device ).createPipelineCache( 
+      createInfo );
   }
 
   std::vector<uint8_t>  PipelineCache::getData( ) const
   {
-    return static_cast< vk::Device >( *_device ).getPipelineCacheData( _pipelineCache );
+    return static_cast< vk::Device >( *_device ).getPipelineCacheData( 
+      _pipelineCache );
   }
 
-  void PipelineCache::merge( vk::ArrayProxy<const std::shared_ptr<PipelineCache>> srcCaches ) const
+  void PipelineCache::merge( 
+    vk::ArrayProxy<const std::shared_ptr<PipelineCache>> srcCaches ) const
   {
     std::vector<vk::PipelineCache> caches;
     caches.reserve( srcCaches.size( ) );
@@ -488,8 +502,10 @@ namespace lava
     {
       caches.push_back( *c );
     }
-    static_cast< vk::Device >( *_device ).mergePipelineCaches( _pipelineCache, caches );
+    static_cast< vk::Device >( *_device ).mergePipelineCaches( 
+      _pipelineCache, caches );
   }
+
 
   void PipelineCache::saveToFile( const std::string& filename )
   {

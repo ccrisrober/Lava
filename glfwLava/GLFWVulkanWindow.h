@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2017 - 2018, Lava
+ * All rights reserved.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
 #pragma once
 
 #include <lava/lava.h>
@@ -8,513 +27,295 @@
 
 namespace lava
 {
-  class GLFWVulkanWindowRenderer
+  namespace glfw
   {
-  public:
-    GLFWLAVA_API
-    virtual ~GLFWVulkanWindowRenderer( void ) { }
-
-    /**
-    * Method called when creating renderer's resources
-    */
-    GLFWLAVA_API
-    virtual void initResources( void ) { }
-    GLFWLAVA_API
-    virtual void initSwapChainResources( void ) { }
-    GLFWLAVA_API
-    virtual void releaseSwapChainResources( void ) { }
-    /**
-    * Method called when renderer's resources must be released
-    */
-    GLFWLAVA_API
-    virtual void releaseResources( void ) { }
-    /**
-    * Method called when the draw calls for the next frame are to be added
-    *   to the command buffer
-    */
-    GLFWLAVA_API
-    virtual void nextFrame( void ) = 0;
-
-    //virtual void physicalDeviceLost( void );
-    //virtual void logicalDeviceLost( void );
-  };
-
-  class DefaultFramebuffer
-  {
-  protected:
-    void createFramebuffers( void )
+    class VulkanWindowRenderer
     {
-      // TODO: Unnecesary ? _framebuffers.clear( );
-      vk::Extent2D extent = _swapchain->extent( );
+    public:
+      GLFWLAVA_API
+      virtual ~VulkanWindowRenderer( void ) { }
 
-      _framebuffers.reserve( _swapchain->imageViews( ).size( ) );
-      for ( size_t i = 0, l = _swapchain->imageViews( ).size( ); i < l; ++i )
-      {
-        _framebuffers.push_back( _device->createFramebuffer( _renderPass,
-          { _swapchain->imageViews( )[ i ], _depthView }, 
-          extent, 1 ) );
-      }
+      /**
+      * Method called when creating renderer's resources
+      */
+      GLFWLAVA_API
+      virtual void initResources( void ) { }
+      GLFWLAVA_API
+      virtual void initSwapChainResources( void ) { }
+      GLFWLAVA_API
+      virtual void releaseSwapChainResources( void ) { }
+      /**
+      * Method called when renderer's resources must be released
+      */
+      GLFWLAVA_API
+      virtual void releaseResources( void ) { }
+      /**
+      * Method called when the draw calls for the next frame are to be added
+      *   to the command buffer
+      */
+      GLFWLAVA_API
+      virtual void nextFrame( void ) = 0;
 
-      std::cout << "Framebuffer Swapchain OK" << std::endl;
+      //virtual void physicalDeviceLost( void );
+      //virtual void logicalDeviceLost( void );
+    };
 
-    }
-
-    void createRenderPasses( void )
+    class VulkanWindow
     {
-      const bool msaa = sampleCount > vk::SampleCountFlagBits::e1;
-
-      // Creating renderpass
+    private:
+      class Engine
       {
-        std::vector< vk::AttachmentDescription > attDesc =
+      public:
+        struct CreateInfo
         {
-          vk::AttachmentDescription( // attachment 0 (color render target)
-            vk::AttachmentDescriptionFlagBits( ), 
-            _swapchain->colorFormat( ), vk::SampleCountFlagBits::e1,
-            vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // color
-            vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, // stencil
-            vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR
-          ),
-          vk::AttachmentDescription( // attachment 1 (depth render target)
-            vk::AttachmentDescriptionFlagBits( ), 
-            depthFormat, sampleCount,
-            vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, // depth
-            vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, // stencil
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal
-          )
+          std::string appInfo;
+          bool enableValidationLayers = false;
+          bool enableRenderdoc = false;
+          std::set<std::string> requiredInstanceExtensions;
+          std::set<std::string> requiredDeviceExtensions;
+
+          CreateInfo( void ) = default;
         };
+        Engine( const CreateInfo &info );
+        ~Engine( void );
+        const vk::Instance& GetVkInstance( void )	const { return instance; }
+      private:
+        void createInstance( void );
 
-        if ( msaa )
-        {
-          attDesc.push_back( vk::AttachmentDescription( // attachment 2 (msaa render target)
-            vk::AttachmentDescriptionFlagBits( ),
-            _swapchain->colorFormat( ), sampleCount,
-            vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-            vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal
-          ) );
-        }
+        const CreateInfo info;
 
-        vk::AttachmentReference colorRef( 0,
-          vk::ImageLayout::eColorAttachmentOptimal );
-        vk::AttachmentReference depthRef( 1,
-          vk::ImageLayout::eDepthStencilAttachmentOptimal );
+        vk::Instance instance;
+      };
+    protected:
+      GLFWLAVA_API
+      virtual void setupRenderPass( void );
+      GLFWLAVA_API
+      virtual void setupFramebuffer( void );
+	  GLFWLAVA_API
+	  virtual void getEnabledFeatures(void) { }
 
-        vk::AttachmentReference resolveRef( 0,
-          vk::ImageLayout::eColorAttachmentOptimal );
+	  // Stores the features available on the selected physical device (for e.g. checking if a feature is available)
+	  vk::PhysicalDeviceFeatures deviceFeatures;
+	  /**
+	  * Set of physical device features to be enabled for this example (must be set in the derived constructor)
+	  *
+	  * @note By default no phyiscal device features are enabled
+	  */
+	  vk::PhysicalDeviceFeatures enabledFeatures;
+    protected:
+      GLFWLAVA_API
+      virtual bool setupPipelineCache( void );
+    private:
+      GLFWwindow* window;
+      static void OnWindowResized( GLFWwindow *window, int width, int height );
+
+      void initVulkan( void );
+      void cleanupVulkan( void );
+      void recreateSwapchain( void );
+      bool _initialized;
+
+      std::shared_ptr< Instance > _instance = nullptr;
+      std::shared_ptr< PhysicalDevice > _physicalDevice = nullptr;
+
+      std::shared_ptr< Device > _device = nullptr;
+
+      std::shared_ptr< Surface > surface = nullptr;
 
 
-        vk::SubpassDescription subPassDesc(
-          vk::SubpassDescriptionFlags( ),
-          vk::PipelineBindPoint::eGraphics,
-          0, nullptr,           // input attachments ( count, data )
-          1, &colorRef,         // color attachments ( count, data )
-          nullptr,              // resolve attachments ( data )
-          &depthRef,            // depth attachment ( data )
-          0, nullptr            // preserve attachments ( count, data )
-        );
+      vk::SurfaceFormatKHR _surfaceFormat;
+      vk::Format _dsFormat;
 
-        if ( msaa )
-        {
-          colorRef.attachment = 2;
-          subPassDesc.pResolveAttachments = &resolveRef;
-        }
+      uint32_t imageIdx;
 
-        _renderPass = _device->createRenderPass( attDesc, subPassDesc, { } );
-      }
-    }
+      std::vector<std::string > _requestedDeviceExts;
+      uint32_t _gfxQueueFamilyIdx;
+      uint32_t _presQueueFamilyIdx;
+      std::shared_ptr< Queue > _gfxQueue;
+      std::shared_ptr< Queue > _presQueue;
 
-    void cleanupFramebuffers( void )
-    {
-      for ( auto& fb : _framebuffers )
+      std::vector<std::shared_ptr< CommandBuffer > > cmds;
+
+      std::shared_ptr< CommandPool > _cmdPool;
+
+      bool _framePending = false;
+      bool _frameGrabbing = false;
+      //QImage _frameGrabTargetImage;
+      std::shared_ptr< Image > frameGrabImage = nullptr;
+    protected:
+      std::shared_ptr< PipelineCache > _pipelineCache;
+    private:
+      vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
+
+      std::shared_ptr< Semaphore > _renderComplete = nullptr;
+      VulkanWindowRenderer* renderer = nullptr;
+
+    protected:
+      GLFWLAVA_API
+      virtual VulkanWindowRenderer* createRenderer( void );
+    public:
+      GLFWLAVA_API
+      void requestUpdate( void )
       {
-        fb.reset( );
+        glfwPollEvents( );
       }
-      _framebuffers.clear( );
-    }
 
-    void cleanupRenderPasses( )
-    {
-      _renderPass.reset( );
-    }
-  public:
-    GLFWLAVA_API
-    DefaultFramebuffer( const std::shared_ptr< Device>& dev,
-      const std::shared_ptr< lava::Surface>& surface,
-      vk::Extent2D extent, vk::Format depthFormat_, 
-      vk::SampleCountFlagBits sampleCount_)
-      : _device( dev )
-      , depthFormat( depthFormat_ )
-      , sampleCount( sampleCount_ )
-    {
-      _swapchain = std::make_shared< Swapchain >( _device, surface, extent );
+      //GLFWLAVA_API
+      //virtual void setVkInstance( const vk::Instance& instance );
+      GLFWLAVA_API
+      explicit VulkanWindow( int width, int height, 
+        const std::string& title, bool enableLayers );
+      GLFWLAVA_API
+      VulkanWindow( const VulkanWindow& ) = delete;
+      GLFWLAVA_API
+      VulkanWindow( VulkanWindow&& ) = delete;
+      GLFWLAVA_API
+      virtual ~VulkanWindow( void );
 
-      // depth/stencil buffer
-      // assert that a depth and/or stencil format is requested
-      vk::FormatProperties formatProps =
-        _device->getPhysicalDevice( )->getFormatProperties( depthFormat );
-      assert( ( formatProps.linearTilingFeatures &
-        vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
-        ( formatProps.optimalTilingFeatures &
-          vk::FormatFeatureFlagBits::eDepthStencilAttachment ) );
+      GLFWLAVA_API
+      VulkanWindow& operator=( const VulkanWindow& ) = delete;
+      GLFWLAVA_API
+      VulkanWindow& operator=( VulkanWindow&& ) = delete;
 
-      vk::ImageTiling tiling = ( formatProps.optimalTilingFeatures
-        & vk::FormatFeatureFlagBits::eDepthStencilAttachment )
-        ? vk::ImageTiling::eOptimal : vk::ImageTiling::eLinear;
-
-      _depthImage = _device->createImage(
-        vk::ImageCreateFlagBits( ), vk::ImageType::e2D, depthFormat,
-        vk::Extent3D( extent.width, extent.height, 1 ), 1, 1,
-        sampleCount, tiling,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-        vk::SharingMode::eExclusive, { },
-        vk::ImageLayout::eUndefined, { } );
-
-      // determine ImageAspect based on format
-      vk::ImageAspectFlags aspectFlags;
-      if ( depthFormat != vk::Format::eS8Uint )
+      GLFWLAVA_API
+      const std::shared_ptr< PipelineCache > pipelineCache( void )
       {
-        aspectFlags |= vk::ImageAspectFlagBits::eDepth;
+        return _pipelineCache;
       }
+    public:
+      GLFWLAVA_API
+      void frameReady( std::shared_ptr<Semaphore> sem = nullptr );
 
-      // add eStencil if image contains stencil
-      static std::initializer_list<vk::Format> const stencilFormats{
-        vk::Format::eD16UnormS8Uint, vk::Format::eD24UnormS8Uint,
-        vk::Format::eD32SfloatS8Uint, vk::Format::eS8Uint };
-      if ( std::find( stencilFormats.begin( ), stencilFormats.end( ),
-        depthFormat ) != stencilFormats.end( ) )
+     // GLFWLAVA_API
+      //QImage grab( void );
+
+      GLFWLAVA_API
+      bool supportGrab( void ) const
       {
-        aspectFlags |= vk::ImageAspectFlagBits::eStencil;
+        return _swapchain ? _swapchain->swapchainSupportsReadBack( ) : false;
       }
 
-      _depthView = _depthImage->createImageView(
-        vk::ImageViewType::e2D, depthFormat,
-        vk::ComponentMapping(
-          vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
-          vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA ),
-        vk::ImageSubresourceRange( aspectFlags, 0, 1, 0, 1 ) );
+      GLFWLAVA_API
+      GLFWwindow* getWindow( void ) const { return window; }
 
-      createRenderPasses( );
-      createFramebuffers( );
-    }
-    
-    GLFWLAVA_API
-    ~DefaultFramebuffer( void )
-    {
-      cleanupFramebuffers( );
-      cleanupRenderPasses( );
-      _depthView.reset( );
-      _depthImage.reset( );
-      _swapchain.reset( );
-    }
-    
-    GLFWLAVA_API
-    const vk::Extent2D& extent( void ) const
-    {
-      return _swapchain->extent( );
-    }
-    
-    GLFWLAVA_API
-    const std::shared_ptr< Swapchain > swapchain( void ) const
-    {
-      return _swapchain;
-    }
-    
-    GLFWLAVA_API
-    const std::shared_ptr< RenderPass > renderPass( void ) const
-    {
-      return _renderPass;
-    }
-    
-    GLFWLAVA_API
-    const std::shared_ptr< Framebuffer > framebuffer( short idx ) const
-    {
-      return _framebuffers.at( idx );
-    }
-    
-    /*GLFWLAVA_API
-    const std::shared_ptr< Framebuffer > framebuffer( void ) const
-    {
-      static short currentIdx = 0;
-      auto fbo = _framebuffers.at( currentIdx );
-      ++currentIdx;
-      currentIdx = currentIdx % _framebuffers.size( );
-      return fbo;
-    }*/
-    
-    GLFWLAVA_API
-    void recreate( void )
-    {
-      // TODO: RECREATE DEPTH!!
-
-      this->_swapchain->recreate( );
-
-      auto extent = _swapchain->extent( );
-
-      cleanupFramebuffers( );
-      cleanupRenderPasses( );
-      _depthView.reset( );
-      _depthImage.reset( );
-
-      // depth/stencil buffer
-      // assert that a depth and/or stencil format is requested
-      vk::FormatProperties formatProps =
-        _device->getPhysicalDevice( )->getFormatProperties( depthFormat );
-      assert( ( formatProps.linearTilingFeatures &
-        vk::FormatFeatureFlagBits::eDepthStencilAttachment ) ||
-        ( formatProps.optimalTilingFeatures &
-          vk::FormatFeatureFlagBits::eDepthStencilAttachment ) );
-
-      vk::ImageTiling tiling = ( formatProps.optimalTilingFeatures
-        & vk::FormatFeatureFlagBits::eDepthStencilAttachment )
-        ? vk::ImageTiling::eOptimal : vk::ImageTiling::eLinear;
-
-      _depthImage = _device->createImage(
-        vk::ImageCreateFlagBits( ), vk::ImageType::e2D, depthFormat,
-        vk::Extent3D( extent.width, extent.height, 1 ), 1, 1,
-        sampleCount, tiling,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-        vk::SharingMode::eExclusive, { },
-        vk::ImageLayout::eUndefined, { } );
-
-      // determine ImageAspect based on format
-      vk::ImageAspectFlags aspectFlags;
-      if ( depthFormat != vk::Format::eS8Uint )
+      GLFWLAVA_API
+      vk::Extent2D swapchainImageSize( void ) const
       {
-        aspectFlags |= vk::ImageAspectFlagBits::eDepth;
+        int w, h;
+        glfwGetWindowSize( window, &w, &h );
+        return vk::Extent2D( w, h );
       }
 
-      // add eStencil if image contains stencil
-      static std::initializer_list<vk::Format> const stencilFormats{
-        vk::Format::eD16UnormS8Uint, vk::Format::eD24UnormS8Uint,
-        vk::Format::eD32SfloatS8Uint, vk::Format::eS8Uint };
-      if ( std::find( stencilFormats.begin( ), stencilFormats.end( ),
-        depthFormat ) != stencilFormats.end( ) )
+      GLFWLAVA_API
+      vk::SampleCountFlagBits sampleCountFlagBits( void ) const
       {
-        aspectFlags |= vk::ImageAspectFlagBits::eStencil;
+        return sampleCount;
+      }
+      GLFWLAVA_API
+      void setSampleCountFlagBits( int sampleCount );
+      GLFWLAVA_API
+      std::vector< int > supportedSampleCounts( void );
+
+      GLFWLAVA_API
+      std::shared_ptr<PhysicalDevice> physicalDevice( void ) const
+      {
+        return _physicalDevice;
+      }
+      GLFWLAVA_API
+      const vk::PhysicalDeviceProperties physicalDeviceProperties( void ) const
+      {
+        return physicalDevice( )->getDeviceProperties( );
+      }
+      GLFWLAVA_API
+      std::shared_ptr<Device> device( void ) const
+      {
+        return _device;
+      }
+      GLFWLAVA_API
+      std::shared_ptr<Queue> gfxQueue( void ) const
+      {
+        return _gfxQueue;
+      }
+      GLFWLAVA_API
+      std::shared_ptr<CommandPool> gfxCommandPool( void ) const
+      {
+        return _cmdPool;
+      }
+      GLFWLAVA_API
+      vk::Format colorFormat( void ) const
+      {
+        return _surfaceFormat.format;
+      }
+      GLFWLAVA_API
+        vk::ColorSpaceKHR colorSpace( void ) const
+      {
+        return _surfaceFormat.colorSpace;
+      }
+      GLFWLAVA_API
+      vk::Format depthStencilFormat( void ) const
+      {
+        return _dsFormat;
+      }
+      GLFWLAVA_API
+      uint32_t currentIndex( void ) const
+      {
+        return imageIdx;
+      }
+      GLFWLAVA_API
+      std::shared_ptr<CommandBuffer> currentCommandBuffer( void ) const
+      {
+        return cmds.at( imageIdx );
+      }
+      GLFWLAVA_API
+      std::shared_ptr< RenderPass > renderPass( void ) const
+      {
+        return _renderPass;
+      }
+      GLFWLAVA_API
+      std::vector<std::shared_ptr< Framebuffer > > framebuffers( void ) const
+      {
+        return _framebuffers;
+      }
+      GLFWLAVA_API
+      std::shared_ptr< Framebuffer > framebuffer( void ) const
+      {
+        return _framebuffers.at( imageIdx );
+      }
+      GLFWLAVA_API
+      std::shared_ptr< Semaphore > currentSemaphore( void ) const
+      {
+        return _swapchain->getPresentCompleteSemaphores( ).at( imageIdx );
       }
 
-      _depthView = _depthImage->createImageView(
-        vk::ImageViewType::e2D, depthFormat,
-        vk::ComponentMapping(
-          vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
-          vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA ),
-        vk::ImageSubresourceRange( aspectFlags, 0, 1, 0, 1 ) );
+      GLFWLAVA_API
+      virtual void keyEvent( int /*key*/, int /*act*/ ) { };
+      GLFWLAVA_API
+      virtual void mouseEvent( double /*xPos*/, double /*yPos*/ ) { }
+      GLFWLAVA_API
+      virtual void scrollEvent( double /*xOff*/, double /*yOff*/ ) { }
+      //GLFWLAVA_API
+      //void mouseEvent( int key, int act ) { };
+    private:
+      bool checkDeviceLost( vk::Result err );
+      void addReadback( void );
+      void finishBlockingReadback( void );
 
-      createRenderPasses( );
-      createFramebuffers( );
-    }
-  protected:
-    std::shared_ptr < Device > _device;
-    std::shared_ptr< Swapchain > _swapchain;
-    std::vector<std::shared_ptr<Framebuffer>> _framebuffers;
-    std::shared_ptr< Image > _depthImage;
-    std::shared_ptr< ImageView > _depthView;
-    std::shared_ptr< RenderPass > _renderPass;
-    vk::Format depthFormat;
-    vk::SampleCountFlagBits sampleCount;
-  };
+      void getSurfaceFormats( void );
+      void createQueues( void );
 
-  class GLFWVulkanWindow
-  {
-  protected:
-    GLFWLAVA_API
-    virtual void setupFramebuffer( void ) { }
-    GLFWLAVA_API
-    virtual void setupRenderPass( void ) { }
+      void beginFrame( void );
+      void endFrame( std::shared_ptr<Semaphore> sem );
+    public:
+      GLFWLAVA_API
+      void show( void );
 
-    GLFWLAVA_API
-    virtual bool setupPipelineCache( void );
-  private:
-    GLFWwindow* window;
-    static void OnWindowResized( GLFWwindow *window, int width, int height );
+    protected:
+      std::shared_ptr< Swapchain > _swapchain;
+      std::shared_ptr< RenderPass > _renderPass;
+      std::vector<std::shared_ptr<Framebuffer>> _framebuffers;
+      std::shared_ptr< Image > _depthImage;
+      std::shared_ptr< ImageView > _depthView;
 
-    void initVulkan( void );
-    void cleanupVulkan( void );
-    void recreateSwapchain( void );
-    bool _initialized;
-
-    std::shared_ptr< lava::Instance > _instance = nullptr;
-    std::shared_ptr< lava::PhysicalDevice > _physicalDevice = nullptr;
-    std::shared_ptr< lava::Device > _device = nullptr;
-
-    std::shared_ptr< lava::Surface > surface = nullptr;
-
-
-    vk::SurfaceFormatKHR _surfaceFormat;
-    vk::Format _dsFormat;
-
-    uint32_t imageIdx;
-
-    std::vector<std::string > _requestedDeviceExts;
-    uint32_t _gfxQueueFamilyIdx;
-    uint32_t _presQueueFamilyIdx;
-    std::shared_ptr< lava::Queue > _gfxQueue;
-    std::shared_ptr< lava::Queue > _presQueue;
-
-    std::vector<std::shared_ptr< lava::CommandBuffer > > cmds;
-
-    DefaultFramebuffer* _dfbFramebuffer = nullptr;
-
-    std::shared_ptr< lava::CommandPool > _cmdPool;
-
-    bool _framePending = false;
-    bool _frameGrabbing = false;
-    //QImage _frameGrabTargetImage;
-    std::shared_ptr< lava::Image > frameGrabImage = nullptr;
-  protected:
-    std::shared_ptr< PipelineCache > _pipelineCache;
-  private:
-    vk::SampleCountFlagBits sampleCount = vk::SampleCountFlagBits::e1;
-
-    std::shared_ptr< lava::Semaphore > _renderComplete = nullptr;
-    GLFWVulkanWindowRenderer* renderer = nullptr;
-
-  protected:
-    GLFWLAVA_API
-    virtual GLFWVulkanWindowRenderer* createRenderer( void );
-  public:
-    GLFWLAVA_API
-    void requestUpdate( void )
-    {
-      glfwPollEvents( );
-    }
-
-    //GLFWLAVA_API
-    //virtual void setVkInstance( const vk::Instance& instance );
-    GLFWLAVA_API
-    explicit GLFWVulkanWindow( int width, int height, 
-      const std::string& title, bool enableLayers );
-    GLFWLAVA_API
-    GLFWVulkanWindow( const GLFWVulkanWindow& ) = delete;
-    GLFWLAVA_API
-    GLFWVulkanWindow( GLFWVulkanWindow&& ) = delete;
-    GLFWLAVA_API
-    ~GLFWVulkanWindow( void );
-
-    GLFWLAVA_API
-    GLFWVulkanWindow& operator=( const GLFWVulkanWindow& ) = delete;
-    GLFWLAVA_API
-    GLFWVulkanWindow& operator=( GLFWVulkanWindow&& ) = delete;
-
-    GLFWLAVA_API
-    const std::shared_ptr< PipelineCache > pipelineCache( void )
-    {
-      return _pipelineCache;
-    }
-  protected:
-    //GLFWLAVA_API
-    void beginFrame( void );
-    //GLFWLAVA_API
-    void endFrame( void );
-  public:
-    GLFWLAVA_API
-    void frameReady( void );
-
-   // GLFWLAVA_API
-    //QImage grab( void );
-
-    GLFWLAVA_API
-    const bool supportGrab( void )
-    {
-      return //_dfbFramebuffer == nullptr ? false : 
-        _dfbFramebuffer->swapchain( )->swapchainSupportsReadBack( );
-    }
-
-    GLFWLAVA_API
-    GLFWwindow* getWindow( void ) const { return window; }
-
-    GLFWLAVA_API
-    vk::Extent2D swapchainImageSize( void ) const
-    {
-      int w, h;
-      glfwGetWindowSize( window, &w, &h );
-      return vk::Extent2D( w, h );
-    }
-
-    GLFWLAVA_API
-    vk::SampleCountFlagBits sampleCountFlagBits( void ) const
-    {
-      return sampleCount;
-    }
-    GLFWLAVA_API
-    void setSampleCountFlagBits( int sampleCount );
-    GLFWLAVA_API
-    std::vector< int > supportedSampleCounts( void );
-
-    GLFWLAVA_API
-    std::shared_ptr<PhysicalDevice> physicalDevice( void ) const
-    {
-      return _physicalDevice;
-    }
-    GLFWLAVA_API
-    const vk::PhysicalDeviceProperties physicalDeviceProperties( void ) const
-    {
-      return physicalDevice( )->getDeviceProperties( );
-    }
-    GLFWLAVA_API
-    std::shared_ptr<Device> device( void ) const
-    {
-      return _device;
-    }
-    GLFWLAVA_API
-    std::shared_ptr<Queue> gfxQueue( void ) const
-    {
-      return _gfxQueue;
-    }
-    GLFWLAVA_API
-    std::shared_ptr<CommandPool> gfxCommandPool( void ) const
-    {
-      return _cmdPool;
-    }
-    GLFWLAVA_API
-    vk::Format colorFormat( void ) const
-    {
-      return _surfaceFormat.format;
-    }
-    GLFWLAVA_API
-      vk::ColorSpaceKHR colorSpace( void ) const
-    {
-      return _surfaceFormat.colorSpace;
-    }
-    GLFWLAVA_API
-    vk::Format depthStencilFormat( void ) const
-    {
-      return _dsFormat;
-    }
-    GLFWLAVA_API
-    std::shared_ptr<CommandBuffer> currentCommandBuffer( void ) const
-    {
-      return cmds.at( imageIdx );
-    }
-    GLFWLAVA_API
-    std::shared_ptr< RenderPass > renderPass( void ) const
-    {
-      return _dfbFramebuffer->renderPass( );
-    }
-    GLFWLAVA_API
-    std::shared_ptr< Framebuffer > framebuffer( void ) const
-    {
-      return _dfbFramebuffer->framebuffer( imageIdx );
-    }
-
-    GLFWLAVA_API
-    virtual void keyEvent( int key, int act ) { };
-    GLFWLAVA_API
-    virtual void mouseEvent( double xPos, double yPos ) { }
-    GLFWLAVA_API
-    virtual void scrollEvent( double xOff, double yOff ) { }
-    //GLFWLAVA_API
-    //void mouseEvent( int key, int act ) { };
-  private:
-    bool checkDeviceLost( vk::Result err );
-    void addReadback( void );
-    void finishBlockingReadback( void );
-
-    void getSurfaceFormats( void );
-    void createQueues( void );
-
-  public:
-    GLFWLAVA_API
-    void show( void );
-  };
+      void setupDepthStencilTarget( void );
+    };
+  }
 }

@@ -20,6 +20,7 @@
 #include "Swapchain.h"
 #include <lava/Surface.h>
 #include <lava/PhysicalDevice.h>
+#include <lava/Log.h>
 
 namespace lava
 {
@@ -95,10 +96,30 @@ namespace lava
 
     desired_extent = extent; // TODO ??
 
-                             // Find present mode
-    auto presentModes = vk::PhysicalDevice(
-      *_device->getPhysicalDevice( ) ).getSurfacePresentModesKHR( *_surface );
+    // Find present mode
+    auto presentModes = _device->getPhysicalDevice( )->getSurfacePresentModes( _surface );
     vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
+
+    bool vsync = false;
+
+    // If v-sync is not requested, try to find a mailbox mode
+    // It's the lowest latency non-tearing present mode available
+    if ( !vsync )
+    {
+      for ( size_t i = 0; i < presentModes.size( ); ++i )
+      {
+        if ( presentModes[ i ] == vk::PresentModeKHR::eMailbox )
+        {
+          presentMode = vk::PresentModeKHR::eMailbox;
+          break;
+        }
+        if ( ( presentMode != vk::PresentModeKHR::eMailbox ) &&
+          ( presentModes[ i ] == vk::PresentModeKHR::eImmediate ) )
+        {
+          presentMode = vk::PresentModeKHR::eImmediate;
+        }
+      }
+    }
 
     auto imageCount = surfaceCaps.minImageCount + 1;
     if ( surfaceCaps.maxImageCount > 0 && imageCount > surfaceCaps.maxImageCount )
@@ -210,7 +231,7 @@ namespace lava
   
   void Swapchain::cleanup( bool destroySwapchain )
   {
-    std::cout << "Destroying image views" << std::endl;
+    Log::info( "Destroying image views" );
     for ( auto& iv : _imageViews )
     {
       iv.reset( );
@@ -225,7 +246,7 @@ namespace lava
 
     if ( destroySwapchain )
     {
-      std::cout << "Destroying swap chain" << std::endl;
+      Log::info( "Destroying swap chain" );
       static_cast< vk::Device >( *_device ).destroySwapchainKHR( _swapchain );
       _swapchain = nullptr;
     }

@@ -53,4 +53,23 @@ namespace lava
         stride, flags );
     return data;
   }*/
+  OcclusionQuery::OcclusionQuery(std::shared_ptr<Device> device, 
+	uint32_t queryCount)
+	: QueryPool(std::move(device), {}, 
+	  vk::QueryType::eOcclusion, queryCount, { })
+  {
+  }
+  PipelineStatisticsQuery::PipelineStatisticsQuery(
+	  std::shared_ptr<Device> device, 
+	  vk::QueryPipelineStatisticFlags pipelineStatistics_)
+	  : QueryPool(std::move(device), {},
+		  vk::QueryType::ePipelineStatistics, 1, pipelineStatistics_)
+  {
+  }
+  TimestampQuery::TimestampQuery(std::shared_ptr<Device> device, 
+	  uint32_t queryCount)
+	  : QueryPool(std::move(device), {},
+		  vk::QueryType::eTimestamp, queryCount, {})
+  {
+  }
 }

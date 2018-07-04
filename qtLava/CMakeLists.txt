@@ -2,12 +2,10 @@
 
 set( QTLAVA_PUBLIC_HEADERS
 	QVulkanWindow.h
-	Engine.h
 )
 
 set( QTLAVA_SOURCES
 	QVulkanWindow.cpp
-	Engine.cpp
 )
 
 set( QTLAVA_HEADERS

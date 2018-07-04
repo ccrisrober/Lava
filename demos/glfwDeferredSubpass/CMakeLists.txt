@@ -6,5 +6,6 @@ set( LAVAGLFWDEFERREDSUBPASS_SOURCES
 set( LAVAGLFWDEFERREDSUBPASS_LINK_LIBRARIES
 	lava
 	glfwLava
+	lavaUtils
 )
 common_application( lavaGLFWDeferredSubpass )

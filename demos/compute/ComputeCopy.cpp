@@ -18,6 +18,7 @@
  **/
 
 #include <lava/lava.h>
+#include <lavaUtils/lavaUtils.h>
 using namespace lava;
 
 #include <routes.h>
@@ -70,7 +71,6 @@ int main( void )
   inBuffer = device->createStorageBuffer( bufferSize );
   outBuffer = device->createStorageBuffer( bufferSize );
   std::cout << "OK" << std::endl;
-
 
   std::cout << "Loading shader... ";
   auto computeStage = device->createShaderPipelineShaderStage(
@@ -147,13 +147,16 @@ int main( void )
 
   std::cout << "Run computations...";
 
-  auto commandBuffer = commandPool->allocateCommandBuffer( );
+  auto commandBuffer = std::make_shared<lava::utility::ComputeCmdBuffer>( 
+    commandPool, pipeline, pipelineLayout, descriptorSet, bufferElements, 1, 1, 
+    vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
+  /*auto commandBuffer = commandPool->allocateCommandBuffer( );
   commandBuffer->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
   commandBuffer->bindComputePipeline( pipeline );
   commandBuffer->bindDescriptorSets( vk::PipelineBindPoint::eCompute, 
     pipelineLayout, 0, { descriptorSet }, { } );
   commandBuffer->dispatch( bufferElements, 1, 1 );
-  commandBuffer->end( );
+  commandBuffer->end( );*/
 
   auto queue = device->getQueue( queueFamilyIndex, 0 );
 

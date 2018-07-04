@@ -20,6 +20,7 @@
 #include "Image.h"
 #include "Device.h"
 #include "PhysicalDevice.h"
+#include "Log.h"
 
 namespace lava
 {
@@ -37,6 +38,7 @@ namespace lava
     vk::SharingMode sharingMode, const std::vector<uint32_t>& qFamilyIndices,
     vk::ImageLayout initialLayout, vk::MemoryPropertyFlags memPropFlags )
     : VulkanResource( device )
+    , _createFlags( createFlags )
     , _arrayLayers( arrayLayers )
     , _extent( extent )
     , _format( format )
@@ -62,6 +64,8 @@ namespace lava
     assert( memoryTypeIndex != uint32_t( -1 ) );
     imageMemory = _device->allocateMemReqMemory( memReqs, _memoryPropertyFlags );
     vk::Device( *_device ).bindImageMemory( _image, imageMemory, 0 );
+
+    layout = initialLayout;
   }
   Image::~Image( void )
   {
@@ -69,11 +73,99 @@ namespace lava
     {
       static_cast< vk::Device >( *_device ).destroyImage( _image );
       _device->freeMemory( imageMemory );
-      std::cout << "Image destroyed" << std::endl;
+      Log::info( "Image destroyed" );
     }
   }
 
-  std::shared_ptr<ImageView> Image::createImageView( vk::ImageViewType viewType, 
+  std::shared_ptr<ImageView> Image::createImageView( uint32_t mipLevelCount, 
+    vk::ImageAspectFlagBits /*aspect*/, vk::ComponentMapping swizzle )
+  {
+    vk::ImageViewType viewType;
+    switch ( this->_type )
+    {
+      case vk::ImageType::e1D:
+      {
+        if ( this->_arrayLayers == 1 )
+        {
+          viewType = vk::ImageViewType::e1D;
+        }
+        else
+        {
+          viewType = vk::ImageViewType::e1DArray;
+        }
+      }
+      break;
+      case vk::ImageType::e2D:
+      {
+        if ( this->_createFlags & vk::ImageCreateFlagBits::eCubeCompatible )
+        {
+          viewType = vk::ImageViewType::eCube;
+        }
+        else
+        {
+          if ( this->_arrayLayers == 1 )
+          {
+            viewType = vk::ImageViewType::e2D;
+          }
+          else
+          {
+            viewType = vk::ImageViewType::e2DArray;
+          }
+        }
+      }
+      break;
+      case vk::ImageType::e3D:
+        viewType = vk::ImageViewType::e3D;
+        break;
+      default:
+        throw std::runtime_error( "invalid image type" );
+    }
+
+
+    vk::ComponentMapping components;
+    if ( !depth( _format ) )
+    {
+      components = swizzle;
+    }
+    else
+    {
+      components = { vk::ComponentSwizzle::eIdentity,
+                         vk::ComponentSwizzle::eIdentity,
+                         vk::ComponentSwizzle::eIdentity,
+                         vk::ComponentSwizzle::eIdentity };
+    }
+    vk::ImageSubresourceRange isrr;
+    if ( depthStencil( _format ) )
+    {
+      isrr.aspectMask = vk::ImageAspectFlagBits::eDepth | 
+        vk::ImageAspectFlagBits::eStencil;
+    }
+    else if ( depth( _format ) )
+    {
+      isrr.aspectMask = vk::ImageAspectFlagBits::eDepth;
+    }
+    else
+    {
+      isrr.aspectMask = vk::ImageAspectFlagBits::eColor;
+    }
+    isrr.baseMipLevel = 0;
+    if ( !mipLevelCount )
+    {
+      isrr.levelCount = VK_REMAINING_MIP_LEVELS;
+    }
+    else
+    {
+      isrr.levelCount = mipLevelCount;
+    }
+    isrr.baseArrayLayer = 0;
+    isrr.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    return std::make_shared< ImageView >( shared_from_this( ), 
+      vk::ImageViewCreateFlags( ), viewType,
+      this->_format, components, isrr );
+  }
+
+  std::shared_ptr<ImageView> Image::createImageView( vk::ImageViewType viewType,
     vk::Format format, vk::ComponentMapping components, 
     vk::ImageSubresourceRange isrr )
   {
@@ -82,13 +174,26 @@ namespace lava
       format, components, isrr );
   }
 
+  std::shared_ptr<ImageView> Image::createImageView( vk::ImageViewType viewType,
+    vk::Format format, vk::ImageAspectFlags aspect )
+  {
+    return std::make_shared< ImageView >( shared_from_this( ),
+      vk::ImageViewCreateFlags( ), viewType,
+      format, vk::ComponentMapping(
+        vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG,
+        vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA
+      ), vk::ImageSubresourceRange( aspect, 0, 1, 0, 1 )
+    );
+  }
+
   ImageView::ImageView( const std::shared_ptr<Image>& image, 
     vk::ImageViewCreateFlags flags, vk::ImageViewType viewType,
     vk::Format format, vk::ComponentMapping components, 
     vk::ImageSubresourceRange isrr )
     : _image( image )
   {
-    vk::ImageViewCreateInfo ivci( flags, *image, viewType, format, components, isrr );
+    vk::ImageViewCreateInfo ivci( flags, *image, viewType, 
+      format, components, isrr );
 
     _imageView = static_cast< vk::Device >( *_image->getDevice( ) )
           .createImageView( ivci );
@@ -97,6 +202,6 @@ namespace lava
   {
     static_cast< vk::Device >( *_image->getDevice( ) )
           .destroyImageView( _imageView );
-    std::cout << "Destroyed ImageView" << std::endl;
+    Log::info( "Destroyed ImageView" );
   }
 }
