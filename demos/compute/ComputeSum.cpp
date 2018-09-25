@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  *
  **/
 
-#include <lava/lava.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -34,7 +34,7 @@ int main( void )
     auto physicalDevice = instance->getPhysicalDevice( 0 );
     if ( !physicalDevice )
     {
-      LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
+      POMPEII_RUNTIME_ERROR( "Failed to find a device with presentation support" );
     }
   std::cout << "OK" << std::endl;
 
@@ -72,7 +72,7 @@ int main( void )
 
   std::cout << "Loading shader... ";
     auto computeStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "arraySum_comp.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "arraySum_comp.spv" ),
       vk::ShaderStageFlagBits::eCompute
     );
 

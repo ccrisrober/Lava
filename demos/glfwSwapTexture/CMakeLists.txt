@@ -1,10 +1,10 @@
-set( LAVAGLFWSWAPTEXTURE_HEADERS
+set( POMPEIIGLFWSWAPTEXTURE_HEADERS
 )
-set( LAVAGLFWSWAPTEXTURE_SOURCES
+set( POMPEIIGLFWSWAPTEXTURE_SOURCES
 	main.cpp
 )
-set( LAVAGLFWSWAPTEXTURE_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWSWAPTEXTURE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWSwapTexture )
+common_application( pompeiiGLFWSwapTexture )

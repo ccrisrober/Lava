@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2017 - 2018, Lava
+* Copyright (c) 2017 - 2018, Pompeii
 * All rights reserved.
 *
 * This program is free software: you can redistribute it and/or modify
@@ -17,10 +17,10 @@
 *
 **/
 
-#include <lava/lava.h>
-#include <lavaRenderer/lavaRenderer.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+#include <pompeiiRenderer/pompeiiRenderer.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -31,11 +31,11 @@ using namespace lava;
 
 class CustomRenderer : public VulkanWindowRenderer
 {
-  lava::utility::ThreadPool threadPool;
+  pompeii::utility::ThreadPool threadPool;
   struct PerThreadData
   {
-    std::shared_ptr<lava::CommandPool> commandPool;
-    std::vector < std::shared_ptr<lava::CommandBuffer>> cmdBuffers;
+    std::shared_ptr<pompeii::CommandPool> commandPool;
+    std::vector < std::shared_ptr<pompeii::CommandBuffer>> cmdBuffers;
   } perThreadData[ 8 ];
 public:
   CustomRenderer( glfw::VulkanWindow *w )
@@ -144,16 +144,16 @@ public:
       mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
     }
 
-    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUVPush_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUVPush_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -290,7 +290,7 @@ public:
 
   void nextFrame( void ) override
   {
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    if ( Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
@@ -342,7 +342,7 @@ public:
     /**/
 
     /**
-    std::vector<std::shared_ptr<lava::CommandBuffer>> secondaryBuffers;
+    std::vector<std::shared_ptr<pompeii::CommandBuffer>> secondaryBuffers;
     for ( uint32_t i = 0; i < numworkers; ++i )
     {
       for ( int j = -MAX; j < MAX; j += 8 )
@@ -444,7 +444,7 @@ int main( void )
   std::vector<const char*> extensions =
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
+    POMPEII_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 

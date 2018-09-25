@@ -1,11 +1,11 @@
-set( LAVAGLFWIMGUI_HEADERS
+set( POMPEIIGLFWIMGUI_HEADERS
 )
-set( LAVAGLFWIMGUI_SOURCES
+set( POMPEIIGLFWIMGUI_SOURCES
 	main.cpp
 )
-set( LAVAGLFWIMGUI_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWIMGUI_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWImgui )
+common_application( pompeiiGLFWImgui )

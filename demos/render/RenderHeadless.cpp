@@ -4,8 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <lava/lava.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -48,7 +48,7 @@ int main( )
   physicalDevice = instance->getPhysicalDevice( 0 );
   if ( !physicalDevice )
   {
-    LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
+    POMPEII_RUNTIME_ERROR( "Failed to find a device with presentation support" );
   }
   std::cout << "OK" << std::endl;
 
@@ -148,7 +148,7 @@ int main( )
   height = 1024;
   vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
   vk::Format depthFormat;
-  lava::utils::getSupportedDepthFormat( physicalDevice, depthFormat );
+  pompeii::utils::getSupportedDepthFormat( physicalDevice, depthFormat );
 
   {
     // Color attachment
@@ -261,11 +261,11 @@ int main( )
       descriptorSetLayout, pushConstantRange );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "renderheadless_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "renderheadless_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "renderheadless_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "renderheadless_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -381,7 +381,7 @@ int main( )
     auto copyCmd = cmdPool->allocateCommandBuffer( );
     copyCmd->begin( );
 
-    lava::utils::insertImageMemoryBarrier( copyCmd, dstImage,
+    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage,
       vk::AccessFlagBits( ), vk::AccessFlagBits::eTransferWrite,
       vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
       vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
@@ -406,7 +406,7 @@ int main( )
 
     // Transition destination image to general layout, which is the 
     //    required layout for mapping the image memory later on
-    lava::utils::insertImageMemoryBarrier( copyCmd, dstImage,
+    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage,
       vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eMemoryRead,
       vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
       vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
@@ -474,6 +474,5 @@ int main( )
 
     queue->waitIdle( );
   }
-  system( "PAUSE" );
   return 0;
 }

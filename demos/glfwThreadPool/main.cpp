@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -16,11 +16,11 @@ class MainWindowRenderer : public glfw::VulkanWindowRenderer
 private:
   glfw::VulkanWindow* _window;
 
-  lava::utility::ThreadPool threadPool;
+  pompeii::utility::ThreadPool threadPool;
   struct PerThreadData
   {
-    std::shared_ptr< lava::CommandPool > commandPool;
-    std::vector< std::shared_ptr< lava::CommandBuffer > > cmdBuffers;
+    std::shared_ptr< pompeii::CommandPool > commandPool;
+    std::vector< std::shared_ptr< pompeii::CommandBuffer > > cmdBuffers;
   } perThreadData[ 8 ];
 public:
   MainWindowRenderer( glfw::VulkanWindow* window )
@@ -122,16 +122,16 @@ public:
       mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
     }
 
-    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUVPush_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUVPush_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -326,7 +326,7 @@ public:
 
 
     /**/
-    std::vector<std::shared_ptr<lava::CommandBuffer>> secondaryBuffers;
+    std::vector<std::shared_ptr<pompeii::CommandBuffer>> secondaryBuffers;
     for ( uint32_t i = 0; i < numworkers; ++i )
     {
       perThreadData[ i ].cmdBuffers.clear( );

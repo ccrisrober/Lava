@@ -1,16 +1,16 @@
-#ifndef __LAVA_EXAMPLES_ROUTES__
-#define __LAVA_EXAMPLES_ROUTES__
+#ifndef __POMPEII_EXAMPLES_ROUTES__
+#define __POMPEII_EXAMPLES_ROUTES__
 
-#define LAVA_EXAMPLES_IMAGES_ROUTE\
+#define POMPEII_EXAMPLES_IMAGES_ROUTE\
   std::string("@PROJECT_SOURCE_DIR@/resources/images/")
 
-#define LAVA_EXAMPLES_MESHES_ROUTE\
+#define POMPEII_EXAMPLES_MESHES_ROUTE\
   std::string("@PROJECT_SOURCE_DIR@/resources/meshes/")
 
-#define LAVA_EXAMPLES_SPV_ROUTE\
+#define POMPEII_EXAMPLES_SPV_ROUTE\
   std::string("@PROJECT_BINARY_DIR@/shaders/")
 
-#define LAVA_EXAMPLES_ROUTE\
+#define POMPEII_EXAMPLES_ROUTE\
   std::string("@PROJECT_BINARY_DIR@/")
 
-#endif /* __LAVA_EXAMPLES_ROUTES__ */
+#endif /* __POMPEII_EXAMPLES_ROUTES__ */

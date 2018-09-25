@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -48,8 +48,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "teapot.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "teapot.obj_" ) );
 
     // MVP buffer
     {
@@ -57,11 +57,11 @@ public:
     }
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh2_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh2_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh2_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh2_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -78,14 +78,14 @@ public:
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, position )
+          offsetof( pompeii::utility::Vertex, position )
           ),
       vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::utility::Vertex, normal )
+        offsetof( pompeii::utility::Vertex, normal )
       )
         }
     );
@@ -124,15 +124,15 @@ public:
     );
 
     vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "showNormals_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "showNormals_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto geomStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "showNormals_geom.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "showNormals_geom.spv" ),
       vk::ShaderStageFlagBits::eGeometry
     );
     fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "showNormals_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "showNormals_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -187,11 +187,11 @@ public:
 
   void nextFrame( void ) override
   {
-    /*if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
+    /*if ( Input::isKeyPressed( pompeii::Keyboard::Key::Z ) )
     {
       displayNormals = true;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::X ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::X ) )
     {
       displayNormals = false;
     }*/
@@ -243,7 +243,7 @@ private:
     std::shared_ptr< Pipeline > normals;
   } pipelines;
 
-  std::shared_ptr< lava::utility::Geometry > geometry;
+  std::shared_ptr< pompeii::utility::Geometry > geometry;
   std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 

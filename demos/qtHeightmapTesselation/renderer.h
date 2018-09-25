@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <qtLava/qtLava.h>
+#include <qtPompeii/qtPompeii.h>
 
-using namespace lava;
+using namespace pompeii;
 
 #include <routes.h>
 #include "vulkanwindow.h"
 
 #include "../utils/Camera.h"
 
-class Renderer: public lava::qt::VulkanWindowRenderer
+class Renderer: public pompeii::qt::VulkanWindowRenderer
 {
 public:
 	Renderer( VulkanWindow* w );
@@ -187,11 +187,11 @@ protected:
     mvpBuffer = device->createUniformBuffer( sizeof( ubo ) );
 
 
-    texHeightmap = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    texHeightmap = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "DisplacementMapEarth.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    texAlbedo = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    texAlbedo = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth_diffuse.jpg" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -216,19 +216,19 @@ protected:
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto ctrlStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_tesc.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_tesc.spv" ),
       vk::ShaderStageFlagBits::eTessellationControl
     );
     auto evalStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_tese.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_tese.spv" ),
       vk::ShaderStageFlagBits::eTessellationEvaluation
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "terrain_tess_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

@@ -1,11 +1,11 @@
-set( LAVAGLFW3DTEXTURE_HEADERS
+set( POMPEIIGLFW3DTEXTURE_HEADERS
 )
-set( LAVAGLFW3DTEXTURE_SOURCES
+set( POMPEIIGLFW3DTEXTURE_SOURCES
 	main.cpp
 )
-set( LAVAGLFW3DTEXTURE_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFW3DTEXTURE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFW3DTexture )
+common_application( pompeiiGLFW3DTexture )

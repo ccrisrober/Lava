@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,9 @@
  *
  **/
 
-#include <lava/lava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -36,7 +36,7 @@ int main( void )
   auto physicalDevice = instance->getPhysicalDevice( 0 );
   if ( !physicalDevice )
   {
-    LAVA_RUNTIME_ERROR( "Failed to find a device with presentation support" );
+    POMPEII_RUNTIME_ERROR( "Failed to find a device with presentation support" );
   }
   std::cout << "OK" << std::endl;
 
@@ -74,7 +74,7 @@ int main( void )
 
   std::cout << "Loading shader... ";
   auto computeStage = device->createShaderPipelineShaderStage(
-    LAVA_EXAMPLES_SPV_ROUTE + std::string( "copy_comp.spv" ),
+    POMPEII_EXAMPLES_SPV_ROUTE + std::string( "copy_comp.spv" ),
     vk::ShaderStageFlagBits::eCompute
   );
 
@@ -147,7 +147,7 @@ int main( void )
 
   std::cout << "Run computations...";
 
-  auto commandBuffer = std::make_shared<lava::utility::ComputeCmdBuffer>( 
+  auto commandBuffer = std::make_shared<pompeii::utility::ComputeCmdBuffer>( 
     commandPool, pipeline, pipelineLayout, descriptorSet, bufferElements, 1, 1, 
     vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
   /*auto commandBuffer = commandPool->allocateCommandBuffer( );

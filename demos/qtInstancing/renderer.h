@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <qtLava/qtLava.h>
+#include <qtPompeii/qtPompeii.h>
 
-using namespace lava;
+using namespace pompeii;
 
 #include <routes.h>
 #include "vulkanwindow.h"
@@ -35,7 +35,7 @@ using namespace lava;
 #define VERTEX_BUFFER_BIND_ID 0
 #define INSTANCE_BUFFER_BIND_ID 1
 
-class Renderer: public lava::qt::VulkanWindowRenderer
+class Renderer: public pompeii::qt::VulkanWindowRenderer
 {
 public:
 	Renderer( VulkanWindow* w );
@@ -238,11 +238,11 @@ protected:
     device->updateDescriptorSets( wdss, { } );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "instancing_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "instancing_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "instancing_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

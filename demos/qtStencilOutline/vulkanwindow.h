@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,25 +17,25 @@
  *
  **/
 
-#ifndef __LAVA_QTSTENCILOUTLINE_VULKANNWINDOW_H__
-#define __LAVA_QTSTENCILOUTLINE_VULKANNWINDOW_H__
+#ifndef __POMPEII_QTSTENCILOUTLINE_VULKANNWINDOW_H__
+#define __POMPEII_QTSTENCILOUTLINE_VULKANNWINDOW_H__
 
-#include <lava/lava.h>
-#include <lavaUtils/lavaUtils.h>
-#include <qtLava/qtLava.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+#include <qtPompeii/qtPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <QKeyEvent>
 
-class StencilOutlineRenderer : public lava::qt::VulkanWindowRenderer
+class StencilOutlineRenderer : public pompeii::qt::VulkanWindowRenderer
 {
 private:
-  lava::qt::VulkanWindow* _window;
+  pompeii::qt::VulkanWindow* _window;
 public:
-  StencilOutlineRenderer( lava::qt::VulkanWindow* window )
+  StencilOutlineRenderer( pompeii::qt::VulkanWindow* window )
     : _window( window )
   {
     _window->setTitle( "(Perfect) Toon Shading with Stencil Outline" );
@@ -45,8 +45,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "ear_study3.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "ear_study3.obj_" ) );
 
     uMVP = device->createUniformBuffer( sizeof( uboVS ) );
     uBufferOutline = device->createUniformBuffer( sizeof( uboOutline ) );
@@ -80,23 +80,23 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "perfectToon_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
-            offsetof( lava::utility::Vertex, position )
+            offsetof( pompeii::utility::Vertex, position )
           ),
           vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
-            offsetof( lava::utility::Vertex, normal )
+            offsetof( pompeii::utility::Vertex, normal )
           )
         }
     );
@@ -158,11 +158,11 @@ public:
     depthStencilState.front = depthStencilState.back;
 
     vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "outline_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "outline_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "outline_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "outline_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -323,8 +323,8 @@ private:
     float outlineWidth = 0.05f;
   } uboOutline;
 
-  std::shared_ptr<lava::UniformBuffer> uMVP;
-  std::shared_ptr<lava::UniformBuffer> uBufferOutline;
+  std::shared_ptr<pompeii::UniformBuffer> uMVP;
+  std::shared_ptr<pompeii::UniformBuffer> uBufferOutline;
 
   struct
   {
@@ -350,21 +350,21 @@ private:
     std::shared_ptr<DescriptorSetLayout> outline;
   } descriptorSetLayouts;
 
-  std::shared_ptr<lava::utility::Geometry> geometry;
+  std::shared_ptr<pompeii::utility::Geometry> geometry;
 };
 
-class VulkanWindow : public lava::qt::VulkanWindow
+class VulkanWindow : public pompeii::qt::VulkanWindow
 {
   Q_OBJECT
 private:
   StencilOutlineRenderer* _renderer;
 public:
   VulkanWindow( QWindow* parent = nullptr )
-    : lava::qt::VulkanWindow( parent )
+    : pompeii::qt::VulkanWindow( parent )
   {
     setContinuousRendering( true );
   }
-  virtual lava::qt::VulkanWindowRenderer* createRenderer( void )
+  virtual pompeii::qt::VulkanWindowRenderer* createRenderer( void )
   {
     _renderer = new StencilOutlineRenderer( this );
     return _renderer;
@@ -402,4 +402,4 @@ protected:
   }
 };
 
-#endif /* __LAVA_QTSTENCILOUTLINE_VULKANNWINDOW_H__ */
+#endif /* __POMPEII_QTSTENCILOUTLINE_VULKANNWINDOW_H__ */

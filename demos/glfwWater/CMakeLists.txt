@@ -1,10 +1,10 @@
-set( LAVAGLFWRENDER_HEADERS
+set( POMPEIIGLFWRENDER_HEADERS
 )
-set( LAVAGLFWRENDER_SOURCES
+set( POMPEIIGLFWRENDER_SOURCES
 	main.cpp
 )
-set( LAVAGLFWRENDER_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWRENDER_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWRender )
+common_application( pompeiiGLFWRender )

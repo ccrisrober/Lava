@@ -1,10 +1,10 @@
-set( LAVAGLFWCLIPPLANE_HEADERS
+set( POMPEIIGLFWCLIPPLANE_HEADERS
 )
-set( LAVAGLFWCLIPPLANE_SOURCES
+set( POMPEIIGLFWCLIPPLANE_SOURCES
 	main.cpp
 )
-set( LAVAGLFWCLIPPLANE_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWCLIPPLANE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWClipPlane )
+common_application( pompeiiGLFWClipPlane )

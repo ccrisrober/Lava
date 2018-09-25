@@ -1,10 +1,10 @@
-set( LAVAGLFWTRIANGLE_HEADERS
+set( POMPEIIGLFWTRIANGLE_HEADERS
 )
-set( LAVAGLFWTRIANGLE_SOURCES
+set( POMPEIIGLFWTRIANGLE_SOURCES
 	main.cpp
 )
-set( LAVAGLFWTRIANGLE_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWTRIANGLE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWTriangle )
+common_application( pompeiiGLFWTriangle )

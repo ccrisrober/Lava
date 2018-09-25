@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 using namespace utility;
 
 class MainWindowRenderer : public glfw::VulkanWindowRenderer
@@ -34,13 +34,13 @@ public:
   {
   }
 
-  lava::utility::UIOverlay* ui;
+  pompeii::utility::UIOverlay* ui;
 
   virtual void initResources( void ) override
   {
     vk::Extent2D extent = _window->swapchainImageSize( );
 
-    lava::utility::UIOverlayCreateInfo overlayCreateInfo;
+    pompeii::utility::UIOverlayCreateInfo overlayCreateInfo;
     // Setup default overlay creation info
     overlayCreateInfo.device = _window->device( );
     overlayCreateInfo.copyQueue = _window->gfxQueue( );
@@ -58,7 +58,7 @@ public:
         loadShader( getAssetPath( ) + "shaders/base/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT ),
       };
     }*/
-    ui = new lava::utility::UIOverlay( overlayCreateInfo );
+    ui = new pompeii::utility::UIOverlay( overlayCreateInfo );
     //updateOverlay( );
   }
 
@@ -80,8 +80,8 @@ public:
     float _blue = cos( time ) * 0.5f + 0.5f;
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( _red, 0.0f, _blue );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( _red, 0.0f, _blue );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     cmd->beginRenderPass( _window->renderPass( ),
       _window->framebuffer( ),

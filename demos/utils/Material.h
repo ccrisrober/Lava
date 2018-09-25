@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 #ifndef __MATERIAL__
 #define __MATERIAL__
 
-#include <lava/lava.h>
+#include <pompeii/pompeii.h>
 
-namespace lava
+namespace pompeii
 {
   class Material: public std::enable_shared_from_this< Material >
   {

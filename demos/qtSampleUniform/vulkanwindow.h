@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <qtLava/qtLava.h>
+#include <qtPompeii/qtPompeii.h>
 
 class Renderer;
 
-class VulkanWindow: public lava::qt::VulkanWindow
+class VulkanWindow: public pompeii::qt::VulkanWindow
 {
 public:
 	VulkanWindow( void );
 
-	lava::qt::VulkanWindowRenderer* createRenderer( void ) override;
+	pompeii::qt::VulkanWindowRenderer* createRenderer( void ) override;
 
 public slots:
   void changeSampler( int idx );

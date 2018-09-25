@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,16 +19,16 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
+#include <glfwPompeii/glfwPompeii.h>
 
-using namespace lava;
+using namespace pompeii;
 
-class MainWindowRenderer : public lava::GLFWVulkanWindowRenderer
+class MainWindowRenderer : public pompeii::GLFWVulkanWindowRenderer
 {
 private:
-  lava::GLFWVulkanWindow* _window;
+  pompeii::GLFWVulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::GLFWVulkanWindow* window )
+  MainWindowRenderer( pompeii::GLFWVulkanWindow* window )
     : _window( window )
   {
   }
@@ -65,15 +65,15 @@ public:
   }
 };
 
-class VulkanWindow : public lava::GLFWVulkanWindow
+class VulkanWindow : public pompeii::GLFWVulkanWindow
 {
 public:
   explicit VulkanWindow( int width, int height,
     const std::string& title, bool enableLayers )
-    : lava::GLFWVulkanWindow( width, height, title, enableLayers )
+    : pompeii::GLFWVulkanWindow( width, height, title, enableLayers )
   {
   }
-  virtual lava::GLFWVulkanWindowRenderer* createRenderer( void ) override
+  virtual pompeii::GLFWVulkanWindowRenderer* createRenderer( void ) override
   {
     return new MainWindowRenderer( this );
   }

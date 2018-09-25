@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -31,8 +31,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "teapot.ply" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "teapot.ply" ) );
 
     // MVP buffer
     {
@@ -51,25 +51,25 @@ public:
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription(
             0, 0, vk::Format::eR32G32B32Sfloat,
-            offsetof( lava::utility::Vertex, position )
+            offsetof( pompeii::utility::Vertex, position )
           ),
       vk::VertexInputAttributeDescription(
         1, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::utility::Vertex, normal )
+        offsetof( pompeii::utility::Vertex, normal )
       ),
       vk::VertexInputAttributeDescription(
         2, 0, vk::Format::eR32G32Sfloat,
-        offsetof( lava::utility::Vertex, texCoord )
+        offsetof( pompeii::utility::Vertex, texCoord )
       )
         }
     );
@@ -123,7 +123,7 @@ public:
       SpecializationInfo specInfo( specMapEntries, &specData );
 
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment, specInfo
       );
 
@@ -144,7 +144,7 @@ public:
       SpecializationInfo specInfo( specMapEntries, &specData );
 
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh_ctes_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment, specInfo
       );
 
@@ -267,7 +267,7 @@ private:
     std::shared_ptr< Pipeline > right;
   } pipelines;
 
-  std::shared_ptr< lava::utility::Geometry > geometry;
+  std::shared_ptr< pompeii::utility::Geometry > geometry;
   std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 

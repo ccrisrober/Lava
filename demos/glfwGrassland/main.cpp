@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include <random>
@@ -156,7 +156,7 @@ public:
     grass.numElements = uint32_t( vertices.size( ) );
     vertices.clear( );
 
-    grass.tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    grass.tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "grass.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -207,15 +207,15 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "grass_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "grass_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto geometryStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "grass_geom.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "grass_geom.spv" ),
       vk::ShaderStageFlagBits::eGeometry
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "grass_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "grass_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ),
@@ -292,7 +292,7 @@ public:
     vertices.clear( );
 
     butterflies.tex = device->createTexture2D(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "butterfly.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "butterfly.png" ),
       _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
@@ -334,15 +334,15 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "butterflies_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "butterflies_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto geometryStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "butterflies_geom.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "butterflies_geom.spv" ),
       vk::ShaderStageFlagBits::eGeometry
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "butterflies_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "butterflies_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ),
@@ -439,12 +439,12 @@ public:
 
     std::array< std::string, 6 > cubeImages =
     {
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/right.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/left.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/top.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/bottom.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/back.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/front.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/right.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/left.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/top.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/bottom.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/back.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/landCubemap/front.jpg" ),
     };
     skybox.tex = device->createTextureCubemap( cubeImages,
       _window->gfxCommandPool( ), _window->gfxQueue( ),
@@ -464,11 +464,11 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "skybox_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "skybox_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "skybox_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "skybox_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
     vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ),
@@ -679,23 +679,23 @@ public:
 
   void nextFrame( void ) override
   {
-    /*if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    /*if ( Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
+    if ( Input::isKeyPressed( pompeii::Keyboard::Key::Z ) )
     {
       grass.ubo2.fAlphaTest -= 0.01f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::X ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::X ) )
     {
       grass.ubo2.fAlphaTest += 0.01f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::C ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::C ) )
     {
       grass.ubo2.fAlphaMultiplier -= 0.01f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::V ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::V ) )
     {
       grass.ubo2.fAlphaMultiplier += 0.01f;
     }*/

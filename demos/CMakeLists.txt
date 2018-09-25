@@ -1,4 +1,4 @@
-if( LAVA_WITH_EXAMPLES )
+if( POMPEII_WITH_EXAMPLES )
   include( glsl2spv )
 
   glsl2spv( )
@@ -14,10 +14,10 @@ if( LAVA_WITH_EXAMPLES )
     ${CMAKE_CURRENT_BINARY_DIR}/routes.h)
 
 
-  set( LAVAVKINFO_HEADERS )
-  set( LAVAVKINFO_SOURCES VkInfo.cpp )
-  set( LAVAVKINFO_LINK_LIBRARIES lava )
-  common_application( lavaVkInfo )
+  set( POMPEIIVKINFO_HEADERS )
+  set( POMPEIIVKINFO_SOURCES VkInfo.cpp )
+  set( POMPEIIVKINFO_LINK_LIBRARIES pompeii )
+  common_application( pompeiiVkInfo )
 
 
   add_subdirectory( compute )
@@ -33,7 +33,7 @@ if( LAVA_WITH_EXAMPLES )
     ##add_subdirectory( qtHeightmapTesselation )
   endif( )
 
-  if( GLFW3_FOUND )
+  if( GLFW3_FOUND_ )
     add_subdirectory( glfwMeshInterpolator )
     #$#$#add_subdirectory( glfwParticles )
     
@@ -92,7 +92,7 @@ if( LAVA_WITH_EXAMPLES )
     #add_subdirectory( glfwMeshNormals )
     #add_subdirectory( glfwMultiSetDescriptor )
     #add_subdirectory( glfwPlanarReflection )
-    #add_subdirectory( glfwRender )
+    add_subdirectory( glfwRender )
     #add_subdirectory( glfwSparkle )
     #add_subdirectory( glfwSpecializationConstants )
     ##add_subdirectory( glfwThreadPool )

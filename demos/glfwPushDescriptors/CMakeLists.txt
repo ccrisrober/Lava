@@ -1,11 +1,11 @@
-set( LAVAGLFWPUSHDESCRIPTORS_HEADERS
+set( POMPEIIGLFWPUSHDESCRIPTORS_HEADERS
 )
-set( LAVAGLFWPUSHDESCRIPTORS_SOURCES
+set( POMPEIIGLFWPUSHDESCRIPTORS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWPUSHDESCRIPTORS_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWPUSHDESCRIPTORS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWPushDescriptors )
+common_application( pompeiiGLFWPushDescriptors )

@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -20,8 +20,8 @@ public:
     camera = Camera( glm::vec3( 0.0f, 0.0f, 25.5f ) );
   }
 
-  std::shared_ptr<lava::QueryPool> queryPool;
-  std::shared_ptr<lava::Buffer> queryResultBuffer;
+  std::shared_ptr<pompeii::QueryPool> queryPool;
+  std::shared_ptr<pompeii::Buffer> queryResultBuffer;
 
   // camera
   Camera camera;
@@ -199,15 +199,15 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "clipPlane_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "clipPlane_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto geomStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "clipPlane_geom.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "clipPlane_geom.spv" ),
       vk::ShaderStageFlagBits::eGeometry
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "clipPlane_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "clipPlane_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -307,11 +307,11 @@ public:
 
   void nextFrame( void ) override
   {
-    /*if ( Input::isKeyPressed( lava::Keyboard::Key::Z ) )
+    /*if ( Input::isKeyPressed( pompeii::Keyboard::Key::Z ) )
     {
       enable_wire = false;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::X ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::X ) )
     {
       enable_wire = true;
     }*/

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -78,8 +78,8 @@ public:
     float _blue = cos( time ) * 0.5f + 0.5f;
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( _red, 0.0f, _blue );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( _red, 0.0f, _blue );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 

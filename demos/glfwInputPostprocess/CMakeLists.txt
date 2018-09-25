@@ -1,11 +1,11 @@
-set( LAVAGLFWINPUTPROCESS_HEADERS
+set( POMPEIIGLFWINPUTPROCESS_HEADERS
 )
-set( LAVAGLFWINPUTPROCESS_SOURCES
+set( POMPEIIGLFWINPUTPROCESS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWINPUTPROCESS_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWINPUTPROCESS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWInputProcess )
+common_application( pompeiiGLFWInputProcess )

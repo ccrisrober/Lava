@@ -1,11 +1,11 @@
-set( LAVAGLFWPOSTPROCESSING_HEADERS
+set( POMPEIIGLFWPOSTPROCESSING_HEADERS
 )
-set( LAVAGLFWPOSTPROCESSING_SOURCES
+set( POMPEIIGLFWPOSTPROCESSING_SOURCES
 	main.cpp
 )
-set( LAVAGLFWPOSTPROCESSING_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWPOSTPROCESSING_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWPostProcessing )
+common_application( pompeiiGLFWPostProcessing )

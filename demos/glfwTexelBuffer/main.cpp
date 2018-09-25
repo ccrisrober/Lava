@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include <glm/glm.hpp>
@@ -113,11 +113,11 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "texelBuffer_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "texelBuffer_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "texelBuffer_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "texelBuffer_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -50,26 +50,26 @@ public:
 
   struct
   {
-    std::shared_ptr<lava::Image> depth;
-    std::shared_ptr<lava::ImageView> depthView;
-    std::shared_ptr<lava::RenderPass> renderPass;
-    std::shared_ptr<lava::Framebuffer> framebuffer;
+    std::shared_ptr<pompeii::Image> depth;
+    std::shared_ptr<pompeii::ImageView> depthView;
+    std::shared_ptr<pompeii::RenderPass> renderPass;
+    std::shared_ptr<pompeii::Framebuffer> framebuffer;
 
-    std::shared_ptr<lava::Sampler> sampler;
+    std::shared_ptr<pompeii::Sampler> sampler;
   } fb;
 
-  std::shared_ptr<lava::CommandBuffer> rtCmdBuffer;
-  std::shared_ptr<lava::Semaphore> rtSemaphore;
-  std::shared_ptr<lava::/*Graphics*/Pipeline> rtPipeline;
-  std::shared_ptr<lava::PipelineLayout> pipelineLayoutShadow;
+  std::shared_ptr<pompeii::CommandBuffer> rtCmdBuffer;
+  std::shared_ptr<pompeii::Semaphore> rtSemaphore;
+  std::shared_ptr<pompeii::/*Graphics*/Pipeline> rtPipeline;
+  std::shared_ptr<pompeii::PipelineLayout> pipelineLayoutShadow;
 
-  std::shared_ptr<lava::UniformBuffer> uniformBuffer0, uniformBuffer1;
-  std::shared_ptr<lava::Sampler> nearestSampler;
-  std::shared_ptr<lava::DescriptorSetLayout> descriptorSetLayout;
-  std::shared_ptr<lava::DescriptorSet> descriptorSet;
-  std::shared_ptr<lava::DescriptorPool> descriptorPool;
-  std::shared_ptr<lava::PipelineLayout> pipelineLayout;
-  std::shared_ptr<lava::/*Graphics*/Pipeline> graphicsPipeline;
+  std::shared_ptr<pompeii::UniformBuffer> uniformBuffer0, uniformBuffer1;
+  std::shared_ptr<pompeii::Sampler> nearestSampler;
+  std::shared_ptr<pompeii::DescriptorSetLayout> descriptorSetLayout;
+  std::shared_ptr<pompeii::DescriptorSet> descriptorSet;
+  std::shared_ptr<pompeii::DescriptorPool> descriptorPool;
+  std::shared_ptr<pompeii::PipelineLayout> pipelineLayout;
+  std::shared_ptr<pompeii::/*Graphics*/Pipeline> graphicsPipeline;
 
   struct
   {
@@ -85,7 +85,7 @@ public:
     glm::mat4 lightSpaceMatrix;
   } ubo1;
 
-  std::shared_ptr<lava::utility::Geometry> geometry;
+  std::shared_ptr<pompeii::utility::Geometry> geometry;
 
   virtual void initResources( void )
   {
@@ -93,8 +93,8 @@ public:
     createFramebuffer( { fbSize.x, fbSize.y } );
     std::cout << "\n\n ... created" << std::endl;
 
-    geometry = std::make_shared<lava::utility::Geometry>( _window->device( ),
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "mammoth.ply" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( _window->device( ),
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "mammoth.ply" ) );
 
     std::cout << "Creating UBO ...\n\n";
     createUniformBuffer( );
@@ -247,21 +247,21 @@ public:
       pipelineLayoutShadow = device->createPipelineLayout( descriptorSetLayout );
       
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
       PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+        vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
           vk::VertexInputRate::eVertex ),
           {
             vk::VertexInputAttributeDescription(
               0, 0, vk::Format::eR32G32B32Sfloat,
-              offsetof( lava::utility::Vertex, position )
+              offsetof( pompeii::utility::Vertex, position )
             )
           }
       );
@@ -302,29 +302,29 @@ public:
       pipelineLayout = device->createPipelineLayout( descriptorSetLayout );
 
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
       PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+        vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
           vk::VertexInputRate::eVertex ),
           {
             vk::VertexInputAttributeDescription(
               0, 0, vk::Format::eR32G32B32Sfloat,
-              offsetof( lava::utility::Vertex, position )
+              offsetof( pompeii::utility::Vertex, position )
             ),
             vk::VertexInputAttributeDescription(
               1, 0, vk::Format::eR32G32B32Sfloat,
-              offsetof( lava::utility::Vertex, normal )
+              offsetof( pompeii::utility::Vertex, normal )
             )/*,
             vk::VertexInputAttributeDescription(
               2, 0, vk::Format::eR32G32Sfloat,
-              offsetof( lava::utility::Vertex, texCoord )
+              offsetof( pompeii::utility::Vertex, texCoord )
             )*/
           }
       );
@@ -452,8 +452,8 @@ public:
       currentTime - startTime ).count( ) / 1000.0f;*/
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 1.0f, 1.0f, 1.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 1.0f, 1.0f, 1.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 

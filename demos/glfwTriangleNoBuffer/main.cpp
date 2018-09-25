@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -23,11 +23,11 @@ public:
     pipelineLayout = device->createPipelineLayout( descSetLayout );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangleNoBuffer_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "triangleNoBuffer_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangleNoBuffer_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "triangleNoBuffer_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

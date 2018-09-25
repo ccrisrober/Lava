@@ -1,22 +1,22 @@
-set( LAVACOMPUTECOPY_HEADERS
+set( POMPEIICOMPUTECOPY_HEADERS
 )
-set( LAVACOMPUTECOPY_SOURCES
+set( POMPEIICOMPUTECOPY_SOURCES
 	ComputeCopy.cpp
 )
-set( LAVACOMPUTECOPY_LINK_LIBRARIES
-	lava
-	lavaUtils
+set( POMPEIICOMPUTECOPY_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
 )
-common_application( lavaComputeCopy )
+common_application( pompeiiComputeCopy )
 
 # ------------------------------------
-set( LAVACOMPUTESUM_HEADERS
+set( POMPEIICOMPUTESUM_HEADERS
 )
-set( LAVACOMPUTESUM_SOURCES
+set( POMPEIICOMPUTESUM_SOURCES
 	ComputeSum.cpp
 )
-set( LAVACOMPUTESUM_LINK_LIBRARIES
-	lava
-	lavaUtils
+set( POMPEIICOMPUTESUM_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
 )
-common_application( lavaComputeSum )
+common_application( pompeiiComputeSum )

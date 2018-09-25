@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -30,8 +30,8 @@ public:
 	{
 		auto device = _window->device();
 
-		geometry = std::make_shared<lava::utility::Geometry>(device,
-			LAVA_EXAMPLES_MESHES_ROUTE + std::string("bunny.obj_"));
+		geometry = std::make_shared<pompeii::utility::Geometry>(device,
+			POMPEII_EXAMPLES_MESHES_ROUTE + std::string("bunny.obj_"));
 
 		// MVP buffer
 		{
@@ -50,16 +50,16 @@ public:
 		pipelineLayout = device->createPipelineLayout(descriptorSetLayout, nullptr);
 
 		PipelineVertexInputStateCreateInfo vertexInput(
-			vk::VertexInputBindingDescription(0, sizeof(lava::utility::Vertex),
+			vk::VertexInputBindingDescription(0, sizeof(pompeii::utility::Vertex),
 				vk::VertexInputRate::eVertex),
 				{
 					vk::VertexInputAttributeDescription(
 						0, 0, vk::Format::eR32G32B32Sfloat,
-						offsetof(lava::utility::Vertex, position)
+						offsetof(pompeii::utility::Vertex, position)
 					),
 			vk::VertexInputAttributeDescription(
 				1, 0, vk::Format::eR32G32B32Sfloat,
-				offsetof(lava::utility::Vertex, normal)
+				offsetof(pompeii::utility::Vertex, normal)
 			)
 				}
 		);
@@ -95,11 +95,11 @@ public:
 		// Left pipeline
 		{
 			auto vertexStage = device->createShaderPipelineShaderStage(
-				LAVA_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorSmooth_vert.spv"),
+				POMPEII_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorSmooth_vert.spv"),
 				vk::ShaderStageFlagBits::eVertex
 			);
 			auto fragmentStage = device->createShaderPipelineShaderStage(
-				LAVA_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorSmooth_frag.spv"),
+				POMPEII_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorSmooth_frag.spv"),
 				vk::ShaderStageFlagBits::eFragment
 			);
 
@@ -112,11 +112,11 @@ public:
 		// Right pipeline
 		{
 			auto vertexStage = device->createShaderPipelineShaderStage(
-				LAVA_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorFlat_vert.spv"),
+				POMPEII_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorFlat_vert.spv"),
 				vk::ShaderStageFlagBits::eVertex
 			);
 			auto fragmentStage = device->createShaderPipelineShaderStage(
-				LAVA_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorFlat_frag.spv"),
+				POMPEII_EXAMPLES_SPV_ROUTE + std::string("meshInterpolatorFlat_frag.spv"),
 				vk::ShaderStageFlagBits::eFragment
 			);
 
@@ -230,7 +230,7 @@ private:
 		std::shared_ptr< Pipeline > right;
 	} pipelines;
 
-	std::shared_ptr< lava::utility::Geometry > geometry;
+	std::shared_ptr< pompeii::utility::Geometry > geometry;
 	std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 

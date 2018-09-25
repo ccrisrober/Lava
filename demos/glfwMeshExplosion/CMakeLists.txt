@@ -1,11 +1,11 @@
-set( LAVAGLFWMESHEXPLOSION_HEADERS
+set( POMPEIIGLFWMESHEXPLOSION_HEADERS
 )
-set( LAVAGLFWMESHEXPLOSION_SOURCES
+set( POMPEIIGLFWMESHEXPLOSION_SOURCES
 	main.cpp
 )
-set( LAVAGLFWMESHEXPLOSION_LINK_LIBRARIES
-	lava
-	lavaUtils
-	glfwLava
+set( POMPEIIGLFWMESHEXPLOSION_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
+	glfwPompeii
 )
-common_application( lavaGLFWMeshExplosion )
+common_application( pompeiiGLFWMeshExplosion )

@@ -1,11 +1,11 @@
-set( LAVAGLFWMESHNORMALS_HEADERS
+set( POMPEIIGLFWMESHNORMALS_HEADERS
 )
-set( LAVAGLFWMESHNORMALS_SOURCES
+set( POMPEIIGLFWMESHNORMALS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWMESHNORMALS_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWMESHNORMALS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWMeshNormals )
+common_application( pompeiiGLFWMeshNormals )

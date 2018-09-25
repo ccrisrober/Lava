@@ -1,5 +1,5 @@
-#ifndef __LAVA_TESTS_H__
-#define __LAVA_TESTS_H__
+#ifndef __POMPEII_TESTS_H__
+#define __POMPEII_TESTS_H__
 
 #define BOOST_TEST_MODULE mb
 
@@ -9,4 +9,4 @@
 
 #include <boost/test/unit_test.hpp>
 
-#endif /* __LAVA_TESTS_H__ */
+#endif /* __POMPEII_TESTS_H__ */

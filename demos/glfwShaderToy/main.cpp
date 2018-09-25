@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <chrono>
 #include <ctime>
@@ -153,8 +153,8 @@ public:
 
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 
@@ -202,8 +202,8 @@ public:
     float _blue = cos( time ) * 0.5f + 0.5f;
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( _red, 0.0f, _blue );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( _red, 0.0f, _blue );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 
@@ -220,7 +220,7 @@ private:
   Timer timer;
   uint32_t frameIndex = 0;
 
-  std::shared_ptr< lava::Pipeline > graphicsPipeline;
+  std::shared_ptr< pompeii::Pipeline > graphicsPipeline;
 
   glm::uvec2 mousePos;
 };

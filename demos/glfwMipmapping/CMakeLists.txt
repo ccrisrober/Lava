@@ -1,11 +1,11 @@
-set( LAVAGLFWMIPMAPPING_HEADERS
+set( POMPEIIGLFWMIPMAPPING_HEADERS
 )
-set( LAVAGLFWMIPMAPPING_SOURCES
+set( POMPEIIGLFWMIPMAPPING_SOURCES
 	main.cpp
 )
-set( LAVAGLFWMIPMAPPING_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWMIPMAPPING_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWMipmapping )
+common_application( pompeiiGLFWMipmapping )

@@ -1,12 +1,12 @@
-set( LAVAQTSTENCILOUTLINE_HEADERS
+set( POMPEIIQTSTENCILOUTLINE_HEADERS
 	vulkanwindow.h
 )
-set( LAVAQTSTENCILOUTLINE_SOURCES
+set( POMPEIIQTSTENCILOUTLINE_SOURCES
 	main.cpp
 )
-set( LAVAQTSTENCILOUTLINE_LINK_LIBRARIES
-	lava
-	lavaUtils
-	qtLava
+set( POMPEIIQTSTENCILOUTLINE_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
+	qtPompeii
 )
-common_application( lavaQtStencilOutline )
+common_application( pompeiiQtStencilOutline )

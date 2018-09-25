@@ -1,16 +1,16 @@
-set( LAVAQTHEIGHTMAPTESSELATION_HEADERS
+set( POMPEIIQTHEIGHTMAPTESSELATION_HEADERS
 	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
-set( LAVAQTHEIGHTMAPTESSELATION_SOURCES
+set( POMPEIIQTHEIGHTMAPTESSELATION_SOURCES
 	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp
 )
-set( LAVAQTHEIGHTMAPTESSELATION_LINK_LIBRARIES
-	lava
-	qtLava
+set( POMPEIIQTHEIGHTMAPTESSELATION_LINK_LIBRARIES
+	pompeii
+	qtPompeii
 )
-common_application( lavaQtHeightmapTesselation )
+common_application( pompeiiQtHeightmapTesselation )

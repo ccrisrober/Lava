@@ -1,16 +1,16 @@
-set( LAVAQTMASKTRANSITION_HEADERS
+set( POMPEIIQTMASKTRANSITION_HEADERS
 	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
-set( LAVAQTMASKTRANSITION_SOURCES
+set( POMPEIIQTMASKTRANSITION_SOURCES
 	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp
 )
-set( LAVAQTMASKTRANSITION_LINK_LIBRARIES
-	lava
-	qtLava
+set( POMPEIIQTMASKTRANSITION_LINK_LIBRARIES
+	pompeii
+	qtPompeii
 )
-common_application( lavaQtMaskTransition )
+common_application( pompeiiQtMaskTransition )

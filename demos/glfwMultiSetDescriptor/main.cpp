@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -68,8 +68,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
     // MVP buffer
     {
@@ -96,43 +96,43 @@ public:
       descriptorSetLayout );
 
     createMaterial(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/MatCap_Toon3.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/MatCap_Toon3.png" ),
       pipelineLayouts.matcapLeft,
       descriptorSetLayout,
       descriptorSets.matcapLeft, textures.matcapLeft
     );
 
     createMaterial(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/green_matcap.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/green_matcap.jpg" ),
       pipelineLayouts.matcapCenter,
       descriptorSetLayout,
       descriptorSets.matcapCenter, textures.matcapCenter
     );
 
     createMaterial(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/rubymatcap.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/rubymatcap.jpg" ),
       pipelineLayouts.matcapRight,
       descriptorSetLayout,
       descriptorSets.matcapRight, textures.matcapRight
     );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "matcap_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "matcap_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, position ) ),
+          offsetof( pompeii::utility::Vertex, position ) ),
           vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, normal ) )
+          offsetof( pompeii::utility::Vertex, normal ) )
         }
     );
     vk::PipelineInputAssemblyStateCreateInfo assembly( { }, vk::PrimitiveTopology::eTriangleList, VK_FALSE );
@@ -262,7 +262,7 @@ public:
 private:
   std::shared_ptr<Buffer> uniformBufferMVP;
 
-  std::shared_ptr<lava::utility::Geometry> geometry;
+  std::shared_ptr<pompeii::utility::Geometry> geometry;
 
   struct
   {

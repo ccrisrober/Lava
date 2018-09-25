@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,23 +19,23 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
-class MipmapTexture2D : public lava::Texture
+class MipmapTexture2D : public pompeii::Texture
 {
 public:
   MipmapTexture2D( const std::shared_ptr<Device>& device, 
     const std::string& filename, vk::Format format, 
     const std::shared_ptr<CommandPool>& cmdPool,
     const std::shared_ptr<Queue>& queue )
-    : lava::Texture( device )
+    : pompeii::Texture( device )
   {
     unsigned int channels;
-    unsigned char* pixels = lava::utils::loadImageTexture(
+    unsigned char* pixels = pompeii::utils::loadImageTexture(
       filename, width, height, channels );
     channels = 4;
 
@@ -301,7 +301,7 @@ public:
   {
     auto device = _window->device( );
 
-    tex = std::shared_ptr<MipmapTexture2D>( new MipmapTexture2D( device, LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = std::shared_ptr<MipmapTexture2D>( new MipmapTexture2D( device, POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "T_Pedestal_512.png" ), vk::Format::eR8G8B8A8Unorm, _window->gfxCommandPool( ),
       _window->gfxQueue( ) ) );
 
@@ -334,11 +334,11 @@ public:
     _window->device( )->updateDescriptorSets( wdss, { } );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_mipmap_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_mipmap_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -392,8 +392,8 @@ public:
       currentTime - startTime ).count( ) / 1000.0f;
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 

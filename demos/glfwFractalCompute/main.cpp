@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -125,7 +125,7 @@ public:
     layoutCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
 
     tex->imageLayout = vk::ImageLayout::eGeneral;
-    lava::utils::transitionImageLayout(
+    pompeii::utils::transitionImageLayout(
       layoutCmd, tex->image, vk::ImageAspectFlagBits::eColor,
       vk::ImageLayout::eUndefined, tex->imageLayout
     );
@@ -201,7 +201,7 @@ public:
     // Create compute shader pipelines
     std::cout << "Loading shader... ";
     auto computeStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fractalCompute_comp.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fractalCompute_comp.spv" ),
       vk::ShaderStageFlagBits::eCompute
     );
 
@@ -284,11 +284,11 @@ public:
       vk::Format::eR8G8B8A8Unorm, _window->gfxCommandPool( ) );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -437,8 +437,8 @@ public:
 
     // Submit compute commands
     uint32_t timeout = std::numeric_limits<uint64_t>::max( );
-    lava::Fence::waitForFences( { compute.fence }, true, timeout );
-    lava::Fence::resetFences( { compute.fence } );
+    pompeii::Fence::waitForFences( { compute.fence }, true, timeout );
+    pompeii::Fence::resetFences( { compute.fence } );
 
     compute.queue->submit( compute.commandBuffer, compute.fence );
     
@@ -455,7 +455,7 @@ public:
       vk::AccessFlagBits::eShaderRead, vk::ImageLayout::eGeneral,
       vk::ImageLayout::eGeneral, 0, 0,
       textureComputeTarget->image,
-      //std::make_shared< lava::Image >( _window->device( ), textureComputeTarget->image ),
+      //std::make_shared< pompeii::Image >( _window->device( ), textureComputeTarget->image ),
       vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
     );
 

@@ -1,11 +1,11 @@
-set( LAVAGLFWSHADOWMAPPING_HEADERS
+set( POMPEIIGLFWSHADOWMAPPING_HEADERS
 )
-set( LAVAGLFWSHADOWMAPPING_SOURCES
+set( POMPEIIGLFWSHADOWMAPPING_SOURCES
 	main.cpp
 )
-set( LAVAGLFWSHADOWMAPPING_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWSHADOWMAPPING_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWShadowMapping )
+common_application( pompeiiGLFWShadowMapping )

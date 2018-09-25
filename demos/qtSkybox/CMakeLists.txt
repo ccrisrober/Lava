@@ -1,17 +1,17 @@
-set( LAVAQTSKYBOX_HEADERS
+set( POMPEIIQTSKYBOX_HEADERS
 	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
-set( LAVAQTSKYBOX_SOURCES
+set( POMPEIIQTSKYBOX_SOURCES
 	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp
 )
-set( LAVAQTSKYBOX_LINK_LIBRARIES
-	lava
-	lavaUtils
-	qtLava
+set( POMPEIIQTSKYBOX_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
+	qtPompeii
 )
-common_application( lavaQtSkybox )
+common_application( pompeiiQtSkybox )

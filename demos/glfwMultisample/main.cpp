@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -40,7 +40,7 @@ public:
   {
     auto device = _window->device( );
 
-    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "aliasing.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -75,11 +75,11 @@ public:
     _window->device( )->updateDescriptorSets( wdss, { } );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -142,9 +142,9 @@ public:
     float _blue = cos( time ) * 0.5f + 0.5f;
 
     std::array<vk::ClearValue, 3 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( _red, 0.0f, _blue );
-    clearValues[ 1 ] = lava::utils::getClearValueColor( _red, 0.0f, _blue );
-    clearValues[ 2 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( _red, 0.0f, _blue );
+    clearValues[ 1 ] = pompeii::utils::getClearValueColor( _red, 0.0f, _blue );
+    clearValues[ 2 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 
@@ -293,13 +293,13 @@ public:
   {
     struct
     {
-      std::shared_ptr<lava::Image> image;
-      std::shared_ptr<lava::ImageView> view;
+      std::shared_ptr<pompeii::Image> image;
+      std::shared_ptr<pompeii::ImageView> view;
     } color;
     struct
     {
-      std::shared_ptr<lava::Image> image;
-      std::shared_ptr<lava::ImageView> view;
+      std::shared_ptr<pompeii::Image> image;
+      std::shared_ptr<pompeii::ImageView> view;
     } depth;
   } multisampleTarget;
 

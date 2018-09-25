@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
+#include <glfwPompeii/glfwPompeii.h>
 #include <glm/glm.hpp>
-using namespace lava;
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -95,11 +95,11 @@ public:
 
     // init pipeline
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangle_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "triangle_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "triangle_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "triangle_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -160,8 +160,8 @@ public:
     auto cmd = _window->currentCommandBuffer( );
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 

@@ -1,16 +1,16 @@
-set( LAVAQTINSTANCING_HEADERS
+set( POMPEIIQTINSTANCING_HEADERS
 	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
-set( LAVAQTINSTANCING_SOURCES
+set( POMPEIIQTINSTANCING_SOURCES
 	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp
 )
-set( LAVAQTINSTANCING_LINK_LIBRARIES
-	lava
-	qtLava
+set( POMPEIIQTINSTANCING_LINK_LIBRARIES
+	pompeii
+	qtPompeii
 )
-common_application( lavaQtInstancing )
+common_application( pompeiiQtInstancing )

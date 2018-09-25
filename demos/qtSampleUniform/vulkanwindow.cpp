@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ VulkanWindow::VulkanWindow( void )
 {
 }
 
-lava::qt::VulkanWindowRenderer* VulkanWindow::createRenderer( void )
+pompeii::qt::VulkanWindowRenderer* VulkanWindow::createRenderer( void )
 {
 	_renderer = new Renderer( this );
 	return _renderer;

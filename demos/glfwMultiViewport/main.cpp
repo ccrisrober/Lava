@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2017 - 2018, Lava
+* Copyright (c) 2017 - 2018, Pompeii
 * All rights reserved.
 *
 * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -179,10 +179,10 @@ public:
 
 		std::vector<std::string> images =
 		{
-			LAVA_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/Jade_Purple.png"),
-			LAVA_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/silver.jpg"),
-			LAVA_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/Outline.png"),
-			LAVA_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/normals.jpg")
+			POMPEII_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/Jade_Purple.png"),
+			POMPEII_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/silver.jpg"),
+			POMPEII_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/Outline.png"),
+			POMPEII_EXAMPLES_IMAGES_ROUTE + std::string("/matcap/normals.jpg")
 		};
 
 		tex = device->createTexture2DArray(images,
@@ -190,15 +190,15 @@ public:
 			vk::Format::eR8G8B8A8Unorm);
 
 		auto vertexStage = device->createShaderPipelineShaderStage(
-			LAVA_EXAMPLES_SPV_ROUTE + std::string("multiview2DArray_vert.spv"),
+			POMPEII_EXAMPLES_SPV_ROUTE + std::string("multiview2DArray_vert.spv"),
 			vk::ShaderStageFlagBits::eVertex
 		);
 		auto geomStage = device->createShaderPipelineShaderStage(
-			LAVA_EXAMPLES_SPV_ROUTE + std::string("multiview2DArray_geom.spv"),
+			POMPEII_EXAMPLES_SPV_ROUTE + std::string("multiview2DArray_geom.spv"),
 			vk::ShaderStageFlagBits::eGeometry
 		);
 		auto fragmentStage = device->createShaderPipelineShaderStage(
-			LAVA_EXAMPLES_SPV_ROUTE + std::string("multiview2DArray_frag.spv"),
+			POMPEII_EXAMPLES_SPV_ROUTE + std::string("multiview2DArray_frag.spv"),
 			vk::ShaderStageFlagBits::eFragment
 		);
 
@@ -315,8 +315,8 @@ public:
 		updateMVP();
 
 		std::array<vk::ClearValue, 2 > clearValues;
-		clearValues[0] = lava::utils::getClearValueColor(0.0f, 0.0f, 0.0f);
-		clearValues[1] = lava::utils::getClearValueDepth();
+		clearValues[0] = pompeii::utils::getClearValueColor(0.0f, 0.0f, 0.0f);
+		clearValues[1] = pompeii::utils::getClearValueDepth();
 
 		vk::Extent2D extent = _window->swapchainImageSize();
 
@@ -342,14 +342,14 @@ public:
 		_window->frameReady();
 	}
 
-	std::shared_ptr< lava::Texture2DArray > tex;
-	std::shared_ptr< lava::UniformBuffer > mvpBuffer;
-	std::shared_ptr< lava::Buffer > vertexBuffer;
-	std::shared_ptr< lava::Buffer > indexBuffer;
-	std::shared_ptr< lava::DescriptorSet > descriptorSet;
-	std::shared_ptr< lava::DescriptorSetLayout > descriptorSetLayout;
-	std::shared_ptr< lava::Pipeline > pipeline;
-	std::shared_ptr< lava::PipelineLayout > pipelineLayout;
+	std::shared_ptr< pompeii::Texture2DArray > tex;
+	std::shared_ptr< pompeii::UniformBuffer > mvpBuffer;
+	std::shared_ptr< pompeii::Buffer > vertexBuffer;
+	std::shared_ptr< pompeii::Buffer > indexBuffer;
+	std::shared_ptr< pompeii::DescriptorSet > descriptorSet;
+	std::shared_ptr< pompeii::DescriptorSetLayout > descriptorSetLayout;
+	std::shared_ptr< pompeii::Pipeline > pipeline;
+	std::shared_ptr< pompeii::PipelineLayout > pipelineLayout;
 };
 
 class VulkanWindow : public glfw::VulkanWindow

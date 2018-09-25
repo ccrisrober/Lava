@@ -1,10 +1,10 @@
-set( LAVAGLFWMULTISAMPLE_HEADERS
+set( POMPEIIGLFWMULTISAMPLE_HEADERS
 )
-set( LAVAGLFWMULTISAMPLE_SOURCES
+set( POMPEIIGLFWMULTISAMPLE_SOURCES
 	main.cpp
 )
-set( LAVAGLFWMULTISAMPLE_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWMULTISAMPLE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWMultisample )
+common_application( pompeiiGLFWMultisample )

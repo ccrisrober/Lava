@@ -1,10 +1,10 @@
-set( LAVAGLFWBILLBOARDS_HEADERS
+set( POMPEIIGLFWBILLBOARDS_HEADERS
 )
-set( LAVAGLFWBILLBOARDS_SOURCES
+set( POMPEIIGLFWBILLBOARDS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWBILLBOARDS_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWBILLBOARDS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWBillboards )
+common_application( pompeiiGLFWBillboards )

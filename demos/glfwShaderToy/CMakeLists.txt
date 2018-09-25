@@ -1,10 +1,10 @@
-set( LAVAGLFWSHADERTOY_HEADERS
+set( POMPEIIGLFWSHADERTOY_HEADERS
 )
-set( LAVAGLFWSHADERTOY_SOURCES
+set( POMPEIIGLFWSHADERTOY_SOURCES
 	main.cpp
 )
-set( LAVAGLFWSHADERTOY_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWSHADERTOY_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWShaderToy )
+common_application( pompeiiGLFWShaderToy )

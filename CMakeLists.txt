@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project( lava VERSION 2.1.0 )
-set( lava_VERSION_ABI 3)
+project( pompeii VERSION 2.1.0 )
+set( pompeii_VERSION_ABI 3)
 
 # Disable in source building
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
@@ -23,7 +23,7 @@ endif( )
 include(GitExternal)
 
 set( COMMON_PROJECT_DOMAIN maldicion069 )
-set( LAVA_DESCRIPTION "LAVA" )
+set( POMPEII_DESCRIPTION "POMPEII" )
 
 include(Common)
 
@@ -32,16 +32,16 @@ include(Common)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
-option( LAVA_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
-option( LAVA_WITH_EXAMPLES "LAVA examples" ON)
-option( LAVAENGINE_WITH_COMPONENTS "LAVA with components" ON )
+option( POMPEII_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
+option( POMPEII_WITH_EXAMPLES "POMPEII examples" ON)
+option( POMPEIIENGINE_WITH_COMPONENTS "POMPEII with components" ON )
 
-if ( LAVAENGINE_WITH_COMPONENTS )
-  list(APPEND COMMON_FIND_PACKAGE_DEFINES LAVAENGINE_HASCOMPONENTS)
+if ( POMPEIIENGINE_WITH_COMPONENTS )
+  list(APPEND COMMON_FIND_PACKAGE_DEFINES POMPEIIENGINE_HASCOMPONENTS)
 endif( )
 
-if ( LAVA_WITH_DEVICE_BUILDERS )
-  list(APPEND COMMON_FIND_PACKAGE_DEFINES LAVA_DEVICE_BUILDERS )
+if ( POMPEII_WITH_DEVICE_BUILDERS )
+  list(APPEND COMMON_FIND_PACKAGE_DEFINES POMPEII_DEVICE_BUILDERS )
 endif( )
 
 
@@ -52,14 +52,14 @@ common_find_package( STBI REQUIRED SYSTEM )
 
 common_find_package( GLM SYSTEM )
 common_find_package( ASSIMP SYSTEM )
-common_find_package( GLFW3 SYSTEM )
+common_find_package( GLFW3 SYSTEM 3.2.1 )
 common_find_package( Qt5Core SYSTEM 5.10 )
 common_find_package( Qt5Widgets SYSTEM 5.10 )
 
 common_find_package( Boost COMPONENTS unit_test_framework )
 
 
-list( APPEND LAVA_DEPENDENT_LIBRARIES Vulkan STBI )
+list( APPEND POMPEII_DEPENDENT_LIBRARIES Vulkan STBI )
 
 IF (NOT WIN32)
   link_libraries( -lX11 -lXi -lXrandr -lXxf86vm -lXinerama -lXcursor -lrt -lm -pthread )
@@ -67,22 +67,26 @@ endif()
 
 common_find_package_post( )
 
+#add glslang
+option(ENABLE_GLSLANG_BINARIES "Enable GLSLang Binaries" OFF)
+add_subdirectory(vendor/glslang)
+
 #option(ENABLE_GLSLANG_BINARIES "Enable GLSLang Binaries" OFF)
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang")
 #SET( ENABLE_HLSL OFF CACHE BOOL "Enables HLSL input support" )
 
-add_subdirectory( lava )
+add_subdirectory( pompeii )
 
 if( GLFW3_FOUND )
-  add_subdirectory( glfwLava )
+  add_subdirectory( glfwPompeii )
 endif( )
 
 if( QT5CORE_FOUND )
-  add_subdirectory( qtLava )
+  add_subdirectory( qtPompeii )
 endif( )
 
-add_subdirectory( lavaUtils )
-#add_subdirectory( lavaEngine )
+add_subdirectory( pompeiiUtils )
+#add_subdirectory( pompeiiEngine )
 
 add_subdirectory( demos )
 

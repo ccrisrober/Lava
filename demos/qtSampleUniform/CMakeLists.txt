@@ -1,16 +1,16 @@
-set( LAVAQTSAMPLEUNIFORM_HEADERS
+set( POMPEIIQTSAMPLEUNIFORM_HEADERS
 	vulkanwindow.h
 	renderer.h
 	mainwindow.h
 )
-set( LAVAQTSAMPLEUNIFORM_SOURCES
+set( POMPEIIQTSAMPLEUNIFORM_SOURCES
 	vulkanwindow.cpp
 	renderer.cpp
 	mainwindow.cpp
 	main.cpp
 )
-set( LAVAQTSAMPLEUNIFORM_LINK_LIBRARIES
-	lava
-	qtLava
+set( POMPEIIQTSAMPLEUNIFORM_LINK_LIBRARIES
+	pompeii
+	qtPompeii
 )
-common_application( lavaQtSampleUniform )
+common_application( pompeiiQtSampleUniform )

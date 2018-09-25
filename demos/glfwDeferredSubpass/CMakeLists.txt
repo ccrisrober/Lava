@@ -1,11 +1,11 @@
-set( LAVAGLFWDEFERREDSUBPASS_HEADERS
+set( POMPEIIGLFWDEFERREDSUBPASS_HEADERS
 )
-set( LAVAGLFWDEFERREDSUBPASS_SOURCES
+set( POMPEIIGLFWDEFERREDSUBPASS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWDEFERREDSUBPASS_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWDEFERREDSUBPASS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWDeferredSubpass )
+common_application( pompeiiGLFWDeferredSubpass )

@@ -1,11 +1,11 @@
-set( LAVAGLFWEARTH_HEADERS
+set( POMPEIIGLFWEARTH_HEADERS
 )
-set( LAVAGLFWEARTH_SOURCES
+set( POMPEIIGLFWEARTH_SOURCES
 	main.cpp
 )
-set( LAVAGLFWEARTH_LINK_LIBRARIES
-	lava
-	lavaUtils
-	glfwLava
+set( POMPEIIGLFWEARTH_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
+	glfwPompeii
 )
-common_application( lavaGLFWEarth )
+common_application( pompeiiGLFWEarth )

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,18 +19,18 @@
 
 #pragma once
 
-#include <qtLava/qtLava.h>
+#include <qtPompeii/qtPompeii.h>
 
 #include "../utils/Camera.h"
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include "vulkanwindow.h"
 
 #include <unordered_map>
 
-class Renderer: public lava::qt::VulkanWindowRenderer
+class Renderer: public pompeii::qt::VulkanWindowRenderer
 {
 public:
 	Renderer( VulkanWindow* w );
@@ -149,12 +149,12 @@ protected:
 
     std::array< std::string, 6 > cubeImages =
     {
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/right.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/left.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/top.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/bottom.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/back.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/front.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/right.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/left.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/top.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/bottom.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/back.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/spaceCubemap/front.png" ),
     };
 
     tex = device->createTextureCubemap( cubeImages,
@@ -189,23 +189,23 @@ protected:
 
       // init pipeline
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "reflect_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "reflect_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "reflect_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "reflect_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
       PipelineVertexInputStateCreateInfo vertexInput(
-        vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+        vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
           vk::VertexInputRate::eVertex ),
           {
             vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
-            offsetof( lava::utility::Vertex, position )
+            offsetof( pompeii::utility::Vertex, position )
             ),
         vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, normal )
+          offsetof( pompeii::utility::Vertex, normal )
         )
           }
       );
@@ -241,11 +241,11 @@ protected:
         _window->renderPass( ) );
 
       vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "refract_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "refract_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "refract_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "refract_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
@@ -291,11 +291,11 @@ protected:
 
       // init pipeline
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "skybox_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "skybox_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "skybox_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "skybox_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
       vk::VertexInputBindingDescription binding( 0, sizeof( Vertex ),
@@ -461,11 +461,11 @@ private:
   std::shared_ptr<TextureCubemap> tex;
   std::shared_ptr<DescriptorPool> descriptorPool;
 
-  std::shared_ptr<lava::utility::Geometry> geometry;
+  std::shared_ptr<pompeii::utility::Geometry> geometry;
   std::shared_ptr<Buffer> uniformMVP;
   std::shared_ptr<Buffer> uniformViewPos;
 
-  std::unordered_map < std::string, std::shared_ptr< lava::utility::Geometry > > geometries;
+  std::unordered_map < std::string, std::shared_ptr< pompeii::utility::Geometry > > geometries;
 
 public:
   void setModel( const std::string& name )
@@ -474,8 +474,8 @@ public:
     if ( geometries.find( name ) == geometries.end( ) )
     {
       // Model don't found
-      geometries[ name ] = std::make_shared<lava::utility::Geometry>( device,
-          LAVA_EXAMPLES_MESHES_ROUTE + name + std::string( ".obj_" ) );
+      geometries[ name ] = std::make_shared<pompeii::utility::Geometry>( device,
+          POMPEII_EXAMPLES_MESHES_ROUTE + name + std::string( ".obj_" ) );
     }
     geometry = geometries[ name ];
   }

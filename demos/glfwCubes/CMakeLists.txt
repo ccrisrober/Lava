@@ -1,10 +1,10 @@
-set( LAVAGLFWCUBES_HEADERS
+set( POMPEIIGLFWCUBES_HEADERS
 )
-set( LAVAGLFWCUBES_SOURCES
+set( POMPEIIGLFWCUBES_SOURCES
 	main.cpp
 )
-set( LAVAGLFWCUBES_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWCUBES_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWCubes )
+common_application( pompeiiGLFWCubes )

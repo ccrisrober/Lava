@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #ifndef __TEAPOT_QUAD__
 #define __TEAPOT_QUAD__
 
-#include <lava/lava.h>
+#include <pompeii/pompeii.h>
 #include "teapotdata.h"
 
 class TeapotQuad

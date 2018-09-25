@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -39,27 +39,27 @@ public:
 
   struct
   {
-    std::shared_ptr<lava::Image> color;
-    std::shared_ptr<lava::ImageView> colorView;
-    std::shared_ptr<lava::Image> msaaColor;
-    std::shared_ptr<lava::ImageView> msaaColorView;
-    std::shared_ptr<lava::RenderPass> renderPass;
-    std::shared_ptr<lava::Framebuffer> framebuffer;
+    std::shared_ptr<pompeii::Image> color;
+    std::shared_ptr<pompeii::ImageView> colorView;
+    std::shared_ptr<pompeii::Image> msaaColor;
+    std::shared_ptr<pompeii::ImageView> msaaColorView;
+    std::shared_ptr<pompeii::RenderPass> renderPass;
+    std::shared_ptr<pompeii::Framebuffer> framebuffer;
 
-    std::shared_ptr<lava::Sampler> sampler;
+    std::shared_ptr<pompeii::Sampler> sampler;
   } fb;
 
-  std::shared_ptr<lava::CommandBuffer> rtCmdBuffer;
-  std::shared_ptr<lava::Semaphore> rtSemaphore;
-  std::shared_ptr<lava::/*Graphics*/Pipeline> rtPipeline;
+  std::shared_ptr<pompeii::CommandBuffer> rtCmdBuffer;
+  std::shared_ptr<pompeii::Semaphore> rtSemaphore;
+  std::shared_ptr<pompeii::/*Graphics*/Pipeline> rtPipeline;
 
-  std::shared_ptr<lava::UniformBuffer> uniformBuffer;
-  std::shared_ptr<lava::Sampler> nearestSampler;
-  std::shared_ptr<lava::DescriptorSetLayout> descriptorSetLayout;
-  std::shared_ptr<lava::DescriptorSet> descriptorSet;
-  std::shared_ptr<lava::DescriptorPool> descriptorPool;
-  std::shared_ptr<lava::PipelineLayout> pipelineLayout;
-  std::shared_ptr<lava::/*Graphics*/Pipeline> graphicsPipeline;
+  std::shared_ptr<pompeii::UniformBuffer> uniformBuffer;
+  std::shared_ptr<pompeii::Sampler> nearestSampler;
+  std::shared_ptr<pompeii::DescriptorSetLayout> descriptorSetLayout;
+  std::shared_ptr<pompeii::DescriptorSet> descriptorSet;
+  std::shared_ptr<pompeii::DescriptorPool> descriptorPool;
+  std::shared_ptr<pompeii::PipelineLayout> pipelineLayout;
+  std::shared_ptr<pompeii::/*Graphics*/Pipeline> graphicsPipeline;
 
   glm::uvec2 fbSize = glm::uvec2(48, 32);
   uint32_t msaaSamples = 4;
@@ -338,11 +338,11 @@ public:
 
     {
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "renderTextureTriangle_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "renderTextureTriangle_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "renderTextureTriangle_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "renderTextureTriangle_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
@@ -398,11 +398,11 @@ public:
     }
     {
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "renderTexturePlane_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "renderTexturePlane_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "renderTexturePlane_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "renderTexturePlane_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
@@ -497,8 +497,8 @@ public:
 
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     vk::Extent2D extent = _window->swapchainImageSize( );
 

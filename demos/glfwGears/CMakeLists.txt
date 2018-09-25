@@ -1,10 +1,10 @@
-set( LAVAGLFWGEARS_HEADERS
+set( POMPEIIGLFWGEARS_HEADERS
 )
-set( LAVAGLFWGEARS_SOURCES
+set( POMPEIIGLFWGEARS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWGEARS_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWGEARS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWGears )
+common_application( pompeiiGLFWGears )

@@ -1,11 +1,11 @@
-set( LAVAGLFWTHREADPOOL_HEADERS
+set( POMPEIIGLFWTHREADPOOL_HEADERS
 )
-set( LAVAGLFWTHREADPOOL_SOURCES
+set( POMPEIIGLFWTHREADPOOL_SOURCES
 	main.cpp
 )
-set( LAVAGLFWTHREADPOOL_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWTHREADPOOL_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWThreadPool )
+common_application( pompeiiGLFWThreadPool )

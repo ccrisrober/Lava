@@ -1,11 +1,11 @@
-set( LAVAGLFWMATCAP2DARRAY_HEADERS
+set( POMPEIIGLFWMATCAP2DARRAY_HEADERS
 )
-set( LAVAGLFWMATCAP2DARRAY_SOURCES
+set( POMPEIIGLFWMATCAP2DARRAY_SOURCES
 	main.cpp
 )
-set( LAVAGLFWMATCAP2DARRAY_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWMATCAP2DARRAY_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWMatcap2DArray )
+common_application( pompeiiGLFWMatcap2DArray )

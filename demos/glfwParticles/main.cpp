@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <random>
 
@@ -95,10 +95,10 @@ public:
 	void setAirResistence(bool airResistence) { this->airResistence = airResistence; }
 	void setVelocityScale(float scale) { this->velocityScale = scale; }
 
-	void initialize(std::shared_ptr<lava::Device> device)
+	void initialize(std::shared_ptr<pompeii::Device> device)
 	{
 		vertexBuffer = device->createVertexBuffer(maxParticles * sizeof(ParticleVertex));
-		drawParams.reset(new lava::IndirectBuffer(device));
+		drawParams.reset(new pompeii::IndirectBuffer(device));
 	}
 
 	void update(float dt)
@@ -211,7 +211,7 @@ public:
 		freeList.splice(freeList.end(), activeList);
 	}
 
-	void draw(std::shared_ptr<lava::CommandBuffer> cmdBuffer)
+	void draw(std::shared_ptr<pompeii::CommandBuffer> cmdBuffer)
 	{
 		cmdBuffer->bindVertexBuffer(0, vertexBuffer);
 		cmdBuffer->drawIndirect(drawParams, 0, 1, 0);
@@ -272,8 +272,8 @@ private:
 	bool airResistence = true;
 	float velocityScale = 1.f;
 
-	std::shared_ptr<lava::VertexBuffer> vertexBuffer;
-	std::shared_ptr<lava::IndirectBuffer> drawParams;
+	std::shared_ptr<pompeii::VertexBuffer> vertexBuffer;
+	std::shared_ptr<pompeii::IndirectBuffer> drawParams;
 };
 
 class MainWindowRenderer : public glfw::VulkanWindowRenderer
@@ -302,12 +302,12 @@ public:
   const float fov = glm::radians(60.f);
 
   std::unique_ptr<ParticleSystem> particles;
-  std::shared_ptr<lava::UniformBuffer> uniformBuffer;
-  std::shared_ptr<lava::DescriptorPool> descriptorPool;
-  std::shared_ptr<lava::DescriptorSetLayout> descriptorSetLayout;
-  std::shared_ptr<lava::DescriptorSet> descriptorSet;
-  std::shared_ptr<lava::PipelineLayout> pipelineLayout;
-  std::shared_ptr<lava::/*Graphics*/Pipeline> pipeline;
+  std::shared_ptr<pompeii::UniformBuffer> uniformBuffer;
+  std::shared_ptr<pompeii::DescriptorPool> descriptorPool;
+  std::shared_ptr<pompeii::DescriptorSetLayout> descriptorSetLayout;
+  std::shared_ptr<pompeii::DescriptorSet> descriptorSet;
+  std::shared_ptr<pompeii::PipelineLayout> pipelineLayout;
+  std::shared_ptr<pompeii::/*Graphics*/Pipeline> pipeline;
 
   void initParticleSystem(void)
   {
@@ -397,11 +397,11 @@ public:
 	  auto device = _window->device();
 
 	  auto vertexStage = device->createShaderPipelineShaderStage(
-		  LAVA_EXAMPLES_SPV_ROUTE + std::string("particles2_vert.spv"),
+		  POMPEII_EXAMPLES_SPV_ROUTE + std::string("particles2_vert.spv"),
 		  vk::ShaderStageFlagBits::eVertex
 	  );
 	  auto fragmentStage = device->createShaderPipelineShaderStage(
-		  LAVA_EXAMPLES_SPV_ROUTE + std::string("particles2_frag.spv"),
+		  POMPEII_EXAMPLES_SPV_ROUTE + std::string("particles2_frag.spv"),
 		  vk::ShaderStageFlagBits::eFragment
 	  );
 
@@ -482,8 +482,8 @@ public:
 	vk::Extent2D extent = _window->swapchainImageSize();
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     cmd->beginRenderPass( _window->renderPass( ),
       _window->framebuffer( ),

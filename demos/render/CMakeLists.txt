@@ -1,9 +1,9 @@
-set( LAVARENDERHEADLESS_HEADERS
+set( POMPEIIRENDERHEADLESS_HEADERS
 )
-set( LAVARENDERHEADLESS_SOURCES
+set( POMPEIIRENDERHEADLESS_SOURCES
 	RenderHeadless.cpp
 )
-set( LAVARENDERHEADLESS_LINK_LIBRARIES
-	lava
+set( POMPEIIRENDERHEADLESS_LINK_LIBRARIES
+	pompeii
 )
-common_application( lavaRenderHeadless )
+common_application( pompeiiRenderHeadless )

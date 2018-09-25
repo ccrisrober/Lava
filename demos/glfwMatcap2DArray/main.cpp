@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -49,8 +49,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
     // MVP buffer
     {
@@ -59,14 +59,14 @@ public:
 
     std::vector< std::string > cubeImages =
     {
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Copper.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/droplet_01.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE +
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Copper.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/droplet_01.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "/matcap/GeneticView_LightGreen-Jade1b.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Jade_Purple.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/silver.jpg" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Outline.png" ),
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/normals.jpg" )
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Jade_Purple.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/silver.jpg" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/Outline.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "/matcap/normals.jpg" )
     };
 
     tex = device->createTexture2DArray( cubeImages,
@@ -74,11 +74,11 @@ public:
       vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap2DArray_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "matcap2DArray_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "matcap2DArray_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "matcap2DArray_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -98,14 +98,14 @@ public:
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
     PipelineVertexInputStateCreateInfo vertexInput(
-      vk::VertexInputBindingDescription( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputBindingDescription( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex ),
         {
           vk::VertexInputAttributeDescription( 0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, position )
+          offsetof( pompeii::utility::Vertex, position )
           ),
       vk::VertexInputAttributeDescription( 1, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::utility::Vertex, normal )
+        offsetof( pompeii::utility::Vertex, normal )
       )
         }
     );
@@ -199,36 +199,36 @@ public:
 
   void nextFrame( void ) override
   {
-    /*if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    /*if ( Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
 
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Num1 ) )
+    if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num1 ) )
     {
       uboVS.level = 0.0f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Num2 ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num2 ) )
     {
       uboVS.level = 1.0f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Num3 ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num3 ) )
     {
       uboVS.level = 2.0f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Num4 ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num4 ) )
     {
       uboVS.level = 3.0f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Num5 ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num5 ) )
     {
       uboVS.level = 4.0f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Num6 ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num6 ) )
     {
       uboVS.level = 5.0f;
     }
-    else if ( Input::isKeyPressed( lava::Keyboard::Key::Num7 ) )
+    else if ( Input::isKeyPressed( pompeii::Keyboard::Key::Num7 ) )
     {
       uboVS.level = 6.0f;
     }*/
@@ -279,7 +279,7 @@ private:
   std::shared_ptr< DescriptorSet > descriptorSet;
   std::shared_ptr< PipelineLayout > pipelineLayout;
   std::shared_ptr< Pipeline > pipeline;
-  std::shared_ptr< lava::utility::Geometry > geometry;
+  std::shared_ptr< pompeii::utility::Geometry > geometry;
   std::shared_ptr< UniformBuffer > mvpBuffer;
 };
 

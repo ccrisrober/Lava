@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -172,21 +172,21 @@ public:
       mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
     }
 
-    auto tex1 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    auto tex1 = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "chesterfieldDiffuseMap.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
-    auto tex2 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    auto tex2 = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "chesterfieldNormalMap.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     cpp = new CustomPingPong<std::shared_ptr<Texture2D>>( tex1, tex2 );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

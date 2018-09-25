@@ -74,7 +74,7 @@ commandBufferDraw.pushConstants(
 
 
 GLFWVulkanWindow
-	GLFWLAVA_API
+	GLFWPOMPEII_API
 	std::shared_ptr<Image> currentImage( void ) const
 	{
 	auto images = _swapchain->images( );
@@ -85,7 +85,7 @@ GLFWVulkanWindow
 	return images.at( idx );
 	}
 
-	lava::utils::saveScreenshot( _window->device( ), "pepito.ppm", 
+	pompeii::utils::saveScreenshot( _window->device( ), "pepito.ppm", 
 	size.width, size.height, _window->colorFormat( ), 
 	_window->currentImage( ), _window->gfxCommandPool( ), _window->gfxQueue( ) );
 
@@ -126,7 +126,7 @@ Material
 	porque son variables que no hace falta replicar.
 
 
-namespace lava
+namespace pompeii
 {
 	typedef std::lock_guard<std::mutex> MutexGuard;
 	typedef std::unique_lock<std::mutex> MutexUniqueLock;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,9 @@
  *
  **/
 
-#include <lava/lava.h>
-#include <lavaRenderer/lavaRenderer.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+#include <pompeiiRenderer/pompeiiRenderer.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -161,7 +161,7 @@ public:
 
   void nextFrame( void ) override
   {
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    if ( Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
@@ -273,11 +273,11 @@ private:
     std::cout << "Loading shaders ... " << std::endl;
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "toy_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "toy_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "toy_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "toy_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -361,7 +361,7 @@ int main( void )
   std::vector<const char*> extensions =
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
+    POMPEII_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,9 +17,9 @@
  *
  **/
 
-#include <lava/lava.h>
-#include <lavaUtils/lavaUtils.h>
-#include <lavaRenderer/lavaRenderer.h>
+#include <pompeii/pompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+#include <pompeiiRenderer/pompeiiRenderer.h>
 #include <glm/glm.hpp>
 
 #include <routes.h>
@@ -28,20 +28,20 @@ struct
 {
   struct
   {
-    std::shared_ptr<lava::Texture2D> colorMap;
-    std::shared_ptr<lava::Texture2D> normalMap;
+    std::shared_ptr<pompeii::Texture2D> colorMap;
+    std::shared_ptr<pompeii::Texture2D> normalMap;
   } model;
   struct
   {
-    std::shared_ptr<lava::Texture2D> colorMap;
-    std::shared_ptr<lava::Texture2D> normalMap;
+    std::shared_ptr<pompeii::Texture2D> colorMap;
+    std::shared_ptr<pompeii::Texture2D> normalMap;
   } floor;
 } textures;
 
 struct
 {
-  std::shared_ptr<lava::utility::Geometry> model;
-  std::shared_ptr<lava::utility::Geometry> floor;
+  std::shared_ptr<pompeii::utility::Geometry> model;
+  std::shared_ptr<pompeii::utility::Geometry> floor;
 } models;
 
 struct
@@ -67,27 +67,27 @@ struct
 
 struct
 {
-  std::shared_ptr<lava::Buffer> vsFullScreen;
-  std::shared_ptr<lava::Buffer> vsOffScreen;
-  std::shared_ptr<lava::Buffer> fsLights;
+  std::shared_ptr<pompeii::Buffer> vsFullScreen;
+  std::shared_ptr<pompeii::Buffer> vsOffScreen;
+  std::shared_ptr<pompeii::Buffer> fsLights;
 } ubos;
 
 struct
 {
-  std::shared_ptr<lava::PipelineLayout> deferred;
-  std::shared_ptr<lava::PipelineLayout> offscreen;
+  std::shared_ptr<pompeii::PipelineLayout> deferred;
+  std::shared_ptr<pompeii::PipelineLayout> offscreen;
 } pipelines;
 
 struct
 {
-  std::shared_ptr<lava::DescriptorSet> deferred;
-  std::shared_ptr<lava::DescriptorSet> offscreen;
+  std::shared_ptr<pompeii::DescriptorSet> deferred;
+  std::shared_ptr<pompeii::DescriptorSet> offscreen;
 } descriptorSets;
 
-std::shared_ptr<lava::DescriptorSet> descriptorSet;
-std::shared_ptr<lava::DescriptorSetLayout> descriptorSetLayout;
+std::shared_ptr<pompeii::DescriptorSet> descriptorSet;
+std::shared_ptr<pompeii::DescriptorSetLayout> descriptorSetLayout;
 
-std::shared_ptr<lava::utility::CustomFramebuffer> customFbo;
+std::shared_ptr<pompeii::utility::CustomFramebuffer> customFbo;
 #include <routes.h>
 
 class CustomRenderer : public glfw::VulkanWindowRenderer
@@ -105,36 +105,36 @@ public:
   {
     auto device = _window->device( );
 
-    models.model = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "armor.dae" ) );
+    models.model = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "armor.dae" ) );
 
-    models.floor = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "floor.obj_" ) );
+    models.floor = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "floor.obj_" ) );
 
     textures.model.colorMap = device->createTexture2D(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "armor_color.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "armor_color.png" ),
       _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     textures.model.normalMap = device->createTexture2D(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "armor_normal.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "armor_normal.png" ),
       _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     textures.floor.colorMap = device->createTexture2D(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "stonefloor_color.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "stonefloor_color.png" ),
       _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
 
     textures.floor.normalMap = device->createTexture2D(
-      LAVA_EXAMPLES_IMAGES_ROUTE + std::string( "stonefloor_normal.png" ),
+      POMPEII_EXAMPLES_IMAGES_ROUTE + std::string( "stonefloor_normal.png" ),
       _window->gfxCommandPool( ), _window->gfxQueue( ),
       vk::Format::eR8G8B8A8Unorm );
   }
 
   void nextFrame( void ) override
   {
-    if ( lava::Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    if ( pompeii::Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
@@ -185,7 +185,7 @@ public:
 
 int main( void )
 {
-  std::shared_ptr<lava::Instance> instance;
+  std::shared_ptr<pompeii::Instance> instance;
 
   // Create instance
   vk::ApplicationInfo appInfo(
@@ -206,12 +206,12 @@ int main( void )
   std::vector<const char*> extensions =
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
+    POMPEII_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 
 
-  instance = lava::Instance::create( vk::InstanceCreateInfo(
+  instance = pompeii::Instance::create( vk::InstanceCreateInfo(
   { },
     &appInfo,
     layers.size( ),

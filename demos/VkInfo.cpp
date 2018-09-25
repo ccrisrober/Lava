@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  *
  **/
 
-#include <lava/lava.h>
+#include <pompeii/pompeii.h>
 #include <vulkan/vulkan.hpp>
 
 int main( void )
@@ -49,7 +49,7 @@ int main( void )
         << ext.specVersion << ")" << std::endl;
     }
 
-    std::shared_ptr<lava::Instance> instance = lava::Instance::create( "" );
+    std::shared_ptr<pompeii::Instance> instance = pompeii::Instance::create( "" );
 
     uint32_t phy_dev_count = instance->getPhysicalDeviceCount( );
     std::cout << "PhysicalDeviceCount : " << phy_dev_count << std::endl;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -56,8 +56,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "ico.obj" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "ico.obj" ) );
 
     // MVP buffer
     {
@@ -66,12 +66,12 @@ public:
       fsBuffer = device->createUniformBuffer( sizeof( uboFS ) );
     }
 
-    texDiffuse = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    texDiffuse = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "gum.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     {
-      texNoise = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+      texNoise = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
         std::string( "noiseRGB.png" ), _window->gfxCommandPool( ),
         _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -86,11 +86,11 @@ public:
     }
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "sparkle_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "sparkle_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "sparkle_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "sparkle_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -114,18 +114,18 @@ public:
 
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout, nullptr );
 
-    vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+    vk::VertexInputBindingDescription binding( 0, sizeof( pompeii::utility::Vertex ),
       vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription(
-        0, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::utility::Vertex, position )
+        0, 0, vk::Format::eR32G32B32Sfloat, offsetof( pompeii::utility::Vertex, position )
       ),
       vk::VertexInputAttributeDescription(
-        1, 0, vk::Format::eR32G32B32Sfloat, offsetof( lava::utility::Vertex, normal )
+        1, 0, vk::Format::eR32G32B32Sfloat, offsetof( pompeii::utility::Vertex, normal )
       ),
       vk::VertexInputAttributeDescription(
-        2, 0, vk::Format::eR32G32Sfloat, offsetof( lava::utility::Vertex, texCoord )
+        2, 0, vk::Format::eR32G32Sfloat, offsetof( pompeii::utility::Vertex, texCoord )
       )
     } );
 
@@ -277,7 +277,7 @@ private:
   std::shared_ptr< UniformBuffer > mvpBuffer;
   std::shared_ptr< UniformBuffer > fsBuffer;
 
-  std::shared_ptr<lava::utility::Geometry> geometry;
+  std::shared_ptr<pompeii::utility::Geometry> geometry;
 };
 
 class VulkanWindow : public glfw::VulkanWindow

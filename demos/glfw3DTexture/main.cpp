@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2017 - 2018, Lava
+* Copyright (c) 2017 - 2018, Pompeii
 * All rights reserved.
 *
 * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -56,8 +56,8 @@ public:
   {
     auto device = _window->device( );
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "monkey.obj_" ) );
 
     mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
 
@@ -93,11 +93,11 @@ public:
     auto dspPool = device->createDescriptorPool( 1, poolSize );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "texture3d_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "texture3d_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "texture3d_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "texture3d_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -115,13 +115,13 @@ public:
 
     pipelineLayout = device->createPipelineLayout( descriptorSetLayout );
 
-    vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+    vk::VertexInputBindingDescription binding( 0, sizeof( pompeii::utility::Vertex ),
       vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription(
         0, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::utility::Vertex, position )
+        offsetof( pompeii::utility::Vertex, position )
       )
     } );
     
@@ -248,7 +248,7 @@ public:
     glm::mat4 proj;
   } uboVS;
 
-  std::shared_ptr< lava::utility::Geometry > geometry;
+  std::shared_ptr< pompeii::utility::Geometry > geometry;
 
 public:
   void mouseEvent( double xpos, double ypos )

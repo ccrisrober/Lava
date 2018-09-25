@@ -1,11 +1,11 @@
-set( LAVAGLFWMESHINTERPOLATOR_HEADERS
+set( POMPEIIGLFWMESHINTERPOLATOR_HEADERS
 )
-set( LAVAGLFWMESHINTERPOLATOR_SOURCES
+set( POMPEIIGLFWMESHINTERPOLATOR_SOURCES
 	main.cpp
 )
-set( LAVAGLFWMESHINTERPOLATOR_LINK_LIBRARIES
-	lava
-	lavaUtils
-	glfwLava
+set( POMPEIIGLFWMESHINTERPOLATOR_LINK_LIBRARIES
+	pompeii
+	pompeiiUtils
+	glfwPompeii
 )
-common_application( lavaGLFWMeshInterpolator )
+common_application( pompeiiGLFWMeshInterpolator )

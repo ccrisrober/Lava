@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #include <random>
 
@@ -163,11 +163,11 @@ public:
     device->updateDescriptorSets( wdss, { } );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "points_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "points_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "points_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "points_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -262,8 +262,8 @@ public:
     uboBuffer->set( &ubo );
 
     std::array<vk::ClearValue, 2 > clearValues;
-    clearValues[ 0 ] = lava::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
-    clearValues[ 1 ] = lava::utils::getClearValueDepth( );
+    clearValues[ 0 ] = pompeii::utils::getClearValueColor( 0.0f, 0.0f, 0.0f );
+    clearValues[ 1 ] = pompeii::utils::getClearValueDepth( );
 
     cmd->beginRenderPass( _window->renderPass( ),
       _window->framebuffer( ),

@@ -1,10 +1,10 @@
-set( LAVAGLFWGRASSLAND_HEADERS
+set( POMPEIIGLFWGRASSLAND_HEADERS
 )
-set( LAVAGLFWGRASSLAND_SOURCES
+set( POMPEIIGLFWGRASSLAND_SOURCES
 	main.cpp
 )
-set( LAVAGLFWGRASSLAND_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWGRASSLAND_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWGrassland )
+common_application( pompeiiGLFWGrassland )

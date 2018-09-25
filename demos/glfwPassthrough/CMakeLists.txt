@@ -1,10 +1,10 @@
-set( LAVAGLFWPASSTHROUGH_HEADERS
+set( POMPEIIGLFWPASSTHROUGH_HEADERS
 )
-set( LAVAGLFWPASSTHROUGH_SOURCES
+set( POMPEIIGLFWPASSTHROUGH_SOURCES
 	main.cpp
 )
-set( LAVAGLFWPASSTHROUGH_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWPASSTHROUGH_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWPassthrough )
+common_application( pompeiiGLFWPassthrough )

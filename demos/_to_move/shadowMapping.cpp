@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2017 - 2018, Lava
+* Copyright (c) 2017 - 2018, Pompeii
 * All rights reserved.
 *
 * This program is free software: you can redistribute it and/or modify
@@ -17,10 +17,10 @@
 *
 **/
 
-#include <lava/lava.h>
-#include <lavaRenderer/lavaRenderer.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+#include <pompeiiRenderer/pompeiiRenderer.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -95,10 +95,10 @@ public:
     w = sc.width;// *2;
     h = sc.height;// *2;
 
-    postProcessFBO = std::make_shared<lava::utility::CustomFramebuffer>( device, w, h );
+    postProcessFBO = std::make_shared<pompeii::utility::CustomFramebuffer>( device, w, h );
     // Depth attachment
     /*vk::Format attDepthFormat;
-    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat(
+    VkBool32 validDepthFormat = pompeii::utils::getSupportedDepthFormat(
       _window->physicalDevice( ), attDepthFormat );
     assert( validDepthFormat );*/
     vk::Format attDepthFormat = vk::Format::eD16Unorm;
@@ -158,7 +158,7 @@ public:
       _window->gfxQueue( )->submitAndWait( cmd );
     }
 
-    cubeTexture = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    cubeTexture = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -171,11 +171,11 @@ public:
 
     {
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "shadow_mapping_depth_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
@@ -261,7 +261,7 @@ public:
 
   void nextFrame( void ) override
   {
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    if ( Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
@@ -350,7 +350,7 @@ int main( void )
   std::vector<const char*> extensions =
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
+    POMPEII_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 

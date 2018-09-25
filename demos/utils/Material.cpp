@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 #include <glm/glm.hpp>
 
-namespace lava
+namespace pompeii
 {
   Material::Material( void )
   {

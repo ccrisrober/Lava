@@ -1,11 +1,11 @@
-set( LAVAGLFWSPARKLE_HEADERS
+set( POMPEIIGLFWSPARKLE_HEADERS
 )
-set( LAVAGLFWSPARKLE_SOURCES
+set( POMPEIIGLFWSPARKLE_SOURCES
 	main.cpp
 )
-set( LAVAGLFWSPARKLE_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWSPARKLE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWSparkle )
+common_application( pompeiiGLFWSparkle )

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -59,7 +59,7 @@ public:
 
     // TODO: BORRAR!!!!
     vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1;
-    lava::utility::RenderPassBuilder renderPass;
+    pompeii::utility::RenderPassBuilder renderPass;
     renderPass.setAttachment( vk::Format::eR16G16B16A16Sfloat, samples, 
       vk::ImageLayout::eUndefined,
       vk::ImageLayout::eGeneral, vk::AttachmentLoadOp::eClear );
@@ -103,8 +103,8 @@ public:
 
 
 
-    geometry = std::make_shared<lava::utility::Geometry>( device,
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "sphere.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( device,
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "sphere.obj_" ) );
 
     // MVP buffers
     {
@@ -112,15 +112,15 @@ public:
       atmosphere.mvpBuffer = device->createUniformBuffer( sizeof( atmosphere.uboVS ) );
     }
 
-    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_diffuse.jpg" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    tex2 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex2 = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_normal.jpg" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    tex3 = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex3 = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_clouds.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -133,11 +133,11 @@ public:
 
     {
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mesh_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
@@ -162,23 +162,23 @@ public:
 
       diffuse.pipelineLayout = device->createPipelineLayout( diffuse.descriptorSetLayout, pushConstantRange );
 
-      lava::utility::VertexInput vi( lava::utility::VertexLayout::POS_NORMAL_UV );
+      pompeii::utility::VertexInput vi( pompeii::utility::VertexLayout::POS_NORMAL_UV );
 
-      /*vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+      /*vk::VertexInputBindingDescription binding( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
         vk::VertexInputAttributeDescription(
           0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, position )
+          offsetof( pompeii::utility::Vertex, position )
         ),
         vk::VertexInputAttributeDescription(
           1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, normal )
+          offsetof( pompeii::utility::Vertex, normal )
         ),
         vk::VertexInputAttributeDescription(
           2, 0, vk::Format::eR32G32Sfloat,
-          offsetof( lava::utility::Vertex, texCoord )
+          offsetof( pompeii::utility::Vertex, texCoord )
         )
       } );*/
       PipelineVertexInputStateCreateInfo vertexInput = vi.getPipelineVertexInput( );
@@ -240,11 +240,11 @@ public:
 
     {
       auto vertexStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "atmosphere_vert.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "atmosphere_vert.spv" ),
         vk::ShaderStageFlagBits::eVertex
       );
       auto fragmentStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "atmosphere_frag.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "atmosphere_frag.spv" ),
         vk::ShaderStageFlagBits::eFragment
       );
 
@@ -262,21 +262,21 @@ public:
 
       atmosphere.pipelineLayout = device->createPipelineLayout( atmosphere.descriptorSetLayout, nullptr );
 
-      vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+      vk::VertexInputBindingDescription binding( 0, sizeof( pompeii::utility::Vertex ),
         vk::VertexInputRate::eVertex );
 
       PipelineVertexInputStateCreateInfo vertexInput( binding, {
         vk::VertexInputAttributeDescription(
           0, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, position )
+          offsetof( pompeii::utility::Vertex, position )
         ),
         vk::VertexInputAttributeDescription(
           1, 0, vk::Format::eR32G32B32Sfloat,
-          offsetof( lava::utility::Vertex, normal )
+          offsetof( pompeii::utility::Vertex, normal )
         ),
         vk::VertexInputAttributeDescription(
           2, 0, vk::Format::eR32G32Sfloat,
-          offsetof( lava::utility::Vertex, texCoord )
+          offsetof( pompeii::utility::Vertex, texCoord )
         )
       } );
 
@@ -457,7 +457,7 @@ public:
     } uboVS;
   } atmosphere;
 
-  std::shared_ptr< lava::utility::Geometry > geometry;
+  std::shared_ptr< pompeii::utility::Geometry > geometry;
 
 public:
   void mouseEvent( double xpos, double ypos )

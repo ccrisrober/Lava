@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  *
  **/
 
-#include <lava/lava.h>
-using namespace lava;
+#include <pompeii/pompeii.h>
+using namespace pompeii;
 
 #include <routes.h>
 
@@ -122,7 +122,7 @@ public:
       // Create compute shader pipelines
       std::cout << "Loading shader... ";
       auto computeStage = device->createShaderPipelineShaderStage(
-        LAVA_EXAMPLES_SPV_ROUTE + std::string( "particles_comp.spv" ),
+        POMPEII_EXAMPLES_SPV_ROUTE + std::string( "particles_comp.spv" ),
         vk::ShaderStageFlagBits::eCompute
       );
 
@@ -149,11 +149,11 @@ public:
     }
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "particles_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "particles_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "particles_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "particles_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -196,14 +196,14 @@ public:
 
   void nextFrame( void ) override
   {
-    if ( Input::isKeyPressed( lava::Keyboard::Key::Esc ) )
+    if ( Input::isKeyPressed( pompeii::Keyboard::Key::Esc ) )
     {
       _window->_window->close( );
     }
 
     uint32_t timeout = std::numeric_limits<uint64_t>::max( );
-    lava::Fence::waitForFences( { compute.fence }, true, timeout );
-    lava::Fence::resetFences( { compute.fence } );
+    pompeii::Fence::waitForFences( { compute.fence }, true, timeout );
+    pompeii::Fence::resetFences( { compute.fence } );
 
     compute.queue->submit( compute.commandBuffer, compute.fence );
 
@@ -225,7 +225,7 @@ public:
     ( vk::AccessFlagBits::eShaderWrite,
       vk::AccessFlagBits::eShaderRead, vk::ImageLayout::eGeneral,
       vk::ImageLayout::eGeneral, 0, 0,
-      std::make_shared< lava::Image >( _window->device( ), textureComputeTarget->image ),
+      std::make_shared< pompeii::Image >( _window->device( ), textureComputeTarget->image ),
       vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 )
     );
 
@@ -324,7 +324,7 @@ int main( void )
   std::vector<const char*> extensions =
   {
     VK_KHR_SURFACE_EXTENSION_NAME,  // Surface extension
-    LAVA_KHR_EXT, // OS specific surface extension
+    POMPEII_KHR_EXT, // OS specific surface extension
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME
   };
 

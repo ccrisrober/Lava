@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -32,7 +32,7 @@ using namespace lava;
 
 #include <routes.h>
 
-const std::string pipCacheFile = LAVA_EXAMPLES_ROUTE + std::string( "pipCache.bin" );
+const std::string pipCacheFile = POMPEII_EXAMPLES_ROUTE + std::string( "pipCache.bin" );
 
 class MainWindowRenderer : public glfw::VulkanWindowRenderer
 {
@@ -158,16 +158,16 @@ public:
       mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
     }
 
-    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "glass.png" ), _window->gfxCommandPool( ), 
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "planar_reflection_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "planar_reflection_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "planar_reflection_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "planar_reflection_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

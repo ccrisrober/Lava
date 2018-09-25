@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVA_QTRENDER_MAINWINDOW_H__
-#define __LAVA_QTRENDER_MAINWINDOW_H__
+#ifndef __POMPEII_QTRENDER_MAINWINDOW_H__
+#define __POMPEII_QTRENDER_MAINWINDOW_H__
 
 
 #include <QtWidgets/QAction>
@@ -38,14 +38,14 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
 
-#include <qtLava/qtLava.h>
+#include <qtPompeii/qtPompeii.h>
 
-class MainWindowRenderer : public lava::qt::VulkanWindowRenderer
+class MainWindowRenderer : public pompeii::qt::VulkanWindowRenderer
 {
 private:
-  lava::qt::VulkanWindow* _window;
+  pompeii::qt::VulkanWindow* _window;
 public:
-  MainWindowRenderer( lava::qt::VulkanWindow* window )
+  MainWindowRenderer( pompeii::qt::VulkanWindow* window )
     : _window( window )
   {
   }
@@ -82,16 +82,16 @@ public:
   }
 };
 
-class VulkanWindow : public lava::qt::VulkanWindow
+class VulkanWindow : public pompeii::qt::VulkanWindow
 {
   Q_OBJECT
 private:
 public:
   VulkanWindow( QWindow* parent = nullptr )
-    : lava::qt::VulkanWindow( parent )
+    : pompeii::qt::VulkanWindow( parent )
   {
   }
-  virtual lava::qt::VulkanWindowRenderer* createRenderer( void )
+  virtual pompeii::qt::VulkanWindowRenderer* createRenderer( void )
   {
     return new MainWindowRenderer( this );
   }
@@ -125,4 +125,4 @@ private:
   QStatusBar *statusBar;
 };
 
-#endif /* __LAVA_QTRENDER_MAINWINDOW_H__ */
+#endif /* __POMPEII_QTRENDER_MAINWINDOW_H__ */

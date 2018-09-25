@@ -1,10 +1,10 @@
-set( LAVAGLFWPARTICLES_HEADERS
+set( POMPEIIGLFWPARTICLES_HEADERS
 )
-set( LAVAGLFWPARTICLES_SOURCES
+set( POMPEIIGLFWPARTICLES_SOURCES
 	main.cpp
 )
-set( LAVAGLFWPARTICLES_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWPARTICLES_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWParticles )
+common_application( pompeiiGLFWParticles )

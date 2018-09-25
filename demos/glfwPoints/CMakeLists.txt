@@ -1,10 +1,10 @@
-set( LAVAGLFWPOINTS_HEADERS
+set( POMPEIIGLFWPOINTS_HEADERS
 )
-set( LAVAGLFWPOINTS_SOURCES
+set( POMPEIIGLFWPOINTS_SOURCES
 	main.cpp
 )
-set( LAVAGLFWPOINTS_LINK_LIBRARIES
-	lava
-	glfwLava
+set( POMPEIIGLFWPOINTS_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
 )
-common_application( lavaGLFWPoints )
+common_application( pompeiiGLFWPoints )

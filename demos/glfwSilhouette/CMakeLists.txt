@@ -1,11 +1,11 @@
-set( LAVAGLFWSILHOUETTE_HEADERS
+set( POMPEIIGLFWSILHOUETTE_HEADERS
 )
-set( LAVAGLFWSILHOUETTE_SOURCES
+set( POMPEIIGLFWSILHOUETTE_SOURCES
 	main.cpp
 )
-set( LAVAGLFWSILHOUETTE_LINK_LIBRARIES
-	lava
-	glfwLava
-	lavaUtils
+set( POMPEIIGLFWSILHOUETTE_LINK_LIBRARIES
+	pompeii
+	glfwPompeii
+	pompeiiUtils
 )
-common_application( lavaGLFWSilhouette )
+common_application( pompeiiGLFWSilhouette )

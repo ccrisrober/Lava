@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -176,7 +176,7 @@ public:
     w = sc.width;
     h = sc.height;
 
-    postProcessFBO = std::make_shared<lava::utility::CustomFramebuffer>( device, w, h );
+    postProcessFBO = std::make_shared<pompeii::utility::CustomFramebuffer>( device, w, h );
 
     // Color attachments
     // Attachment 0: Color
@@ -187,7 +187,7 @@ public:
 
     // Depth attachment
     vk::Format attDepthFormat;
-    VkBool32 validDepthFormat = lava::utils::getSupportedDepthFormat(
+    VkBool32 validDepthFormat = pompeii::utils::getSupportedDepthFormat(
       _window->physicalDevice( ), attDepthFormat );
     assert( validDepthFormat );
 
@@ -269,11 +269,11 @@ public:
     } );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "vignette_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "vignette_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -295,7 +295,7 @@ public:
     w = sc.width;
     h = sc.height;
 
-    postProcessFBO2 = std::make_shared<lava::utility::CustomFramebuffer>( device, w, h );
+    postProcessFBO2 = std::make_shared<pompeii::utility::CustomFramebuffer>( device, w, h );
 
     // Color attachments
     // Attachment 0: Color
@@ -380,11 +380,11 @@ public:
     } );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "tintPostProcess_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "tintPostProcess_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -443,16 +443,16 @@ public:
       mvpBuffer = device->createUniformBuffer( sizeof( uboVS ) );
     }
 
-    tex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "uv_checker.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "cubeUV_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 

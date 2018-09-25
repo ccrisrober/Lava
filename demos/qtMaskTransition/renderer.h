@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,18 +19,18 @@
 
 #pragma once
 
-#include <qtLava/qtLava.h>
+#include <qtPompeii/qtPompeii.h>
 
 #include "../utils/Camera.h"
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <routes.h>
 #include "vulkanwindow.h"
 
 #include <unordered_map>
 
-class Renderer: public lava::qt::VulkanWindowRenderer
+class Renderer: public pompeii::qt::VulkanWindowRenderer
 {
 private:
   struct PushConstant
@@ -49,7 +49,7 @@ public:
   {
     auto device = _window->device( );
 
-    _MaskTex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    _MaskTex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "masks/Mask" ) + std::to_string( i ) + std::string(".png" ), 
       _window->gfxCommandPool( ), _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -82,11 +82,11 @@ public:
   {
     auto device = _window->device( );
 
-    _MainTex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    _MainTex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "sample.png" ), _window->gfxCommandPool( ), 
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
-    _TransTex = device->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    _TransTex = device->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "glass.png" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -123,11 +123,11 @@ public:
     updateCurrentImage( 0 );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "fullquad_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "mask_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "mask_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
 
@@ -200,7 +200,7 @@ public:
     _window->frameReady( );
   }
 private:
-  lava::qt::VulkanWindow* _window;
+  pompeii::qt::VulkanWindow* _window;
 
   std::shared_ptr< DescriptorSet > descriptorSet;
   std::shared_ptr< DescriptorSetLayout > descriptorSetLayout;

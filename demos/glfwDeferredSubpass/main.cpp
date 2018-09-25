@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include <glfwLava/glfwLava.h>
-#include <lavaUtils/lavaUtils.h>
-using namespace lava;
+#include <glfwPompeii/glfwPompeii.h>
+#include <pompeiiUtils/pompeiiUtils.h>
+using namespace pompeii;
 
 #include <glm/glm.hpp>
 
@@ -36,7 +36,7 @@ private:
 
   Camera camera;
 
-  std::shared_ptr< lava::utility::Geometry > geometry;
+  std::shared_ptr< pompeii::utility::Geometry > geometry;
 
   struct Light
   {
@@ -59,8 +59,8 @@ private:
 
   struct
   {
-    std::shared_ptr< lava::UniformBuffer > GBuffer;
-    std::shared_ptr< lava::UniformBuffer > lights;
+    std::shared_ptr< pompeii::UniformBuffer > GBuffer;
+    std::shared_ptr< pompeii::UniformBuffer > lights;
   } uniformBuffers;
 
   struct
@@ -268,11 +268,11 @@ public:
     SpecializationInfo specInfo( specMapEntries, &specData );
 
     auto vertexStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "composition_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "composition_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = device->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "composition_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "composition_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment, specInfo
     );
 
@@ -300,21 +300,21 @@ public:
 
   void preparePipelines( void )
   {
-    vk::VertexInputBindingDescription binding( 0, sizeof( lava::utility::Vertex ),
+    vk::VertexInputBindingDescription binding( 0, sizeof( pompeii::utility::Vertex ),
       vk::VertexInputRate::eVertex );
 
     PipelineVertexInputStateCreateInfo vertexInput( binding, {
       vk::VertexInputAttributeDescription(
         0, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::utility::Vertex, position )
+        offsetof( pompeii::utility::Vertex, position )
       ),
       vk::VertexInputAttributeDescription(
         1, 0, vk::Format::eR32G32B32Sfloat,
-        offsetof( lava::utility::Vertex, normal )
+        offsetof( pompeii::utility::Vertex, normal )
       ),
       vk::VertexInputAttributeDescription(
         2, 0, vk::Format::eR32G32Sfloat,
-        offsetof( lava::utility::Vertex, texCoord )
+        offsetof( pompeii::utility::Vertex, texCoord )
       )
     } );
 
@@ -348,11 +348,11 @@ public:
     } );
 
     auto vertexStage = _window->device( )->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "gbuffer_vert.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "gbuffer_vert.spv" ),
       vk::ShaderStageFlagBits::eVertex
     );
     auto fragmentStage = _window->device( )->createShaderPipelineShaderStage(
-      LAVA_EXAMPLES_SPV_ROUTE + std::string( "gbuffer_frag.spv" ),
+      POMPEII_EXAMPLES_SPV_ROUTE + std::string( "gbuffer_frag.spv" ),
       vk::ShaderStageFlagBits::eFragment
     );
     pipelines.offscreen = _window->device( )->createGraphicsPipeline( 
@@ -416,10 +416,10 @@ public:
 
   virtual void initResources( void ) override
   {
-    geometry = std::make_shared<lava::utility::Geometry>( _window->device( ),
-      LAVA_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
+    geometry = std::make_shared<pompeii::utility::Geometry>( _window->device( ),
+      POMPEII_EXAMPLES_MESHES_ROUTE + std::string( "wolf.obj_" ) );
 
-    tex = _window->device( )->createTexture2D( LAVA_EXAMPLES_IMAGES_ROUTE +
+    tex = _window->device( )->createTexture2D( POMPEII_EXAMPLES_IMAGES_ROUTE +
       std::string( "earth/earth_diffuse.jpg" ), _window->gfxCommandPool( ),
       _window->gfxQueue( ), vk::Format::eR8G8B8A8Unorm );
 
@@ -478,8 +478,8 @@ public:
     _window->frameReady( );
   }
 protected:
-  std::shared_ptr< lava::DescriptorPool > descriptorPool;
-  std::shared_ptr< lava::Texture > tex;
+  std::shared_ptr< pompeii::DescriptorPool > descriptorPool;
+  std::shared_ptr< pompeii::Texture > tex;
 };
 
 class VulkanWindow : public glfw::VulkanWindow
@@ -493,7 +493,7 @@ public:
 
   virtual void setupFramebuffer( void ) override
   {
-    std::vector<std::shared_ptr<lava::ImageView>> attachmentsIV( 5 );
+    std::vector<std::shared_ptr<pompeii::ImageView>> attachmentsIV( 5 );
 
     _framebuffers.resize( _swapchain->count( ) );
     // Create frame buffers for every swap chain image
