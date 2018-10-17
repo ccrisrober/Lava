@@ -22,7 +22,7 @@
 #include "Image.h"
 #include "PhysicalDevice.h"
 
-#include "utils.hpp"
+#include "utilities.hpp"
 
 namespace pompeii
 {

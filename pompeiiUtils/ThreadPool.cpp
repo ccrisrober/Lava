@@ -33,7 +33,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     void Thread::queueLoop( void )
     {

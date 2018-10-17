@@ -20,7 +20,7 @@
 #ifndef __POMPEIIUTILS_MESH__
 #define __POMPEIIUTILS_MESH__
 
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -30,7 +30,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     struct Vertex
     {

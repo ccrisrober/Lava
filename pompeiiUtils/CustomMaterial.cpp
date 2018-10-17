@@ -21,7 +21,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     void CustomMaterial::bind( std::shared_ptr<CommandBuffer> cmd )
     {

@@ -24,6 +24,7 @@
 #include "VulkanResource.h"
 #include "RenderPass.h"
 #include "Log.h"
+#include <cmath>
 
 #include <fstream>
 

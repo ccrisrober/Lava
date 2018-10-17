@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __LAVA_UTILS_GLSL2SPV__
-#define __LAVA_UTILS_GLSL2SPV__
+#ifndef __POMPEII_UTILS_GLSL2SPV__
+#define __POMPEII_UTILS_GLSL2SPV__
 
 #include <pompeii/pompeii.h>
 #include <pompeiiUtils/api.h>
@@ -28,7 +28,7 @@
 
 namespace pompeii
 {
-	namespace utility
+	namespace utils
 	{
     class GLSLToSPIRVCompiler
     {
@@ -47,4 +47,4 @@ namespace pompeii
 	}
 }
 
-#endif /* __LAVA_UTILS_GLSL2SPV__ */
+#endif /* __POMPEII_UTILS_GLSL2SPV__ */

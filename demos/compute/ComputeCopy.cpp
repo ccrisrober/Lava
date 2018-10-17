@@ -147,7 +147,7 @@ int main( void )
 
   std::cout << "Run computations...";
 
-  auto commandBuffer = std::make_shared<pompeii::utility::ComputeCmdBuffer>( 
+  auto commandBuffer = std::make_shared<pompeii::utils::ComputeCmdBuffer>( 
     commandPool, pipeline, pipelineLayout, descriptorSet, bufferElements, 1, 1, 
     vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
   /*auto commandBuffer = commandPool->allocateCommandBuffer( );

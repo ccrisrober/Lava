@@ -2,7 +2,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     UIOverlay::UIOverlay( UIOverlayCreateInfo createInfo )
     {

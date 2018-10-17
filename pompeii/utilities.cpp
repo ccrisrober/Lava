@@ -17,7 +17,7 @@
  *
  **/
 
-#include "utils.hpp"
+#include "utilities.hpp"
 #include "Log.h"
 
 #include <sstream>
@@ -28,7 +28,7 @@
 
 namespace pompeii
 {
-   short utils::channelsFromFormat( const vk::Format& )
+   short utilities::channelsFromFormat( const vk::Format& )
    {
      short numChannels = 4;
      // TODO: https://github.com/googlesamples/vulkan-basic-samples/blob/master/layers/vk_format_utils.cpp
@@ -111,7 +111,7 @@ namespace pompeii
      }*/
      return numChannels;
    }
-   void utils::saveScreenshot( std::shared_ptr<Device> device,
+   void utilities::saveScreenshot( std::shared_ptr<Device> device,
     const char * filename, uint32_t width, uint32_t height, 
     vk::Format colorFormat, std::shared_ptr<Image> srcImage,
     std::shared_ptr<CommandPool> cmdPool, std::shared_ptr<Queue> queue )
@@ -161,7 +161,7 @@ namespace pompeii
     copyCmd->begin( );
 
     // Transition destination image to transfer destination layout
-    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage, { },
+    pompeii::utilities::insertImageMemoryBarrier( copyCmd, dstImage, { },
       vk::AccessFlagBits::eTransferWrite,
       vk::ImageLayout::eUndefined,
       vk::ImageLayout::eTransferDstOptimal,
@@ -172,7 +172,7 @@ namespace pompeii
       )
     );
     // Transition swapchain image from present to transfer source layout
-    pompeii::utils::insertImageMemoryBarrier( copyCmd, srcImage,
+    pompeii::utilities::insertImageMemoryBarrier( copyCmd, srcImage,
       vk::AccessFlagBits::eMemoryRead,
       vk::AccessFlagBits::eTransferRead,
       vk::ImageLayout::ePresentSrcKHR,
@@ -329,7 +329,7 @@ namespace pompeii
     Log::info( "Screenshot saved to disk" );
   }
 
-  /*void utils::saveToPPM( const char* file, uint32_t width, uint32_t height, 
+  /*void utilities::saveToPPM( const char* file, uint32_t width, uint32_t height, 
     const std::shared_ptr< pompeii::Image >& image, vk::ImageAspectFlags aspect )
   {
     vk::ImageSubresource isr;
@@ -339,7 +339,7 @@ namespace pompeii
 
   }*/
   
-  unsigned char* utils::loadImageTexture( const std::string& fileName,
+  unsigned char* utilities::loadImageTexture( const std::string& fileName,
     uint32_t& width, uint32_t& height, uint32_t& numChannels )
   {
     int w, h, c;
@@ -361,7 +361,7 @@ namespace pompeii
     return pixels;
   }
   
-  std::vector<char> utils::readBinaryile( const std::string& fileName )
+  std::vector<char> utilities::readBinaryile( const std::string& fileName )
   {
     std::ifstream file( fileName, std::ios::ate | std::ios::binary );
 
@@ -381,7 +381,7 @@ namespace pompeii
     return buffer;
   }
 	
-  const std::string utils::translateVulkanResult( vk::Result res )
+  const std::string utilities::translateVulkanResult( vk::Result res )
 	{
     VkResult result = VkResult( res );
     switch ( result ) {
@@ -457,7 +457,7 @@ namespace pompeii
     }
 	}
   
-  void utils::transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
+  void utilities::transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
     std::shared_ptr<Image> image,
     vk::ImageAspectFlags aspectMask,
     vk::ImageLayout oldImageLayout,
@@ -473,7 +473,7 @@ namespace pompeii
     transitionImageLayout( cmd, image, oldImageLayout, newImageLayout, 
       subresourceRange, srcStageMask, dstStageMask );
   }
-  void utils::insertImageMemoryBarrier( 
+  void utilities::insertImageMemoryBarrier( 
     const std::shared_ptr<CommandBuffer> cmdbuffer, 
     std::shared_ptr<Image> image, 
     vk::AccessFlags srcAccessMask, vk::AccessFlags dstAccessMask, 
@@ -489,7 +489,7 @@ namespace pompeii
     cmdbuffer->pipelineBarrier( srcStageMask, dstStageMask, {}, {}, {}, imr );
   }
 
-  void utils::transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
+  void utilities::transitionImageLayout( const std::shared_ptr<CommandBuffer>& cmd,
     std::shared_ptr<Image> image,
     vk::ImageLayout oldImageLayout,
     vk::ImageLayout newImageLayout,

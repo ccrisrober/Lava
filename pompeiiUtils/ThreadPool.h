@@ -32,7 +32,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     class Thread
     {

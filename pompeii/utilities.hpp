@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __POMPEII_UTILS__
-#define __POMPEII_UTILS__
+#ifndef __POMPEII_UTILITIESS__
+#define __POMPEII_UTILITIESS__
 
 #include "includes.hpp"
 
@@ -32,7 +32,7 @@
 
 namespace pompeii
 {
-	class utils
+	class utilities
 	{
   public:
     template< class E >
@@ -176,4 +176,4 @@ namespace pompeii
 	};
 }
 
-#endif /* __POMPEII_UTILS__ */
+#endif /* __POMPEII_UTILITIESS__ */

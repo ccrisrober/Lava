@@ -19,10 +19,10 @@
 
 #include "Mesh.h"
 
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     Mesh::Mesh( const aiMesh *mesh )
     {

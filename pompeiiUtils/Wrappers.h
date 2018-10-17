@@ -6,7 +6,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     struct FramebufferColorAttachment
     {

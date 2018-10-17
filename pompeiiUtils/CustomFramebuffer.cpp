@@ -21,7 +21,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     CustomFramebuffer::CustomFramebuffer( std::shared_ptr< Device > device,
       uint32_t w, uint32_t h )

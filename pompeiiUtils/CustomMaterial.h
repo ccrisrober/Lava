@@ -27,7 +27,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     class CustomMaterial: public pompeii::VulkanResource
     {

@@ -42,7 +42,7 @@ set( POMPEII_PUBLIC_HEADERS
   Framebuffer.h
   Pipeline.h
 
-  utils.hpp
+  utilities.hpp
 
   VulkanResource.h
 
@@ -86,7 +86,7 @@ set( POMPEII_SOURCES
   Framebuffer.cpp
   Pipeline.cpp
 
-  utils.cpp
+  utilities.cpp
 
   VulkanResource.cpp
 

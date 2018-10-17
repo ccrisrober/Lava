@@ -21,7 +21,7 @@
 
 namespace pompeii
 {
-	namespace utility
+	namespace utils
 	{
 		Node::Node( const std::string& name )
 		: _parent( nullptr )

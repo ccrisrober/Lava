@@ -17,15 +17,15 @@
  *
  **/
 
-#ifndef __LAVA_UTILS_CUSTOMFRAMEBUFFER__
-#define __LAVA_UTILS_CUSTOMFRAMEBUFFER__
+#ifndef __POMPEII_UTILS_CUSTOMFRAMEBUFFER__
+#define __POMPEII_UTILS_CUSTOMFRAMEBUFFER__
 
 #include <pompeii/pompeii.h>
 #include <pompeiiUtils/api.h>
 
 namespace pompeii
 {
-	namespace utility
+	namespace utils
 	{
 		struct FramebufferAttachment
 		{
@@ -109,4 +109,4 @@ namespace pompeii
 	}
 }
 
-#endif /* __LAVA_UTILS_CUSTOMFRAMEBUFFER__ */
+#endif /* __POMPEII_UTILS_CUSTOMFRAMEBUFFER__ */

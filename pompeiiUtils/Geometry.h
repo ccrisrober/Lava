@@ -20,7 +20,7 @@
 #ifndef __POMPEIIUTILS_GEOMETRY__
 #define __POMPEIIUTILS_GEOMETRY__
 
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 
 #include <memory>
 
@@ -33,7 +33,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     class Geometry : public pompeii::VulkanResource
     {

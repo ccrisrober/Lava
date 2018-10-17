@@ -20,7 +20,7 @@
 #ifndef __POMPEIIUTILS_MODELIMPORTER__
 #define __POMPEIIUTILS_MODELIMPORTER__
 
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 
 #include <pompeiiUtils/api.h>
 
@@ -33,7 +33,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     class ModelImporter
     {

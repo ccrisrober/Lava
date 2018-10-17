@@ -2,7 +2,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     OffscreenFBO::OffscreenFBO( const std::shared_ptr<Device>& device,
       uint32_t w, uint32_t h )

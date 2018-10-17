@@ -21,7 +21,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     GLSLToSPIRVCompiler::GLSLToSPIRVCompiler( void )
     {

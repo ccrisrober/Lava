@@ -20,11 +20,11 @@
 #include "Material.h"
 #include <iostream>
 
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     Material::Material( const aiMaterial* mtl, const std::string& globalPath )
     {

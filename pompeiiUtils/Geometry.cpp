@@ -19,11 +19,11 @@
 
 #include "Geometry.h"
 #include "ModelImporter.h"
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     Geometry::Geometry( const std::shared_ptr<Device>& device, 
       const std::string& path, bool adjancency )

@@ -26,7 +26,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     template <class T>
     class CustomPingPong

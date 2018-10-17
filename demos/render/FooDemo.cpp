@@ -319,7 +319,7 @@ int main( )
   height = 1024;
   vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
   vk::Format depthFormat;
-  pompeii::utils::getSupportedDepthFormat( physicalDevice, depthFormat );
+  pompeii::utilities::getSupportedDepthFormat( physicalDevice, depthFormat );
 
   {
     // Color attachment
@@ -434,7 +434,7 @@ int main( )
     
 
     std::vector<uint32_t> vtx_spv, frg_spv;
-    pompeii::utility::GLSLtoSPV( vk::ShaderStageFlagBits::eVertex, R"(#version 450
+    pompeii::utils::GLSLtoSPV( vk::ShaderStageFlagBits::eVertex, R"(#version 450
 
     layout( location = 0 ) in vec3 inPos;
     layout( location = 1 ) in vec3 inColor;
@@ -444,14 +444,14 @@ int main( )
     layout( push_constant ) uniform PushConsts
     {
       mat4 MVP;
-    };
+    } pcte;
 
     void main( ) 
     {
-      gl_Position = MVP * vec4( inPos.xyz, 1.0 );
+      gl_Position = pcte.MVP * vec4( inPos.xyz, 1.0 );
       outColor = inColor;
     } )", vtx_spv );
-    GLSLtoSPV( vk::ShaderStageFlagBits::eFragment, R"(#version 450
+    pompeii::utils::GLSLtoSPV( vk::ShaderStageFlagBits::eFragment, R"(#version 450
 
     layout( location = 0 ) in vec3 inColor;
 
@@ -587,7 +587,7 @@ int main( )
     auto copyCmd = cmdPool->allocateCommandBuffer( );
     copyCmd->begin( );
 
-    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage,
+    pompeii::utilities::insertImageMemoryBarrier( copyCmd, dstImage,
       vk::AccessFlagBits( ), vk::AccessFlagBits::eTransferWrite,
       vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
       vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
@@ -612,7 +612,7 @@ int main( )
 
     // Transition destination image to general layout, which is the 
     //    required layout for mapping the image memory later on
-    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage,
+    pompeii::utilities::insertImageMemoryBarrier( copyCmd, dstImage,
       vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eMemoryRead,
       vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
       vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,

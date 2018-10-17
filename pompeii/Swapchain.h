@@ -27,7 +27,7 @@
 
 #include <pompeii/Fence.h>
 
-#include "utils.hpp"
+#include "utilities.hpp"
 
 namespace pompeii
 {
@@ -36,7 +36,9 @@ namespace pompeii
 
 namespace pompeii
 {
-  class Swapchain: public VulkanResource, public utils::NonCopyable
+  class Swapchain:
+    public VulkanResource,
+    public utilities::NonCopyable
   {
   public:
     POMPEII_API

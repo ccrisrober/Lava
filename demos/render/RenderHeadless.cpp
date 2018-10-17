@@ -148,7 +148,7 @@ int main( )
   height = 1024;
   vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
   vk::Format depthFormat;
-  pompeii::utils::getSupportedDepthFormat( physicalDevice, depthFormat );
+  pompeii::utilities::getSupportedDepthFormat( physicalDevice, depthFormat );
 
   {
     // Color attachment
@@ -381,7 +381,7 @@ int main( )
     auto copyCmd = cmdPool->allocateCommandBuffer( );
     copyCmd->begin( );
 
-    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage,
+    pompeii::utilities::insertImageMemoryBarrier( copyCmd, dstImage,
       vk::AccessFlagBits( ), vk::AccessFlagBits::eTransferWrite,
       vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
       vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
@@ -406,7 +406,7 @@ int main( )
 
     // Transition destination image to general layout, which is the 
     //    required layout for mapping the image memory later on
-    pompeii::utils::insertImageMemoryBarrier( copyCmd, dstImage,
+    pompeii::utilities::insertImageMemoryBarrier( copyCmd, dstImage,
       vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eMemoryRead,
       vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
       vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,

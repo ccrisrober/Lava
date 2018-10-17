@@ -23,7 +23,7 @@
 #include <pompeii/Buffer.h>
 #include <pompeii/PhysicalDevice.h>
 
-#include "utils.hpp"
+#include "utilities.hpp"
 
 namespace pompeii
 {
@@ -119,7 +119,7 @@ namespace pompeii
     // Image barrier for optimal image (target)
     // Optimal image will be used as destination for the copy
     // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-    utils::transitionImageLayout(
+    utilities::transitionImageLayout(
       copyCmd,
       image,
       vk::ImageLayout::eUndefined,          // Old layout is undefined
@@ -135,7 +135,7 @@ namespace pompeii
     this->imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
     // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    utils::transitionImageLayout(
+    utilities::transitionImageLayout(
       copyCmd,
       image,
       vk::ImageLayout::eTransferDstOptimal, // Older layout

@@ -22,7 +22,7 @@
 #include <pompeii/Buffer.h>
 #include <pompeii/PhysicalDevice.h>
 
-#include "utils.hpp"
+#include "utilities.hpp"
 
 namespace pompeii
 {
@@ -35,7 +35,7 @@ namespace pompeii
     : Texture( device_ )
   {
     unsigned int channels;
-    unsigned char* pixels = pompeii::utils::loadImageTexture( 
+    unsigned char* pixels = pompeii::utilities::loadImageTexture( 
       filename, width, height, channels );
 
     channels = 4; // TODO: hardcoded
@@ -98,7 +98,7 @@ namespace pompeii
       // Image barrier for optimal image (target)
       // Optimal image will be used as destination for the copy
       // Transition image layout VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-      utils::transitionImageLayout(
+      utilities::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageLayout::eUndefined,          // Old layout is undefined
@@ -130,7 +130,7 @@ namespace pompeii
       this->imageLayout = imageLayout_;
       
       // Transition image layout VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-      utils::transitionImageLayout(
+      utilities::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageLayout::eTransferDstOptimal, // Older layout
@@ -182,7 +182,7 @@ namespace pompeii
       copyCmd->begin( vk::CommandBufferUsageFlagBits::eOneTimeSubmit );
       
       // Setup image memory barrier
-      utils::transitionImageLayout(
+      utilities::transitionImageLayout(
         copyCmd,
         image,
         vk::ImageAspectFlagBits::eColor,

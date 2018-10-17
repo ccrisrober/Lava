@@ -20,7 +20,7 @@
 #ifndef __POMPEIIUTILS_MATERIAL__
 #define __POMPEIIUTILS_MATERIAL__
 
-#ifdef LAVA_USE_ASSIMP
+#ifdef POMPEII_USE_ASSIMP
 
 #include <assimp/material.h>
 #include <glm/glm.hpp>
@@ -29,7 +29,7 @@
 
 namespace pompeii
 {
-  namespace utility
+  namespace utils
   {
     class Material
     {
