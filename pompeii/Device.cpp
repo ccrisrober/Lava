@@ -465,6 +465,13 @@ namespace pompeii
     auto shaderModule = createShaderModule( spvFile, stage );
     return PipelineShaderStageCreateInfo( stage, shaderModule, "main", specInfo );
   }
+  const PipelineShaderStageCreateInfo Device::createShaderPipelineShaderStage(
+    const std::shared_ptr<ShaderModule>& shaderModule, vk::ShaderStageFlagBits stage,
+    vk::Optional<const SpecializationInfo> specInfo )
+  {
+    return PipelineShaderStageCreateInfo( stage, shaderModule, "main", specInfo );
+  }
+#ifdef POMPEII_DEVICE_BUILDERS
   const PipelineShaderStageCreateInfo Device::createVertexShaderStage( 
     const std::string & spvFile, vk::Optional<const SpecializationInfo> specInfo )
   {
@@ -501,6 +508,7 @@ namespace pompeii
     return createShaderPipelineShaderStage( spvFile,
       vk::ShaderStageFlagBits::eCompute, specInfo );
   }
+#endif
 #ifdef POMPEII_DEVICE_BUILDERS
   std::shared_ptr<UniformBuffer> Device::createUniformBuffer( vk::DeviceSize size )
   {

@@ -28,24 +28,23 @@ set( POMPEII_DESCRIPTION "POMPEII" )
 include(Common)
 
 # Allow warnings
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
 option( POMPEII_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
-option( POMPEII_WITH_EXAMPLES "POMPEII examples" ON)
-option( POMPEIIENGINE_WITH_COMPONENTS "POMPEII with components" ON )
+#option( POMPEII_WITH_EXAMPLES "POMPEII examples" ON)
+#option( POMPEIIENGINE_WITH_COMPONENTS "POMPEII with components" ON )
 
-if ( POMPEIIENGINE_WITH_COMPONENTS )
-  list(APPEND COMMON_FIND_PACKAGE_DEFINES POMPEIIENGINE_HASCOMPONENTS)
-endif( )
+#if ( POMPEIIENGINE_WITH_COMPONENTS )
+#  list(APPEND COMMON_FIND_PACKAGE_DEFINES POMPEIIENGINE_HASCOMPONENTS)
+#endif( )
 
 if ( POMPEII_WITH_DEVICE_BUILDERS )
   list(APPEND COMMON_FIND_PACKAGE_DEFINES POMPEII_DEVICE_BUILDERS )
 endif( )
 
-
-set(STBI_INCLUDE_DIR ../stbi)
+set( STBI_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/stbi" )
 
 common_find_package( Vulkan REQUIRED SYSTEM )
 common_find_package( STBI REQUIRED SYSTEM )
@@ -67,32 +66,31 @@ endif()
 
 common_find_package_post( )
 
-#add glslang
-option(ENABLE_GLSLANG_BINARIES "Enable GLSLang Binaries" OFF)
-add_subdirectory(vendor/glslang)
-
-#option(ENABLE_GLSLANG_BINARIES "Enable GLSLang Binaries" OFF)
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang")
-#SET( ENABLE_HLSL OFF CACHE BOOL "Enables HLSL input support" )
 
 add_subdirectory( pompeii )
 
-if( GLFW3_FOUND )
-  add_subdirectory( glfwPompeii )
-endif( )
+#add glslang
+option( ENABLE_GLSLANG_BINARIES "Enable GLSLang Binaries" OFF )
+option( BUILD_TESTING OFF )
+option( ENABLE_HLSL OFF)
+add_subdirectory( vendor/glslang )
 
-if( QT5CORE_FOUND )
-  add_subdirectory( qtPompeii )
-endif( )
+#if( GLFW3_FOUND )
+#  add_subdirectory( glfwPompeii )
+#endif( )
+
+#if( QT5CORE_FOUND )
+#  add_subdirectory( qtPompeii )
+#endif( )
 
 add_subdirectory( pompeiiUtils )
 #add_subdirectory( pompeiiEngine )
 
 add_subdirectory( demos )
 
-if(${Boost_FOUND})
-  add_subdirectory(tests)
-endif()
+#if(${Boost_FOUND})
+#  add_subdirectory(tests)
+#endif()
 
 configure_file(
   CMake/glsl2spv.cmake
@@ -104,5 +102,5 @@ install( FILES CMake/glsl2spv.cmake
 
 set(DOXYGEN_MAINPAGE_MD ${PROJECT_SOURCE_DIR}/README.md)
 set(DOXYGEN_EXTRA_INPUT ${DOXYGEN_MAINPAGE_MD})
-include(CPackConfig)
+# TODO: CRISTIAN ARREGLAR include(CPackConfig)
 include(DoxygenRule)

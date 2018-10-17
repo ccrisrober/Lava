@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __POMPEII_UTILS_CUSTOMFRAMEBUFFER__
-#define __POMPEII_UTILS_CUSTOMFRAMEBUFFER__
+#ifndef __LAVA_UTILS_CUSTOMFRAMEBUFFER__
+#define __LAVA_UTILS_CUSTOMFRAMEBUFFER__
 
 #include <pompeii/pompeii.h>
 #include <pompeiiUtils/api.h>
@@ -109,4 +109,4 @@ namespace pompeii
 	}
 }
 
-#endif /* __POMPEII_UTILS_CUSTOMFRAMEBUFFER__ */
+#endif /* __LAVA_UTILS_CUSTOMFRAMEBUFFER__ */

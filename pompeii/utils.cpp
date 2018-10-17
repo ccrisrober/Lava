@@ -328,6 +328,16 @@ namespace pompeii
 
     Log::info( "Screenshot saved to disk" );
   }
+
+  /*void utils::saveToPPM( const char* file, uint32_t width, uint32_t height, 
+    const std::shared_ptr< pompeii::Image >& image, vk::ImageAspectFlags aspect )
+  {
+    vk::ImageSubresource isr;
+    isr.aspectMask = aspect;
+    vk::SubresourceLayout srl;
+
+
+  }*/
   
   unsigned char* utils::loadImageTexture( const std::string& fileName,
     uint32_t& width, uint32_t& height, uint32_t& numChannels )

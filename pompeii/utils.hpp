@@ -111,6 +111,11 @@ namespace pompeii
       return false;
     }
 
+    /*POMPEII_API
+    static void saveToPPM( const char* file, uint32_t width, uint32_t height, 
+      const std::shared_ptr< pompeii::Image >& image,
+      vk::ImageAspectFlags aspect = vk::ImageAspectFlagBits::eColor );*/
+
     POMPEII_API
     static unsigned char* loadImageTexture( const std::string& fileName,
       uint32_t& width, uint32_t& height, uint32_t& numChannels );

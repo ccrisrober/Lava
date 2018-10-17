@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "Mesh.h"
 
-#ifdef POMPEII_USE_ASSIMP
+#ifdef LAVA_USE_ASSIMP
 namespace pompeii
 {
   namespace utility

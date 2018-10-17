@@ -475,12 +475,12 @@ namespace pompeii
 #endif
 
   public:
-    POMPEII_API
+    /*POMPEII_API
     void pushDescriptorSetKHR( vk::PipelineBindPoint bindpoint, 
       std::shared_ptr<PipelineLayout> pipLayout, uint32_t set, 
       vk::ArrayProxy<WriteDescriptorSet> descriptorWrites );
-  protected:
-    PFN_vkCmdPushDescriptorSetKHR vkCmdPushDescriptorSetKHR = nullptr;
+  //protected:
+  //  PFN_vkCmdPushDescriptorSetKHR vkCmdPushDescriptorSetKHR = nullptr;*/
   };
   
   template<typename T>

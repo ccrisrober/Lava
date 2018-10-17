@@ -3,12 +3,14 @@
 #include <pompeii/pompeii.h>
 #include <pompeiiUtils/api.h>
 
+#include <glslang/SPIRV/GlslangToSpv.h>
+
 namespace pompeii
 {
   namespace utility
   {
     POMPEIIUTILS_API
-    std::vector<uint32_t> compileGLSLToSPIRV(vk::ShaderStageFlagBits stage, 
-      std::string const & source);
+    bool GLSLtoSPV( vk::ShaderStageFlagBits shaderType, const char* pshader,
+      std::vector<uint32_t>& spirv );
   }
 }

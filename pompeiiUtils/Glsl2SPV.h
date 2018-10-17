@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 - 2018, Lava
+ * Copyright (c) 2017 - 2018, Pompeii
  * All rights reserved.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  *
  **/
 
-#ifndef __POMPEII_UTILS_GLSL2SPV__
-#define __POMPEII_UTILS_GLSL2SPV__
+#ifndef __LAVA_UTILS_GLSL2SPV__
+#define __LAVA_UTILS_GLSL2SPV__
 
 #include <pompeii/pompeii.h>
 #include <pompeiiUtils/api.h>
@@ -47,4 +47,4 @@ namespace pompeii
 	}
 }
 
-#endif /* __POMPEII_UTILS_GLSL2SPV__ */
+#endif /* __LAVA_UTILS_GLSL2SPV__ */

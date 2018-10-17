@@ -317,6 +317,11 @@ namespace pompeii
       const std::string& spvFile, vk::ShaderStageFlagBits stage,
       vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
 
+    POMPEII_API
+    const PipelineShaderStageCreateInfo createShaderPipelineShaderStage(
+      const std::shared_ptr<ShaderModule>& shaderModule, vk::ShaderStageFlagBits stage,
+      vk::Optional<const SpecializationInfo> specializationInfo = nullptr );
+
 
 
 #ifdef POMPEII_DEVICE_BUILDERS

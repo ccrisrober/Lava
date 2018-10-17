@@ -28,8 +28,6 @@ namespace pompeii
 {
   namespace engine
   {
-    //class Renderer;
-    class Camera;
   }
 }
 

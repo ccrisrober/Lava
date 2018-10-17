@@ -1,5 +1,4 @@
 #include "Compiler.h"
-#include <glslang/SPIRV/GlslangToSpv.h>
 
 #include <iostream>
 
@@ -7,26 +6,34 @@ namespace pompeii
 {
   namespace utility
   {
-    class GLSLToSPIRVCompiler
+    EShLanguage FindLanguage(const vk::ShaderStageFlagBits shaderType)
     {
-    public:
-      GLSLToSPIRVCompiler( void );
-      ~GLSLToSPIRVCompiler( void );
+      switch (shaderType) {
+        case vk::ShaderStageFlagBits::eVertex:
+          return EShLangVertex;
 
-      POMPEIIUTILS_API
-      std::vector<uint32_t> compile(vk::ShaderStageFlagBits stage, 
-        const std::string& source) const;
+        case vk::ShaderStageFlagBits::eTessellationControl:
+          return EShLangTessControl;
 
-    private:
-      TBuiltInResource _resource;
-    };
+        case vk::ShaderStageFlagBits::eTessellationEvaluation:
+          return EShLangTessEvaluation;
 
-    GLSLToSPIRVCompiler::GLSLToSPIRVCompiler( void )
+        case vk::ShaderStageFlagBits::eGeometry:
+          return EShLangGeometry;
+
+        case vk::ShaderStageFlagBits::eFragment:
+          return EShLangFragment;
+
+        case vk::ShaderStageFlagBits::eCompute:
+          return EShLangCompute;
+
+        default:
+          return EShLangVertex;
+      }
+    }
+
+    void init_resources(TBuiltInResource &_resource)
     {
-  #ifndef __ANDROID__
-      glslang::InitializeProcess( );
-  #endif
-
       _resource.maxLights = 32;
       _resource.maxClipPlanes = 6;
       _resource.maxTextureUnits = 32;
@@ -121,66 +128,52 @@ namespace pompeii
       _resource.limits.generalConstantMatrixVectorIndexing = 1;
     }
 
-    GLSLToSPIRVCompiler::~GLSLToSPIRVCompiler( void )
+    bool GLSLtoSPV(vk::ShaderStageFlagBits shaderType, const char *pshader, 
+      std::vector<uint32_t> &spirv)
     {
-  #ifndef __ANDROID__
-      glslang::FinalizeProcess( );
-  #endif
-    }
+      glslang::InitializeProcess();
 
-    std::vector<uint32_t> GLSLToSPIRVCompiler::compile(
-      vk::ShaderStageFlagBits stage, const std::string& source) const
-    {
-      static const std::map<vk::ShaderStageFlagBits, EShLanguage> stageToLanguageMap
-      {
-        {vk::ShaderStageFlagBits::eVertex, EShLangVertex},
-        {vk::ShaderStageFlagBits::eTessellationControl, EShLangTessControl},
-        {vk::ShaderStageFlagBits::eTessellationEvaluation, EShLangTessEvaluation},
-        {vk::ShaderStageFlagBits::eGeometry, EShLangGeometry},
-        {vk::ShaderStageFlagBits::eFragment, EShLangFragment},
-        {vk::ShaderStageFlagBits::eCompute, EShLangCompute}
-      };
-
-      std::map<vk::ShaderStageFlagBits, EShLanguage>::const_iterator stageIt = 
-        stageToLanguageMap.find(stage);
-      assert( stageIt != stageToLanguageMap.end());
-      glslang::TShader shader(stageIt->second);
+      EShLanguage stage = FindLanguage(shaderType);
+      glslang::TShader shader(stage);
+      glslang::TProgram program;
 
       const char *shaderStrings[1];
-      shaderStrings[0] = source.c_str();
-      shader.setStrings(shaderStrings, 1);
+
+      TBuiltInResource Resources;
+      init_resources(Resources);
 
       // Enable SPIR-V and Vulkan rules when parsing GLSL
       EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
 
-      if (!shader.parse(&_resource, 100, false, messages))
-      {
-        std::string infoLog = shader.getInfoLog();
-        std::string infoDebugLog = shader.getInfoDebugLog();
-        assert(false);
-      }
+      shaderStrings[0] = pshader;
 
-      glslang::TProgram program;
+      shader.setStrings(shaderStrings, 1);
+
+      std::cout << "Parsing " << std::endl;
+      if (!shader.parse(&Resources, 100, false, messages))
+      {
+        puts(shader.getInfoLog());
+        puts(shader.getInfoDebugLog());
+        return false;
+      }
+      std::cout << "Parsing OK" << std::endl;
+
       program.addShader(&shader);
-
-      if (!program.link(messages))
-      {
-        std::string infoLog = program.getInfoLog();
-        std::string infoDebugLog = program.getInfoDebugLog();
-        assert(false);
+      
+      // Link the program and report if errors...
+      std::cout << "Linking " << std::endl;
+      if (!program.link(messages)) {
+        puts(shader.getInfoLog());
+        puts(shader.getInfoDebugLog());
+        return false;
       }
+      std::cout << "Linking OK" << std::endl;
 
-      std::vector<uint32_t> code;
-      glslang::GlslangToSpv(*program.getIntermediate(stageIt->second), code);
+      glslang::GlslangToSpv(*program.getIntermediate(stage), spirv);
 
-      return code;
-    }
-
-    std::vector<uint32_t> compileGLSLToSPIRV(vk::ShaderStageFlagBits stage, 
-      const std::string& source)
-    {
-      static GLSLToSPIRVCompiler compiler;
-      return compiler.compile(stage, source);
+      glslang::FinalizeProcess();
+      
+      return true;
     }
   }
 }

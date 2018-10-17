@@ -934,11 +934,11 @@ namespace pompeii
     _commandBuffer.bindPipeline( vk::PipelineBindPoint::eCompute, *p );
   }
 
-  void CommandBuffer::pushDescriptorSetKHR( vk::PipelineBindPoint bindpoint,
+  /*void CommandBuffer::pushDescriptorSetKHR( vk::PipelineBindPoint bindpoint,
     std::shared_ptr<PipelineLayout> pipLayout, uint32_t set,
     vk::ArrayProxy<WriteDescriptorSet> descriptorWrites )
-  {
-    if ( !vkCmdPushDescriptorSetKHR )
+  {*/
+    /*if ( !vkCmdPushDescriptorSetKHR )
     {
       VkDevice device = static_cast< VkDevice >
         ( static_cast<vk::Device>( *_commandPool->getDevice( ) ) );
@@ -949,8 +949,8 @@ namespace pompeii
     if ( !vkCmdPushDescriptorSetKHR )
     {
       throw;
-    }
-    std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
+    }*/
+    /*std::vector<std::unique_ptr<vk::DescriptorImageInfo>> diis;
     diis.reserve( descriptorWrites.size( ) );
 
     std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> dbis;
@@ -989,8 +989,8 @@ namespace pompeii
       }
 
       writes.push_back( std::move( write ) );
-    }
-    VkCommandBuffer m_commandBuffer = static_cast< VkCommandBuffer >( _commandBuffer );
+    }*/
+    /*VkCommandBuffer m_commandBuffer = static_cast< VkCommandBuffer >( _commandBuffer );
     vk::PipelineLayout layout = *pipLayout;
     std::vector<VkWriteDescriptorSet> vkwds( descriptorWrites.size( ) );
     vkwds[ 0 ] = static_cast< VkWriteDescriptorSet >( writes.at( 0 ) );
@@ -999,6 +999,11 @@ namespace pompeii
       static_cast<VkPipelineBindPoint>( bindpoint ), 
       static_cast<VkPipelineLayout>( layout ), 
       set, descriptorWrites.size( ), 
-      vkwds.data( ) );
-  }
+      vkwds.data( ) );*/
+    /*if(vkCmdPushDescriptorSetKHR == NULL)
+    {
+      throw;
+    }
+    _commandBuffer.pushDescriptorSetKHR( bindpoint, *pipLayout, set, writes );
+  }*/
 }

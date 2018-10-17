@@ -23,7 +23,7 @@ if( POMPEII_WITH_EXAMPLES )
   add_subdirectory( compute )
   add_subdirectory( render )
   
-  if( QT5CORE_FOUND )
+  if( QT5CORE_FOUND_ )
     #add_subdirectory( qtRender )
     ##add_subdirectory( qtStencilOutline )
     #add_subdirectory( qtSkybox )

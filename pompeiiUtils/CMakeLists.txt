@@ -1,7 +1,12 @@
-#source_group(\\ FILES CMakeLists.txt)
-# if( ASSIMP_FOUND )
+include_directories( 
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
 
-#file(GLOB BASE_SRC "*.cpp" "../thirdparty/imgui/imgui.cpp" "../thirdparty/imgui/imgui_draw.cpp")
+add_definitions(
+  -DNOMINMAX
+)
+
+source_group(\\ FILES CMakeLists.txt)
 
 set( POMPEIIUTILS_PUBLIC_HEADERS
 	Mesh.h
@@ -10,20 +15,17 @@ set( POMPEIIUTILS_PUBLIC_HEADERS
 	Geometry.h
 	CustomMaterial.h
 	ThreadPool.h
-	###Glsl2SPV.h
+
 	CustomFramebuffer.h
 	CustomPingPong.h
 
 	Wrappers.h
 
-	##../thirdparty/imgui/imgui.h
-	##VulkanUI.h
-
 	glmConfig.h
 
 	States.h
 
-	#Compiler.h
+	Compiler.h
 )
 
 set( POMPEIIUTILS_SOURCES
@@ -33,25 +35,14 @@ set( POMPEIIUTILS_SOURCES
 	Geometry.cpp
 	CustomMaterial.cpp
 	ThreadPool.cpp
-	###Glsl2SPV.cpp
+
 	CustomFramebuffer.cpp
 
 	Wrappers.cpp
 
-	##../thirdparty/imgui/imgui.cpp
-	##../thirdparty/imgui/imgui_draw.cpp
-
-	##VulkanUI.cpp
-
 	States.cpp
 
-	#Compiler.cpp
-)
-
-set( POMPEIIUTILS_HEADERS
-)
-
-set( POMPEIIUTILS_MOC_HEADERS
+	Compiler.cpp
 )
 
 set( POMPEIIUTILS_LINK_LIBRARIES
@@ -59,15 +50,17 @@ set( POMPEIIUTILS_LINK_LIBRARIES
 	${GLM_LIBRARIES}
 	${ASSIMP_LIBRARIES}
 	
-##	glslang
-##	OGLCompiler
-##	OSDependent
-##	#HLSL
-##	SPIRV
+	glslang
+	OGLCompiler
+	OSDependent
+	SPIRV
 )
-##set( POMPEIIUTILS_PUBLIC_INCLUDE_DIRECTORIES
-##	"${CMAKE_SOURCE_DIR}/vendor"
-##)
+
+set( POMPEIIUTILS_PUBLIC_INCLUDE_DIRECTORIES
+	"${CMAKE_SOURCE_DIR}/vendor"
+)
+
 set( POMPEIIUTILS_INCLUDE_NAME pompeiiUtils )
 set( POMPEIIUTILS_NAMESPACE pompeiiUtils )
+
 common_library( pompeiiUtils )
