@@ -33,7 +33,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 
 option( POMPEII_WITH_DEVICE_BUILDERS "enabling/disabling custom device builder" ON )
-#option( POMPEII_WITH_EXAMPLES "POMPEII examples" ON)
+option( POMPEII_WITH_EXAMPLES "POMPEII examples" ON)
 #option( POMPEIIENGINE_WITH_COMPONENTS "POMPEII with components" ON )
 
 #if ( POMPEIIENGINE_WITH_COMPONENTS )
